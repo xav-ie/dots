@@ -14,9 +14,6 @@
     nur = {
       url = "github:nix-community/NUR";
     };
-    goarchiveyourself = {
-      url = "git+ssh://git@work_git/outsmartly/goarchiveyourself.git?ref=main";
-    };
   };
 
   outputs = { nixpkgs, home-manager, nur, ... }@inputs:
