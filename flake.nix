@@ -15,9 +15,9 @@
       url = "github:nix-community/NUR";
     };
   };
-
   outputs = { nixpkgs, home-manager, nur, ... }@inputs:
   let 
+    nix.registry.nixpkgs.flake = nixpkgs;
     system = "x86_64-linux";
     pkgs = import nixpkgs {
       inherit system;

@@ -39,7 +39,7 @@
   networking.nameservers = [ "1.1.1.1#one.one.one.one" "1.0.0.1#one.one.one.one" ];
   
   services.resolved = {
-    enable = true;
+    enable = lib.mkForce true;
     dnssec = "true";
     domains = [ "~." ];
     fallbackDns = [ "1.1.1.1#one.one.one.one" "1.0.0.1#one.one.one.one" ];
@@ -110,12 +110,12 @@
     cava
     chromium
     cliphist
-    ctpv # lf previews
+    ctpv                          # lf previews
     cudaPackages.cudatoolkit
     cudaPackages.cudnn
     cudaPackages.cuda_cccl
+    delta                         # a better git diff
     discord
-    # dunst
     exa
     file
     fzf
@@ -140,7 +140,6 @@
     openrgb
     pavucontrol
     pciutils
-    pistol
     polkit_gnome
     prusa-slicer
     ripgrep
@@ -168,7 +167,7 @@
     zip
     zoxide
   ]) ++ [
-      inputs.hyprland-contrib.packages.${pkgs.system}.grimblast # or any other package
+      inputs.hyprland-contrib.packages.${pkgs.system}.grimblast
   ];
 
   security.wrappers.noisetorch = {
@@ -247,11 +246,23 @@
     };
   };
   
-  # services.twingate.enable = true;
+  services.twingate.enable = true;
   
   services.blueman.enable = true;
   
   services.xserver.videoDrivers = [ "nvidia" ];
+  
+  # location.provider = "geoclue2";
+  location.longitude = 40.0;
+  location.latitude = 90.0;
+  services.redshift = {
+    enable = true;
+  };
+
+  services.geoclue2 = {
+    enable = true;
+    appConfig.redshift.isAllowed = true;
+  };
 
   sound.enable = true;
   security.rtkit.enable = true;
@@ -310,7 +321,7 @@
   # List services that you want to enable:
   services.udev.packages = [ pkgs.openrgb ];
 
-  # virtualisation.docker.enable = true;
+  virtualisation.docker.enable = true;
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;
 
