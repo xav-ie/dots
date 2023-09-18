@@ -56,6 +56,25 @@ in {
       aliases = {
         graph = "log --graph --pretty=tformat:'%C(bold blue)%h%Creset %s %C(bold green)%d%Creset %C(blue)<%an>%Creset %C(dim cyan)%cr' --abbrev-commit --decorate";
       };
+      extraConfig = {
+        core = {
+          pager = "delta";
+        };
+        interactive = {
+          diffFilter = "delta --color-only";
+        };
+        delta = {
+          navigate = true;
+          line-numbers = true;
+          true-color =  "always";
+        };
+        merge = {
+          conflictstyle = "diff3";
+        };
+        diff = {
+          colorMoved = "default";
+        };
+      };
     };
     zsh = {
       enable = true;
@@ -90,6 +109,9 @@ in {
           bitwarden
           ublock-origin
           vimium-c
+          sidebartabs
+          newtab-adapter
+          videospeed
 
         ];
 
