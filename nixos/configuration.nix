@@ -62,7 +62,7 @@
 
 
   # Set your time zone.
-  time.timeZone = "America/Phoenix";
+  time.timeZone = "America/New_York";
 
   # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
@@ -104,71 +104,83 @@
     })
   ];
 
-  environment.systemPackages = (with pkgs; [
-    bat
-	  blesh
-    cava
-    chromium
+  environment.systemPackages = 
+  # in triage - try to minimize this list
+  (with pkgs; [
+	  blesh                         # bash extensions
     cliphist
     ctpv                          # lf previews
+    cudaPackages.cuda_cccl
     cudaPackages.cudatoolkit
     cudaPackages.cudnn
-    cudaPackages.cuda_cccl
-    delta                         # a better git diff
-    discord
-    exa
-    file
-    fzf
-    gcc
-    gh
-    google-chrome
-  	gnumake
     hstr
-    htop
-    killall
-    kitty
-    lazygit
-    lf
-    libnotify
-    manix	
-    magic-wormhole-rs
-    mpv
-    mpvpaper
-    networkmanagerapplet
-    neovim
-    noisetorch
-    openrgb
-    pavucontrol
+    manix
     pciutils
-    polkit_gnome
-    prusa-slicer
-    ripgrep
-    rofi-wayland
-    slack
-    sioyek
-    starship
-    swaynotificationcenter
-    swayidle
-    swaylock
-    swww
-    tldr
+    # prusa-slicer                # does not launch currently
+    # slack                       # does not launch currently
+    tldr                          # barely working due to it not having many entries
     tmux
-    thefuck
+    xdg-utils                     # ????
+  # awesome dev tools
+  ]) ++ (with pkgs; [
+    bat                           # a better cat
+    btop                          # a better top
+    delta                         # a better git diff
+    exa                           # a better ls
+    fzf                           # fuzzy finder
+    gh                            # github cli
+    lazygit                       # easy git tui
+    ripgrep                       # faster grep
+    magic-wormhole-rs             # send files easily
+    neovim                        # the one and only
+    starship                      # amazing PS1
+    thefuck                       # correct previous command automatically
+    zoxide                        # smart cd
+  # universal utils
+  ]) ++ (with pkgs; [
+    file
+    gcc
+  	gnumake
+    lf
     unzip
     vim 
+    wget
+    zip
+  # user programs
+  ]) ++ (with pkgs; [
+    chromium
+    discord
+    google-chrome
+    kitty
+    mpv                          # video player
+    playerctl                    # play, pause, next
+    pulseaudio                   # provides pactl for volume control
+    networkmanagerapplet
+    noisetorch                   # noise filter
+    openrgb                      # pc rgb control
+    pavucontrol                  # audio mixer
+    sioyek                       # vimified pdf viewer
+  # hyprland
+  ]) ++ (with pkgs; [
+    cava
+    libnotify
+    polkit_gnome
+    rofi-wayland
+    swayidle
+    swaylock
+    swaynotificationcenter
+    swww
+    waypipe
+    wl-clipboard
     (waybar.overrideAttrs (oldAttrs: {
       mesonFlags = oldAttrs.mesonFlags ++ [ "-Dexperimental=true" ];
       hyprlandSupport = true;
     }))
-    waypipe
-    wget
-    wl-clipboard
-    xdg-utils
-    zip
-    zoxide
   ]) ++ [
-      inputs.hyprland-contrib.packages.${pkgs.system}.grimblast
+    inputs.hyprland-contrib.packages.${pkgs.system}.grimblast
   ];
+
+
 
   security.wrappers.noisetorch = {
     owner = "root";
