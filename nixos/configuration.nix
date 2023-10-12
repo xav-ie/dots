@@ -148,23 +148,27 @@
     zip
   # user programs
   ]) ++ (with pkgs; [
+    bitwarden
     chromium
     discord
     google-chrome
     kitty
     mpv                          # video player
-    playerctl                    # play, pause, next
-    pulseaudio                   # provides pactl for volume control
     networkmanagerapplet
     noisetorch                   # noise filter
     openrgb                      # pc rgb control
     pavucontrol                  # audio mixer
+    playerctl                    # play, pause, next
+    pulseaudio                   # provides pactl for volume control
+    qutebrowser
     sioyek                       # vimified pdf viewer
   # hyprland
   ]) ++ (with pkgs; [
     cava
     libnotify
-    polkit_gnome
+    libva
+    libva-utils                   # hardware video acceleration
+    polkit_gnome                  # just a GUI askpass
     rofi-wayland
     swayidle
     swaylock
@@ -249,6 +253,14 @@
       enable = true;
       driSupport = true;
       driSupport32Bit = true;
+      package = pkgs.nvidia-vaapi-driver;  # For NVIDIA
+      extraPackages = with pkgs; [
+          nvidia-vaapi-driver  # For NVIDIA
+          intel-media-driver   # LIBVA_DRIVER_NAME=iHD
+          vaapiIntel           # LIBVA_DRIVER_NAME=i965 (older but works better for Firefox/Chromium)
+          # vaapiVdpau
+          # libvdpau-va-gl
+        ];
     };
     nvidia = {
       modesetting.enable = true;
