@@ -49,5 +49,6 @@ Check the Makefile!
       3. I want better snapping of PIP windows. Ideally, the PIP behaves exactly like MacOS Arc PIP works. It anchors the PIP to some corner and resizing happens from that corner alone. 
       4. I also just need to figure out binding to make this mostly happen automatically for already open video, I have "M" binding to open video link on page, but not current page itself.
 
+-  use nix-colors repo for theming everything
 
 
