@@ -43,6 +43,11 @@ Check the Makefile!
 -  Screenshots/recording - wf-recorder is ... fine. I would prefer somebindings and a bit more chrome/indicators in my bar to show that I am recording screen. I dislike that I could be screensharing and not really be aware that I am.
 -  DND - I would like to trigger DND when I am scrensharing. I really dislike that notifications come through on screenshare. Maybe I can still allow notifications, but hide them from screenshare entirely??? That would be really cool.
 
+-  CONSOOM - PIP in Qutebrowser lowkey sucks. It does not have PIP support. The suggested workaround is to use MPV. This has a few problems. 
+      1. Videos do not show as watched on youtube - what I do right now is set the quality to 144p and mute and just let it play in background
+      2. MPV does not autochange the yt-dlp source as I resize MPV. When MPV is really smol, the source url from YT is always really high quality which is wasteful and causes weird artifacts
+      3. I want better snapping of PIP windows. Ideally, the PIP behaves exactly like MacOS Arc PIP works. It anchors the PIP to some corner and resizing happens from that corner alone. 
+      4. I also just need to figure out binding to make this mostly happen automatically for already open video, I have "M" binding to open video link on page, but not current page itself.
 
 
 
