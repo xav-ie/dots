@@ -109,8 +109,8 @@
   (with pkgs; [
 	  blesh                         # bash extensions
     cliphist
-    ctpv                          # lf previews
-    cudaPackages.cuda_cccl
+    ctpv                          # lf previews, very buggy
+    cudaPackages.cuda_cccl        # I wish hardware acceleration would work :/
     cudaPackages.cudatoolkit
     cudaPackages.cudnn
     hstr
@@ -119,14 +119,13 @@
     # prusa-slicer                # does not launch currently
     # slack                       # does not launch currently
     tldr                          # barely working due to it not having many entries
-    tmux
     xdg-utils                     # ????
   # awesome dev tools
   ]) ++ (with pkgs; [
     bat                           # a better cat
     btop                          # a better top
     delta                         # a better git diff
-    exa                           # a better ls
+    eza                           # a better ls
     fzf                           # fuzzy finder
     gh                            # github cli
     lazygit                       # easy git tui
@@ -136,12 +135,15 @@
     starship                      # amazing PS1
     thefuck                       # correct previous command automatically
     zoxide                        # smart cd
+    zellij                        # tmux could never
   # universal utils
   ]) ++ (with pkgs; [
+    cmake
     file
     gcc
   	gnumake
     lf
+    ninja
     unzip
     vim 
     wget
