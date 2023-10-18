@@ -109,6 +109,7 @@
   (with pkgs; [
 	  blesh                         # bash extensions
     cliphist
+    clipboard-jh                  # a really awesome clipboard
     ctpv                          # lf previews, very buggy
     cudaPackages.cuda_cccl        # I wish hardware acceleration would work :/
     cudaPackages.cudatoolkit
