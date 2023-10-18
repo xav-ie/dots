@@ -143,6 +143,7 @@
     file                          # magic number reader
     gcc
     gnumake                       # provides `make`
+    jq                            # json parser
     lf                            # file browser
     ninja
     unzip
