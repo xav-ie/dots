@@ -139,10 +139,10 @@
   # universal utils
   ]) ++ (with pkgs; [
     cmake
-    file
+    file                          # magic number reader
     gcc
-  	gnumake
-    lf
+    gnumake                       # provides `make`
+    lf                            # file browser
     ninja
     unzip
     vim 
