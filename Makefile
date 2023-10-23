@@ -11,5 +11,5 @@ INPUTS = nixpkgs nur
 .PHONY: update
 update:
 	for input in $(INPUTS); do \
-		$(NIX) flake lock --update-input $$input; \
+		nix flake lock --update-input $$input; \
 	done
