@@ -107,7 +107,9 @@
   environment.systemPackages = 
   # in triage - try to minimize this list
   (with pkgs; [
-	  blesh                         # bash extensions
+    asciinema                     # record shell sessions and share easily
+    age                           # the new PGP
+    blesh                         # bash extensions
     cliphist
     clipboard-jh                  # a really awesome clipboard
     ctpv                          # lf previews, very buggy
@@ -119,8 +121,14 @@
     pciutils
     # prusa-slicer                # does not launch currently
     # slack                       # does not launch currently
+    sops                          # secrets manager? idk... seems like an extension to age and 
+                                  # other encrypters that allows you to just encrypt part of the 
+                                  # file instead of the whole thing... IDK the real use for that 
     tldr                          # barely working due to it not having many entries
     xdg-utils                     # ????
+    # https://github.com/marionebl/svg-term-cli
+    # allows asciinema recordings to be exported to svg... this could be pretty indespensable if 
+    # you would like ANSI escape sequences to be interpreted by GH
   # awesome dev tools
   ]) ++ (with pkgs; [
     bat                           # a better cat
@@ -268,9 +276,9 @@
       driSupport32Bit = true;
       package = pkgs.nvidia-vaapi-driver;  # For NVIDIA
       extraPackages = with pkgs; [
-          nvidia-vaapi-driver  # For NVIDIA
-          intel-media-driver   # LIBVA_DRIVER_NAME=iHD
-          vaapiIntel           # LIBVA_DRIVER_NAME=i965 (older but works better for Firefox/Chromium)
+          nvidia-vaapi-driver # For NVIDIA
+          intel-media-driver  # LIBVA_DRIVER_NAME=iHD
+          vaapiIntel          # LIBVA_DRIVER_NAME=i965 (older but works better for Firefox/Chromium)
           # vaapiVdpau
           # libvdpau-va-gl
         ];
