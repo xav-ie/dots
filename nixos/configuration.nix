@@ -98,6 +98,12 @@
   
   nixpkgs.overlays = with pkgs; [
     (self: super: {
+      mpv = super.mpv.override {
+        scripts = [ 
+          self.mpvScripts.mpris # extends mpv to be controllable with MPD
+        ];
+      };
+      # use full ffmpeg version to support all video formats
       mpv-unwrapped = super.mpv-unwrapped.override {
         ffmpeg_5 = ffmpeg_5-full;
       };
