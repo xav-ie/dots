@@ -229,17 +229,17 @@
       enable = true;
       enableNvidiaPatches = true;
       xwayland.enable = true;
-      portalPackage = (pkgs.xdg-desktop-portal-hyprland.overrideAttrs (oldAttrs: {
-        # 1.2.2 has key fixes for nvidia cards
-        version = "1.2.2";
-
-        src = pkgs.fetchFromGitHub {
-          owner = "hyprwm";
-          repo = "xdg-desktop-portal-hyprland";
-          rev = "v1.2.2";
-          hash = "sha256-UGMo/xSWkYg9nzQ2is7l6mYtHS48IuWFtObQnx5Hheg=";
-        };
-      }));
+      # portalPackage = (pkgs.xdg-desktop-portal-hyprland.overrideAttrs (oldAttrs: {
+      #   # 1.2.2 has key fixes for nvidia cards for newest hyprland.. but hyprland still borked
+      #   version = "1.2.2";
+      #
+      #   src = pkgs.fetchFromGitHub {
+      #     owner = "hyprwm";
+      #     repo = "xdg-desktop-portal-hyprland";
+      #     rev = "v1.2.2";
+      #     hash = "sha256-UGMo/xSWkYg9nzQ2is7l6mYtHS48IuWFtObQnx5Hheg=";
+      #   };
+      # }));
       # sets this option for us
       # xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-hyprland ];
     };
