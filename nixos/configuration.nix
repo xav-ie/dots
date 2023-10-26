@@ -100,7 +100,8 @@
     (self: super: {
       mpv = super.mpv.override {
         scripts = [ 
-          self.mpvScripts.mpris # extends mpv to be controllable with MPD
+          self.mpvScripts.mpris        # extends mpv to be controllable with MPD
+          self.mpvScripts.quality-menu # control video quality on the fly
         ];
       };
       # use full ffmpeg version to support all video formats
