@@ -99,9 +99,10 @@
   nixpkgs.overlays = with pkgs; [
     (self: super: {
       mpv = super.mpv.override {
-        scripts = [ 
-          self.mpvScripts.mpris        # extends mpv to be controllable with MPD
-          self.mpvScripts.quality-menu # control video quality on the fly
+        scripts = with self.mpvScripts; [ 
+          mpris                 # extends mpv to be controllable with MPD
+          quality-menu          # control video quality on the fly
+          webtorrent-mpv-hook   # extends mpv to handle magnet URLs
         ];
       };
       # use full ffmpeg version to support all video formats
@@ -125,6 +126,9 @@
     cudaPackages.cudnn
     hstr
     manix
+    nodePackages."webtorrent-cli"
+    xidel                         # like jq but for html and much more advanced. 
+                                  # required by mpvScripts.webtorrent-mpv-hook
     pciutils
     # prusa-slicer                # does not launch currently
     # slack                       # does not launch currently
