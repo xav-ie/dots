@@ -100,7 +100,9 @@
     (self: super: {
       mpv = super.mpv.override {
         scripts = with self.mpvScripts; [ 
+          autoload              # autoloads entries before and after current entry
           mpris                 # extends mpv to be controllable with MPD
+          mpv-playlistmanager   # resolves url titles, SHIFT+ENTER for playlist
           quality-menu          # control video quality on the fly
           webtorrent-mpv-hook   # extends mpv to handle magnet URLs
         ];
