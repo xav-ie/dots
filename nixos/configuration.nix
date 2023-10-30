@@ -138,6 +138,7 @@
     cudaPackages.cuda_cccl        # I wish hardware acceleration would work :/
     cudaPackages.cudatoolkit
     cudaPackages.cudnn
+    himalaya                      # email
     hstr
     manix
     nodePackages."webtorrent-cli"
