@@ -153,6 +153,7 @@
     tldr                          # barely working due to it not having many entries
     xdg-utils                     # ????
     weechat
+    zoom-us
     # https://github.com/marionebl/svg-term-cli
     # allows asciinema recordings to be exported to svg... this could be pretty indespensable if 
     # you would like ANSI escape sequences to be interpreted by GH
