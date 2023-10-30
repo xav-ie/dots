@@ -166,6 +166,7 @@
     lf                            # file browser
     ninja
     unzip
+    unrar
     vim 
     wget
     zip
@@ -377,8 +378,14 @@
   # };
 
   # List services that you want to enable:
-  services.udev.packages = [ pkgs.openrgb ];
+  services.udev = {
+    packages = [ pkgs.openrgb ];
+    extraRules = ''
+SUBSYSTEM=="usb", ATTRS{idVendor}=="057e", ATTRS{idProduct}=="3000", MODE="0666"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0955", ATTRS{idProduct}=="7321", MODE="0666"
+    '';
 
+  };
   virtualisation.docker.enable = true;
   # Enable the OpenSSH daemon.
   services.openssh = {
