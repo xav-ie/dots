@@ -111,6 +111,18 @@
       mpv-unwrapped = super.mpv-unwrapped.override {
         ffmpeg_5 = ffmpeg_5-full;
       };
+      weechat = super.weechat.override {
+        configure = { availablePlugins, ... }: {
+          scripts = with super.weechatScripts; [
+            # Idk how to use this one yet
+            edit                # edit messages in $EDITOR
+            wee-slack           # slack in weechat
+            # I think weeslack already has way to facilitate notifications 
+            # weechat-notify-send # highlight and notify bindings to notify-send
+            weechat-go          # command pallette jumping
+          ];
+        };
+      };
     })
   ];
 
@@ -139,6 +151,7 @@
                                   # file instead of the whole thing... IDK the real use for that 
     tldr                          # barely working due to it not having many entries
     xdg-utils                     # ????
+    weechat
     # https://github.com/marionebl/svg-term-cli
     # allows asciinema recordings to be exported to svg... this could be pretty indespensable if 
     # you would like ANSI escape sequences to be interpreted by GH
