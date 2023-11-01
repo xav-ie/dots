@@ -38,15 +38,6 @@
 
   networking.nameservers = [ "1.1.1.1#one.one.one.one" "1.0.0.1#one.one.one.one" ];
   
-  services.resolved = {
-    enable = lib.mkForce true;
-    dnssec = "true";
-    domains = [ "~." ];
-    fallbackDns = [ "1.1.1.1#one.one.one.one" "1.0.0.1#one.one.one.one" ];
-    extraConfig = ''
-      DNSOverTLS=yes
-    '';
-  };
   # Configure network proxy if necessary
   # networking.proxy.default = "http://user:password@proxy:port/";
   # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
@@ -59,7 +50,6 @@
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
   networking.firewall.enable = false;
-
 
   # Set your time zone.
   time.timeZone = "America/New_York";
@@ -77,12 +67,6 @@
     LC_PAPER = "en_US.UTF-8";
     LC_TELEPHONE = "en_US.UTF-8";
     LC_TIME = "en_US.UTF-8";
-  };
-
-  # Configure keymap in X11
-  services.xserver = {
-    layout = "us";
-    xkbVariant = "";
   };
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
@@ -225,15 +209,6 @@
     inputs.hyprland-contrib.packages.${pkgs.system}.grimblast
   ];
 
-
-
-  security.wrappers.noisetorch = {
-    owner = "root";
-    group = "root";
-    source = "${pkgs.noisetorch}/bin/noisetorch";
-    capabilities = "cap_sys_resource+ep";
-  };
-
   fonts.packages = with pkgs; [
     nerdfonts
   ];
@@ -322,50 +297,84 @@
     };
   };
   
-  services.twingate.enable = true;
-  
-  services.blueman.enable = true;
-  
-  services.xserver.videoDrivers = [ "nvidia" ];
+  services = {
+    blueman.enable = true;
+    geoclue2 = {
+      enable = true;
+      appConfig.redshift.isAllowed = true;
+    };
+    openssh = {
+      enable = true;
+      extraConfig = ''
+        ClientAliveInterval 60
+        ClientAliveCountMax 5
+      '';
+    };
+    pipewire = {
+      enable = true;
+      alsa.enable = true;
+      alsa.support32Bit = true;
+      pulse.enable = true;
+      jack.enable = true;
+    };
+    redshift = {
+      enable = true;
+    };
+    resolved = {
+      enable = lib.mkForce true;
+      dnssec = "true";
+      domains = [ "~." ];
+      fallbackDns = [ "1.1.1.1#one.one.one.one" "1.0.0.1#one.one.one.one" ];
+      extraConfig = ''
+        DNSOverTLS=yes
+      '';
+    };
+    twingate.enable = true;
+    udev = {
+      packages = [ pkgs.openrgb ];
+      extraRules = ''
+  SUBSYSTEM=="usb", ATTRS{idVendor}=="057e", ATTRS{idProduct}=="3000", MODE="0666"
+  SUBSYSTEM=="usb", ATTRS{idVendor}=="0955", ATTRS{idProduct}=="7321", MODE="0666"
+      '';
+    };
+    # Configure keymap in X11
+    xserver = {
+      layout = "us";
+      xkbVariant = "";
+      videoDrivers = [ "nvidia" ];
+    };
+  };
   
   # location.provider = "geoclue2";
   location.longitude = 40.0;
   location.latitude = 90.0;
-  services.redshift = {
-    enable = true;
-  };
-
-  services.geoclue2 = {
-    enable = true;
-    appConfig.redshift.isAllowed = true;
-  };
 
   sound.enable = true;
-  security.rtkit.enable = true;
-  services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    pulse.enable = true;
-    jack.enable = true;
+  security = {
+    pam.services.swaylock.text = ''
+      # Account management.
+      account required pam_unix.so
+
+      # Authentication management.
+      auth sufficient pam_unix.so   likeauth try_first_pass
+      auth required pam_deny.so
+
+      # Password management.
+      password sufficient pam_unix.so nullok sha512
+
+      # Session management.
+      session required pam_env.so conffile=/etc/pam/environment readenv=0
+      session required pam_unix.so
+    '';
+    polkit.enable = true;
+    rtkit.enable = true;
+    wrappers.noisetorch = {
+      owner = "root";
+      group = "root";
+      source = "${pkgs.noisetorch}/bin/noisetorch";
+      capabilities = "cap_sys_resource+ep";
+    };
   };
-
-  security.polkit.enable = true;
-  security.pam.services.swaylock.text = ''
-    # Account management.
-    account required pam_unix.so
-
-    # Authentication management.
-    auth sufficient pam_unix.so   likeauth try_first_pass
-    auth required pam_deny.so
-
-    # Password management.
-    password sufficient pam_unix.so nullok sha512
-
-    # Session management.
-    session required pam_env.so conffile=/etc/pam/environment readenv=0
-    session required pam_unix.so
-  '';
 
 
   # TODO: get this working
@@ -394,24 +403,7 @@
   #   enableSSHSupport = true;
   # };
 
-  # List services that you want to enable:
-  services.udev = {
-    packages = [ pkgs.openrgb ];
-    extraRules = ''
-SUBSYSTEM=="usb", ATTRS{idVendor}=="057e", ATTRS{idProduct}=="3000", MODE="0666"
-SUBSYSTEM=="usb", ATTRS{idVendor}=="0955", ATTRS{idProduct}=="7321", MODE="0666"
-    '';
-
-  };
   virtualisation.docker.enable = true;
-  # Enable the OpenSSH daemon.
-  services.openssh = {
-    enable = true;
-    extraConfig = ''
-      ClientAliveInterval 60
-      ClientAliveCountMax 5
-    '';
-  };
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
