@@ -1,7 +1,7 @@
 {
   description = "My NixOS";
   nixConfig = {
-    extra-substituters = [
+    extra-trusted-substituters = [
       "https://nix-community.cachix.org"
     ];
     extra-trusted-public-keys = [
