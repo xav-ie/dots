@@ -83,8 +83,6 @@ in {
     };
     firefox = {
       enable = true;
-      
-
       profiles.x = {
         id = 0;
         isDefault = true;
@@ -112,9 +110,7 @@ in {
           sidebartabs
           newtab-adapter
           videospeed
-
         ];
-
       };
     };
   };
@@ -128,25 +124,24 @@ in {
 
 
   xdg.mimeApps.defaultApplications = {
-    "text/plain" = [ "neovide.desktop" ];
-    "application/pdf" = [ "zathura.desktop" ];
+    "text/plain" = [ "qutebrowser.desktop" ];
+    "application/pdf" = [ "sioyek.desktop" ];
     "image/*" = [ "sxiv.desktop" ];
     "video/*" = [ "mpv.desktop" ];
-    "text/html" = [ "firefox.desktop" ];
-    "x-scheme-handler/http" = [ "firefox.desktop" ];
-    "x-scheme-handler/https" = [ "firefox.desktop" ];
-    "x-scheme-handler/ftp" = [ "firefox.desktop" ];
-    "application/xhtml+xml" = [ "firefox.desktop" ];
-    "application/xml" = [ "firefox.desktop" ]; 
+    "text/html" = [ "qutebrowser.desktop" ];
+    "x-scheme-handler/http" = [ "qutebrowser.desktop" ];
+    "x-scheme-handler/https" = [ "qutebrowser.desktop" ];
+    "x-scheme-handler/ftp" = [ "qutebrowser.desktop" ];
+    "application/xhtml+xml" = [ "qutebrowser.desktop" ];
+    "application/xml" = [ "qutebrowser.desktop" ]; 
   };
   # Nicely reload system units when changing configs
   systemd.user.startServices = "sd-switch";
 
-
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
   home.stateVersion = "23.05";
   home.sessionVariables = {
-    EDITOR = "vim";
+    EDITOR = "nvim";
   };
 }
 
