@@ -7,9 +7,10 @@ docs: README.norg
 system:
 	sudo nixos-rebuild switch --flake ~/Projects/mysystem
 
-INPUTS = nixpkgs nur
+.PHONY: bleed
+bleed:
+	nix flake lock --update-input nixpkgs-bleeding
+
 .PHONY: update
 update:
-	for input in $(INPUTS); do \
-		nix flake lock --update-input $$input; \
-	done
+	nix flake update
