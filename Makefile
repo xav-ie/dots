@@ -1,3 +1,6 @@
+.PHONY: init
+init:
+	nix run home-manager/master -- init --switch
 
 .PHONY: docs
 docs: README.norg
@@ -6,6 +9,7 @@ docs: README.norg
 .PHONY: system
 system:
 	sudo nixos-rebuild switch --flake ~/Projects/mysystem
+	# home-manager switch
 
 .PHONY: bleed
 bleed:
