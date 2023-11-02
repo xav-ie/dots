@@ -1,5 +1,34 @@
 { inputs, lib, config, pkgs, ... }: 
-let merge = lib.foldr (a: b: a // b) { };
+let 
+  merge = lib.foldr (a: b: a // b) { };
+  default_tab_template = ''
+        default_tab_template {
+            children
+            pane size=1 borderless=true {
+                plugin location="file:${pkgs.zjstatus}/bin/zjstatus.wasm" {
+                  format_left  "{mode} #[fg=#FA89B4,bold]{session} {tabs}"
+                  format_right "{datetime}"
+                  format_space ""
+
+                  border_enabled  "false"
+                  border_char     "─"
+                  border_format   "#[fg=#6C7086]{char}"
+                  border_position "top"
+
+                  mode_normal  "#[bg=magenta] "
+                  mode_locked  "#[bg=cyan] "
+                  mode_tmux    "#[bg=red] "
+
+                  tab_normal   "#[fg=#6C7086] {name} "
+                  tab_active   "#[fg=magenta,bold,italic] {name} "
+
+                  datetime        "#[fg=cyan,bold] {format} "
+                  datetime_format "%A, %d %b %Y %I:%M %p"
+                  datetime_timezone "America/New_York"
+                }
+            }
+        }
+  '';
 in {
   # You can import other home-manager modules here
   imports = [
@@ -434,68 +463,16 @@ in {
     //
     // theme_dir "/path/to/my/theme_dir"
   '';
+
   home.file.".config/zellij/layouts/simple.kdl".text = ''
     layout {
-        default_tab_template {
-            children
-            pane size=1 borderless=true {
-                plugin location="file:${pkgs.zjstatus}/bin/zjstatus.wasm" {
-                  format_left  "{mode} #[fg=#FA89B4,bold]{session} {tabs}"
-                  format_right "{datetime}"
-                  format_space ""
-
-                  border_enabled  "false"
-                  border_char     "─"
-                  border_format   "#[fg=#6C7086]{char}"
-                  border_position "top"
-
-                  hide_frame_for_single_pane "true"
-
-                  mode_normal  "#[bg=magenta] "
-                  mode_locked  "#[bg=cyan] "
-                  mode_tmux    "#[bg=red] "
-
-                  tab_normal   "#[fg=#6C7086] {name} "
-                  tab_active   "#[fg=magenta,bold,italic] {name} "
-
-                  datetime        "#[fg=cyan,bold] {format} "
-                  datetime_format "%A, %d %b %Y %I:%M %p"
-                  datetime_timezone "America/New_York"
-                }
-            }
-        }
+        ${default_tab_template}
         tab
     }
   '';
   home.file.".config/zellij/layouts/default.kdl".text = ''
     layout {
-        default_tab_template {
-            children
-            pane size=1 borderless=true {
-              plugin location="file:${pkgs.zjstatus}/bin/zjstatus.wasm" {
-                format_left  "{mode} #[fg=#FA89B4,bold]{session} {tabs}"
-                format_right "{datetime}"
-                format_space ""
-
-                border_enabled  "false"
-                border_char     "─"
-                border_format   "#[fg=#6C7086]{char}"
-                border_position "top"
-
-                hide_frame_for_single_pane "true"
-
-                mode_normal  "#[bg=yellow] "
-                mode_tmux    "#[bg=red] "
-
-                tab_normal   "#[fg=#6C7086] {name} "
-                tab_active   "#[fg=magenta,bold,italic] {name} "
-
-                datetime        "#[fg=cyan,bold] {format} "
-                datetime_format "%A, %d %b %Y %I:%M %p"
-                datetime_timezone "America/New_York"
-              }
-            }
-        }
+        ${default_tab_template}
         tab name="music" {
           pane command="mpv" {
             args "https://raw.githubusercontent.com/junguler/m3u-radio-music-playlists/fc9e42a424451fbdfcc55920bb3af8b4c21531ac/web-radio_directory/90s.m3u"
