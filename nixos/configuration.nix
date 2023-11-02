@@ -80,7 +80,9 @@
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
-  
+  # now you don't have to pass --impure when trying to run nix commands
+  nixpkgs.config.allowUnfreePredicate = (_: true);
+
   nixpkgs.overlays = with pkgs; [
     (self: super: {
       mpv = super.mpv.override {
@@ -108,6 +110,9 @@
           ];
         };
       };
+      # (final: prev: {
+      zjstatus = inputs.zjstatus.packages.${super.system}.default;
+      # })
     })
   ];
 
