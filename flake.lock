@@ -56,6 +56,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-bleeding": {
+      "locked": {
+        "lastModified": 1698611440,
+        "narHash": "sha256-jPjHjrerhYDy3q9+s5EAsuhyhuknNfowY6yt6pjn9pc=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "0cbe9f69c234a7700596e943bfae7ef27a31b735",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nur": {
       "locked": {
         "lastModified": 1693934318,
@@ -76,6 +92,7 @@
         "home-manager": "home-manager",
         "hyprland-contrib": "hyprland-contrib",
         "nixpkgs": "nixpkgs",
+        "nixpkgs-bleeding": "nixpkgs-bleeding",
         "nur": "nur"
       }
     }
