@@ -5,58 +5,59 @@
 { inputs, lib, config, pkgs, fetchFromGithub, ... }:
 
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-    ];
+  imports = [ 
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+  ];
   
-  # Bootloader.
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
-  boot.supportedFilesystems = [ "ntfs" ];
-  boot.kernelModules = [ 
-    "i2c-dev"
-    # Virtual Camera
-    "v4l2loopback"
-    # Virtual Microphone, built-in
-    "snd-aloop"
-    ];
-  boot.kernelPackages = pkgs.linuxPackages_latest;
-  boot.extraModulePackages = with config.boot.kernelPackages;
-    [ v4l2loopback.out ];
-  boot.extraModprobeConfig = ''
-    # exclusive_caps: Skype, Zoom, Teams etc. will only show device when actually streaming
-    # card_label: Name of virtual camera, how it'll show up in Skype, Zoom, Teams
-    # https://github.com/umlaeute/v4l2loopback
-    options v4l2loopback exclusive_caps=1 card_label="Virtual Camera"
-  '';
+  # Bootloader
+  boot = {
+    loader.systemd-boot.enable = true;
+    loader.efi.canTouchEfiVariables = true;
+    supportedFilesystems = [ "ntfs" ];
+    kernelModules = [ 
+      "i2c-dev"
+      # Virtual Camera
+      "v4l2loopback"
+      # Virtual Microphone, built-in
+      "snd-aloop"
+      ];
+    kernelPackages = pkgs.linuxPackages_latest;
+    extraModulePackages = with config.boot.kernelPackages;
+      [ v4l2loopback.out ];
+    extraModprobeConfig = ''
+      # exclusive_caps: Skype, Zoom, Teams etc. will only show device when actually streaming
+      # card_label: Name of virtual camera, how it'll show up in Skype, Zoom, Teams
+      # https://github.com/umlaeute/v4l2loopback
+      options v4l2loopback exclusive_caps=1 card_label="Virtual Camera"
+    '';
 
-  networking.hostName = "nixos"; # Define your hostname.
-  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
+  };
 
+  networking = {
+    hostName = "nixos"; # Define your hostname.
+    # wireless.enable = true;  # Enables wireless support via wpa_supplicant.
+    nameservers = [ "1.1.1.1#one.one.one.one" "1.0.0.1#one.one.one.one" ];
+    
+    # Configure network proxy if necessary
+    # proxy.default = "http://user:password@proxy:port/";
+    # proxy.noProxy = "127.0.0.1,localhost,internal.domain";
 
+    # Enable networking
+    networkmanager.enable = true;
 
-  networking.nameservers = [ "1.1.1.1#one.one.one.one" "1.0.0.1#one.one.one.one" ];
-  
-  # Configure network proxy if necessary
-  # networking.proxy.default = "http://user:password@proxy:port/";
-  # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
-
-  # Enable networking
-  networking.networkmanager.enable = true;
-
-  # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ... ];
-  # networking.firewall.allowedUDPPorts = [ ... ];
-  # Or disable the firewall altogether.
-  networking.firewall.enable = false;
+    # Open ports in the firewall.
+    # firewall.allowedTCPPorts = [ ... ];
+    # firewall.allowedUDPPorts = [ ... ];
+    # Or disable the firewall altogether.
+    firewall.enable = false;
+  };
 
   # Set your time zone.
   time.timeZone = "America/New_York";
 
   # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
-
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "en_US.UTF-8";
     LC_IDENTIFICATION = "en_US.UTF-8";
@@ -111,8 +112,10 @@
   ];
 
   environment.systemPackages = 
-  # in triage - try to minimize this list
   (with pkgs; [
+  ################################
+  # in triage - try to minimize this list
+  ################################
     asciinema                     # record shell sessions and share easily
     age                           # the new PGP
     blesh                         # bash extensions
@@ -141,8 +144,9 @@
     # https://github.com/marionebl/svg-term-cli
     # allows asciinema recordings to be exported to svg... this could be pretty indespensable if 
     # you would like ANSI escape sequences to be interpreted by GH
+  ################################
   # awesome dev tools
-  ]) ++ (with pkgs; [
+  ################################
     bat                           # a better cat
     btop                          # a better top
     delta                         # a better git diff
@@ -157,8 +161,9 @@
     thefuck                       # correct previous command automatically
     zoxide                        # smart cd
     zellij                        # tmux could never
+  ################################
   # universal utils
-  ]) ++ (with pkgs; [
+  ################################
     cmake
     file                          # magic number reader
     gcc
@@ -171,8 +176,9 @@
     vim 
     wget
     zip
+  ################################
   # user programs
-  ]) ++ (with pkgs; [
+  ################################
     bitwarden
     chromium
     discord
@@ -187,8 +193,9 @@
     pulseaudio                   # provides pactl for volume control
     qutebrowser
     sioyek                       # vimified pdf viewer
+  ################################
   # hyprland
-  ]) ++ (with pkgs; [
+  ################################
     cava
     libnotify
     libva
@@ -209,18 +216,11 @@
     inputs.hyprland-contrib.packages.${pkgs.system}.grimblast
   ];
 
-  fonts.packages = with pkgs; [
-    nerdfonts
-  ];
-
   environment.sessionVariables = {
     # va-api driver to use 'nvidia', '', ...
     LIBVA_DRIVER_NAME = "nvidia";
-
     GBM_BACKEND = "nvidia-drm";
     __GLX_VENDOR_LIBRARY_NAME = "nvidia";
-
-    
     XDG_CONFIG_HOME = "/home/x/.config";
     NIXOS_OZONE_WL = "1";
     WLR_NO_HARDWARE_CURSORS = "1";
@@ -228,6 +228,17 @@
     EDITOR = "nvim";
   };
 
+  fonts.packages = with pkgs; [
+    nerdfonts
+  ];
+
+  # Some programs need SUID wrappers, can be configured further or are
+  # started in user sessions.
+  # programs.mtr.enable = true;
+  # programs.gnupg.agent = {
+  #   enable = true;
+  #   enableSSHSupport = true;
+  # };
   # my hunch is that these should be moved to home manager
   programs = {
     hyprland = {
@@ -347,10 +358,11 @@
   };
   
   # location.provider = "geoclue2";
-  location.longitude = 40.0;
-  location.latitude = 90.0;
+  location = {
+    longitude = 40.0;
+    latitude = 90.0;
+  };
 
-  sound.enable = true;
   security = {
     pam.services.swaylock.text = ''
       # Account management.
@@ -377,8 +389,8 @@
     };
   };
 
+  sound.enable = true;
 
-  # TODO: get this working
   systemd = {
     user.services.polkit-gnome-authentication-agent-1 = {
       description = "polkit-gnome-authentication-agent-1";
@@ -396,13 +408,6 @@
         };
     };
   };
-  # Some programs need SUID wrappers, can be configured further or are
-  # started in user sessions.
-  # programs.mtr.enable = true;
-  # programs.gnupg.agent = {
-  #   enable = true;
-  #   enableSSHSupport = true;
-  # };
 
   virtualisation.docker.enable = true;
 
