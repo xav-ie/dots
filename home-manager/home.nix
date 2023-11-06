@@ -1,6 +1,7 @@
 { inputs, lib, config, pkgs, ... }: 
 let 
   merge = lib.foldr (a: b: a // b) { };
+  # see https://github.com/dj95/zjstatus
   default_tab_template = ''
         default_tab_template {
             children
@@ -15,9 +16,21 @@ let
                   border_format   "#[fg=#6C7086]{char}"
                   border_position "top"
 
-                  mode_normal  "#[bg=magenta] "
-                  mode_locked  "#[bg=cyan] "
-                  mode_tmux    "#[bg=red] "
+                  mode_normal        "#[bg=magenta] "
+                  mode_locked        "#[bg=black] {name} "
+                  mode_locked        "#[bg=black] {name} "
+                  mode_resize        "#[bg=black] {name} "
+                  mode_pane          "#[bg=black] {name} "
+                  mode_tab           "#[bg=black] {name} "
+                  mode_scroll        "#[bg=black] {name} "
+                  mode_enter_search  "#[bg=black] {name} "
+                  mode_search        "#[bg=black] {name} "
+                  mode_rename_tab    "#[bg=black] {name} "
+                  mode_rename_pane   "#[bg=black] {name} "
+                  mode_session       "#[bg=black] {name} "
+                  mode_move          "#[bg=black] {name} "
+                  mode_prompt        "#[bg=black] {name} "
+                  mode_tmux          "#[bg=red] {name} "
 
                   tab_normal   "#[fg=#6C7086] {name} "
                   tab_active   "#[fg=magenta,bold,italic] {name} "
@@ -483,7 +496,7 @@ in {
         }
         tab name="mail" {
           pane command="nvim" {
-            args "+Himalaya"
+            args "+Himalaya Work"
           }
         }
         tab name="gh dash" {
