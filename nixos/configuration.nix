@@ -9,7 +9,6 @@
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
   ];
-  
   # Bootloader
   boot = {
     loader.systemd-boot.enable = true;
@@ -31,9 +30,7 @@
       # https://github.com/umlaeute/v4l2loopback
       options v4l2loopback exclusive_caps=1 card_label="Virtual Camera"
     '';
-
   };
-
   networking = {
     hostName = "nixos"; # Define your hostname.
     # wireless.enable = true;  # Enables wireless support via wpa_supplicant.
