@@ -3,7 +3,6 @@
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 # test
 { inputs, lib, config, pkgs, fetchFromGithub, ... }:
-
 {
   imports = [ 
     # Include the results of the hardware scan.
@@ -55,7 +54,6 @@
 
   # Set your time zone.
   time.timeZone = "America/New_York";
-
   # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
   i18n.extraLocaleSettings = {
@@ -69,7 +67,6 @@
     LC_TELEPHONE = "en_US.UTF-8";
     LC_TIME = "en_US.UTF-8";
   };
-
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.x = {
     isNormalUser = true;
@@ -77,7 +74,6 @@
     extraGroups = [ "networkmanager" "wheel" "docker" "video" ];
     packages = with pkgs; [];
   };
-
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
   # now you don't have to pass --impure when trying to run nix commands
@@ -115,7 +111,6 @@
       # })
     })
   ];
-
   environment.systemPackages = 
   (with pkgs; [
   ################################
