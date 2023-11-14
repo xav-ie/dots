@@ -454,6 +454,5 @@
       # different from `cores` option
       max-jobs = "auto";
     };
-
   };
 }
