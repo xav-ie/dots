@@ -137,7 +137,10 @@
     xidel                         # like jq but for html and much more advanced. 
                                   # required by mpvScripts.webtorrent-mpv-hook
     pciutils
+    pinentry-gnome                # I wish I could figure out pinentry-rofi but it does not work
     # prusa-slicer                # does not launch currently
+    rofi-rbw                      # bitwarden cli wrapper
+    rbw                           # unnofficial bitwarden client
     # slack                       # does not launch currently
     sops                          # secrets manager? idk... seems like an extension to age and 
                                   # other encrypters that allows you to just encrypt part of the 
@@ -145,6 +148,8 @@
     tldr                          # barely working due to it not having many entries
     xdg-utils                     # ????
     weechat
+    wtype                         # xdotool for wayland; used as part of rofi-rbw for typing 
+                                  # passwords out
     zoom-us
     # https://github.com/marionebl/svg-term-cli
     # allows asciinema recordings to be exported to svg... this could be pretty indespensable if 
@@ -246,6 +251,11 @@
   # };
   # my hunch is that these should be moved to home manager
   programs = {
+    gnupg.agent = {
+      enable = true;
+      pinentryFlavor = "gnome3";
+      enableSSHSupport = true;
+    };
     hyprland = {
       enable = true;
       enableNvidiaPatches = true;
@@ -320,6 +330,7 @@
       enable = true;
       appConfig.redshift.isAllowed = true;
     };
+    gnome.gnome-keyring.enable = true;
     openssh = {
       enable = true;
       extraConfig = ''
