@@ -142,6 +142,7 @@
     python312Packages."adblock"
     rofi-rbw                      # bitwarden cli wrapper
     rbw                           # unnofficial bitwarden client
+    silver-searcher               # a better rg? has premade filters 
     # slack                       # does not launch currently
     sops                          # secrets manager? idk... seems like an extension to age and 
                                   # other encrypters that allows you to just encrypt part of the 
