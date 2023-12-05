@@ -491,22 +491,23 @@ in {
             args "https://raw.githubusercontent.com/junguler/m3u-radio-music-playlists/fc9e42a424451fbdfcc55920bb3af8b4c21531ac/web-radio_directory/90s.m3u"
           }
         }
-        tab name="slack" {
-          pane command="weechat"
-        }
-        tab name="mail" {
-          pane command="nvim" {
-            args "+Himalaya Work"
-          }
-        }
-        tab name="gh dash" {
-          pane command="gh" {
-            args "dash"
-          }
-        }
         tab
     }
   '';
+
+        # tab name="slack" {
+        #   pane command="weechat"
+        # }
+        # tab name="mail" {
+        #   pane command="nvim" {
+        #     args "+Himalaya Work"
+        #   }
+        # }
+        # tab name="gh dash" {
+        #   pane command="gh" {
+        #     args "dash"
+        #   }
+        # }
 
   gtk = {
     enable = true;
