@@ -139,6 +139,7 @@
     pciutils
     pinentry-gnome                # I wish I could figure out pinentry-rofi but it does not work
     # prusa-slicer                # does not launch currently
+    python312Packages."adblock"
     rofi-rbw                      # bitwarden cli wrapper
     rbw                           # unnofficial bitwarden client
     # slack                       # does not launch currently
