@@ -30,35 +30,40 @@
       url = "github:dj95/zjstatus";
     };
   };
-  outputs = { nixpkgs, home-manager, nur, zjstatus, ... }@inputs:
-  let 
+  outputs = {
+    nixpkgs,
+    home-manager,
+    nur,
+    zjstatus,
+    ...
+  } @ inputs: let
     nix.registry.nixpkgs.flake = nixpkgs;
     system = "x86_64-linux";
     pkgs = import nixpkgs {
       inherit system;
-    };    
+    };
     overlays = with inputs; [
       (final: prev: {
         zjstatus = zjstatus.packages.${prev.system}.default;
       })
     ];
-  in 
-  {
+  in {
     nixosConfigurations = {
       nixos = nixpkgs.lib.nixosSystem {
-       specialArgs = { inherit inputs nur; }; 
-       modules = [
-         ./nixos/configuration.nix
-         nur.nixosModules.nur
-         home-manager.nixosModules.home-manager {
-           nixpkgs.overlays = [ nur.overlay ];
-           home-manager.useGlobalPkgs = true;
-           home-manager.useUserPackages = true;
-           home-manager.users.x = import ./home-manager/home.nix;
-           # home-manager.extraSpecialArgs = { inherit inputs; };
-         }
-       ];
+        specialArgs = {inherit inputs nur;};
+        modules = [
+          ./nixos/configuration.nix
+          nur.nixosModules.nur
+          home-manager.nixosModules.home-manager
+          {
+            nixpkgs.overlays = [nur.overlay];
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.x = import ./home-manager/home.nix;
+            # home-manager.extraSpecialArgs = { inherit inputs; };
+          }
+        ];
       };
-    }; 
+    };
   };
 }
