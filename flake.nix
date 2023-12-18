@@ -83,8 +83,11 @@
           ({pkgs, ...}: {
             # darwin prefs and config items
             programs.zsh.enable = true;
-            environment.shells = [pkgs.bash pkgs.zsh];
-            environment.loginShell = pkgs.zsh;
+            environment = {
+              shells = [pkgs.bash pkgs.zsh];
+              loginShell = pkgs.zsh;
+              pathsToLink = ["/Applications"];
+            };
             nix.extraOptions = ''
               experimental-features = nix-command flakes
             '';
@@ -106,6 +109,8 @@
                 dock = {
                   autohide = true;
                 };
+                NSGlobalDomain.InitialKeyRepeat = 14;
+                NSGlobalDomain.KeyRepeat = 1;
               };
             };
             homebrew = {
