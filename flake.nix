@@ -33,6 +33,9 @@
       url = "github:LnL7/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    pwnvim = {
+      url = "github:zmre/pwnvim";
+    };
   };
   outputs = {
     darwin,
@@ -113,13 +116,15 @@
               useUserPackages = true;
               users.xavierruiz.imports = [
                 ({pkgs, ...}: {
-                  home.packages = [pkgs.ripgrep pkgs.fd pkgs.curl pkgs.eza];
-                  # The state version is required and should stay at the version you
-                  # originally installed.
-                  home.stateVersion = "23.11";
-                  home.sessionVariables = {
-                    PAGER = "bat";
-                    EDITOR = "nvim";
+                  home = {
+                    packages = [pkgs.ripgrep pkgs.fd pkgs.curl pkgs.eza inputs.pwnvim.packages."aarch64-darwin".default];
+                    # The state version is required and should stay at the version you
+                    # originally installed.
+                    stateVersion = "23.11";
+                    sessionVariables = {
+                      PAGER = "bat";
+                      EDITOR = "nvim";
+                    };
                   };
                   programs = {
                     bat = {
