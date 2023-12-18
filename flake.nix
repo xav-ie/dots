@@ -62,10 +62,12 @@
           home-manager.nixosModules.home-manager
           {
             nixpkgs.overlays = [nur.overlay];
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.x = import ./home-manager/home.nix;
-            # home-manager.extraSpecialArgs = { inherit inputs; };
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              users.x = import ./home-manager/home.nix;
+              # extraSpecialArgs = { inherit inputs; };
+            };
           }
         ];
       };
@@ -83,22 +85,24 @@
             nix.extraOptions = ''
               experimental-features = nix-command flakes
             '';
-            #system.packages = [pkgs.coreutils];
-            system.keyboard.enableKeyMapping = true;
-            system.keyboard.remapCapsLockToEscape = true;
             fonts.fontDir.enable = true;
             fonts.fonts = [(pkgs.nerdfonts.override {fonts = ["Meslo"];})];
             services.nix-daemon.enable = true;
             # BECAUSE YA HAVE TO :/
             # https://github.com/nix-community/home-manager/issues/4026
             users.users.xavierruiz.home = "/Users/xavierruiz";
-            system.defaults = {
-              finder = {
-                AppleShowAllExtensions = true;
-                _FXShowPosixPathInTitle = true;
-              };
-              dock = {
-                autohide = true;
+            system = {
+              #packages = [pkgs.coreutils];
+              keyboard.enableKeyMapping = true;
+              keyboard.remapCapsLockToEscape = true;
+              defaults = {
+                finder = {
+                  AppleShowAllExtensions = true;
+                  _FXShowPosixPathInTitle = true;
+                };
+                dock = {
+                  autohide = true;
+                };
               };
             };
           })
