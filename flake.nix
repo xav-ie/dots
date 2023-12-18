@@ -29,8 +29,13 @@
     zjstatus = {
       url = "github:dj95/zjstatus";
     };
+    darwin = {
+      url = "github:LnL7/nix-darwin";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs = {
+    darwin,
     nixpkgs,
     home-manager,
     nur,
@@ -61,6 +66,88 @@
             home-manager.useUserPackages = true;
             home-manager.users.x = import ./home-manager/home.nix;
             # home-manager.extraSpecialArgs = { inherit inputs; };
+          }
+        ];
+      };
+    };
+    darwinConfigurations = {
+      macbookAir = darwin.lib.darwinSystem {
+        system = "aarch64-darwin";
+        pkgs = import inputs.nixpkgs {system = "aarch64-darwin";};
+        modules = [
+          ({pkgs, ...}: {
+            # darwin prefs and config items
+            programs.zsh.enable = true;
+            environment.shells = [pkgs.bash pkgs.zsh];
+            environment.loginShell = pkgs.zsh;
+            nix.extraOptions = ''
+              experimental-features = nix-command flakes
+            '';
+            #system.packages = [pkgs.coreutils];
+            system.keyboard.enableKeyMapping = true;
+            system.keyboard.remapCapsLockToEscape = true;
+            fonts.fontDir.enable = true;
+            fonts.fonts = [(pkgs.nerdfonts.override {fonts = ["Meslo"];})];
+            services.nix-daemon.enable = true;
+            system.defaults = {
+              finder = {
+                AppleShowAllExtensions = true;
+                _FXShowPosixPathInTitle = true;
+              };
+              dock = {
+                autohide = true;
+              };
+            };
+          })
+          home-manager.darwinModules.home-manager
+          {
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              users.x.imports = [
+                ({pkgs, ...}: {
+                  home.packages = [pkgs.ripgrep pkgs.fd pkgs.curl pkgs.eza];
+                  # The state version is required and should stay at the version you
+                  # originally installed.
+                  home.stateVersion = "23.11";
+                  home.sessionVariables = {
+                    PAGER = "bat";
+                    EDITOR = "nvim";
+                  };
+                  programs = {
+                    bat = {
+                      enable = true;
+                      config.theme = "TwoDark";
+                    };
+                    fzf = {
+                      enable = true;
+                      enableZshIntegration = true;
+                    };
+                    git = {enable = true;};
+                    zsh = {
+                      enable = true;
+                      enableCompletion = true;
+                      enableAutosuggestions = true;
+                      enableSyntaxHighlighting = true;
+                      shellAliases = {
+                        ls = "exa";
+                      };
+                    };
+                    starship = {
+                      enable = true;
+                      enableZshIntegration = true;
+                    };
+                    alacritty = {
+                      enable = true;
+                      settings.font.normal.family = "MesloLGS Nerd Font Mono";
+                      settings.fontSize = 16;
+                    };
+                  };
+                })
+              ];
+              # users.x = import ./home-manager/home.nix;
+            };
+            nixpkgs.overlays = [nur.overlay];
           }
         ];
       };
