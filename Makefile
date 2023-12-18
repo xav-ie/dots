@@ -8,7 +8,11 @@ docs: README.norg
 
 .PHONY: system
 system:
+ifeq ($(shell uname -s), Darwin)
+	darwin-rebuild switch --flake .
+else
 	sudo nixos-rebuild switch --flake ~/Projects/mysystem
+endif
 	# home-manager switch
 
 .PHONY: bleed
