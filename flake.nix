@@ -71,7 +71,7 @@
       };
     };
     darwinConfigurations = {
-      macbookAir = darwin.lib.darwinSystem {
+      Xaviers-MacBook-Air = darwin.lib.darwinSystem {
         system = "aarch64-darwin";
         pkgs = import inputs.nixpkgs {system = "aarch64-darwin";};
         modules = [
@@ -89,6 +89,9 @@
             fonts.fontDir.enable = true;
             fonts.fonts = [(pkgs.nerdfonts.override {fonts = ["Meslo"];})];
             services.nix-daemon.enable = true;
+            # BECAUSE YA HAVE TO :/
+            # https://github.com/nix-community/home-manager/issues/4026
+            users.users.xavierruiz.home = "/Users/xavierruiz";
             system.defaults = {
               finder = {
                 AppleShowAllExtensions = true;
@@ -104,7 +107,7 @@
             home-manager = {
               useGlobalPkgs = true;
               useUserPackages = true;
-              users.x.imports = [
+              users.xavierruiz.imports = [
                 ({pkgs, ...}: {
                   home.packages = [pkgs.ripgrep pkgs.fd pkgs.curl pkgs.eza];
                   # The state version is required and should stay at the version you
