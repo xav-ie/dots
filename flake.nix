@@ -140,7 +140,7 @@
                       enable = true;
                       enableCompletion = true;
                       enableAutosuggestions = true;
-                      enableSyntaxHighlighting = true;
+                      syntaxHighlighting.enable = true;
                       shellAliases = {
                         ls = "exa";
                       };
@@ -152,7 +152,7 @@
                     alacritty = {
                       enable = true;
                       settings.font.normal.family = "MesloLGS Nerd Font Mono";
-                      settings.fontSize = 16;
+                      settings.fontSize = 22;
                     };
                   };
                 })
