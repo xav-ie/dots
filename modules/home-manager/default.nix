@@ -14,6 +14,11 @@
     };
   };
   programs = {
+    alacritty = {
+      enable = true;
+      settings.font.normal.family = "MesloLGS Nerd Font Mono";
+      settings.fontSize = 22;
+    };
     bat = {
       enable = true;
       config.theme = "TwoDark";
@@ -23,6 +28,15 @@
       enableZshIntegration = true;
     };
     git = {enable = true;};
+    gh = {
+      enable = true;
+      extensions = [pkgs.gh-dash];
+    };
+    starship = {
+      enable = true;
+      enableZshIntegration = true;
+    };
+    zoxide = {enable = true;};
     zsh = {
       enable = true;
       enableCompletion = true;
@@ -31,15 +45,6 @@
       shellAliases = {
         ls = "exa";
       };
-    };
-    starship = {
-      enable = true;
-      enableZshIntegration = true;
-    };
-    alacritty = {
-      enable = true;
-      settings.font.normal.family = "MesloLGS Nerd Font Mono";
-      settings.fontSize = 22;
     };
   };
   home.file.".inputrc".source = ./dotfiles/inputrc;
