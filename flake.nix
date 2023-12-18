@@ -108,6 +108,19 @@
                 };
               };
             };
+            homebrew = {
+              enable = true;
+              caskArgs.no_quarantine = true; # do not prompt for updates
+              global.brewfile = true; # track brews in a file
+              masApps = {
+                Klack = 6446206067;
+                Magnet = 441258766;
+                Twingate = 1501592214;
+              };
+              casks = ["raycast"];
+              taps = [];
+              brews = ["mas"];
+            };
           })
           home-manager.darwinModules.home-manager
           {
