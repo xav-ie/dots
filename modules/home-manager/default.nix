@@ -9,15 +9,27 @@
     # originally installed.
     stateVersion = "23.11";
     sessionVariables = {
-      PAGER = "bat";
+      BROWSER = "qutebrowser";
       EDITOR = "nvim";
+      LANG = "en_US.UTF-8";
+      LC_ALL = "en_US.UTF-8";
+      PAGER = "bat";
+      TERMINAL = "alacritty";
     };
   };
   programs = {
     alacritty = {
       enable = true;
-      settings.font.normal.family = "MesloLGS Nerd Font Mono";
-      settings.fontSize = 22;
+      settings = {
+        font.normal.family = "MesloLGS Nerd Font Mono";
+        font.size = 14;
+        window = {
+          #decorations = "Transparent";
+          opacity = 0.9;
+          blur = true;
+          #option_as_alt = "Both";
+        };
+      };
     };
     bat = {
       enable = true;
@@ -45,6 +57,12 @@
       shellAliases = {
         ls = "exa";
       };
+    };
+    mpv = {
+      enable = true;
+    };
+    zellij = {
+      enable = true;
     };
   };
   home.file.".inputrc".source = ./dotfiles/inputrc;
