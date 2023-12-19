@@ -1,10 +1,6 @@
-{
-  pkgs,
-  pwnvim,
-  ...
-} @ inputs: {
+{pkgs, ...} @ inputs: {
   home = {
-    packages = [pkgs.ripgrep pkgs.fd pkgs.curl pkgs.eza pwnvim.packages."aarch64-darwin".default];
+    packages = [pkgs.ripgrep pkgs.fd pkgs.curl pkgs.eza];
     # The state version is required and should stay at the version you
     # originally installed.
     stateVersion = "23.11";
@@ -39,7 +35,33 @@
       enable = true;
       enableZshIntegration = true;
     };
-    git = {enable = true;};
+    git = {
+      enable = true;
+      userName = "xav-ie";
+      userEmail = "xruizify@gmail.com";
+      aliases = {
+        graph = "log --graph --pretty=tformat:'%C(bold blue)%h%Creset %s %C(bold green)%d%Creset %C(blue)<%an>%Creset %C(dim cyan)%cr' --abbrev-commit --decorate";
+      };
+      extraConfig = {
+        core = {
+          pager = "delta";
+        };
+        interactive = {
+          diffFilter = "delta --color-only";
+        };
+        delta = {
+          navigate = true;
+          line-numbers = true;
+          true-color = "always";
+        };
+        merge = {
+          conflictstyle = "diff3";
+        };
+        diff = {
+          colorMoved = "default";
+        };
+      };
+    };
     gh = {
       enable = true;
       extensions = [pkgs.gh-dash];
