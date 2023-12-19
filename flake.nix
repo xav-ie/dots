@@ -69,7 +69,11 @@
             home-manager = {
               useGlobalPkgs = true;
               useUserPackages = true;
-              users.x = import ./home-manager/home.nix;
+              users.x.imports = [
+                ./modules/home-manager/default.nix
+                ./modules/home-manager/linux.nix
+                ./home-manager/home
+              ];
               # extraSpecialArgs = {inherit inputs;};
             };
           }
@@ -89,7 +93,8 @@
               useGlobalPkgs = true;
               useUserPackages = true;
               users.xavierruiz.imports = [
-                ./modules/home-manager
+                ./modules/home-manager/default.nix
+                ./modules/home-manager/darwin.nix
               ];
             };
             nixpkgs.overlays = [nur.overlay];
