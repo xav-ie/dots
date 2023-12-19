@@ -47,11 +47,13 @@
     ...
   } @ inputs: let
     nix.registry.nixpkgs.flake = nixpkgs;
-    system = "x86_64-linux";
-    pkgs = import nixpkgs {
-      inherit system;
-    };
-    overlays = with inputs; [
+    # system = "x86_64-linux";
+    # system = "aarch64-darwin";
+    # no idea what this does
+    # pkgs = import nixpkgs {
+    #   inherit system;
+    # };
+    zjstatusOverlay = with inputs; [
       (final: prev: {
         zjstatus = zjstatus.packages.${prev.system}.default;
       })
@@ -97,7 +99,7 @@
                 ./modules/home-manager/darwin.nix
               ];
             };
-            nixpkgs.overlays = [nur.overlay];
+            nixpkgs.overlays = [nur.overlay zjstatusOverlay];
           }
         ];
       };
