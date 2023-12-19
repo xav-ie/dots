@@ -113,6 +113,10 @@ in {
       enable = true;
       enableZshIntegration = true;
     };
+    thefuck = {
+      enable = true;
+      #enableInstantMode = true;
+    };
     zoxide = {enable = true;};
     zsh = {
       enable = true;
