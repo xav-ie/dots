@@ -40,7 +40,13 @@
       Magnet = 441258766;
       Twingate = 1501592214;
     };
-    casks = ["raycast" "slack" "qutebrowser" "bitwarden"];
+    casks = [
+      "bitwarden"
+      "qutebrowser"
+      "raycast"
+      "slack"
+      "zoom"
+    ];
     taps = [];
     brews = ["mas"];
   };
