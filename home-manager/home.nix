@@ -1,46 +1,50 @@
-{ inputs, lib, config, pkgs, ... }: 
-let 
-  merge = lib.foldr (a: b: a // b) { };
+{
+  inputs,
+  lib,
+  config,
+  pkgs,
+  ...
+}: let
   # see https://github.com/dj95/zjstatus
   default_tab_template = ''
-        default_tab_template {
-            children
-            pane size=1 borderless=true {
-                plugin location="file:${pkgs.zjstatus}/bin/zjstatus.wasm" {
-                  format_left  "{mode} #[fg=#FA89B4,bold]{session} {tabs}"
-                  format_right "{datetime}"
-                  format_space ""
+    default_tab_template {
+        children
+        pane size=1 borderless=true {
+            plugin location="file:${pkgs.zjstatus}/bin/zjstatus.wasm" {
+              format_left  "{mode} #[fg=#FA89B4,bold]{session} {tabs}"
+              format_right "{datetime}"
+              format_space ""
 
-                  border_enabled  "false"
-                  border_char     "─"
-                  border_format   "#[fg=#6C7086]{char}"
-                  border_position "top"
+              border_enabled  "false"
+              border_char     "─"
+              border_format   "#[fg=#6C7086]{char}"
+              border_position "top"
 
-                  mode_normal        "#[bg=magenta] "
-                  mode_locked        "#[bg=black] {name} "
-                  mode_locked        "#[bg=black] {name} "
-                  mode_resize        "#[bg=black] {name} "
-                  mode_pane          "#[bg=black] {name} "
-                  mode_tab           "#[bg=black] {name} "
-                  mode_scroll        "#[bg=black] {name} "
-                  mode_enter_search  "#[bg=black] {name} "
-                  mode_search        "#[bg=black] {name} "
-                  mode_rename_tab    "#[bg=black] {name} "
-                  mode_rename_pane   "#[bg=black] {name} "
-                  mode_session       "#[bg=black] {name} "
-                  mode_move          "#[bg=black] {name} "
-                  mode_prompt        "#[bg=black] {name} "
-                  mode_tmux          "#[bg=red] {name} "
+              mode_normal        "#[bg=magenta] "
+              mode_locked        "#[bg=black] {name} "
+              mode_locked        "#[bg=black] {name} "
+              mode_resize        "#[bg=black] {name} "
+              mode_pane          "#[bg=black] {name} "
+              mode_tab           "#[bg=black] {name} "
+              mode_scroll        "#[bg=black] {name} "
+              mode_enter_search  "#[bg=black] {name} "
+              mode_search        "#[bg=black] {name} "
+              mode_rename_tab    "#[bg=black] {name} "
+              mode_rename_pane   "#[bg=black] {name} "
+              mode_session       "#[bg=black] {name} "
+              mode_move          "#[bg=black] {name} "
+              mode_prompt        "#[bg=black] {name} "
+              mode_tmux          "#[bg=red] {name} "
 
-                  tab_normal   "#[fg=#6C7086] {name} "
-                  tab_active   "#[fg=magenta,bold,italic] {name} "
+              tab_normal   "#[fg=#6C7086] {name} "
+              tab_active   "#[fg=magenta,bold,italic] {name} "
 
-                  datetime        "#[fg=cyan,bold] {format} "
-                  datetime_format "%A, %d %b %Y %I:%M %p"
-                  datetime_timezone "America/New_York"
-                }
+              datetime        "#[fg=cyan,bold] {format} "
+              datetime_format "%A, %d %b %Y %I:%M %p"
+              datetime_timezone "America/New_York"
             }
         }
+    }
   '';
 in {
   # You can import other home-manager modules here
@@ -89,80 +93,11 @@ in {
     home-manager = {
       enable = true;
       # useGlobalPkgs = true;
-
-    };
-    git = {
-      enable = true;
-      userName = "xav-ie";
-      userEmail = "xruizify@gmail.com";
-      aliases = {
-        graph = "log --graph --pretty=tformat:'%C(bold blue)%h%Creset %s %C(bold green)%d%Creset %C(blue)<%an>%Creset %C(dim cyan)%cr' --abbrev-commit --decorate";
-      };
-      extraConfig = {
-        core = {
-          pager = "delta";
-        };
-        interactive = {
-          diffFilter = "delta --color-only";
-        };
-        delta = {
-          navigate = true;
-          line-numbers = true;
-          true-color =  "always";
-        };
-        merge = {
-          conflictstyle = "diff3";
-        };
-        diff = {
-          colorMoved = "default";
-        };
-      };
-    };
-    zsh = {
-      enable = true;
-      enableAutosuggestions = true;
-      enableCompletion = true;
-    };
-    firefox = {
-      enable = true;
-      profiles.x = {
-        id = 0;
-        isDefault = true;
-        settings = merge [
-          (import ./programs/firefox/annoyances.nix)
-          (import ./programs/firefox/settings.nix)
-
-        ];
-        userChrome = ''
-          /* hides the native tabs */
-          #TabsToolbar {
-            visibility: collapse;
-          }
-          #titlebar {
-            visibility: collapse;
-          }
-          #sidebar-header {
-            visibility: collapse !important;
-          } 
-          '';
-        extensions = with pkgs.nur.repos.rycee.firefox-addons; [
-          bitwarden
-          ublock-origin
-          vimium-c
-          sidebartabs
-          newtab-adapter
-          videospeed
-        ];
-      };
-    };
-    zellij = {
-      enable = true;
-      enableBashIntegration = true;
     };
   };
 
   home.file.".config/zellij/config.kdl".text = ''
-    // If you'd like to override the default keybindings completely, 
+    // If you'd like to override the default keybindings completely,
     // be sure to change "keybinds" to "keybinds clear-defaults=true"
     keybinds {
         normal {
@@ -338,38 +273,14 @@ in {
         }
     }
 
-    // Choose what to do when zellij receives SIGTERM, SIGINT, SIGQUIT or SIGHUP
-    // eg. when terminal window with an active zellij session is closed
-    // Options:
-    //   - detach (Default)
-    //   - quit
-    //
-    // on_force_close "quit"
-
-    //  Send a request for a simplified ui (without arrow fonts) to plugins
-    //  Options:
-    //    - true
-    //    - false (Default)
-    //
-    // simplified_ui true
 
     // Choose the path to the default shell that zellij will use for opening new panes
     // Default: $SHELL
     //
     // default_shell "fish"
 
-    // Choose the path to override cwd that zellij will use for opening new panes
-    //
-    // default_cwd ""
 
-    // Toggle between having pane frames around the panes
-    // Options:
-    //   - true (default)
-    //   - false
-    //
-    pane_frames false
-
-    // Toggle between having Zellij lay out panes according to a predefined set of layouts 
+    // Toggle between having Zellij lay out panes according to a predefined set of layouts
     // whenever possible
     // Options:
     //   - true (default)
@@ -377,11 +288,6 @@ in {
     //
     // auto_layout true
 
-    // Define color themes for Zellij
-    // For more examples, see: https://github.com/zellij-org/zellij/tree/main/example/themes
-    // Once these themes are defined, one of them should to be selected in the "theme"
-    // section of this file
-    //
     // themes {
     //     dracula {
     //         fg 248 248 242
@@ -397,84 +303,22 @@ in {
     //         white 255 255 255
     //     }
     // }
-
-    // Choose the theme that is specified in the themes section.
-    // Default: default
-    //
-    // theme "default"
-
-    // The name of the default layout to load on startup
-    // Default: "default"
-    //
+    mouse_mode true
+    scroll_buffer_size 10000
+    copy_on_select true
+    pane_frames false
     // default_layout "compact"
+    // layout_dir "/path/to/my/layout_dir"
+    // theme_dir "/path/to/my/theme_dir"
 
-    // Choose the mode that zellij uses when starting up.
-    // Default: normal
-    //
-    // default_mode "locked"
-
-    // Toggle enabling the mouse mode.
-    // On certain configurations, or terminals this could
-    // potentially interfere with copying text.
-    // Options:
-    //   - true (default)
-    //   - false
-    //
-    // mouse_mode false
-
-    // Configure the scroll back buffer size
-    // This is the number of lines zellij stores for each pane in the scroll back
-    // buffer. Excess number of lines are discarded in a FIFO fashion.
-    // Valid values: positive integers
-    // Default value: 10000
-    //
-    // scroll_buffer_size 10000
-
-    // Provide a command to execute when copying text. The text will be piped to
-    // the stdin of the program to perform the copy. This can be used with
-    // terminal emulators which do not support the OSC 52 ANSI control sequence
-    // that will be used by default if this option is not set.
-    // Examples:
-    //
+    // Do not define to get OSC52 copying
     // copy_command "xclip -selection clipboard" // x11
     // copy_command "wl-copy"                    // wayland
-    // copy_command "pbcopy"                     // osx
-    copy_command "cb cp && movetomac"            // LINUX
+    copy_command "pbcopy"                     // osx
+    //copy_command "cb cp && movetomac"            // LINUX
 
 
-    // Choose the destination for copied text
-    // Allows using the primary selection buffer (on x11/wayland) instead of the system clipboard.
-    // Does not apply when using copy_command.
-    // Options:
-    //   - system (default)
-    //   - primary
-    //
-    // copy_clipboard "primary"
 
-    // Enable or disable automatic copy (and clear) of selection when releasing mouse
-    // Default: true
-    //
-    // copy_on_select false
-
-    // Path to the default editor to use to edit pane scrollbuffer
-    // Default: $EDITOR or $VISUAL
-    //
-    // scrollback_editor "/usr/bin/vim"
-
-    // When attaching to an existing session with other users,
-    // should the session be mirrored (true)
-    // or should each user have their own cursor (false)
-    // Default: false
-    //
-    // mirror_session true
-
-    // The folder in which Zellij will look for layouts
-    //
-    // layout_dir "/path/to/my/layout_dir"
-
-    // The folder in which Zellij will look for themes
-    //
-    // theme_dir "/path/to/my/theme_dir"
   '';
 
   home.file.".config/zellij/layouts/simple.kdl".text = ''
@@ -494,49 +338,4 @@ in {
         tab
     }
   '';
-
-        # tab name="slack" {
-        #   pane command="weechat"
-        # }
-        # tab name="mail" {
-        #   pane command="nvim" {
-        #     args "+Himalaya Work"
-        #   }
-        # }
-        # tab name="gh dash" {
-        #   pane command="gh" {
-        #     args "dash"
-        #   }
-        # }
-
-  gtk = {
-    enable = true;
-    theme.name = "adw-gtk3";
-    cursorTheme.name = "Bibata-Modern-Ice";
-    iconTheme.name = "GruvboxPlus";
-  };
-
-
-  xdg.mimeApps.defaultApplications = {
-    "text/plain" = [ "qutebrowser.desktop" ];
-    "application/pdf" = [ "sioyek.desktop" ];
-    "image/*" = [ "sxiv.desktop" ];
-    "video/*" = [ "mpv.desktop" ];
-    "text/html" = [ "qutebrowser.desktop" ];
-    "x-scheme-handler/http" = [ "qutebrowser.desktop" ];
-    "x-scheme-handler/https" = [ "qutebrowser.desktop" ];
-    "x-scheme-handler/ftp" = [ "qutebrowser.desktop" ];
-    "application/xhtml+xml" = [ "qutebrowser.desktop" ];
-    "application/xml" = [ "qutebrowser.desktop" ]; 
-  };
-  # Nicely reload system units when changing configs
-  systemd.user.startServices = "sd-switch";
-
-  # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
-  home.stateVersion = "23.05";
-  home.sessionVariables = {
-    EDITOR = "nvim";
-  };
 }
-
-
