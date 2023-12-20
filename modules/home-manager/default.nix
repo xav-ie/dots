@@ -54,6 +54,13 @@ in {
       LC_ALL = "en_US.UTF-8";
       PAGER = "bat";
       TERMINAL = "alacritty";
+      # get more colors
+      HSTR_CONFIG = "hicolor";
+      # leading space hides commands from history
+      HISTCONTROL = "ignorespace";
+      # increase history file size (default is 500)
+      HISTFILESIZE = 10000;
+      PATH = "$HOME/.config/scripts/:$PATH";
     };
   };
   programs = {
@@ -109,6 +116,9 @@ in {
       enable = true;
       extensions = [pkgs.gh-dash];
     };
+    mpv = {
+      enable = true;
+    };
     starship = {
       enable = true;
       enableZshIntegration = true;
@@ -118,6 +128,9 @@ in {
       #enableInstantMode = true;
     };
     zoxide = {enable = true;};
+    zellij = {
+      enable = true;
+    };
     zsh = {
       enable = true;
       enableCompletion = true;
@@ -130,12 +143,23 @@ in {
         gpr = "GH_FORCE_TTY=100% gh pr list | fzf --ansi --preview 'GH_FORCE_TTY=100% gh pr view {1}' --preview-window up --header-lines 3 | awk '{print \$1}' | xargs gh pr checkout";
         n = "NIXPKGS_ALLOW_UNFREE=1 exec nix shell --impure nixpkgs#nodejs nixpkgs#deno nixpkgs#yarn nixpkgs#cloudflared nixpkgs#terraform nixpkgs#google-cloud-sdk nixpkgs#bun nixpkgs#nodePackages.\"prettier\"";
       };
-    };
-    mpv = {
-      enable = true;
-    };
-    zellij = {
-      enable = true;
+      initExtra = ''
+        function git_diff_exclude_file() {
+          if [ $# -lt 3 ]; then
+            echo "Usage: git_diff_exclude_file <start_commit> <end_commit> <exclude_file> [output_file]"
+            return 1
+          fi
+
+          local start_commit=$1
+          local end_commit=$2
+          local exclude_file=$3
+          local output_file=$\{4:-combined_diff.txt}
+
+          git diff --name-only "$start_commit" "$end_commit" | grep -v "$exclude_file" | xargs -I {} git diff "$start_commit" "$end_commit" -- {} > "$output_file"
+        }
+
+
+      '';
     };
   };
   home.file.".inputrc".source = ./dotfiles/inputrc;
