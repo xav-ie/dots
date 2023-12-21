@@ -12,6 +12,8 @@
   '';
   fonts.fontDir.enable = true;
   fonts.fonts = [(pkgs.nerdfonts.override {fonts = ["Meslo"];})];
+  # allow sudo to use touch id
+  security.pam.enableSudoTouchIdAuth = true;
   services.nix-daemon.enable = true;
   # BECAUSE YA HAVE TO :/
   # https://github.com/nix-community/home-manager/issues/4026
@@ -20,16 +22,30 @@
     defaults = {
       dock = {
         autohide = true;
+        wvous-tl-corner = 2;
+        wvous-tr-corner = 1;
+        wvous-br-corner = 1;
+        wvous-bl-corner = 1;
       };
       finder = {
         AppleShowAllExtensions = true;
+        QuitMenuItem = true;
+        ShowPathbar = true;
+        ShowStatusBar = true;
         _FXShowPosixPathInTitle = true;
       };
       NSGlobalDomain.InitialKeyRepeat = 14;
       NSGlobalDomain.KeyRepeat = 1;
+      screencapture.disable-shadow = true;
+      trackpad = {
+        Clicking = true;
+        Dragging = true;
+      };
     };
-    keyboard.enableKeyMapping = true;
-    keyboard.remapCapsLockToEscape = true;
+    keyboard = {
+      enableKeyMapping = true;
+      remapCapsLockToEscape = true;
+    };
   };
   homebrew = {
     enable = true;
@@ -42,9 +58,11 @@
     };
     casks = [
       "bitwarden"
+      "codewhisperer"
       "qutebrowser"
       "raycast"
       "slack"
+      "spacelauncher"
       "zoom"
     ];
     taps = [];

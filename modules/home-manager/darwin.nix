@@ -4,7 +4,7 @@
   ...
 } @ inputs: {
   home = {
-    packages = [pwnvim.packages."aarch64-darwin".default];
+    packages = [pwnvim.packages."aarch64-darwin".default pkgs.yabai];
     # The state version is required and should stay at the version you
     # originally installed.
     stateVersion = "23.11";
@@ -24,6 +24,17 @@
           #option_as_alt = "Both"; # mac only
         };
       };
+    };
+    zsh = {
+      initExtra = ''
+
+          # CodeWhisperer pre block. Keep at the top of this file.
+          [[ -f "/Users/xavierruiz/Library/Application Support/codewhisperer/shell/zshrc.pre.zsh" ]] && builtin source "/Users/xavierruiz/Library/Application Support/codewhisperer/shell/zshrc.pre.zsh"
+
+
+          # CodeWhisperer post block. Keep at the bottom of this file.
+          [[ -f "/Users/xavierruiz/Library/Application Support/codewhisperer/shell/zshrc.post.zsh" ]] && builtin source "/Users/xavierruiz/Library/Application Support/codewhisperer/shell/zshrc.post.zsh"
+        # '';
     };
   };
   #home.file.".inputrc".source = ./dotfiles/inputrc;
