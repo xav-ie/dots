@@ -116,6 +116,10 @@ in {
       enable = true;
       extensions = [pkgs.gh-dash];
     };
+    lf = {
+      enable = true;
+      # TODO: add a lot more config
+    };
     mpv = {
       enable = true;
     };
@@ -125,7 +129,9 @@ in {
     };
     thefuck = {
       enable = true;
-      #enableInstantMode = true;
+    };
+    watson = {
+      enable = true;
     };
     zoxide = {enable = true;};
     zellij = {
@@ -137,11 +143,12 @@ in {
       enableAutosuggestions = true;
       syntaxHighlighting.enable = true;
       shellAliases = {
-        ls = "exa";
         gd = "git diff --ignore-all-space --ignore-space-at-eol --ignore-space-change --ignore-blank-lines -- . ':(exclude)*package-lock.json' -- . ':(exclude)*yarn.lock'";
-        main = "git fetch && git fetch --tags && git checkout -B main origin/main";
         gpr = "GH_FORCE_TTY=100% gh pr list | fzf --ansi --preview 'GH_FORCE_TTY=100% gh pr view {1}' --preview-window up --header-lines 3 | awk '{print \$1}' | xargs gh pr checkout";
-        n = "NIXPKGS_ALLOW_UNFREE=1 exec nix shell --impure nixpkgs#nodejs nixpkgs#deno nixpkgs#yarn nixpkgs#cloudflared nixpkgs#terraform nixpkgs#google-cloud-sdk nixpkgs#bun nixpkgs#nodePackages.\"prettier\"";
+        ls = "exa";
+        main = "git fetch && git fetch --tags && git checkout -B main origin/main";
+        n = "NIXPKGS_ALLOW_UNFREE=1 exec nix shell --impure nixpkgs#nodejs-18_x nixpkgs#yarn nixpkgs#cloudflared nixpkgs#terraform nixpkgs#google-cloud-sdk nixpkgs#bun nixpkgs#nodePackages.\"prettier\" nixpkgs#deno nixpkgs#prettierd";
+        w = "watson";
       };
       initExtra = ''
         function git_diff_exclude_file() {
@@ -157,6 +164,10 @@ in {
 
           git diff --name-only "$start_commit" "$end_commit" | grep -v "$exclude_file" | xargs -I {} git diff "$start_commit" "$end_commit" -- {} > "$output_file"
         }
+
+        # TODO: get tab name update scripts and others
+        #export PROMPT_COMMAND="$HOME/.config/scripts/zellij_tab_name_update.sh; $PROMPT_COMMAND"
+        source ~/.env
 
 
       '';
