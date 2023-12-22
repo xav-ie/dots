@@ -11,8 +11,9 @@ system:
 ifeq ($(shell uname -s), Darwin)
 	darwin-rebuild switch --flake .
 else
-	sudo nixos-rebuild switch --flake ~/Projects/mysystem
+	sudo nixos-rebuild switch --flake .
 endif
+	# if using home-manager externally to config
 	# home-manager switch
 
 .PHONY: bleed
