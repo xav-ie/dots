@@ -4,7 +4,7 @@
   ...
 } @ inputs: {
   home = {
-    packages = [pwnvim.packages."aarch64-darwin".default pkgs.yabai];
+    packages = [pwnvim.packages."aarch64-darwin".default pkgs.yabai pkgs.wezterm];
     # The state version is required and should stay at the version you
     # originally installed.
     stateVersion = "23.11";
@@ -37,5 +37,6 @@
         # '';
     };
   };
-  #home.file.".inputrc".source = ./dotfiles/inputrc;
+  home.file.".config/borders/bordersrc".source = ./dotfiles/bordersrc;
+  home.file.".config/wezterm/wezterm.lua".source = ./dotfiles/wezterm.lua;
 }
