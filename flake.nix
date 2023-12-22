@@ -74,7 +74,6 @@
               users.x.imports = [
                 ./modules/home-manager/default.nix
                 ./modules/home-manager/linux.nix
-                ./home-manager/home
               ];
               # extraSpecialArgs = {inherit inputs;};
             };
