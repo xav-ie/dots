@@ -97,9 +97,9 @@
         ];
       };
       # use full ffmpeg version to support all video formats
-      mpv-unwrapped = super.mpv-unwrapped.override {
-        ffmpeg_5 = ffmpeg_5-full;
-      };
+      # mpv-unwrapped = super.mpv-unwrapped.override {
+        # ffmpeg_5 = ffmpeg_5-full;
+      # };
       weechat = super.weechat.override {
         configure = {availablePlugins, ...}: {
           scripts = with super.weechatScripts; [
@@ -264,7 +264,7 @@
     };
     hyprland = {
       enable = true;
-      enableNvidiaPatches = true;
+      #enableNvidiaPatches = true;
       xwayland.enable = true;
       portalPackage = pkgs.xdg-desktop-portal-hyprland.overrideAttrs (oldAttrs: {
         # 1.2.2 has key fixes for nvidia cards for newest hyprland.. but hyprland still borked
