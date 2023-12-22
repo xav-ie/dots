@@ -23,15 +23,17 @@
       config = {
         window_border = "on";
         window_border_width = 5;
-        active_window_border_color = "0xff3B4252";
-        normal_window_border_color = "0xff2E3440";
+        window_border_placement = "inset";
+        active_window_border_color = "0xff00ffff";
+        normal_window_border_color = "0xffff0000";
+        insert_window_border_color = "0xff00ff00";
         focus_follows_mouse = "autoraise";
-        mouse_follows_focus = "off";
+        mouse_follows_focus = "on";
         mouse_drop_action = "stack";
         window_placement = "second_child";
         window_opacity = "off";
         window_topmost = "on";
-        window_shadow = "on";
+        window_shadow = "off";
         active_window_opacity = "1.0";
         normal_window_opacity = "1.0";
         split_ratio = "0.50";
@@ -40,11 +42,11 @@
         mouse_action1 = "move";
         mouse_action2 = "resize";
         layout = "bsp";
-        top_padding = 9;
-        bottom_padding = 9;
-        left_padding = 9;
-        right_padding = 9;
-        window_gap = 9;
+        top_padding = 5;
+        bottom_padding = 5;
+        left_padding = 5;
+        right_padding = 5;
+        window_gap = 5;
       };
     };
     skhd = {
@@ -129,7 +131,7 @@
       "spacelauncher"
       "zoom"
     ];
-    taps = [];
-    brews = ["mas"];
+    taps = ["FelixKratz/formulae"];
+    brews = ["borders" "mas"];
   };
 })
