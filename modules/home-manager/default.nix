@@ -414,7 +414,17 @@ in {
   #      tab
   #  }
   #'';
-  #home.file.".config/zellij/layouts/default.kdl".text = ''
+  home.file.".config/zellij/layouts/default.kdl".text = ''
+    layout {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
+        }
+        pane
+        pane size=2 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+    }
+  '';
   #  layout {
   #      ${default_tab_template}
   #      tab name="music" {
