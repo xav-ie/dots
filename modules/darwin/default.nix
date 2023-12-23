@@ -76,6 +76,8 @@
         ctrl + alt - p : yabai -m window --toggle sticky;\
           yabai -m window --toggle topmost;\
           yabai -m window --toggle pip
+        ctrl - right : yabai -m space --focus next
+        ctrl - left : yabai -m space --focus prev
       '';
     };
   };
