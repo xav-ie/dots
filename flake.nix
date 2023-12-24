@@ -85,6 +85,7 @@
       Xaviers-MacBook-Air = darwin.lib.darwinSystem {
         system = "aarch64-darwin";
         pkgs = import inputs.nixpkgs {system = "aarch64-darwin";};
+        specialArgs = {inherit inputs nur zjstatus;};
         modules = [
           ./modules/darwin
           home-manager.darwinModules.home-manager
