@@ -45,5 +45,7 @@
          4. I also just need to figure out binding to make this mostly happen automatically for already open video, I have "M" binding to open video link on page, but not current page itself.
 
    - ( ) use nix-colors repo for theming everything
+     This is interesting:
+     - https://github.com/colemickens/nixcfg/blob/3705032fd67f231fe83fd3bc25d4021b80394b1c/mixins/_preferences.nix#L53
 
 
