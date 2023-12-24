@@ -90,7 +90,7 @@
           home-manager.darwinModules.home-manager
           {
             home-manager = {
-              extraSpecialArgs = {inherit pwnvim;};
+              extraSpecialArgs = {inherit pwnvim inputs nur zjstatus;};
               useGlobalPkgs = true;
               useUserPackages = true;
               users.xavierruiz.imports = [
