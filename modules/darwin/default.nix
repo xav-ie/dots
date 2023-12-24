@@ -21,14 +21,8 @@
       enable = true;
       enableScriptingAddition = false;
       config = {
-        window_border = "on";
-        window_border_width = 5;
-        window_border_placement = "inset";
-        active_window_border_color = "0xff00ffff";
-        normal_window_border_color = "0xffff0000";
-        insert_window_border_color = "0xff00ff00";
         focus_follows_mouse = "autoraise";
-        mouse_follows_focus = "on";
+        mouse_follows_focus = "off";
         mouse_drop_action = "stack";
         window_placement = "second_child";
         window_opacity = "off";
@@ -42,11 +36,11 @@
         mouse_action1 = "move";
         mouse_action2 = "resize";
         layout = "bsp";
-        top_padding = 5;
-        bottom_padding = 5;
-        left_padding = 5;
-        right_padding = 5;
-        window_gap = 5;
+        top_padding = 4;
+        bottom_padding = 4;
+        left_padding = 4;
+        right_padding = 4;
+        window_gap = 4;
       };
     };
     skhd = {
