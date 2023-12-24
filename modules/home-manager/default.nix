@@ -3,44 +3,47 @@
   zjstatus,
   ...
 } @ inputs: let
+  # there is no difference in output...? Idk if there is good reason to use one over the other
+  # zjstatus_package = inputs.zjstatus.outputs.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  zjstatus_package = inputs.zjstatus.outputs.packages.${pkgs.system}.default;
   # see https://github.com/dj95/zjstatus
   # for some reason, I could not figure out pkgs.zjstatus
-  # default_tab_template = ''
-  #   default_tab_template {
-  #       children
-  #       pane size=2 borderless=false {
-  #           plugin location="file:${pkgs.zjstatus}/bin/zjstatus.wasm" {
-  #             format_left  "{mode} #[fg=#FA89B4,bold]{session} {tabs}"
-  #             format_right "{datetime}"
-  #             format_space ""
-  #             border_enabled  "false"
-  #             border_char     "─"
-  #             border_format   "#[fg=#6C7086]{char}"
-  #             border_position "top"
-  #             mode_normal        "#[bg=magenta] "
-  #             mode_locked        "#[bg=black] {name} "
-  #             mode_locked        "#[bg=black] {name} "
-  #             mode_resize        "#[bg=black] {name} "
-  #             mode_pane          "#[bg=black] {name} "
-  #             mode_tab           "#[bg=black] {name} "
-  #             mode_scroll        "#[bg=black] {name} "
-  #             mode_enter_search  "#[bg=black] {name} "
-  #             mode_search        "#[bg=black] {name} "
-  #             mode_rename_tab    "#[bg=black] {name} "
-  #             mode_rename_pane   "#[bg=black] {name} "
-  #             mode_session       "#[bg=black] {name} "
-  #             mode_move          "#[bg=black] {name} "
-  #             mode_prompt        "#[bg=black] {name} "
-  #             mode_tmux          "#[bg=red] {name} "
-  #             tab_normal   "#[fg=#6C7086] {name} "
-  #             tab_active   "#[fg=magenta,bold,italic] {name} "
-  #             datetime        "#[fg=cyan,bold] {format} "
-  #             datetime_format "%A, %d %b %Y %I:%M %p"
-  #             datetime_timezone "America/New_York"
-  #           }
-  #       }
-  #   }
-  # '';
+  default_tab_template = ''
+    default_tab_template {
+        children
+        pane size=1 borderless=true {
+            plugin location="file:${zjstatus_package}/bin/zjstatus.wasm" {
+              format_left  "{mode} #[fg=#FA89B4,bold]{session} {tabs}"
+              format_right "{datetime}"
+              format_space ""
+              border_enabled  "false"
+              border_char     "─"
+              border_format   "#[fg=#6C7086]{char}"
+              border_position "top"
+              mode_normal        "#[bg=magenta] "
+              mode_locked        "#[bg=black] {name} "
+              mode_locked        "#[bg=black] {name} "
+              mode_resize        "#[bg=black] {name} "
+              mode_pane          "#[bg=black] {name} "
+              mode_tab           "#[bg=black] {name} "
+              mode_scroll        "#[bg=black] {name} "
+              mode_enter_search  "#[bg=black] {name} "
+              mode_search        "#[bg=black] {name} "
+              mode_rename_tab    "#[bg=black] {name} "
+              mode_rename_pane   "#[bg=black] {name} "
+              mode_session       "#[bg=black] {name} "
+              mode_move          "#[bg=black] {name} "
+              mode_prompt        "#[bg=black] {name} "
+              mode_tmux          "#[bg=red] {name} "
+              tab_normal   "#[fg=#6C7086] {name} "
+              tab_active   "#[fg=magenta,bold,italic] {name} "
+              datetime        "#[fg=cyan,bold] {format} "
+              datetime_format "%A, %d %b %Y %I:%M %p"
+              datetime_timezone "America/New_York"
+            }
+        }
+    }
+  '';
 in {
   home = {
     packages = with pkgs; [ripgrep fd curl eza delta];
@@ -184,12 +187,12 @@ in {
   home.file.".config/scripts/remove_video_silence.py".source = ./dotfiles/remove_video_silence.py;
 
   home.file.".config/zellij/config.kdl".source = ./dotfiles/zellij/config.kdl;
-  #home.file.".config/zellij/layouts/default.kdl".text = ''
-  #  layout {
-  #      ${default_tab_template}
-  #      tab
-  #  }
-  #'';
+  home.file.".config/zellij/layouts/default.kdl".text = ''
+    layout {
+        ${default_tab_template}
+        tab
+    }
+  '';
   #  layout {
   #      ${default_tab_template}
   #      tab name="music" {
