@@ -7,9 +7,11 @@
     systemPackages = [pkgs.coreutils];
     pathsToLink = ["/Applications"];
   };
-  nix.extraOptions = ''
-    experimental-features = nix-command flakes
-  '';
+  nix.settings = {
+    auto-optimise-store = true;
+    experimental-features = "nix-command flakes";
+    keep-derivations = true;
+  };
   fonts.fontDir.enable = true;
   fonts.fonts = [(pkgs.nerdfonts.override {fonts = ["Meslo"];})];
   # allow sudo to use touch id
