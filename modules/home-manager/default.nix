@@ -84,6 +84,12 @@ in {
       enable = true;
       config.theme = "TwoDark";
     };
+
+    direnv = {
+      enable = true;
+      # very important, allows caching of build-time deps
+      nix-direnv.enable = true;
+    };
     fzf = {
       enable = true;
       enableZshIntegration = true;
