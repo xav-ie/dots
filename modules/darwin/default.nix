@@ -6,6 +6,9 @@
     shells = [pkgs.bash pkgs.zsh];
     systemPackages = [pkgs.coreutils];
     pathsToLink = ["/Applications"];
+    # use the version of nix that is from nix-darwin and home-manager and
+    # disable using /nix/var/nix/profiles/default and ~/.nixprofile
+    profiles = inputs.lib.mkForce ["/run/current-system/sw" "/etc/profiles/per-user/xavierruiz"];
   };
   nix.settings = {
     experimental-features = "nix-command flakes";
