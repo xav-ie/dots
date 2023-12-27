@@ -62,7 +62,7 @@
   in {
     nixosConfigurations = {
       nixos = nixpkgs.lib.nixosSystem {
-        specialArgs = {inherit inputs nur;};
+        specialArgs = {inherit inputs nur zjstatus;};
         modules = [
           ./nixos/configuration.nix
           nur.nixosModules.nur
@@ -76,7 +76,7 @@
                 ./modules/home-manager/default.nix
                 ./modules/home-manager/linux.nix
               ];
-              # extraSpecialArgs = {inherit inputs;};
+              extraSpecialArgs = {inherit inputs nur zjstatus;};
             };
           }
         ];
