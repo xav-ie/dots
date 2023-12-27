@@ -4,7 +4,7 @@
   ...
 } @ inputs: let
   # there is no difference in output...? Idk if there is good reason to use one over the other
-  # zjstatus_package = inputs.zjstatus.outputs.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  #zjstatus_package = inputs.zjstatus.outputs.packages.${pkgs.stdenv.hostPlatform.system}.default;
   zjstatus_package = inputs.zjstatus.outputs.packages.${pkgs.system}.default;
   # see https://github.com/dj95/zjstatus
   # for some reason, I could not figure out pkgs.zjstatus
@@ -199,14 +199,4 @@ in {
         tab
     }
   '';
-  #  layout {
-  #      ${default_tab_template}
-  #      tab name="music" {
-  #        pane command="mpv" {
-  #          args "https://raw.githubusercontent.com/junguler/m3u-radio-music-playlists/fc9e42a424451fbdfcc55920bb3af8b4c21531ac/web-radio_directory/90s.m3u"
-  #        }
-  #      }
-  #      tab
-  #  }
-  #'';
 }
