@@ -46,7 +46,7 @@
   '';
 in {
   home = {
-    packages = with pkgs; [ripgrep fd curl eza delta];
+    packages = with pkgs; [ripgrep fd gh curl eza delta];
     # The state version is required and should stay at the version you
     # originally installed.
     stateVersion = "23.11";
@@ -121,10 +121,10 @@ in {
         };
       };
     };
-    gh = {
-      enable = true;
-      extensions = [pkgs.gh-dash];
-    };
+    #gh = {
+    #  enable = true;
+    #  extensions = [pkgs.gh-dash];
+    #};
     lf = {
       enable = true;
       # TODO: add a lot more config
@@ -191,6 +191,7 @@ in {
   home.file.".config/scripts/generate_tokens.sh".source = ./dotfiles/generate_tokens.sh;
   home.file.".config/scripts/zellij_tab_name_update.sh".source = ./dotfiles/zellij_tab_name_update.sh;
   home.file.".config/scripts/remove_video_silence.py".source = ./dotfiles/remove_video_silence.py;
+  home.file.".config/gh-dash/config.yml".source = ./dotfiles/gh-dash/config.yml;
 
   home.file.".config/zellij/config.kdl".source = ./dotfiles/zellij/config.kdl;
   home.file.".config/zellij/layouts/default.kdl".text = ''
