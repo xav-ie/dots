@@ -124,23 +124,6 @@
 
   environment.systemPackages =
     (with pkgs; [
-      ################################
-      # in triage - try to minimize this list
-      ################################
-      asciinema # record shell sessions and share easily
-      age # the new PGP
-      blesh # bash extensions
-      cliphist
-      clipboard-jh # a really awesome clipboard
-      ctpv # lf previews, very buggy
-      cudaPackages.cuda_cccl # I wish hardware acceleration would work :/
-      cudaPackages.cudatoolkit
-      cudaPackages.cudnn
-      himalaya # email
-      hstr
-      manix
-      nodePackages."webtorrent-cli"
-      xidel # like jq but for html and much more advanced.
       # required by mpvScripts.webtorrent-mpv-hook
       pciutils
       pinentry-gnome # I wish I could figure out pinentry-rofi but it does not work

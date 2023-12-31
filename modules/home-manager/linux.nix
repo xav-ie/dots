@@ -7,7 +7,26 @@
   merge = lib.foldr (a: b: a // b) {};
 in {
   home = {
-    packages = [];
+    packages = with pkgs; [
+      ################################
+      # in triage - try to minimize this list
+      ################################
+      asciinema # record shell sessions and share easily
+      age # the new PGP
+      blesh # bash extensions
+      cliphist
+      clipboard-jh # a really awesome clipboard
+      ctpv # lf previews, very buggy
+      cudaPackages.cuda_cccl # I wish hardware acceleration would work :/
+      cudaPackages.cudatoolkit
+      cudaPackages.cudnn
+      himalaya # email
+      hstr
+      manix
+      nodePackages."webtorrent-cli"
+      xidel # like jq but for html and much more advanced.
+
+    ];
     # The state version is required and should stay at the version you
     # originally installed.
     stateVersion = "23.11";
