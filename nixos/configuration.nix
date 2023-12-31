@@ -124,10 +124,7 @@
 
   environment.systemPackages =
     (with pkgs; [
-    ])
-    ++ [
-      inputs.hyprland-contrib.packages.${pkgs.system}.grimblast
-    ];
+    ]) ;
 
   environment.sessionVariables = {
     # va-api driver to use 'nvidia', '', ...
