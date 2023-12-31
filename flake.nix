@@ -39,12 +39,13 @@
   };
   outputs = {
     darwin,
-    nixpkgs,
     home-manager,
-    pwnvim,
+    hyprland-contrib,
+    nixpkgs,
     nur,
-    zjstatus,
+    pwnvim,
     self,
+    zjstatus,
     ...
   } @ inputs: let
     nix.registry.nixpkgs.flake = nixpkgs;
@@ -76,7 +77,7 @@
                 ./modules/home-manager/default.nix
                 ./modules/home-manager/linux.nix
               ];
-              extraSpecialArgs = {inherit inputs nur zjstatus;};
+              extraSpecialArgs = {inherit inputs nur zjstatus hyprland-contrib;};
             };
           }
         ];
