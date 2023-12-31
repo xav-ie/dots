@@ -124,25 +124,6 @@
 
   environment.systemPackages =
     (with pkgs; [
-      ################################
-      # hyprland
-      ################################
-      cava
-      libnotify
-      libva
-      libva-utils # hardware video acceleration
-      polkit_gnome # just a GUI askpass
-      rofi-wayland
-      swayidle
-      swaylock
-      swaynotificationcenter
-      swww
-      waypipe
-      wl-clipboard
-      (waybar.overrideAttrs (oldAttrs: {
-        mesonFlags = oldAttrs.mesonFlags ++ ["-Dexperimental=true"];
-        hyprlandSupport = true;
-      }))
     ])
     ++ [
       inputs.hyprland-contrib.packages.${pkgs.system}.grimblast
