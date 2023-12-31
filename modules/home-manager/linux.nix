@@ -25,6 +25,77 @@ in {
       manix
       nodePackages."webtorrent-cli"
       xidel # like jq but for html and much more advanced.
+      # required by mpvScripts.webtorrent-mpv-hook
+      pciutils
+      pinentry-gnome # I wish I could figure out pinentry-rofi but it does not work
+      # prusa-slicer                # does not launch currently
+      python312Packages."adblock"
+      rofi-rbw # bitwarden cli wrapper
+      rbw # unnofficial bitwarden client
+      silver-searcher # a better rg? has premade filters
+      # slack                       # does not launch currently
+      sops # secrets manager? idk... seems like an extension to age and
+      # other encrypters that allows you to just encrypt part of the
+      # file instead of the whole thing... IDK the real use for that
+      tldr # barely working due to it not having many entries
+      xdg-utils # ????
+      weechat
+      wtype # xdotool for wayland; used as part of rofi-rbw for typing
+      # passwords out
+      yt-dlp # better yt-dl
+      zoom-us
+      # https://github.com/marionebl/svg-term-cli
+      # allows asciinema recordings to be exported to svg... this could be pretty indespensable if
+      # you would like ANSI escape sequences to be interpreted by GH
+      ################################
+      # awesome dev tools
+      ################################
+      bat # a better cat
+      btop # a better top
+      delta # a better git diff
+      eza # a better ls
+      fzf # fuzzy finder
+      gh # github cli
+      lazygit # easy git tui
+      ripgrep # faster grep
+      magic-wormhole-rs # send files easily
+      neovim # the one and only
+      starship # amazing PS1
+      thefuck # correct previous command automatically
+      zoxide # smart cd
+      zellij # tmux could never
+      ################################
+      # universal utils
+      ################################
+      cmake
+      file # magic number reader
+      gcc
+      gnumake # provides `make`
+      jq # json parser
+      lf # file browser
+      ninja
+      unzip
+      unrar
+      vim
+      wget
+      zip
+      ################################
+      # user programs
+      ################################
+      bitwarden
+      chromium
+      discord
+      google-chrome
+      kitty
+      mpv # video player
+      networkmanagerapplet
+      noisetorch # noise filter
+      openrgb # pc rgb control
+      pavucontrol # audio mixer
+      playerctl # play, pause, next
+      pulseaudio # provides pactl for volume control
+      qutebrowser
+      sioyek # vimified pdf viewer
 
     ];
     # The state version is required and should stay at the version you
