@@ -174,10 +174,10 @@ in {
           git diff --name-only "$start_commit" "$end_commit" | grep -v "$exclude_file" | xargs -I {} git diff "$start_commit" "$end_commit" -- {} > "$output_file"
         }
 
-        # TODO: get tab name update scripts and others
-        #export PROMPT_COMMAND="$HOME/.config/scripts/zellij_tab_name_update.sh; $PROMPT_COMMAND"
         source ~/.env
-
+        precmd() {
+          $HOME/.config/scripts/zellij_tab_name_update.sh; 
+        }
 
       '';
     };
