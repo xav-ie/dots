@@ -38,7 +38,8 @@
 
   networking = {
     hostName = "nixos"; # Define your hostname.
-    # wireless.enable = true;  # Enables wireless support via wpa_supplicant.
+    # Enables wireless support via wpa_supplicant.
+    # wireless.enable = true; 
     nameservers = ["1.1.1.1#one.one.one.one" "1.0.0.1#one.one.one.one"];
 
     # Configure network proxy if necessary
@@ -116,9 +117,6 @@
           ];
         };
       };
-      # (final: prev: {
-      zjstatus = inputs.zjstatus.packages.${super.system}.default;
-      # })
     })
   ];
 
@@ -151,11 +149,7 @@
   # };
   # my hunch is that these should be moved to home manager
   programs = {
-    gnupg.agent = {
-      enable = true;
-      pinentryFlavor = "gnome3";
-      enableSSHSupport = true;
-    };
+    # TODO: can I get this into home-manager?
     hyprland = {
       enable = true;
       #enableNvidiaPatches = true;
@@ -175,32 +169,9 @@
       # sets this option for us
       # xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-hyprland ];
     };
-    # firejail = {
-    #   enable = true;
-    #   wrappedBinaries = {
-    #     google-chrome-stable = {
-    #       executable = "${pkgs.google-chrome}/bin/google-chrome-stable";
-    #       profile = "${pkgs.firejail}/etc/firejail/google-chrome.profile";
-    #       desktop = "${pkgs.google-chrome}/share/applications/google-chrome.desktop";
-    #     };
-    #     librewolf = {
-    #       executable = "${pkgs.librewolf}/bin/librewolf";
-    #       profile = "${pkgs.firejail}/etc/firejail/librewolf.profile";
-    #       extraArgs = [
-    #         # Required for U2F USB stick
-    #         "--ignore=private-dev"
-    #         # Enforce dark mode
-    #         "--env=GTK_THEME=Adwaita:dark"
-    #         # Enable system notifications
-    #         "--dbus-user.talk=org.freedesktop.Notifications"
-    #       ];
-    #     };
-    #   };
-    # };
     zsh = {
       # must be enabled system-wide in order to be a default shell
       enable = true;
-
     };
   };
 
@@ -332,25 +303,24 @@
 
   virtualisation.docker.enable = true;
 
-  # This value determines the NixOS release from which the default
-  # settings for stateful data, like file locations and database versions
-  # on your system were taken. It‘s perfectly fine and recommended to leave
-  # this value at the release version of the first install of this system.
-  # Before changing this value read the documentation for this option
-  # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
+  # just don't change this. there is never a good reason to change this as all updates still 
+  # apply and changing this just messes things up. it is a state tracker
   system.stateVersion = "23.05"; # Did you read the comment?
 
   nix = {
     # This will add each flake input as a registry
     # To make nix3 commands consistent with your flake
+    # TODO: what does this do??
     registry = lib.mapAttrs (_: value: {flake = value;}) inputs;
 
     # This will additionally add your inputs to the system's legacy channels
     # Making legacy nix commands consistent as well, awesome!
+    # TODO: Yeah, idk what that means either
     nixPath = lib.mapAttrsToList (key: value: "${key}=${value.to.path}") config.nix.registry;
 
     settings = {
-      auto-optimise-store = true;
+      # just run this every once in a while... auto-optimization slows down optimization
+      auto-optimise-store = false; 
       experimental-features = ["nix-command" "flakes"];
       fallback = true; # allow building from src
       # use max cores when `enableParallelBuilding` is set for package
