@@ -73,11 +73,15 @@
   };
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.users.x = {
-    isNormalUser = true;
-    description = "x";
-    extraGroups = ["networkmanager" "wheel" "docker" "video"];
-    packages = with pkgs; [];
+  users = {
+    defaultUserShell = pkgs.zsh;
+    users.x = {
+      isNormalUser = true;
+      description = "x";
+      extraGroups = ["networkmanager" "wheel" "docker" "video"];
+      packages = with pkgs; [];
+      useDefaultShell = true;
+    };
   };
 
   # Allow unfree packages
@@ -303,6 +307,11 @@
     #     };
     #   };
     # };
+    zsh = {
+      # must be enabled system-wide in order to be a default shell
+      enable = true;
+
+    };
   };
 
   hardware = {
