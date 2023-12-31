@@ -160,6 +160,14 @@ in {
     };
   };
 
+  services = {
+    gpg-agent = {
+      enable = true;
+      pinentryFlavor = "gnome3";
+      enableSshSupport = true;
+    };
+  };
+
   xdg.mimeApps.defaultApplications = {
     "text/plain" = ["qutebrowser.desktop"];
     "application/pdf" = ["sioyek.desktop"];
