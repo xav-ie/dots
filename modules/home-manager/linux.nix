@@ -96,6 +96,25 @@ in {
       pulseaudio # provides pactl for volume control
       qutebrowser
       sioyek # vimified pdf viewer
+      ################################
+      # hyprland
+      ################################
+      cava
+      libnotify
+      libva
+      libva-utils # hardware video acceleration
+      polkit_gnome # just a GUI askpass
+      rofi-wayland
+      swayidle
+      swaylock
+      swaynotificationcenter
+      swww
+      waypipe
+      wl-clipboard
+      (waybar.overrideAttrs (oldAttrs: {
+        mesonFlags = oldAttrs.mesonFlags ++ ["-Dexperimental=true"];
+        hyprlandSupport = true;
+      }))
 
     ];
     # The state version is required and should stay at the version you
