@@ -125,15 +125,6 @@
     ]) ;
 
   environment.sessionVariables = {
-    # va-api driver to use 'nvidia', '', ...
-    LIBVA_DRIVER_NAME = "nvidia";
-    GBM_BACKEND = "nvidia-drm";
-    __GLX_VENDOR_LIBRARY_NAME = "nvidia";
-    XDG_CONFIG_HOME = "/home/x/.config";
-    NIXOS_OZONE_WL = "1";
-    WLR_NO_HARDWARE_CURSORS = "1";
-    LANG = "en_US.UTF-8";
-    EDITOR = "nvim";
   };
 
   fonts.packages = with pkgs; [
