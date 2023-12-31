@@ -125,6 +125,7 @@
     casks = [
       "bitwarden"
       "codewhisperer"
+      "firefox"
       "qutebrowser"
       "raycast"
       "slack"
