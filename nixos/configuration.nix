@@ -160,6 +160,7 @@
       # sets this option for us
       # xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-hyprland ];
     };
+    nix-ld.enable = true;
     zsh = {
       # must be enabled system-wide in order to be a default shell
       enable = true;
