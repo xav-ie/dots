@@ -71,13 +71,13 @@
           {
             nixpkgs.overlays = [nur.overlay];
             home-manager = {
+              extraSpecialArgs = {inherit inputs nur zjstatus hyprland-contrib;};
               useGlobalPkgs = true;
               useUserPackages = true;
               users.x.imports = [
                 ./modules/home-manager/default.nix
                 ./modules/home-manager/linux.nix
               ];
-              extraSpecialArgs = {inherit inputs nur zjstatus hyprland-contrib;};
             };
           }
         ];
