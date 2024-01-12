@@ -183,6 +183,7 @@ in {
     };
   };
   home.file.".inputrc".source = ./dotfiles/inputrc;
+  home.file.".config/lf/icons".source = ./dotfiles/icons;
   home.file.".config/scripts/localip".source = ./dotfiles/localip;
   # There has got to be a better way to do this :(
   home.file.".config/scripts/timeUtils.sh".source = ./dotfiles/timeUtils.sh;
