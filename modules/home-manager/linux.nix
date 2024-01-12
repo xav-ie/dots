@@ -1,6 +1,5 @@
 {
   pkgs,
-  pwnvim,
   lib,
   ...
 } @ inputs: let
@@ -16,7 +15,6 @@ in {
         blesh # bash extensions
         cliphist
         clipboard-jh # a really awesome clipboard
-        ctpv # lf previews, very buggy
         # cudaPackages.cuda_cccl # I wish hardware acceleration would work :/
         # cudaPackages.cudatoolkit
         # cudaPackages.cudnn
@@ -63,7 +61,6 @@ in {
         starship # amazing PS1
         thefuck # correct previous command automatically
         zoxide # smart cd
-        zellij # tmux could never
         ################################
         # universal utils
         ################################
@@ -131,8 +128,6 @@ in {
       XDG_CONFIG_HOME = "/home/x/.config";
       NIXOS_OZONE_WL = "1";
       WLR_NO_HARDWARE_CURSORS = "1";
-      LANG = "en_US.UTF-8";
-      EDITOR = "nvim";
     };
   };
   programs = {
