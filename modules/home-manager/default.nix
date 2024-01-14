@@ -1,13 +1,9 @@
-{
-  pkgs,
-  zjstatus,
-  ...
-} @ inputs: {
+{ pkgs, ... }: {
   imports = [
     ./programs/zellij/default.nix
   ];
   home = {
-    packages = with pkgs; [ripgrep fd gh curl eza delta];
+    packages = with pkgs; [ ripgrep fd gh curl eza delta ];
     # The state version is required and should stay at the version you
     # originally installed.
     stateVersion = "23.11";
@@ -90,8 +86,8 @@
       enable = true;
       commands = {
         dragon-out = ''%${pkgs.xdragon}/bin/xdragon -a -x "$fx"'';
-	editor-open = ''$$EDITOR $f'';
-	mkdir = '' ''${{
+        editor-open = ''$$EDITOR $f'';
+        mkdir = '' ''${{
 	  printf "Directory Name: "
 	  read DIR
 	  mkdir $DIR
@@ -100,29 +96,29 @@
       keybindings = {
         # ?
         "\\\"" = "";
-	o = "";
-	c = "mkdir";
-	"." = "set hidden!";
-	"`" = "mark-load";
-	"\\'" = "mark-load";
-	"<enter>" = "open";
-	do = "dragon-out";
-	"g~" = "cd";
-	gh = "cd";
-	"g/" = "/";
-	ee = "editor-open";
-	l = "editor-open";
-	V = ''''$${pkgs.bat}/bin/bat --paging always "$f"'';
+        o = "";
+        c = "mkdir";
+        "." = "set hidden!";
+        "`" = "mark-load";
+        "\\'" = "mark-load";
+        "<enter>" = "open";
+        do = "dragon-out";
+        "g~" = "cd";
+        gh = "cd";
+        "g/" = "/";
+        ee = "editor-open";
+        l = "editor-open";
+        V = ''''$${pkgs.bat}/bin/bat --paging always "$f"'';
       };
       settings = {
         preview = true;
-	hidden = true;
-	drawbox = true;
-	icons = true;
-	ignorecase = true;
-		
-        previewer = "${pkgs.ctpv}/bin/ctpv";
-        cleaner = "${pkgs.ctpv}/bin/ctpvclear";
+        hidden = true;
+        drawbox = true;
+        icons = true;
+        ignorecase = true;
+
+        #previewer = "${pkgs.ctpv}/bin/ctpv";
+        #cleaner = "${pkgs.ctpv}/bin/ctpvclear";
       };
     };
     mpv = {
@@ -138,7 +134,7 @@
     watson = {
       enable = true;
     };
-    zoxide = {enable = true;};
+    zoxide = { enable = true; };
     zsh = {
       enable = true;
       enableCompletion = true;
