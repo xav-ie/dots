@@ -117,8 +117,8 @@
         icons = true;
         ignorecase = true;
 
-        #previewer = "${pkgs.ctpv}/bin/ctpv";
-        #cleaner = "${pkgs.ctpv}/bin/ctpvclear";
+        previewer = "${pkgs.ctpv}/bin/ctpv";
+        cleaner = "${pkgs.ctpv}/bin/ctpvclear";
       };
     };
     mpv = {

@@ -15,7 +15,7 @@
     };
     ctpv = {
       url = "github:xav-ie/ctpv-nix";
-      inputs.nixpkgs.follow = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     home-manager = {
       url = "github:nix-community/home-manager";
@@ -49,7 +49,8 @@
     , ...
     } @ inputs:
     let
-      nix.registry.nixpkgs.flake = nixpkgs;
+      # TODO: what does setting this do?
+      # nix.registry.nixpkgs.flake = nixpkgs;
       # TODO: move to overlays because they are supposed to be better but I can't seem to figure them out :(
       # Some other ppl who got them working:
       # https://github.com/clemak27/linux_setup/blob/4970745992be98b0d00fdae336b4b9ee63f3c1af/flake.nix#L48
@@ -57,10 +58,17 @@
       #
       # system = "x86_64-linux";
       # system = "aarch64-darwin";
-      # no idea what this does
-      # pkgs = import nixpkgs {
-      #   inherit system;
-      # };
+      overlays = [
+        nur.overlay
+        (self: super: {
+          ctpv = inputs.ctpv.packages.${self.system}.default;
+        })
+
+      ];
+      darwinPkgs = import nixpkgs {
+        system = "aarch64-darwin";
+        overlays = overlays;
+      };
     in
     {
       nixosConfigurations = {
@@ -71,7 +79,7 @@
             nur.nixosModules.nur
             home-manager.nixosModules.home-manager
             {
-              nixpkgs.overlays = [ nur.overlay ];
+              nixpkgs.overlays = overlays;
               home-manager = {
                 extraSpecialArgs = { inherit inputs nur zjstatus hyprland-contrib; };
                 useGlobalPkgs = true;
@@ -89,7 +97,8 @@
         Xaviers-MacBook-Air = darwin.lib.darwinSystem {
           system = "aarch64-darwin";
           pkgs = import inputs.nixpkgs { system = "aarch64-darwin"; };
-          specialArgs = { inherit inputs nur zjstatus; };
+          specialArgs = { inherit inputs nur zjstatus; pkgs = darwinPkgs; };
+          # specialArgs = { inherit darwinPkgs; };
           modules = [
             ./modules/darwin
             home-manager.darwinModules.home-manager
@@ -103,7 +112,7 @@
                   ./modules/home-manager/darwin.nix
                 ];
               };
-              nixpkgs.overlays = [ nur.overlay ];
+              nixpkgs.overlays = overlays;
             }
           ];
         };
