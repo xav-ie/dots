@@ -21,6 +21,27 @@
         "type": "github"
       }
     },
+    "ctpv": {
+      "inputs": {
+        "flake-utils": "flake-utils",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1705100340,
+        "narHash": "sha256-ZcPCc8DZiTju55QhjbHNghs3OONo8iB3vmAgIMlHoDw=",
+        "owner": "xav-ie",
+        "repo": "ctpv-nix",
+        "rev": "7f82381f0d5509ed47ef37bd784ee38d66a32d78",
+        "type": "github"
+      },
+      "original": {
+        "owner": "xav-ie",
+        "repo": "ctpv-nix",
+        "type": "github"
+      }
+    },
     "darwin": {
       "inputs": {
         "nixpkgs": [
@@ -44,6 +65,24 @@
     "flake-utils": {
       "inputs": {
         "systems": "systems"
+      },
+      "locked": {
+        "lastModified": 1701680307,
+        "narHash": "sha256-kAuep2h5ajznlPMD9rnQyffWG8EM/C73lejGofXvdM8=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "4022d587cbbfd70fe950c1e2083a02621806a725",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "flake-utils_2": {
+      "inputs": {
+        "systems": "systems_2"
       },
       "locked": {
         "lastModified": 1701680307,
@@ -164,6 +203,7 @@
     },
     "root": {
       "inputs": {
+        "ctpv": "ctpv",
         "darwin": "darwin",
         "home-manager": "home-manager",
         "hyprland-contrib": "hyprland-contrib",
@@ -213,10 +253,25 @@
         "type": "github"
       }
     },
+    "systems_2": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
     "zjstatus": {
       "inputs": {
         "crane": "crane",
-        "flake-utils": "flake-utils",
+        "flake-utils": "flake-utils_2",
         "nixpkgs": "nixpkgs_2",
         "rust-overlay": "rust-overlay"
       },
