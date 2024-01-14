@@ -72,6 +72,9 @@
           specialArgs = { inherit inputs nur zjstatus; };
           modules = [
             ./nixos/configuration.nix
+            ({ pkgs, ... }: {
+              nixpkgs.overlays = overlays;
+            })
             nur.nixosModules.nur
             home-manager.nixosModules.home-manager
             {
@@ -107,7 +110,7 @@
                   ./modules/home-manager/darwin.nix
                 ];
               };
-              nixpkgs.overlays = overlays;
+              #nixpkgs.overlays = overlays;
             }
           ];
         };
