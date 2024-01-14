@@ -65,10 +65,6 @@
         })
 
       ];
-      darwinPkgs = import nixpkgs {
-        system = "aarch64-darwin";
-        overlays = overlays;
-      };
     in
     {
       nixosConfigurations = {
@@ -79,7 +75,6 @@
             nur.nixosModules.nur
             home-manager.nixosModules.home-manager
             {
-              nixpkgs.overlays = overlays;
               home-manager = {
                 extraSpecialArgs = { inherit inputs nur zjstatus hyprland-contrib; };
                 useGlobalPkgs = true;
@@ -89,6 +84,7 @@
                   ./modules/home-manager/linux.nix
                 ];
               };
+              nixpkgs.overlays = overlays;
             }
           ];
         };
@@ -96,9 +92,8 @@
       darwinConfigurations = {
         Xaviers-MacBook-Air = darwin.lib.darwinSystem {
           system = "aarch64-darwin";
-          pkgs = import inputs.nixpkgs { system = "aarch64-darwin"; };
-          specialArgs = { inherit inputs nur zjstatus; pkgs = darwinPkgs; };
-          # specialArgs = { inherit darwinPkgs; };
+          pkgs = import inputs.nixpkgs { system = "aarch64-darwin"; overlays = overlays; };
+          specialArgs = { inherit inputs nur zjstatus; };
           modules = [
             ./modules/darwin
             home-manager.darwinModules.home-manager
