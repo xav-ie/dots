@@ -1,13 +1,11 @@
 # Edit this configuration file to define what should be installed on
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
-{
-  inputs,
-  lib,
-  config,
-  pkgs,
-  fetchFromGithub,
-  ...
+{ inputs
+, lib
+, config
+, pkgs
+, ...
 }: {
   imports = [
     # Include the results of the hardware scan.
@@ -18,7 +16,7 @@
   boot = {
     loader.systemd-boot.enable = true;
     loader.efi.canTouchEfiVariables = true;
-    supportedFilesystems = ["ntfs"];
+    supportedFilesystems = [ "ntfs" ];
     kernelModules = [
       "i2c-dev"
       # Virtual Camera
@@ -27,7 +25,7 @@
       "snd-aloop"
     ];
     kernelPackages = pkgs.linuxPackages_latest;
-    extraModulePackages = with config.boot.kernelPackages; [v4l2loopback.out];
+    extraModulePackages = with config.boot.kernelPackages; [ v4l2loopback.out ];
     extraModprobeConfig = ''
       # exclusive_caps: Skype, Zoom, Teams etc. will only show device when actually streaming
       # card_label: Name of virtual camera, how it'll show up in Skype, Zoom, Teams
@@ -40,7 +38,7 @@
     hostName = "nixos"; # Define your hostname.
     # Enables wireless support via wpa_supplicant.
     # wireless.enable = true; 
-    nameservers = ["1.1.1.1#one.one.one.one" "1.0.0.1#one.one.one.one"];
+    nameservers = [ "1.1.1.1#one.one.one.one" "1.0.0.1#one.one.one.one" ];
 
     # Configure network proxy if necessary
     # proxy.default = "http://user:password@proxy:port/";
@@ -79,8 +77,8 @@
     users.x = {
       isNormalUser = true;
       description = "x";
-      extraGroups = ["networkmanager" "wheel" "docker" "video"];
-      packages = with pkgs; [];
+      extraGroups = [ "networkmanager" "wheel" "docker" "video" ];
+      # packages = with pkgs; [];
       useDefaultShell = true;
     };
   };
@@ -103,10 +101,10 @@
       };
       # use full ffmpeg version to support all video formats
       # mpv-unwrapped = super.mpv-unwrapped.override {
-        # ffmpeg_5 = ffmpeg_5-full;
+      # ffmpeg_5 = ffmpeg_5-full;
       # };
       weechat = super.weechat.override {
-        configure = {availablePlugins, ...}: {
+        configure = { availablePlugins, ... }: {
           scripts = with super.weechatScripts; [
             # Idk how to use this one yet
             edit # edit messages in $EDITOR
@@ -120,13 +118,14 @@
     })
   ];
 
-  environment.systemPackages =
-    (with pkgs; [
-    ]) ;
+  # environment.systemPackages =
+  #   (with pkgs; [
+  #   ]) ;
 
-  environment.sessionVariables = {
-  };
+  # environment.sessionVariables = {
+  # };
 
+  # TODO: move this into home-manager
   fonts.packages = with pkgs; [
     nerdfonts
   ];
@@ -161,10 +160,9 @@
       # xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-hyprland ];
     };
     nix-ld.enable = true;
-    zsh = {
-      # must be enabled system-wide in order to be a default shell
-      enable = true;
-    };
+    # must be enabled system-wide in order to be a default shell
+    # additional settings should occur in home-manager
+    zsh.enable = true;
   };
 
   hardware = {
@@ -219,15 +217,15 @@
     resolved = {
       enable = lib.mkForce true;
       dnssec = "true";
-      domains = ["~."];
-      fallbackDns = ["1.1.1.1#one.one.one.one" "1.0.0.1#one.one.one.one"];
+      domains = [ "~." ];
+      fallbackDns = [ "1.1.1.1#one.one.one.one" "1.0.0.1#one.one.one.one" ];
       extraConfig = ''
         DNSOverTLS=yes
       '';
     };
     twingate.enable = true;
     udev = {
-      packages = [pkgs.openrgb];
+      packages = [ pkgs.openrgb ];
       extraRules = ''
         SUBSYSTEM=="usb", ATTRS{idVendor}=="057e", ATTRS{idProduct}=="3000", MODE="0666"
         SUBSYSTEM=="usb", ATTRS{idVendor}=="0955", ATTRS{idProduct}=="7321", MODE="0666"
@@ -237,7 +235,7 @@
     xserver = {
       layout = "us";
       xkbVariant = "";
-      videoDrivers = ["nvidia"];
+      videoDrivers = [ "nvidia" ];
     };
   };
 
@@ -281,8 +279,8 @@
       # wantedBy = [ "graphical-session.target" ];
       # wants = [ "graphical-session.target" ];
       # after = [ "graphical-session.target" ];
-      wantedBy = ["default.target"];
-      after = ["default.target"];
+      wantedBy = [ "default.target" ];
+      after = [ "default.target" ];
       serviceConfig = {
         Type = "simple";
         ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
@@ -303,7 +301,7 @@
     # This will add each flake input as a registry
     # To make nix3 commands consistent with your flake
     # TODO: what does this do??
-    registry = lib.mapAttrs (_: value: {flake = value;}) inputs;
+    registry = lib.mapAttrs (_: value: { flake = value; }) inputs;
 
     # This will additionally add your inputs to the system's legacy channels
     # Making legacy nix commands consistent as well, awesome!
@@ -311,14 +309,13 @@
     nixPath = lib.mapAttrsToList (key: value: "${key}=${value.to.path}") config.nix.registry;
 
     settings = {
-      # just run this every once in a while... auto-optimization slows down optimization
-      auto-optimise-store = false; 
-      experimental-features = ["nix-command" "flakes"];
+      # just run this every once in a while... auto-optimization slows down evaluation
+      auto-optimise-store = false;
+      experimental-features = [ "nix-command" "flakes" ];
       fallback = true; # allow building from src
-      # use max cores when `enableParallelBuilding` is set for package
+      # use max cores/threads when `enableParallelBuilding` is set for package
       cores = 0;
-      # use max CPUs for nix build jobs... not entirely sure if this is that
-      # different from `cores` option
+      # use max CPUs for nix build jobs
       max-jobs = "auto";
     };
   };
