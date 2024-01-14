@@ -55,15 +55,11 @@
       # Some other ppl who got them working:
       # https://github.com/clemak27/linux_setup/blob/4970745992be98b0d00fdae336b4b9ee63f3c1af/flake.nix#L48
       # https://github.com/CosmicHalo/AndromedaNixos/blob/665668415fa72e850d322adbdacb81c1251301c0/overlays/zjstatus/default.nix#L2
-      #
-      # system = "x86_64-linux";
-      # system = "aarch64-darwin";
       overlays = [
         nur.overlay
         (self: super: {
           ctpv = inputs.ctpv.packages.${self.system}.default;
         })
-
       ];
     in
     {
@@ -72,6 +68,7 @@
           specialArgs = { inherit inputs nur zjstatus; };
           modules = [
             ./nixos/configuration.nix
+            # I have no idea if this is working... :/
             ({ pkgs, ... }: {
               nixpkgs.overlays = overlays;
             })
@@ -87,6 +84,7 @@
                   ./modules/home-manager/linux.nix
                 ];
               };
+              # does this have any effect?
               nixpkgs.overlays = overlays;
             }
           ];
@@ -110,7 +108,8 @@
                   ./modules/home-manager/darwin.nix
                 ];
               };
-              #nixpkgs.overlays = overlays;
+              # does this have any effect?
+              nixpkgs.overlays = overlays;
             }
           ];
         };
