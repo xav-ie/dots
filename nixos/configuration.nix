@@ -89,33 +89,6 @@
   nixpkgs.config.allowUnfreePredicate = _: true;
 
   # nixpkgs.overlays = with pkgs; [
-  #   (self: super: {
-  #     mpv = super.mpv.override {
-  #       scripts = with self.mpvScripts; [
-  #         autoload # autoloads entries before and after current entry
-  #         mpris # extends mpv to be controllable with MPD
-  #         mpv-playlistmanager # resolves url titles, SHIFT+ENTER for playlist
-  #         quality-menu # control video quality on the fly
-  #         webtorrent-mpv-hook # extends mpv to handle magnet URLs
-  #       ];
-  #     };
-  #     # use full ffmpeg version to support all video formats
-  #     # mpv-unwrapped = super.mpv-unwrapped.override {
-  #     # ffmpeg_5 = ffmpeg_5-full;
-  #     # };
-  #     weechat = super.weechat.override {
-  #       configure = { availablePlugins, ... }: {
-  #         scripts = with super.weechatScripts; [
-  #           # Idk how to use this one yet
-  #           edit # edit messages in $EDITOR
-  #           wee-slack # slack in weechat
-  #           # I think weeslack already has way to facilitate notifications
-  #           # weechat-notify-send # highlight and notify bindings to notify-send
-  #           weechat-go # command pallette jumping
-  #         ];
-  #       };
-  #     };
-  #   })
   # ];
 
   # environment.systemPackages =
@@ -194,7 +167,6 @@
     flatpak.enable = true;
     geoclue2 = {
       enable = true;
-      appConfig.redshift.isAllowed = true;
     };
     gnome.gnome-keyring.enable = true;
     openssh = {
