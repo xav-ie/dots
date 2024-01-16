@@ -9,6 +9,7 @@
       eza
       fd
       gh
+      gnumake
       jq
       magic-wormhole-rs # send files easily
       ripgrep
