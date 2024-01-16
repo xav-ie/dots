@@ -76,7 +76,14 @@
         graph = "log --graph --pretty=tformat:'%C(bold blue)%h%Creset %s %C(bold green)%d%Creset %C(blue)<%an>%Creset %C(dim cyan)%cr' --abbrev-commit --decorate";
       };
       # I am guessing this option sets up the options I set in extraConfig
-      delta.enable = true;
+      delta = {
+        enable = true;
+        options = {
+          navigate = true;
+          line-numbers = true;
+          true-color = "always";
+        };
+      };
       extraConfig = {
         core = {
           # configured by delta.enable=true
@@ -86,11 +93,12 @@
           # configured by delta.enable=true
           # diffFilter = "delta --color-only";
         };
-        delta = {
-          navigate = true;
-          line-numbers = true;
-          true-color = "always";
-        };
+        # configured by delta.enable=true
+        # delta = {
+        #   navigate = true;
+        #   line-numbers = true;
+        #   true-color = "always";
+        # };
         merge = {
           conflictstyle = "diff3";
         };

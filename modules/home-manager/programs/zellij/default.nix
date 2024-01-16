@@ -1,8 +1,5 @@
-{
-  pkgs,
-  zjstatus,
-  ...
-} @ inputs: let
+{ pkgs, ... } @ inputs:
+let
   # there is no difference in output...? Idk if there is good reason to use one over the other
   #zjstatus_package = inputs.zjstatus.outputs.packages.${pkgs.stdenv.hostPlatform.system}.default;
   zjstatus_package = inputs.zjstatus.outputs.packages.${pkgs.system}.default;
@@ -44,11 +41,12 @@
         }
     }
   '';
-in {
+in
+{
   programs = {
-      zellij = {
-	enable = true;
-      };
+    zellij = {
+      enable = true;
+    };
   };
   home.file.".config/zellij/config.kdl".source = ../../dotfiles/zellij/config.kdl;
   home.file.".config/zellij/layouts/default.kdl".text = ''
