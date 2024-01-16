@@ -144,6 +144,9 @@
         V = ''''$${pkgs.bat}/bin/bat --paging always "$f"'';
       };
       settings = {
+        autochafa = true;
+        chafasixel = true;
+        sixel = true;
         preview = true;
         hidden = true;
         drawbox = true;
