@@ -96,18 +96,20 @@
       keybindings = {
         # ?
         "\\\"" = "";
-        o = "";
+        o = "open";
         c = "mkdir";
         "." = "set hidden!";
         "`" = "mark-load";
         "\\'" = "mark-load";
-        "<enter>" = "open";
+        "<enter>" = "editor-open";
         do = "dragon-out";
         "g~" = "cd";
         gh = "cd";
         "g/" = "/";
         ee = "editor-open";
-        l = "editor-open";
+        # TODO: make this work only when you have file selected. otherwise, enter folder
+        # l = "editor-open";
+
         V = ''''$${pkgs.bat}/bin/bat --paging always "$f"'';
       };
       settings = {
