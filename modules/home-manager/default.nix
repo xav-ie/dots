@@ -3,7 +3,19 @@
     ./programs/zellij/default.nix
   ];
   home = {
-    packages = with pkgs; [ ripgrep fd gh curl eza delta ];
+    packages = with pkgs; [
+      curl
+      delta
+      eza
+      fd
+      gh
+      jq
+      magic-wormhole-rs # send files easily
+      ripgrep
+      unzip
+      unrar
+      zip
+    ];
     # The state version is required and should stay at the version you
     # originally installed.
     stateVersion = "23.11";
@@ -41,10 +53,17 @@
       enable = true;
       config.theme = "TwoDark";
     };
+    btop.enable = true;
     direnv = {
       enable = true;
       # very important, allows caching of build-time deps
       nix-direnv.enable = true;
+    };
+    eza = {
+      enable = true;
+      enableAliases = true;
+      git = true;
+      icons = true;
     };
     fzf = {
       enable = true;
@@ -57,12 +76,16 @@
       aliases = {
         graph = "log --graph --pretty=tformat:'%C(bold blue)%h%Creset %s %C(bold green)%d%Creset %C(blue)<%an>%Creset %C(dim cyan)%cr' --abbrev-commit --decorate";
       };
+      # I am guessing this option sets up the options I set in extraConfig
+      delta.enable = true;
       extraConfig = {
         core = {
-          pager = "delta";
+          # configured by delta.enable=true
+          # pager = "delta";
         };
         interactive = {
-          diffFilter = "delta --color-only";
+          # configured by delta.enable=true
+          # diffFilter = "delta --color-only";
         };
         delta = {
           navigate = true;
@@ -109,7 +132,6 @@
         ee = "editor-open";
         # TODO: make this work only when you have file selected. otherwise, enter folder
         # l = "editor-open";
-
         V = ''''$${pkgs.bat}/bin/bat --paging always "$f"'';
       };
       settings = {
@@ -145,7 +167,7 @@
       shellAliases = {
         gd = "git diff --ignore-all-space --ignore-space-at-eol --ignore-space-change --ignore-blank-lines -- . ':(exclude)*package-lock.json' -- . ':(exclude)*yarn.lock'";
         gpr = "GH_FORCE_TTY=100% gh pr list | fzf --ansi --preview 'GH_FORCE_TTY=100% gh pr view {1}' --preview-window up --header-lines 3 | awk '{print \$1}' | xargs gh pr checkout";
-        ls = "exa";
+        #ls = "exa";
         main = "git fetch && git fetch --tags && git checkout -B main origin/main";
         n = "NIXPKGS_ALLOW_UNFREE=1 exec nix shell --impure nixpkgs#nodejs-18_x nixpkgs#yarn nixpkgs#cloudflared nixpkgs#terraform nixpkgs#google-cloud-sdk nixpkgs#bun nixpkgs#nodePackages.\"prettier\" nixpkgs#deno nixpkgs#prettierd";
         w = "watson";
@@ -166,7 +188,7 @@
           git diff --name-only "$start_commit" "$end_commit" | grep -v "$exclude_file" | xargs -I {} git diff "$start_commit" "$end_commit" -- {} > "$output_file"
         }
 
-        source ~/.env
+        source $HOME/.env
         precmd() {
           $HOME/.config/scripts/zellij_tab_name_update.sh; 
         }
