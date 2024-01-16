@@ -9,7 +9,7 @@
     stateVersion = "23.11";
     sessionVariables = {
       BROWSER = "qutebrowser";
-      EDITOR = "nvim";
+      EDITOR = "$HOME/Projects/xnixvim/result/bin/nvim";
       LANG = "en_US.UTF-8";
       LC_ALL = "en_US.UTF-8";
       PAGER = "bat";
@@ -149,6 +149,7 @@
         main = "git fetch && git fetch --tags && git checkout -B main origin/main";
         n = "NIXPKGS_ALLOW_UNFREE=1 exec nix shell --impure nixpkgs#nodejs-18_x nixpkgs#yarn nixpkgs#cloudflared nixpkgs#terraform nixpkgs#google-cloud-sdk nixpkgs#bun nixpkgs#nodePackages.\"prettier\" nixpkgs#deno nixpkgs#prettierd";
         w = "watson";
+        nvim = "~/Projects/xnixvim/result/bin/nvim";
       };
       initExtra = ''
         function git_diff_exclude_file() {
