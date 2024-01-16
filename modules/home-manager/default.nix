@@ -14,6 +14,7 @@
       magic-wormhole-rs # send files easily
       ripgrep
       unzip
+      wget
       zip
     ];
     # The state version is required and should stay at the version you
@@ -205,6 +206,14 @@
         source $HOME/.env
         precmd() {
           $HOME/.config/scripts/zellij_tab_name_update.sh; 
+        }
+
+        download_nixpkgs_cache_index () {
+          filename="index-$(uname -m | sed 's/^arm64$/aarch64/')-$(uname | tr A-Z a-z)"
+          mkdir -p ~/.cache/nix-index && cd ~/.cache/nix-index
+          # -N will only download a new version if there is an update.
+          wget -q -N https://github.com/Mic92/nix-index-database/releases/latest/download/$filename
+          ln -f $filename files
         }
       '';
     };
