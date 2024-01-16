@@ -180,6 +180,7 @@
         n = "NIXPKGS_ALLOW_UNFREE=1 exec nix shell --impure nixpkgs#nodejs-18_x nixpkgs#yarn nixpkgs#cloudflared nixpkgs#terraform nixpkgs#google-cloud-sdk nixpkgs#bun nixpkgs#nodePackages.\"prettier\" nixpkgs#deno nixpkgs#prettierd";
         w = "watson";
         nvim = "~/Projects/xnixvim/result/bin/nvim";
+        zj = "zellij attach || zellij";
       };
       initExtra = ''
         function git_diff_exclude_file() {
