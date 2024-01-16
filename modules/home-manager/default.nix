@@ -13,7 +13,6 @@
       magic-wormhole-rs # send files easily
       ripgrep
       unzip
-      unrar
       zip
     ];
     # The state version is required and should stay at the version you
