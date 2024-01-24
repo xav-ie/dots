@@ -66,11 +66,12 @@
         # Rotate tree
         ctrl + alt - r : yabai -m space --rotate 90
         # Open application
-        ctrl + alt - t : open -a wezterm
+        ctrl + alt - w : open -a wezterm
         ctrl + alt - q : open -a qutebrowser
         ctrl + alt - a : open -a Safari
         ctrl + alt - s : open -a Slack
         ctrl + alt - b : open -a Bitwarden
+        ctrl + alt - z : open -a zoom.us
         # ctrl + alt - t : yabai -m window --toggle float;\
         #  yabai -m window --grid 4:4:1:1:2:2
         # ctrl + alt - p : yabai -m window --toggle sticky;\
