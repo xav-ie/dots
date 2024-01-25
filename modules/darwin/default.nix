@@ -72,8 +72,9 @@
         ctrl + alt - s : open -a Slack
         ctrl + alt - b : open -a Bitwarden
         ctrl + alt - z : open -a zoom.us
-        # ctrl + alt - t : yabai -m window --toggle float;\
-        #  yabai -m window --grid 4:4:1:1:2:2
+        ctrl + alt - z : yabai -m window --focus $(yabai -m query --windows | jq '.[] | select(.app == "mpv").id')
+        ctrl + alt - t : yabai -m window --toggle float;\
+         yabai -m window --grid 4:4:1:1:2:2
         # ctrl + alt - p : yabai -m window --toggle sticky;\
         #   yabai -m window --toggle topmost;\
         #   yabai -m window --toggle pip
