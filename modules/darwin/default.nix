@@ -134,6 +134,7 @@
       "bitwarden"
       "codewhisperer"
       "firefox"
+      "microsoft-edge"
       "qutebrowser"
       "raycast"
       "slack"
