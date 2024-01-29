@@ -187,8 +187,8 @@
 
         -- For example, changing the color scheme:
         config = {
-          window_background_opacity = 0.85,
-          macos_window_background_blur = 30,
+          window_background_opacity = 0.95,
+          macos_window_background_blur = 0,
           color_scheme = 'Argonaut',
           window_decorations = "RESIZE",
           enable_tab_bar = false,
