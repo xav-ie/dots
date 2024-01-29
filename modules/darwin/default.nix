@@ -122,6 +122,9 @@
     enable = true;
     caskArgs.no_quarantine = true; # do not prompt for updates
     global.brewfile = true; # track brews in a file
+    onActivation = {
+      cleanup = "zap"; # destroy app config and app on removal from nix-darwin
+    };
     masApps = {
       Klack = 6446206067;
       Magnet = 441258766;
