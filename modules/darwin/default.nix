@@ -72,11 +72,11 @@
         ctrl + alt - b : open -a Bitwarden
         ctrl + alt - e : open -a "Microsoft Edge"
         ctrl + alt - f : open -a Finder
-        ctrl + alt - q : open -a qutebrowser
+        ctrl + alt - m : open -a Messages
         ctrl + alt - s : open -a Slack
         ctrl + alt - w : open -a wezterm
         ctrl + alt - z : open -a zoom.us
-        ctrl + alt - z : yabai -m window --focus $(yabai -m query --windows | jq '.[] | select(.app == "mpv").id')
+        # ctrl + alt - z : yabai -m window --focus $(yabai -m query --windows | jq '.[] | select(.app == "mpv").id')
         # ctrl + alt - t : yabai -m window --toggle float;\
         #  yabai -m window --grid 4:4:1:1:2:2
         # ctrl + alt - p : yabai -m window --toggle sticky;\
