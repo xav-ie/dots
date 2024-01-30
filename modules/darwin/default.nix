@@ -138,6 +138,7 @@
       "bitwarden"
       "firefox"
       "microsoft-edge"
+      "protonvpn"
       "raycast"
       "slack"
       "zoom"
