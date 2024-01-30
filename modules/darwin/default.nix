@@ -136,13 +136,10 @@
     };
     casks = [
       "bitwarden"
-      "codewhisperer"
       "firefox"
       "microsoft-edge"
-      "qutebrowser"
       "raycast"
       "slack"
-      "spacelauncher"
       "zoom"
     ];
     taps = [ "FelixKratz/formulae" ];
