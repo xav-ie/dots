@@ -34,9 +34,9 @@ let
               datetime                "#[fg=cyan,bold] {format} "
               datetime_format         "%A, %d %b %I:%M"
               datetime_timezone       "America/New_York"
-              command_pomo_command    "echo hi"
+              command_pomo_command    "uairctl listen"
               command_pomo_format     "#[fg=blue] {stdout}"
-              command_pomo_interval   "10"
+              command_pomo_interval   "1"
               command_pomo_rendermode "static"
             }
         }
