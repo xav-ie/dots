@@ -68,14 +68,14 @@
         # Open application
         # I really like application driven window management. I just want simple keybindings to
         # just go where I want. Only downside is new bindings must be added for new apps.
-        ctrl + alt - a : open -a Safari
-        ctrl + alt - b : open -a Bitwarden
-        ctrl + alt - e : open -a "Microsoft Edge"
-        ctrl + alt - f : open -a Finder
-        ctrl + alt - m : open -a Messages
-        ctrl + alt - s : open -a Slack
-        ctrl + alt - w : open -a wezterm
-        ctrl + alt - z : open -a zoom.us
+        ctrl + 1 : open -a wezterm
+        ctrl + 2 : open -a "Microsoft Edge"
+        ctrl + 3 : open -a Slack
+        ctrl + 4 : open -a zoom.us
+        ctrl + 5 : open -a Bitwarden
+        ctrl + 6 : open -a Messages
+        ctrl + 7 : open -a Finder
+        ctrl + 8 : open -a Safari
         # ctrl + alt - z : yabai -m window --focus $(yabai -m query --windows | jq '.[] | select(.app == "mpv").id')
         # ctrl + alt - t : yabai -m window --toggle float;\
         #  yabai -m window --grid 4:4:1:1:2:2
