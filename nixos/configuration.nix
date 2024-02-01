@@ -34,18 +34,28 @@
     '';
   };
 
+
   networking = {
     hostName = "nixos"; # Define your hostname.
     # Enables wireless support via wpa_supplicant.
     # wireless.enable = true; 
+    # nameservers = [ "127.0.0.1" "::1" ];
+    # nameservers = [ "1.1.1.1" "9.9.9.9" ];
     nameservers = [ "1.1.1.1#one.one.one.one" "1.0.0.1#one.one.one.one" ];
+
+    # dhcpcd.extraConfig = "nohook resolv.conf";
 
     # Configure network proxy if necessary
     # proxy.default = "http://user:password@proxy:port/";
     # proxy.noProxy = "127.0.0.1,localhost,internal.domain";
 
     # Enable networking
-    networkmanager.enable = true;
+    networkmanager = {
+      enable = true;
+      # do not override my dns?
+      # dns = "none";
+      # dns = "systemd-resolved";
+    };
 
     # Open ports in the firewall.
     # firewall.allowedTCPPorts = [ ... ];
@@ -187,7 +197,7 @@
       enable = true;
     };
     resolved = {
-      enable = lib.mkForce true;
+      enable = true;
       dnssec = "true";
       domains = [ "~." ];
       fallbackDns = [ "1.1.1.1#one.one.one.one" "1.0.0.1#one.one.one.one" ];
@@ -195,6 +205,7 @@
         DNSOverTLS=yes
       '';
     };
+
     twingate.enable = true;
     udev = {
       packages = [ pkgs.openrgb ];

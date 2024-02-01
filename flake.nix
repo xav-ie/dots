@@ -38,6 +38,10 @@
     nur = {
       url = "github:nix-community/NUR";
     };
+    wezterm = {
+      url = "github:wez/wezterm?dir=nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     zjstatus = {
       url = "github:dj95/zjstatus";
     };
@@ -49,6 +53,7 @@
     , nixpkgs
     , nur
     , self
+    , wezterm
     , zjstatus
     , ...
     } @ inputs:
@@ -97,7 +102,7 @@
     {
       nixosConfigurations = {
         nixos = nixpkgs.lib.nixosSystem {
-          specialArgs = { inherit inputs nur zjstatus; };
+          specialArgs = { inherit inputs nur wezterm zjstatus; };
           modules = [
             ./nixos/configuration.nix
             # I have no idea if this is working... :/
@@ -108,7 +113,7 @@
             home-manager.nixosModules.home-manager
             {
               home-manager = {
-                extraSpecialArgs = { inherit inputs nur zjstatus hyprland-contrib; };
+                extraSpecialArgs = { inherit inputs nur wezterm zjstatus hyprland-contrib; };
                 useGlobalPkgs = true;
                 useUserPackages = true;
                 users.x.imports = [
