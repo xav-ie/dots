@@ -1,4 +1,4 @@
-{ pkgs, ... }: {
+{ pkgs, ... }@inputs: {
   imports = [
     ./programs/zellij/default.nix
   ];
@@ -12,7 +12,9 @@
       gnumake
       jq
       magic-wormhole-rs # send files easily
+      microsoft-edge
       ripgrep
+      slack
       uair
       unzip
       wget
@@ -22,12 +24,12 @@
     # originally installed.
     stateVersion = "23.11";
     sessionVariables = {
-      BROWSER = "qutebrowser";
+      BROWSER = "microsoft-edge";
       EDITOR = "$HOME/Projects/xnixvim/result/bin/nvim";
       LANG = "en_US.UTF-8";
       LC_ALL = "en_US.UTF-8";
       PAGER = "bat";
-      TERMINAL = "alacritty";
+      TERMINAL = "wezterm";
       # get more colors
       HSTR_CONFIG = "hicolor";
       # leading space hides commands from history
@@ -198,12 +200,14 @@
             right = 0,
             top = 0,
             bottom = 0,
-          }
+          },
         }
 
         -- and finally, return the configuration to wezterm
         return config
       '';
+      enableZshIntegration = false;
+      package = inputs.wezterm.outputs.packages.${pkgs.system}.default;
     };
     watson = {
       enable = true;
