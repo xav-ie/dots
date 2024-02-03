@@ -7,7 +7,6 @@ let
 in
 {
   home = {
-    fonts.fontconfig.enable = true;
     packages = (with pkgs; [
       ################################
       # in triage - try to minimize this list
