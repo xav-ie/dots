@@ -208,7 +208,6 @@
         -- and finally, return the configuration to wezterm
         return config
       '';
-      enableZshIntegration = true;
     };
     watson = {
       enable = true;
