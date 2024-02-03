@@ -108,10 +108,11 @@
   # environment.sessionVariables = {
   # };
 
-  # TODO: check this works in home-manager
   # fonts.packages = with pkgs; [
   #   nerdfonts
   # ];
+  fonts.fontconfig.enable = true;
+
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
