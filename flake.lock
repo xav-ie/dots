@@ -294,18 +294,18 @@
         "type": "github"
       }
     },
-    "nixpkgs-bleeding": {
+    "nixpkgs-stable": {
       "locked": {
-        "lastModified": 1706371002,
-        "narHash": "sha256-dwuorKimqSYgyu8Cw6ncKhyQjUDOyuXoxDTVmAXq88s=",
+        "lastModified": 1706826059,
+        "narHash": "sha256-N69Oab+cbt3flLvYv8fYnEHlBsWwdKciNZHUbynVEOA=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "c002c6aa977ad22c60398daaa9be52f2203d0006",
+        "rev": "25e3d4c0d3591c99929b1ec07883177f6ea70c9d",
         "type": "github"
       },
       "original": {
         "owner": "nixos",
-        "ref": "nixos-unstable",
+        "ref": "nixos-23.11",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -349,7 +349,7 @@
         "hyprland": "hyprland",
         "hyprland-contrib": "hyprland-contrib",
         "nixpkgs": "nixpkgs",
-        "nixpkgs-bleeding": "nixpkgs-bleeding",
+        "nixpkgs-stable": "nixpkgs-stable",
         "nur": "nur",
         "wezterm": "wezterm",
         "zjstatus": "zjstatus"
