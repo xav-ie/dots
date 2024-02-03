@@ -14,6 +14,7 @@
     experimental-features = "nix-command flakes";
     keep-derivations = true;
   };
+  # unfortanately, this must be done in nix-darwin
   fonts.fontDir.enable = true;
   fonts.fonts = [ (pkgs.nerdfonts.override { fonts = [ "Meslo" ]; }) ];
   # allow sudo to use touch id
@@ -23,7 +24,7 @@
     # a lot of this is taken from https://github.com/shaunsingh/nix-darwin-dotfiles/commit/a457a0b2d0e68d810e3503f84217db8698dd9533
     yabai = {
       enable = true;
-      enableScriptingAddition = false;
+      enableScriptingAddition = true;
       config = {
         focus_follows_mouse = "autoraise";
         mouse_follows_focus = "off";
@@ -46,6 +47,11 @@
         right_padding = 4;
         window_gap = 4;
       };
+
+      # make every app fullscreen
+      extraConfig = ''
+        yabai -m rule --add app=".*" native-fullscreen=on
+      '';
     };
     skhd = {
       enable = true;
@@ -68,21 +74,20 @@
         # Open application
         # I really like application driven window management. I just want simple keybindings to
         # just go where I want. Only downside is new bindings must be added for new apps.
-        ctrl + 1 : open -a wezterm
-        ctrl + 2 : open -a "Microsoft Edge"
-        ctrl + 3 : open -a Slack
-        ctrl + 4 : open -a zoom.us
-        ctrl + 5 : open -a Bitwarden
-        ctrl + 6 : open -a Messages
-        ctrl + 7 : open -a Finder
-        ctrl + 8 : open -a Safari
+        ctrl + alt - 1 : open -a wezterm
+        ctrl + alt - 2 : open -a "Microsoft Edge"
+        ctrl + alt - 3 : open -a Slack
+        ctrl + alt - 4 : open -a zoom.us
+        ctrl + alt - 5 : open -a Bitwarden
+        ctrl + alt - 6 : open -a Messages
+        ctrl + alt - 7 : open -a Finder
+        ctrl + alt - 8 : open -a Safari
         # ctrl + alt - z : yabai -m window --focus $(yabai -m query --windows | jq '.[] | select(.app == "mpv").id')
         # ctrl + alt - t : yabai -m window --toggle float;\
         #  yabai -m window --grid 4:4:1:1:2:2
         # ctrl + alt - p : yabai -m window --toggle sticky;\
         #   yabai -m window --toggle topmost;\
         #   yabai -m window --toggle pip
-        # TODO: add space rules
         ctrl - right : yabai -m space --focus next
         ctrl - left : yabai -m space --focus prev
       '';

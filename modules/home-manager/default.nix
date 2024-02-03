@@ -1,4 +1,4 @@
-{ pkgs, ... }@inputs: {
+{ pkgs, ... }: {
   imports = [
     ./programs/zellij/default.nix
   ];
@@ -12,9 +12,7 @@
       gnumake
       jq
       magic-wormhole-rs # send files easily
-      microsoft-edge
       ripgrep
-      slack
       uair
       unzip
       wget
@@ -142,8 +140,6 @@
         gh = "cd";
         "g/" = "/";
         ee = "editor-open";
-        # TODO: make this work only when you have file selected. otherwise, enter folder
-        # l = "editor-open";
         V = ''''$${pkgs.bat}/bin/bat --paging always "$f"'';
       };
       settings = {
@@ -175,6 +171,12 @@
       extraConfig = ''
         -- Pull in the wezterm API
         local wezterm = require 'wezterm'
+        local mux = wezterm.mux
+
+        wezterm.on("gui-startup", function()
+          local tab, pane, window = mux.spawn_window{}
+          window:gui_window():maximize()
+        end)
 
         -- This table will hold the configuration.
         local config = {}
@@ -206,8 +208,7 @@
         -- and finally, return the configuration to wezterm
         return config
       '';
-      enableZshIntegration = false;
-      package = inputs.wezterm.outputs.packages.${pkgs.system}.default;
+      enableZshIntegration = true;
     };
     watson = {
       enable = true;
