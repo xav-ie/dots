@@ -7,10 +7,13 @@ let
 in
 {
   home = {
+    fonts.fontconfig.enable = true;
     packages = (with pkgs; [
       ################################
       # in triage - try to minimize this list
       ################################
+      microsoft-edge
+      slack
       asciinema # record shell sessions and share easily
       age # the new PGP
       blesh # bash extensions
@@ -72,6 +75,7 @@ in
       noisetorch # noise filter
       openrgb # pc rgb control
       pavucontrol # audio mixer
+      (pkgs.nerdfonts.override { fonts = [ "Meslo" ]; })
       playerctl # play, pause, next
       pulseaudio # provides pactl for volume control
       qutebrowser
@@ -144,6 +148,12 @@ in
           videospeed
         ];
       };
+    };
+    wezterm = {
+      # guess this does not work with the flake version
+      enableZshIntegration = false;
+      # enable flake version because it is more up to date
+      package = inputs.wezterm.outputs.packages.${pkgs.system}.default;
     };
   };
 
