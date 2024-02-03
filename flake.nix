@@ -96,7 +96,7 @@
         })
       ];
       nixModule = ({ config, pkgs, ... }: {
-        nixpkgs.overlays = [ overlays ];
+        nixpkgs.overlays = overlays;
         # This setting is important because it makes things like:
         # `nix run nixpkgs#some-package` makes it use the same reference of packages as in your 
         # flake.lock, which helps prevent the package from being different every time you run it
