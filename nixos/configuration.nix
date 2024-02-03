@@ -108,10 +108,10 @@
   # environment.sessionVariables = {
   # };
 
-  # TODO: move this into home-manager
-  fonts.packages = with pkgs; [
-    nerdfonts
-  ];
+  # TODO: check this works in home-manager
+  # fonts.packages = with pkgs; [
+  #   nerdfonts
+  # ];
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
@@ -120,27 +120,13 @@
   #   enable = true;
   #   enableSSHSupport = true;
   # };
-  # my hunch is that these should be moved to home manager
+
   programs = {
-    # TODO: can I get this into home-manager?
     hyprland = {
       enable = true;
       xwayland.enable = true;
       package = inputs.hyprland.packages."${pkgs.system}".hyprland;
-      # portalPackage = pkgs.xdg-desktop-portal-hyprland.overrideAttrs (oldAttrs: {
-      #   # 1.2.2 has key fixes for nvidia cards for newest hyprland.. but hyprland still borked
-      #   # 1.2.3 has some bugfixes
-      #   version = "1.2.3";
-      #
-      #   src = pkgs.fetchFromGitHub {
-      #     owner = "hyprwm";
-      #     repo = "xdg-desktop-portal-hyprland";
-      #     rev = "v1.2.3";
-      #     hash = "sha256-y8q4XUwx+gVK7i2eLjfR32lVo7TYvEslyzrmzYEaPZU=";
-      #   };
-      # });
-      # sets this option for us
-      # xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-hyprland ];
+      # TODO: additional settings should occur in home-manager
     };
     nix-ld.enable = true;
     # must be enabled system-wide in order to be a default shell
