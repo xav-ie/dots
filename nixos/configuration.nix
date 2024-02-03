@@ -167,9 +167,11 @@
     gnome.gnome-keyring.enable = true;
     openssh = {
       enable = true;
+      # since I use zellij, I don't mind disconnecting often and just reconnecting to my session;
+      # I want to avoid stale/unresponsive connections
       extraConfig = ''
-        ClientAliveInterval 60
-        ClientAliveCountMax 5
+        ClientAliveInterval 30
+        ClientAliveCountMax 3
       '';
     };
     pipewire = {
