@@ -76,8 +76,27 @@
       userName = "xav-ie";
       userEmail = "xruizify@gmail.com";
       aliases = {
+
+        bb = ''!${./dotfiles/betterbranch.sh}'';
+        bblame = "blame -w -C -C -C";
+        cam = "commit -am";
+        c = "commit";
+        dc = "diff --cached --ignore-all-space --ignore-space-at-eol --ignore-space-change --ignore-blank-lines -- . ':(exclude)*package-lock.json' -- . ':(exclude)*yarn.lock'";
+        d = "diff --ignore-all-space --ignore-space-at-eol --ignore-space-change --ignore-blank-lines -- . ':(exclude)*package-lock.json' -- . ':(exclude)*yarn.lock'";
         graph = "log --graph --pretty=tformat:'%C(bold blue)%h%Creset %s %C(bold green)%d%Creset %C(blue)<%an>%Creset %C(dim cyan)%cr' --abbrev-commit --decorate";
+        main = "!(git fetch && git fetch --tags && git checkout -B main origin/main)";
+        p = "push";
+        pr = ''!(GH_FORCE_TTY=100% gh pr list | fzf --ansi --preview 'GH_FORCE_TTY=100% gh pr view {1}' --preview-window up --header-lines 3 | awk '{print $1}' | xargs -r gh pr checkout)'';
+        s = "status";
+        staash = "stash --all";
+        # git log -L :functionName:/path/to/file
+        # git blame -L :functionName:/path/to/file
+        # git log -S your_regex -p 
+        # git reflog <- idk what this does other than show history
+
       };
+      # attributes = {
+      # };
       # I am guessing this option sets up the options I set in extraConfig
       delta = {
         enable = true;
@@ -92,6 +111,11 @@
           # configured by delta.enable=true
           # pager = "delta";
         };
+        branch.sort = "-committerdate";
+        column.ui = "auto";
+        rerere.enabled = true;
+        fetch.writeCommitGraph = true;
+        remote.origin.fetch = "+refs/pull/*:refs/remotes/origin/pull/*";
         interactive = {
           # configured by delta.enable=true
           # diffFilter = "delta --color-only";
@@ -219,15 +243,6 @@
       enableAutosuggestions = true;
       syntaxHighlighting.enable = true;
       shellAliases = {
-        gc = "git commit";
-        gcam = "gc -am";
-        gd = "git diff --ignore-all-space --ignore-space-at-eol --ignore-space-change --ignore-blank-lines -- . ':(exclude)*package-lock.json' -- . ':(exclude)*yarn.lock'";
-        gdc = "git diff --cached --ignore-all-space --ignore-space-at-eol --ignore-space-change --ignore-blank-lines -- . ':(exclude)*package-lock.json' -- . ':(exclude)*yarn.lock'";
-        gp = "git push";
-        gs = "git status";
-        gpr = "GH_FORCE_TTY=100% gh pr list | fzf --ansi --preview 'GH_FORCE_TTY=100% gh pr view {1}' --preview-window up --header-lines 3 | awk '{print \$1}' | xargs gh pr checkout";
-        #ls = "exa";
-        main = "git fetch && git fetch --tags && git checkout -B main origin/main";
         n = "NIXPKGS_ALLOW_UNFREE=1 exec nix shell --impure nixpkgs#nodejs-18_x nixpkgs#yarn nixpkgs#cloudflared nixpkgs#terraform nixpkgs#google-cloud-sdk nixpkgs#bun nixpkgs#nodePackages.\"prettier\" nixpkgs#deno nixpkgs#prettierd";
         w = "watson";
         nvim = "~/Projects/xnixvim/result/bin/nvim";
