@@ -77,7 +77,7 @@ in
       (pkgs.nerdfonts.override { fonts = [ "Meslo" ]; })
       playerctl # play, pause, next
       pulseaudio # provides pactl for volume control
-      qutebrowser
+      # qutebrowser
       sioyek # vimified pdf viewer
       ################################
       # hyprland
