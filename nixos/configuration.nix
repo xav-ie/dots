@@ -40,8 +40,8 @@
     # Enables wireless support via wpa_supplicant.
     # wireless.enable = true; 
     # nameservers = [ "127.0.0.1" "::1" ];
-    # nameservers = [ "1.1.1.1" "9.9.9.9" ];
-    nameservers = [ "1.1.1.1#one.one.one.one" "1.0.0.1#one.one.one.one" ];
+    nameservers = [ "1.1.1.1" "9.9.9.9" ];
+    # nameservers = [ "1.1.1.1#one.one.one.one" "1.0.0.1#one.one.one.one" ];
 
     # dhcpcd.extraConfig = "nohook resolv.conf";
 
@@ -54,7 +54,7 @@
       enable = true;
       # do not override my dns?
       # dns = "none";
-      # dns = "systemd-resolved";
+      dns = "systemd-resolved";
     };
 
     # Open ports in the firewall.
@@ -195,7 +195,7 @@
       '';
     };
 
-    twingate.enable = true;
+    # twingate.enable = true;
     udev = {
       packages = [ pkgs.openrgb ];
       extraRules = ''
