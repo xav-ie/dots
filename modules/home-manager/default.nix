@@ -26,7 +26,6 @@
     ] ++ [
       # experimental
       bun
-      comma
       deno
       ollama
     ]
