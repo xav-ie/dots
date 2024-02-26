@@ -17,7 +17,20 @@
       unzip
       wget
       zip
-    ];
+    ] ++ [
+      # the shell I use most often
+      nodejs
+      cloudflared
+      python3
+      yarn
+    ] ++ [
+      # experimental
+      bun
+      comma
+      deno
+      ollama
+    ]
+    ;
     # The state version is required and should stay at the version you
     # originally installed.
     stateVersion = "23.11";
@@ -49,6 +62,7 @@
           blur = true;
           #option_as_alt = "Both";
         };
+        import = [ pkgs.alacritty-theme.iterm ];
       };
     };
     bat = {
