@@ -165,16 +165,16 @@ in
   };
 
   xdg.mimeApps.defaultApplications = {
-    "text/plain" = [ "microsoft-edge.desktop" ];
+    "text/plain" = [ "firefox.desktop" ];
     "application/pdf" = [ "sioyek.desktop" ];
-    "image/*" = [ "microsoft-edge.desktop" ];
+    "image/*" = [ "firefox.desktop" ];
     "video/*" = [ "mpv.desktop" ];
-    "text/html" = [ "microsoft-edge.desktop" ];
-    "x-scheme-handler/http" = [ "microsoft-edge.desktop" ];
-    "x-scheme-handler/https" = [ "microsoft-edge.desktop" ];
-    "x-scheme-handler/ftp" = [ "microsoft-edge.desktop" ];
-    "application/xhtml+xml" = [ "microsoft-edge.desktop" ];
-    "application/xml" = [ "microsoft-edge.desktop" ];
+    "text/html" = [ "firefox.desktop" ];
+    "x-scheme-handler/http" = [ "firefox.desktop" ];
+    "x-scheme-handler/https" = [ "firefox.desktop" ];
+    "x-scheme-handler/ftp" = [ "firefox.desktop" ];
+    "application/xhtml+xml" = [ "firefox.desktop" ];
+    "application/xml" = [ "firefox.desktop" ];
   };
   # Nicely reload system units when changing configs
   systemd.user.startServices = "sd-switch";

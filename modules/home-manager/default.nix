@@ -34,7 +34,7 @@
     # originally installed.
     stateVersion = "23.11";
     sessionVariables = {
-      BROWSER = "microsoft-edge";
+      BROWSER = "firefox";
       EDITOR = "$HOME/Projects/xnixvim/result/bin/nvim";
       LANG = "en_US.UTF-8";
       LC_ALL = "en_US.UTF-8";
