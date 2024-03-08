@@ -87,9 +87,8 @@
     git = {
       enable = true;
       userName = "xav-ie";
-      userEmail = "xruizify@gmail.com";
+      # userEmail = "github@xav.ie";
       aliases = {
-
         bb = ''!${./dotfiles/betterbranch.sh}'';
         bblame = "blame -w -C -C -C";
         cam = "commit -am";
@@ -139,12 +138,22 @@
         #   line-numbers = true;
         #   true-color = "always";
         # };
+        init = {
+          defaultBranch = "main";
+        };
         merge = {
           conflictstyle = "diff3";
         };
         diff = {
           colorMoved = "default";
         };
+        "includeIf \"gitdir:~/\"" = {
+          path = "~/.config/git/config.default";
+        };
+        "includeIf \"gitdir:~/Outsmartly/\"" = {
+          path = "~/.config/git/config.work";
+        };
+
       };
     };
     #gh = {
@@ -303,4 +312,6 @@
   home.file.".config/scripts/remove_video_silence.py".source = ./dotfiles/remove_video_silence.py;
   home.file.".config/gh-dash/config.yml".source = ./dotfiles/gh-dash/config.yml;
   home.file.".config/uair/uair.toml".source = ./dotfiles/uair.toml;
+  home.file.".config/git/config.default".source = ./dotfiles/default.gitconfig;
+  home.file.".config/git/config.work".source = ./dotfiles/outsmartly.gitconfig;
 }
