@@ -12,6 +12,7 @@
       gnumake
       jq
       magic-wormhole-rs # send files easily
+      moar # the best pager
       ripgrep
       uair
       unzip
@@ -38,7 +39,7 @@
       EDITOR = "$HOME/Projects/xnixvim/result/bin/nvim";
       LANG = "en_US.UTF-8";
       LC_ALL = "en_US.UTF-8";
-      PAGER = "bat";
+      PAGER = "bat -p --pager=\"moar\"";
       TERMINAL = "wezterm";
       # get more colors
       HSTR_CONFIG = "hicolor";

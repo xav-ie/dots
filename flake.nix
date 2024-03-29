@@ -122,6 +122,7 @@
           modules = [
             nixModule
             ./nixos/configuration.nix
+            ./modules/linux
             nur.nixosModules.nur
             home-manager.nixosModules.home-manager
             {

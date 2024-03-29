@@ -196,6 +196,20 @@ in
     };
   };
 
+  systemd.user.services = {
+    ollama-server = {
+      Unit = {
+        Description = "Run ollama server";
+      };
+      Install = {
+        WantedBy = [ "default.target" ];
+      };
+      Service = {
+        ExecStart = "${pkgs.ollama}/bin/ollama serve";
+      };
+    };
+  };
+
   xdg.mimeApps.defaultApplications = {
     "text/plain" = [ "firefox.desktop" ];
     "application/pdf" = [ "sioyek.desktop" ];
