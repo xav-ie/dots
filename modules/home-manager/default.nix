@@ -41,7 +41,7 @@
       LC_ALL = "en_US.UTF-8";
       # causes bug if set. dont do it!
       BAT_PAGER = "";
-      PAGER = "bat -p --pager=\"moar -quit-if-one-screen\"";
+      PAGER = "bat -p --pager=\"moar -quit-if-one-screen\" --terminal-width=$(expr $COLUMNS - 4)";
       MOAR = "-quit-if-one-screen";
       TERMINAL = "wezterm";
       # get more colors
@@ -76,6 +76,7 @@
         pager = "moar -quit-if-one-screen";
         paging = "auto";
         style = "plain";
+        wrap = "character";
       };
     };
     btop.enable = true;
