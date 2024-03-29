@@ -209,27 +209,45 @@ in
           ExecStart = "${pkgs.ollama}/bin/ollama serve";
         };
       };
-      # https://github.com/hlissner/dotfiles/blob/089f1a9da9018df9e5fc200c2d7bef70f4546026/hosts/server.nix#L28
-      # I am not sure how/if I should make these user servies
-      # You should not, but keeping this user example here for future reference
-      # services.clear-log = {
-      #   Unit = {
-      #     Description = "Clear >1 month-old logs";
-      #   };
-      #   Service = {
-      #     Type = "oneshot";
-      #     ExecStart = "${pkgs.systemd}/bin/journalctl --vacuum-time=21d";
-      #   };
-      # };
-      # timers.clear-log = {
-      #   Unit = { Description = "Clear >1 month-old logs weekly"; };
-      #   Timer = {
-      #     Unit = "clear-log.service";
-      #     OnCalendar = "weekly UTC";
-      #     Persistent = true;
-      #   };
-      #   Install = { WantedBy = [ "timers.target" ]; };
-      # };
+
+      # Zoom and Slack love to "helpfully" stay open even when I kill them through UI
+      services.kill-spyware = {
+        Unit = {
+          Description = "Stop spyware";
+        };
+        Service = {
+          Type = "oneshot";
+          ExecStart = ./dotfiles/kill-spyware.sh;
+        };
+      };
+      timers.kill-spyware = {
+        Unit = { Description = "Stop spyware after working hours"; };
+        Timer = {
+          Unit = "kill-spyware.service";
+          OnCalendar = "18:00";
+          Persistent = true;
+        };
+        Install = { WantedBy = [ "timers.target" ]; };
+      };
+
+      services.start-work = {
+        Unit = {
+          Description = "Start work programs";
+        };
+        Service = {
+          Type = "oneshot";
+          ExecStart = ./dotfiles/start-work.sh;
+        };
+      };
+      timers.start-work = {
+        Unit = { Description = "Start work programs every weekday at 9am"; };
+        Timer = {
+          Unit = "start-work.service";
+          OnCalendar = "Mon..Fri 09:00";
+          Persistent = true;
+        };
+        Install = { WantedBy = [ "timers.target" ]; };
+      };
     };
   };
 
