@@ -39,7 +39,10 @@
       EDITOR = "$HOME/Projects/xnixvim/result/bin/nvim";
       LANG = "en_US.UTF-8";
       LC_ALL = "en_US.UTF-8";
-      PAGER = "bat -p --pager=\"moar\"";
+      # causes bug if set. dont do it!
+      BAT_PAGER = "";
+      PAGER = "bat -p --pager=\"moar -quit-if-one-screen\"";
+      MOAR = "-quit-if-one-screen";
       TERMINAL = "wezterm";
       # get more colors
       HSTR_CONFIG = "hicolor";
@@ -68,7 +71,12 @@
     };
     bat = {
       enable = true;
-      config.theme = "TwoDark";
+      config = {
+        theme = "ansi";
+        pager = "moar -quit-if-one-screen";
+        paging = "auto";
+        style = "plain";
+      };
     };
     btop.enable = true;
     direnv = {
@@ -113,7 +121,7 @@
       # };
       # I am guessing this option sets up the options I set in extraConfig
       delta = {
-        enable = true;
+        # enable = true;
         options = {
           navigate = true;
           line-numbers = true;
@@ -123,7 +131,9 @@
       extraConfig = {
         core = {
           # configured by delta.enable=true
-          # pager = "delta";
+          # actually had to override that ^ 
+          # in order to get better column width output
+          pager = "delta -n -w $COLUMNS-4";
         };
         branch.sort = "-committerdate";
         column.ui = "auto";
@@ -132,7 +142,8 @@
         remote.origin.fetch = "+refs/pull/*:refs/remotes/origin/pull/*";
         interactive = {
           # configured by delta.enable=true
-          # diffFilter = "delta --color-only";
+          # idk what this does
+          # diffFilter = "delta -w 226 -s -n";
         };
         # configured by delta.enable=true
         # delta = {
@@ -267,6 +278,10 @@
       enableAutosuggestions = true;
       syntaxHighlighting.enable = true;
       shellAliases = {
+        # this is for commands that do not properly adjust their output to given width
+        c4 = "COLUMNS=$COLUMNS-4";
+        # I could not get man to respect pager width
+        man = "c4 env man";
         n = "NIXPKGS_ALLOW_UNFREE=1 exec nix shell --impure nixpkgs#nodejs-18_x nixpkgs#yarn nixpkgs#cloudflared nixpkgs#terraform nixpkgs#google-cloud-sdk nixpkgs#bun nixpkgs#nodePackages.\"prettier\" nixpkgs#deno nixpkgs#prettierd";
         w = "watson";
         nvim = "~/Projects/xnixvim/result/bin/nvim";
