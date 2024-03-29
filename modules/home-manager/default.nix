@@ -281,11 +281,12 @@
       shellAliases = {
         # this is for commands that do not properly adjust their output to given width
         c4 = "COLUMNS=$COLUMNS-4";
+        info = "env info --vi-keys";
         # I could not get man to respect pager width
         man = "c4 env man";
         n = "NIXPKGS_ALLOW_UNFREE=1 exec nix shell --impure nixpkgs#nodejs-18_x nixpkgs#yarn nixpkgs#cloudflared nixpkgs#terraform nixpkgs#google-cloud-sdk nixpkgs#bun nixpkgs#nodePackages.\"prettier\" nixpkgs#deno nixpkgs#prettierd";
-        w = "watson";
         nvim = "~/Projects/xnixvim/result/bin/nvim";
+        w = "watson";
         zj = "zellij attach || zellij";
       };
       initExtra = ''
