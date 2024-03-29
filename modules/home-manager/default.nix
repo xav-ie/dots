@@ -62,6 +62,7 @@
           #option_as_alt = "Both";
         };
         import = [ pkgs.alacritty-theme.iterm ];
+        # import = [ pkgs.alacritty-theme.papercolor_light ];
       };
     };
     bat = {

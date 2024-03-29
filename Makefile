@@ -1,11 +1,3 @@
-.PHONY: init
-init:
-	nix run home-manager/master -- init --switch
-
-.PHONY: docs
-docs: README.norg
-	nvim --headless -c "edit README.norg" -c "Neorg export to-file README.md" -c "q"
-
 .PHONY: system
 system:
 ifeq ($(shell uname -s), Darwin)
@@ -15,6 +7,16 @@ else
 endif
 	# if using home-manager externally to config
 	# home-manager switch
+
+# buggy
+.PHONY: init
+init:
+	nix run home-manager/master -- init --switch
+
+.PHONY: docs
+docs: README.norg
+	nvim --headless -c "edit README.norg" -c "Neorg export to-file README.md" -c "q"
+
 
 .PHONY: bleed
 bleed:
