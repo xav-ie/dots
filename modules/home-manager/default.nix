@@ -122,7 +122,9 @@
       # };
       # I am guessing this option sets up the options I set in extraConfig
       delta = {
-        # enable = true;
+        # I think it might not be worth it to turn this off and try and set up
+        # yourself. There is a lot of set up this one flag does
+        enable = true;
         options = {
           navigate = true;
           line-numbers = true;
@@ -134,7 +136,8 @@
           # configured by delta.enable=true
           # actually had to override that ^ 
           # in order to get better column width output
-          pager = "delta -n -w $COLUMNS-4";
+          # pager = "delta -n -w $(expr $COLUMNS - 4)";
+          # pager = "delta";
         };
         branch.sort = "-committerdate";
         column.ui = "auto";
@@ -143,8 +146,9 @@
         remote.origin.fetch = "+refs/pull/*:refs/remotes/origin/pull/*";
         interactive = {
           # configured by delta.enable=true
-          # idk what this does
-          # diffFilter = "delta -w 226 -s -n";
+          # this is used for diff patches
+          # diffFilter = "delta";
+          # diffFilter = "delta -n -w $(expr $COLUMNS - 4)";
         };
         # configured by delta.enable=true
         # delta = {
@@ -170,10 +174,6 @@
 
       };
     };
-    #gh = {
-    #  enable = true;
-    #  extensions = [pkgs.gh-dash];
-    #};
     # heavily borrowed from https://www.youtube.com/watch?v=z8y_qRUYEWU
     lf = {
       enable = true;
