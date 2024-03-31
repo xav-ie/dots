@@ -148,7 +148,6 @@
           # configured by delta.enable=true
           # this is used for diff patches
           # diffFilter = "delta";
-          # diffFilter = "delta -n -w $(expr $COLUMNS - 4)";
         };
         # configured by delta.enable=true
         # delta = {
