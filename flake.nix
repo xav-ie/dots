@@ -106,12 +106,21 @@
       ];
       nixModule = ({ config, pkgs, ... }: {
         nixpkgs.overlays = overlays;
-        # This setting is important because it makes things like:
-        # `nix run nixpkgs#some-package` makes it use the same reference of packages as in your 
-        # flake.lock, which helps prevent the package from being different every time you run it
-        nix.registry.nixpkgs.flake = self.inputs.nixpkgs;
+        nix.registry = {
+          # This setting is important because it makes things like:
+          # `nix run nixpkgs#some-package` makes it use the same reference of packages as in your 
+          # flake.lock, which helps prevent the package from being different every time you run it
+          home-manager.flake = self.inputs.home-manager;
+          nixpkgs.flake = self.inputs.nixpkgs;
+          nur.flake = self.inputs.nur;
+        };
         nixpkgs.config = {
           allowUnfree = true;
+          packageOverrides = pkgs: {
+            nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
+              inherit pkgs;
+            };
+          };
         };
       });
     in
