@@ -74,7 +74,8 @@ in
       noisetorch # noise filter
       openrgb # pc rgb control
       pavucontrol # audio mixer
-      (pkgs.nerdfonts.override { fonts = [ "Meslo" ]; })
+      nerdfonts
+      # (pkgs.nerdfonts.override { fonts = [ "Meslo" ]; })
       playerctl # play, pause, next
       pulseaudio # provides pactl for volume control
       # qutebrowser
