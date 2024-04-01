@@ -101,9 +101,10 @@
   # nixpkgs.overlays = with pkgs; [
   # ];
 
-  # environment.systemPackages =
-  #   (with pkgs; [
-  #   ]) ;
+  environment.systemPackages =
+    (with pkgs; [
+      nur.repos.dustinblackman.oatmeal
+    ]) ;
 
   # environment.sessionVariables = {
   # };
