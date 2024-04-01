@@ -113,7 +113,7 @@
     };
     eza = {
       enable = true;
-      enableAliases = true;
+      enableZshIntegration = true;
       git = true;
       icons = true;
     };
@@ -156,6 +156,7 @@
           navigate = true;
           line-numbers = true;
           true-color = "always";
+          dark = true;
         };
       };
       extraConfig = {
