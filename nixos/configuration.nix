@@ -104,7 +104,7 @@
   environment.systemPackages =
     (with pkgs; [
       nur.repos.dustinblackman.oatmeal
-    ]) ;
+    ]);
 
   # environment.sessionVariables = {
   # };
@@ -206,8 +206,10 @@
     };
     # Configure keymap in X11
     xserver = {
-      layout = "us";
-      xkbVariant = "";
+      xkb = {
+        layout = "us";
+        variant = "";
+      };
       videoDrivers = [ "nvidia" ];
     };
   };
