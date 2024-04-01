@@ -106,8 +106,25 @@
       nur.repos.dustinblackman.oatmeal
     ]);
 
-  # environment.sessionVariables = {
-  # };
+  # trying to fix hypr anomalies
+  environment.sessionVariables = {
+    BROWSER = "firefox";
+    EDITOR = "$HOME/Projects/xnixvim/result/bin/nvim";
+    LANG = "en_US.UTF-8";
+    LC_ALL = "en_US.UTF-8";
+    # causes bug if set. dont do it!
+    BAT_PAGER = "";
+    PAGER = "bat -p --pager=\"moar -quit-if-one-screen\" --terminal-width=$(expr $COLUMNS - 4)";
+    MOAR = "-quit-if-one-screen";
+    TERMINAL = "wezterm";
+    # get more colors
+    HSTR_CONFIG = "hicolor";
+    # leading space hides commands from history
+    HISTCONTROL = "ignorespace";
+    # increase history file size (default is 500)
+    HISTFILESIZE = "10000";
+    PATH = "$HOME/.config/scripts/:$PATH";
+  };
 
   # fonts.packages = with pkgs; [
   #   nerdfonts
