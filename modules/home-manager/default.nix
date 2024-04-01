@@ -67,6 +67,28 @@
         };
         import = [ pkgs.alacritty-theme.iterm ];
         # import = [ pkgs.alacritty-theme.papercolor_light ];
+        keyboard.bindings = [
+            {
+              key = "Tab";
+              mods = "Control";
+              command = { program = "zellij"; args = ["action" "go-to-next-tab"]; };
+            }
+            {
+              key = "Tab";
+              mods = "Control|Shift";
+              command = { program = "zellij"; args = ["action" "go-to-previous-tab"]; };
+            }
+            {
+              key = "Tab";
+              mods = "Alt";
+              command = { program = "zellij"; args = ["action" "focus-next-pane"]; };
+            }
+            {
+              key = "Tab";
+              mods = "Alt|Shift";
+              command = { program = "zellij"; args = ["action" "focus-previous-pane"]; };
+            }
+          ];
       };
     };
     bat = {
