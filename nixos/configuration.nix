@@ -2,6 +2,7 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 { inputs
+, outputs
 , lib
 , config
 , pkgs
@@ -93,18 +94,21 @@
     };
   };
 
-  # Allow unfree packages
-  nixpkgs.config.allowUnfree = true;
-  # now you don't have to pass --impure when trying to run nix commands
-  nixpkgs.config.allowUnfreePredicate = _: true;
 
-  # nixpkgs.overlays = with pkgs; [
-  # ];
+  nixpkgs = {
+    overlays = builtins.attrValues outputs.overlays;
+    # Allow unfree packages
+    config.allowUnfree = true;
+    # now you don't have to pass --impure when trying to run nix commands
+    config.allowUnfreePredicate = _: true;
+  };
 
   environment.systemPackages =
-    (with pkgs; [
+    (with pkgs;
+    [
       nur.repos.dustinblackman.oatmeal
-    ]);
+      # TODO: put this in a better place
+    ]) ++ [ pkgs.cache-command ];
 
   # trying to fix hypr anomalies
   environment.sessionVariables = {
