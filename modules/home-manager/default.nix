@@ -94,6 +94,7 @@
     atuin = {
       enable = true;
       enableZshIntegration = true;
+      settings.style = "compact";
     };
     bat = {
       enable = true;
