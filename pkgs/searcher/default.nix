@@ -15,10 +15,10 @@ writeShellApplication {
     fi
 
     # Step 1: Run the nix search and prepare selection options with package names and keys
-    options=$(nix search - -json "$repo" "$@" | jq - r 'to_entries [ ] | "\(.value.pname) \(.key)"')
+    options=$(nix search --json "$repo" "$@" | jq -r 'to_entries [ ] | "\(.value.pname) \(.key)"')
 
     # Step 2: Use fzf to let the user select a package, then generate and display its metadata
-    selected=$(echo "$options" | fzf - -ansi - -preview-window=right:70%:wrap --preview="echo {2} | xargs -I {} nix eval --json ''${repo}#{}.meta | jq -C . " -d ' ')
+    selected=$(echo "$options" | fzf --ansi --preview-window=right:70%:wrap --preview="echo {2} | xargs -I {} nix eval --json ''${repo}#{}.meta | jq -C . " -d ' ')
 
     # Extract the package key from the selection for further processing if needed
     pkg_key=$(echo "$selected" | awk '{print $2}')
