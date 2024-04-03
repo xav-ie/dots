@@ -28,7 +28,7 @@ in
       xidel # like jq but for html and much more advanced.
       # required by mpvScripts.webtorrent-mpv-hook
       pciutils
-      pinentry-gnome # I wish I could figure out pinentry-rofi but it does not work
+      pinentry-gnome3 # I wish I could figure out pinentry-rofi but it does not work
       # prusa-slicer                # does not launch currently
       python312Packages."adblock"
       rofi-rbw # bitwarden cli wrapper
@@ -74,7 +74,8 @@ in
       noisetorch # noise filter
       openrgb # pc rgb control
       pavucontrol # audio mixer
-      (pkgs.nerdfonts.override { fonts = [ "Meslo" ]; })
+      nerdfonts
+      # (pkgs.nerdfonts.override { fonts = [ "Meslo" ]; })
       playerctl # play, pause, next
       pulseaudio # provides pactl for volume control
       # qutebrowser
@@ -191,7 +192,7 @@ in
   services = {
     gpg-agent = {
       enable = true;
-      pinentryFlavor = "gnome3";
+      pinentryPackage = pkgs.pinentry-gnome3;
       enableSshSupport = true;
     };
   };
