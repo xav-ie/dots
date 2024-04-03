@@ -37,6 +37,9 @@
     nixpkgs-stable = {
       url = "github:nixos/nixpkgs/nixos-23.11";
     };
+    nixpkgs-staging-next = {
+      url = "github:nixos/nixpkgs/staging-next";
+    };
     nur = {
       url = "github:nix-community/NUR";
     };
@@ -58,6 +61,7 @@
     , home-manager
     , hyprland-contrib
     , nixpkgs
+    , nixpkgs-staging-next
     , nur
     , self
     , wezterm
@@ -135,6 +139,9 @@
         config.allowUnfree = true;
       });
       forEachSystem = f: lib.genAttrs systems (system: f pkgsFor.${system});
+      pkgs-staging-next = import nixpkgs-staging-next {
+        system = "x86_64-linux";
+      };
     in
     {
       # TODO: make the import of this global like misterio
@@ -144,7 +151,7 @@
       nixosConfigurations = {
         nixos = nixpkgs.lib.nixosSystem {
           specialArgs = {
-            inherit inputs nur wezterm zjstatus outputs;
+            inherit inputs nur wezterm zjstatus outputs pkgs-staging-next;
           };
           modules = [
             nixModule

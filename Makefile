@@ -3,7 +3,7 @@ system:
 ifeq ($(shell uname -s), Darwin)
 	darwin-rebuild switch --flake .
 else
-	sudo nixos-rebuild switch --flake .
+	sudo nixos-rebuild switch --impure --flake .
 	@echo "Checking for bad systemd user units..."
 	systemctl --user list-unit-files | awk '{print $1}' | while read unit; do systemctl --user status "$unit" 2>&1 | grep -q 'bad-setting' && echo "Bad setting in $unit" || true; done
 endif
