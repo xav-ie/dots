@@ -16,6 +16,7 @@
       ripgrep
       uair
       unzip
+      tree
       wget
       zip
     ] ++ [
