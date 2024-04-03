@@ -107,8 +107,10 @@
     (with pkgs;
     [
       nur.repos.dustinblackman.oatmeal
-      # TODO: put this in a better place
-    ]) ++ [ pkgs.cache-command ];
+      # TODO: put these in a better place
+      cache-command
+      searcher
+    ]);
 
   # trying to fix hypr anomalies
   environment.sessionVariables = {
