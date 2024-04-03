@@ -9,6 +9,8 @@
 
   # Personal scripts
   cache-command = pkgs.callPackage ./cache-command { };
+  ff = pkgs.callPackage ./ff { };
+  nvim = pkgs.callPackage ./nvim { };
   searcher = pkgs.callPackage ./searcher { };
   # nix-inspect = pkgs.callPackage ./nix-inspect { };
   # minicava = pkgs.callPackage ./minicava { };
