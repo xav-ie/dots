@@ -118,7 +118,10 @@
     LC_ALL = "en_US.UTF-8";
     # causes bug if set. dont do it!
     BAT_PAGER = "";
-    PAGER = "bat -p --pager=\"moar -quit-if-one-screen\" --terminal-width=$(expr $COLUMNS - 4)";
+    # PAGER = ''bat -p --pager="moar -quit-if-one-screen" --terminal-width=\$(expr $COLUMNS - 4)'';
+    # PAGER = ''bat -p --terminal-width=123 --pager="moar -quit-if-one-screen" '';
+    # TODO: figure out the numbers thing
+    PAGER = ''bat -p --terminal-width=123 --pager="moar" '';
     MOAR = "-quit-if-one-screen";
     TERMINAL = "wezterm";
     # get more colors
