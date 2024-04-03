@@ -9,6 +9,7 @@
 
   # Personal scripts
   cache-command = pkgs.callPackage ./cache-command { };
+  searcher = pkgs.callPackage ./searcher { };
   # nix-inspect = pkgs.callPackage ./nix-inspect { };
   # minicava = pkgs.callPackage ./minicava { };
   # pass-wofi = pkgs.callPackage ./pass-wofi { };
