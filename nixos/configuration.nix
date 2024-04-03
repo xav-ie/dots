@@ -2,6 +2,7 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 { inputs
+, outputs
 , lib
 , config
 , pkgs
@@ -93,21 +94,41 @@
     };
   };
 
-  # Allow unfree packages
-  nixpkgs.config.allowUnfree = true;
-  # now you don't have to pass --impure when trying to run nix commands
-  nixpkgs.config.allowUnfreePredicate = _: true;
 
-  # nixpkgs.overlays = with pkgs; [
-  # ];
+  nixpkgs = {
+    overlays = builtins.attrValues outputs.overlays;
+    # Allow unfree packages
+    config.allowUnfree = true;
+    # now you don't have to pass --impure when trying to run nix commands
+    config.allowUnfreePredicate = _: true;
+  };
 
   environment.systemPackages =
-    (with pkgs; [
+    (with pkgs;
+    [
       nur.repos.dustinblackman.oatmeal
-    ]);
+      # TODO: put this in a better place
+    ]) ++ [ pkgs.cache-command ];
 
-  # environment.sessionVariables = {
-  # };
+  # trying to fix hypr anomalies
+  environment.sessionVariables = {
+    BROWSER = "firefox";
+    EDITOR = "$HOME/Projects/xnixvim/result/bin/nvim";
+    LANG = "en_US.UTF-8";
+    LC_ALL = "en_US.UTF-8";
+    # causes bug if set. dont do it!
+    BAT_PAGER = "";
+    PAGER = "bat -p --pager=\"moar -quit-if-one-screen\" --terminal-width=$(expr $COLUMNS - 4)";
+    MOAR = "-quit-if-one-screen";
+    TERMINAL = "wezterm";
+    # get more colors
+    HSTR_CONFIG = "hicolor";
+    # leading space hides commands from history
+    HISTCONTROL = "ignorespace";
+    # increase history file size (default is 500)
+    HISTFILESIZE = "10000";
+    PATH = "$HOME/.config/scripts/:$PATH";
+  };
 
   # fonts.packages = with pkgs; [
   #   nerdfonts
