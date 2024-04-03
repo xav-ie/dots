@@ -94,6 +94,7 @@
     atuin = {
       enable = true;
       enableZshIntegration = true;
+      settings.style = "compact";
     };
     bat = {
       enable = true;
@@ -113,7 +114,7 @@
     };
     eza = {
       enable = true;
-      enableAliases = true;
+      enableZshIntegration = true;
       git = true;
       icons = true;
     };
@@ -134,9 +135,9 @@
         dc = "diff --cached --ignore-all-space --ignore-space-at-eol --ignore-space-change --ignore-blank-lines -- . ':(exclude)*package-lock.json' -- . ':(exclude)*yarn.lock'";
         d = "diff --ignore-all-space --ignore-space-at-eol --ignore-space-change --ignore-blank-lines -- . ':(exclude)*package-lock.json' -- . ':(exclude)*yarn.lock'";
         graph = "log --graph --pretty=tformat:'%C(bold blue)%h%Creset %s %C(bold green)%d%Creset %C(blue)<%an>%Creset %C(dim cyan)%cr' --abbrev-commit --decorate";
-        main = "!(git fetch && git fetch --tags && git checkout -B main origin/main)";
+        main = /*bash*/"!(git fetch && git fetch --tags && git checkout -B main origin/main)";
         p = "push";
-        pr = ''!(GH_FORCE_TTY=100% gh pr list | fzf --ansi --preview 'GH_FORCE_TTY=100% gh pr view {1}' --preview-window up --header-lines 3 | awk '{print $1}' | xargs -r gh pr checkout)'';
+        pr = /*bash*/"!(GH_FORCE_TTY=100% gh pr list | fzf --ansi --preview 'GH_FORCE_TTY=100% gh pr view {1}' --preview-window up --header-lines 3 | awk '{print $1}' | xargs -r gh pr checkout)";
         s = "status";
         staash = "stash --all";
         # git log -L :functionName:/path/to/file
@@ -156,6 +157,7 @@
           navigate = true;
           line-numbers = true;
           true-color = "always";
+          dark = true;
         };
       };
       extraConfig = {
@@ -206,11 +208,11 @@
       commands = {
         dragon-out = ''%${pkgs.xdragon}/bin/xdragon -a -x "$fx"'';
         editor-open = ''$$EDITOR $f'';
-        mkdir = '' ''${{
-	  printf "Directory Name: "
-	  read DIR
-	  mkdir $DIR
-	}}'';
+        mkdir = /*bash*/'' ''${{
+          printf "Directory Name: "
+          read DIR
+          mkdir $DIR
+        }}'';
       };
       keybindings = {
         # ?
@@ -254,7 +256,7 @@
     };
     wezterm = {
       enable = true;
-      extraConfig = ''
+      extraConfig = /*lua*/''
         -- Pull in the wezterm API
         local wezterm = require 'wezterm'
         local mux = wezterm.mux
@@ -302,7 +304,7 @@
     zsh = {
       enable = true;
       enableCompletion = true;
-      enableAutosuggestions = true;
+      autosuggestion.enable = true;
       syntaxHighlighting.enable = true;
       shellAliases = {
         # this is for commands that do not properly adjust their output to given width
@@ -315,7 +317,7 @@
         w = "watson";
         zj = "zellij attach || zellij";
       };
-      initExtra = ''
+      initExtra = /*bash*/''
         function git_diff_exclude_file() {
           if [ $# -lt 3 ]; then
             echo "Usage: git_diff_exclude_file <start_commit> <end_commit> <exclude_file> [output_file]"
