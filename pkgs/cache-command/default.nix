@@ -1,7 +1,6 @@
 { writeShellApplication, }:
 writeShellApplication {
   name = "cache-command";
-  # runtimeInputs = [ jq slurp ];
   text = ''
     # Create a hash of the entire command line to use as a cache file name
     cmd_hash=$(echo "$*" | md5sum | cut -d' ' -f1)
