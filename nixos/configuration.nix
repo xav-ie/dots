@@ -6,6 +6,8 @@
 , lib
 , config
 , pkgs
+, system
+, pkgs-staging-next
 , ...
 }: {
   imports = [
@@ -299,6 +301,13 @@
   # just don't change this. there is never a good reason to change this as all updates still 
   # apply and changing this just messes things up. it is a state tracker
   system.stateVersion = "23.05"; # Did you read the comment?
+
+  # woopsy I installed some malware
+  # https://github.com/NixOS/nixpkgs/issues/300055
+  system.replaceRuntimeDependencies = [{
+    original = pkgs.xz;
+    replacement = pkgs-staging-next.xz;
+  }];
 
   nix = {
     # This will add each flake input as a registry
