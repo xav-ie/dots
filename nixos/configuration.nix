@@ -109,6 +109,8 @@
       nur.repos.dustinblackman.oatmeal
       # TODO: put these in a better place
       cache-command
+      ff
+      nvim
       searcher
     ]);
 
