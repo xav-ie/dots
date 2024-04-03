@@ -436,6 +436,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-staging-next": {
+      "locked": {
+        "lastModified": 1712145681,
+        "narHash": "sha256-p40EpZDQXCuNy+qNFM5cWXRa8GAL2bVT+0svJdQ+elU=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "e74231f370d6f5927533e8ba6b23767039c49c19",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "staging-next",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs-unfree": {
       "inputs": {
         "nixpkgs": [
@@ -549,6 +565,7 @@
         "hyprland-contrib": "hyprland-contrib",
         "nixpkgs": "nixpkgs_2",
         "nixpkgs-stable": "nixpkgs-stable",
+        "nixpkgs-staging-next": "nixpkgs-staging-next",
         "nur": "nur",
         "ollama": "ollama",
         "wezterm": "wezterm",
