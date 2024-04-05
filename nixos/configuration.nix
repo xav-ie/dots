@@ -184,6 +184,23 @@
     };
     nvidia = {
       modesetting.enable = true;
+      # allows systemd to better control nvidia card
+      # turns on NVreg_PreserveVideoMemoryAllocations=1
+      # it also sets up systemd to properly suspend, hibernate, and resume
+      # https://download.nvidia.com/XFree86/Linux-x86_64/515.65.01/README/powermanagement.html
+      powerManagement.enable = true;
+      # only available if your CPU has integrated graphics
+      # I was a doofus and did not buy one with that
+      # prime = {
+      #   offload = {
+      #     enable = true;
+      #     enableOffloadCmd = true;
+      #   };
+      #   # 01:00.0 VGA compatible controller: NVIDIA Corporation GA104 [GeForce RTX 3060 Ti Lite Hash Rate] (rev a1)
+      #   nvidiaBusId = "PCI:1:0:0";
+      #   # darn it, I will have to remember to buy a cpu with integrated graphics next time :(((((
+      #   intelBusId = "???";
+      # };
       open = false;
       nvidiaSettings = true;
       package = config.boot.kernelPackages.nvidiaPackages.stable;
