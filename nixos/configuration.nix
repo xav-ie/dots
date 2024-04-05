@@ -113,6 +113,7 @@
       cache-command
       ff
       nvim
+      record-section
       searcher
     ]);
 

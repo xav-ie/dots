@@ -11,6 +11,7 @@
   cache-command = pkgs.callPackage ./cache-command { };
   ff = pkgs.callPackage ./ff { };
   nvim = pkgs.callPackage ./nvim { };
+  record-section = pkgs.callPackage ./record-section { };
   searcher = pkgs.callPackage ./searcher { };
   # nix-inspect = pkgs.callPackage ./nix-inspect { };
   # minicava = pkgs.callPackage ./minicava { };
