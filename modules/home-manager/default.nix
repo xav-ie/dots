@@ -58,7 +58,16 @@
     alacritty = {
       enable = true;
       settings = {
-        font.normal.family = "MesloLGS Nerd Font Mono";
+        # == === => ->
+        # A lot like Lato, but mono
+        # font.normal.family = "MonaspiceAr NF Medium";
+        # not available yet, awaiting full test
+        # font.normal.family = "Cartograph Nerd Font";
+        font.normal.family = "FiraCode Nerd Font Ret";
+        # Hack has better spacing and numbers than Fira, 
+        # but has worse special characters. Fira has some cool letters but both
+        # have letter spacing problems "ma" "wa" both look bad when not italic
+        # font.normal.family = "Hack Nerd Font";
         font.size = 14;
         window = {
           #decorations = "Transparent";
