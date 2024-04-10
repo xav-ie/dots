@@ -115,6 +115,7 @@
       # TODO: fix this :/
       # g
       nvim
+      record
       record-section
       searcher
     ]);

@@ -12,6 +12,7 @@
   ff = pkgs.callPackage ./ff { };
   # g = pkgs.callPackage ./g { };
   nvim = pkgs.callPackage ./nvim { };
+  record = pkgs.callPackage ./record { };
   record-section = pkgs.callPackage ./record-section { };
   searcher = pkgs.callPackage ./searcher { };
   # nix-inspect = pkgs.callPackage ./nix-inspect { };
