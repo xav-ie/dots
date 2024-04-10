@@ -3,7 +3,6 @@ writeShellApplication {
   name = "record-section";
   runtimeInputs = [ slurp wf-recorder ];
   text = ''
-    # the strange encoding is for firefox
-    sleep 2 && wf-recorder -c libvpx-vp9 -f recording.mp4 -g "$(slurp)"
+    sleep 2 && wf-recorder --  -r 60 -c libsvtav1 -C aac -f recording.mp4 -g "$(slurp)" $@
   '';
 }
