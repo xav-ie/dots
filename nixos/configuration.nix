@@ -114,6 +114,7 @@
       ff
       # TODO: fix this :/
       # g
+      j
       nvim
       record
       record-section
