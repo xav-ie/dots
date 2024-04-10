@@ -10,6 +10,7 @@
   # Personal scripts
   cache-command = pkgs.callPackage ./cache-command { };
   ff = pkgs.callPackage ./ff { };
+  # g = pkgs.callPackage ./g { };
   nvim = pkgs.callPackage ./nvim { };
   record-section = pkgs.callPackage ./record-section { };
   searcher = pkgs.callPackage ./searcher { };

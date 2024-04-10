@@ -112,6 +112,8 @@
       # TODO: put these in a better place
       cache-command
       ff
+      # TODO: fix this :/
+      # g
       nvim
       record-section
       searcher
