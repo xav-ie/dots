@@ -1,6 +1,7 @@
 { writeShellApplication, }:
 writeShellApplication {
   name = "cache-command";
+  # TODO: make it easy to invalidate whole cache or clear cache by command_hash/command
   text = ''
     # Create a hash of the entire command line to use as a cache file name
     cmd_hash=$(echo "$*" | md5sum | cut -d' ' -f1)
