@@ -11,6 +11,7 @@
   cache-command = pkgs.callPackage ./cache-command { };
   ff = pkgs.callPackage ./ff { };
   # g = pkgs.callPackage ./g { };
+  j = pkgs.callPackage ./j { };
   nvim = pkgs.callPackage ./nvim { };
   record = pkgs.callPackage ./record { };
   record-section = pkgs.callPackage ./record-section { };
