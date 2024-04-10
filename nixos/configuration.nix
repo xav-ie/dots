@@ -115,6 +115,7 @@
       # TODO: fix this :/
       # g
       j
+      jira-list
       nvim
       record
       record-section
