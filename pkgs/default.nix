@@ -12,6 +12,7 @@
   ff = pkgs.callPackage ./ff { };
   # g = pkgs.callPackage ./g { };
   j = pkgs.callPackage ./j { };
+  jira-list = pkgs.callPackage ./jira-list { };
   nvim = pkgs.callPackage ./nvim { };
   record = pkgs.callPackage ./record { };
   record-section = pkgs.callPackage ./record-section { };
