@@ -8,6 +8,8 @@
       delta
       eza
       fd
+      ffmpeg
+      go-jira
       gh
       gnumake
       jq
@@ -17,6 +19,7 @@
       uair
       unzip
       tree
+      wf-recorder
       wget
       zip
     ] ++ [
