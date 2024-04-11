@@ -203,6 +203,16 @@
         };
         branch.sort = "-committerdate";
         column.ui = "auto";
+        # This is *very* helpful for stacked branches.
+        # This is the situation.
+        # You are on your third stacked PR.
+        # You `git rebase -i main` to update your stacked PRs with main
+        # Womp. PR 1 and PR 2 are *not* rebased when PR 3 is. Why is this the default? :shrug:
+        # To lean more, go to: https://youtu.be/Md44rcw13k4?t=956
+        # This article is also a great read on stacked PRs:
+        # https://andrewlock.net/working-with-stacked-branches-in-git-is-easier-with-update-refs/
+        # to temporarily turn off, --no-update-refs
+        rebase.updateRefs = true;
         rerere.enabled = true;
         fetch.writeCommitGraph = true;
         remote.origin.fetch = "+refs/pull/*:refs/remotes/origin/pull/*";
