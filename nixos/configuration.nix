@@ -115,6 +115,7 @@
       # TODO: fix this :/
       # g
       j
+      jira-task-list
       jira-list
       nvim
       record
