@@ -18,6 +18,7 @@
   record = pkgs.callPackage ./record { };
   record-section = pkgs.callPackage ./record-section { };
   searcher = pkgs.callPackage ./searcher { };
+  zellij-tab-name-update = pkgs.callPackage ./zellij-tab-name-update { };
   # nix-inspect = pkgs.callPackage ./nix-inspect { };
   # minicava = pkgs.callPackage ./minicava { };
   # pass-wofi = pkgs.callPackage ./pass-wofi { };
