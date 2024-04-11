@@ -150,14 +150,34 @@
         graph = "log --graph --pretty=tformat:'%C(bold blue)%h%Creset %s %C(bold green)%d%Creset %C(blue)<%an>%Creset %C(dim cyan)%cr' --abbrev-commit --decorate";
         main = /*bash*/"!(git fetch && git fetch --tags && git checkout -B main origin/main)";
         p = "push";
-        pr = /*bash*/"!(GH_FORCE_TTY=100% gh pr list | fzf --ansi --preview 'GH_FORCE_TTY=100% gh pr view {1}' --preview-window up --header-lines 3 | awk '{print $1}' | xargs -r gh pr checkout)";
+        pr = /* bash */''
+          !(GH_FORCE_TTY=100% gh pr list | fzf --ansi --preview 'GH_FORCE_TTY=100% gh pr view {1}' --preview-window up --header-lines 3 | awk '{print $1}' | xargs -r gh pr checkout)
+        '';
         s = "status";
         staash = "stash --all";
         # git log -L :functionName:/path/to/file
         # git blame -L :functionName:/path/to/file
         # git log -S your_regex -p 
         # git reflog <- idk what this does other than show history
-
+        # "So You Think You Know Git - Part 2":
+        # https://www.youtube.com/watch?v=Md44rcw13k4
+        # Helpful hooks
+        ## Commit Stuff
+        # - pre-commit
+        # - prepare-commit-msg
+        # - commit-msg
+        # - post-commit
+        ## Rewriting stuff
+        # - pre-rebase
+        # - post-rewrite
+        ## Merging Stuff
+        # - post-merge
+        # - pre-merge-commit
+        ## Switching/Pushing Stuff
+        # - post-checkout
+        # - reference-transaction
+        # - pre-push
+        # He recommends `pre-commit` binary
       };
       # attributes = {
       # };
