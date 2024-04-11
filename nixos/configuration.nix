@@ -121,6 +121,7 @@
       record
       record-section
       searcher
+      zellij-tab-name-update
     ]);
 
   # trying to fix hypr anomalies
