@@ -12,6 +12,11 @@
       go-jira
       gh
       gnumake
+      (jira-cli-go.overrideAttrs (oldAttrs: {
+        postInstall = ''
+          mv $out/bin/jira $out/bin/jira-unfree
+        '';
+      }))
       jq
       magic-wormhole-rs # send files easily
       moar # the best pager
