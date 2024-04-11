@@ -401,7 +401,6 @@
   # There has got to be a better way to do this :(
   home.file.".config/scripts/timeUtils.sh".source = ./dotfiles/timeUtils.sh;
   home.file.".config/scripts/colorUtils.sh".source = ./dotfiles/colorUtils.sh;
-  home.file.".config/scripts/jiraIssues.sh".source = ./dotfiles/jiraIssues.sh;
   home.file.".config/scripts/generate_tokens.sh".source = ./dotfiles/generate_tokens.sh;
   home.file.".config/scripts/zellij_tab_name_update.sh".source = ./dotfiles/zellij_tab_name_update.sh;
   home.file.".config/scripts/remove_video_silence.py".source = ./dotfiles/remove_video_silence.py;
