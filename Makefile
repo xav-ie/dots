@@ -27,3 +27,6 @@ bleed:
 .PHONY: update
 update:
 	nix flake update
+
+check-all:
+	NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nix flake check --impure --all-systems

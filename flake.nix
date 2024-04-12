@@ -69,25 +69,6 @@
       # https://github.com/Misterio77/nix-config/blob/e360a9ecf6de7158bea813fc075f3f6228fc8fc0/flake.nix
       # https://github.com/clemak27/linux_setup/blob/4970745992be98b0d00fdae336b4b9ee63f3c1af/flake.nix#L48
       # https://github.com/CosmicHalo/AndromedaNixos/blob/665668415fa72e850d322adbdacb81c1251301c0/overlays/zjstatus/default.nix#L2
-      nixModule = ({ config, pkgs, ... }: {
-        nix.registry = {
-          # This setting is important because it makes things like:
-          # `nix run nixpkgs#some-package` makes it use the same reference of packages as in your 
-          # flake.lock, which helps prevent the package from being different every time you run it
-          home-manager.flake = self.inputs.home-manager;
-          nixpkgs.flake = self.inputs.nixpkgs;
-          nur.flake = self.inputs.nur;
-        };
-        nixpkgs.config = {
-          allowUnfree = true;
-          packageOverrides = pkgs: {
-            nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
-              inherit pkgs;
-            };
-          };
-        };
-      });
-
 
       systems = [ "x86_64-linux" "aarch64-darwin" ];
       lib = nixpkgs.lib // home-manager.lib;
@@ -103,18 +84,18 @@
       overlays = import ./overlays { inherit inputs outputs; };
       packages = forEachSystem (pkgs: import ./pkgs { inherit pkgs; });
       # Reusable nixos modules you might want to export
+      # TODO: refactor these into proper, shareable modules
       # These are usually stuff you would upstream into nixpkgs
-      nixosModules = import ./modules/nixos;
+      # nixosModules = import ./modules/nixos;
       # Reusable home-manager modules you might want to export
       # These are usually stuff you would upstream into home-manager
-      homeManagerModules = import ./modules/home-manager;
+      # homeManagerModules = import ./modules/home-manager;
 
       nixosConfigurations = {
         praesidium = nixpkgs.lib.nixosSystem {
           specialArgs = { inherit inputs outputs; };
           modules = [
             ./hosts/praesidium
-            nixModule
             home-manager.nixosModules.home-manager
             {
               home-manager = {
@@ -133,13 +114,13 @@
 
       darwinConfigurations = let system = "aarch64-darwin"; in
         {
+          # TODO: rename to castra
           Xaviers-MacBook-Air = inputs.darwin.lib.darwinSystem {
             inherit system;
-            pkgs = import inputs.nixpkgs { inherit system; };
-            specialArgs = { };
+            # pkgs = import inputs.nixpkgs { inherit system; };
+            specialArgs = { inherit inputs outputs; };
             modules = [
-              nixModule
-              ./modules/darwin
+              ./hosts/castra
               home-manager.darwinModules.home-manager
               {
                 home-manager = {
