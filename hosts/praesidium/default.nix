@@ -3,6 +3,7 @@
 , outputs
 , lib
 , pkgs
+, self
 , ...
 }:
 {
@@ -14,6 +15,7 @@
 
     ./hardware-configuration.nix
 
+    ../common
     # ../common/global
     # ../common/users/misterio
     # ../common/users/layla
@@ -314,9 +316,6 @@
   systemd = {
     user.services.polkit-gnome-authentication-agent-1 = {
       description = "polkit-gnome-authentication-agent-1";
-      # wantedBy = [ "graphical-session.target" ];
-      # wants = [ "graphical-session.target" ];
-      # after = [ "graphical-session.target" ];
       wantedBy = [ "default.target" ];
       after = [ "default.target" ];
       serviceConfig = {

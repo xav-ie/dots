@@ -12,8 +12,9 @@
   ff = pkgs.callPackage ./ff { };
   # g = pkgs.callPackage ./g { };
   j = pkgs.callPackage ./j { };
-  jira-task-list = pkgs.callPackage ./jira-task-list { };
-  jira-list = pkgs.callPackage ./jira-list { };
+  # TODO: how to use cache-command package in this one??
+  jira-task-list = pkgs.callPackage ./jira-task-list { inherit cache-command; };
+  jira-list = pkgs.callPackage ./jira-list { inherit cache-command; };
   nvim = pkgs.callPackage ./nvim { };
   record = pkgs.callPackage ./record { };
   record-section = pkgs.callPackage ./record-section { };
