@@ -7,7 +7,6 @@
 , config
 , pkgs
 , system
-, pkgs-staging-next
 , ...
 }: {
   imports = [
@@ -39,7 +38,7 @@
 
 
   networking = {
-    hostName = "nixos"; # Define your hostname.
+    hostName = "praesidium"; # Define your hostname.
     # Enables wireless support via wpa_supplicant.
     # wireless.enable = true; 
     # nameservers = [ "127.0.0.1" "::1" ];
@@ -181,14 +180,15 @@
       enable = true;
       driSupport = true;
       driSupport32Bit = true;
-      package = pkgs.nvidia-vaapi-driver; # For NVIDIA
-      extraPackages = with pkgs; [
-        nvidia-vaapi-driver # For NVIDIA
-        intel-media-driver # LIBVA_DRIVER_NAME=iHD
-        vaapiIntel # LIBVA_DRIVER_NAME=i965 (older but works better for Firefox/Chromium)
-        # vaapiVdpau
-        # libvdpau-va-gl
-      ];
+      # package = pkgs.nvidia-vaapi-driver; # For NVIDIA
+      # extraPackages = with pkgs; [
+      # nvidia-vaapi-driver # For NVIDIA
+      # This one below would probably be helpful if you had integrated graphics
+      # intel-media-driver # LIBVA_DRIVER_NAME=iHD
+      # vaapiIntel # LIBVA_DRIVER_NAME=i965 (older but works better for Firefox/Chromium)
+      # vaapiVdpau
+      # libvdpau-va-gl
+      # ];
     };
     nvidia = {
       modesetting.enable = true;
@@ -211,7 +211,7 @@
       # };
       open = false;
       nvidiaSettings = true;
-      package = config.boot.kernelPackages.nvidiaPackages.stable;
+      package = config.boot.kernelPackages.nvidiaPackages.production;
     };
   };
 
@@ -329,10 +329,10 @@
 
   # woopsy I installed some malware
   # https://github.com/NixOS/nixpkgs/issues/300055
-  system.replaceRuntimeDependencies = [{
-    original = pkgs.xz;
-    replacement = pkgs-staging-next.xz;
-  }];
+  # system.replaceRuntimeDependencies = [{
+  #   original = pkgs.xz;
+  #   replacement = pkgs-staging-next.xz;
+  # }];
 
   nix = {
     # This will add each flake input as a registry

@@ -1,8 +1,8 @@
-{ pkgs, ... } @ inputs:
+{ inputs, outputs, ... }:
 let
   # there is no difference in output...? Idk if there is good reason to use one over the other
   #zjstatus_package = inputs.zjstatus.outputs.packages.${pkgs.stdenv.hostPlatform.system}.default;
-  zjstatus_package = inputs.zjstatus.outputs.packages.${pkgs.system}.default;
+  zjstatus_package = inputs.zjstatus.outputs.packages."x86_64-linux".default;
   # see https://github.com/dj95/zjstatus
   # for some reason, I could not figure out pkgs.zjstatus
   default_tab_template = ''
