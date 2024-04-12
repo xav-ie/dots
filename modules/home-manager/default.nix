@@ -24,7 +24,6 @@
       uair
       unzip
       tree
-      wf-recorder
       wget
       zip
     ] ++ [
