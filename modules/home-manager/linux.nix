@@ -1,7 +1,8 @@
 { pkgs
 , lib
+, inputs
 , ...
-} @ inputs:
+}:
 let
   merge = lib.foldr (a: b: a // b) { };
 in
@@ -101,7 +102,7 @@ in
       }))
 
     ]) ++ [
-      inputs.hyprland-contrib.packages.${pkgs.system}.grimblast
+      inputs.hyprland-contrib.packages."x86_64-linux".grimblast
     ]
     ;
     # The state version is required and should stay at the version you
