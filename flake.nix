@@ -69,45 +69,7 @@
       # https://github.com/Misterio77/nix-config/blob/e360a9ecf6de7158bea813fc075f3f6228fc8fc0/flake.nix
       # https://github.com/clemak27/linux_setup/blob/4970745992be98b0d00fdae336b4b9ee63f3c1af/flake.nix#L48
       # https://github.com/CosmicHalo/AndromedaNixos/blob/665668415fa72e850d322adbdacb81c1251301c0/overlays/zjstatus/default.nix#L2
-      overlays = [
-        inputs.alacritty-theme.overlays.default
-        inputs.nur.overlay
-        (self: super: {
-          ctpv = inputs.ctpv.packages.${self.system}.default;
-          # idk if I should be using cuda version here or not
-          ollama = inputs.ollama.packages.${self.system}.default;
-          mpv = super.mpv.override {
-            scripts = with self.mpvScripts; [
-              autoload # autoloads entries before and after current entry
-              mpv-playlistmanager # resolves url titles, SHIFT+ENTER for playlist
-              quality-menu # control video quality on the fly
-              webtorrent-mpv-hook # extends mpv to handle magnet URLs
-            ] ++
-            # extends mpv to be controllable with MPD
-            self.lib.optional (self.system == "x86_64-linux") self.mpvScripts.mpris
-            ;
-          };
-          # TODO: do I need this?
-          # use full ffmpeg version to support all video formats
-          # mpv-unwrapped = super.mpv-unwrapped.override {
-          # ffmpeg_5 = ffmpeg_5-full;
-          # };
-          weechat = super.weechat.override {
-            configure = { availablePlugins, ... }: {
-              scripts = with super.weechatScripts; [
-                # Idk how to use this one yet
-                edit # edit messages in $EDITOR
-                wee-slack # slack in weechat
-                # I think weeslack already has way to facilitate notifications
-                # weechat-notify-send # highlight and notify bindings to notify-send
-                weechat-go # command pallette jumping
-              ];
-            };
-          };
-        })
-      ];
       nixModule = ({ config, pkgs, ... }: {
-        nixpkgs.overlays = overlays;
         nix.registry = {
           # This setting is important because it makes things like:
           # `nix run nixpkgs#some-package` makes it use the same reference of packages as in your 
@@ -140,6 +102,12 @@
       # TODO: make the import of this global like misterio
       overlays = import ./overlays { inherit inputs outputs; };
       packages = forEachSystem (pkgs: import ./pkgs { inherit pkgs; });
+      # Reusable nixos modules you might want to export
+      # These are usually stuff you would upstream into nixpkgs
+      nixosModules = import ./modules/nixos;
+      # Reusable home-manager modules you might want to export
+      # These are usually stuff you would upstream into home-manager
+      homeManagerModules = import ./modules/home-manager;
 
       nixosConfigurations = {
         praesidium = nixpkgs.lib.nixosSystem {
@@ -147,8 +115,6 @@
           modules = [
             ./hosts/praesidium
             nixModule
-            ./modules/linux
-            inputs.nur.nixosModules.nur
             home-manager.nixosModules.home-manager
             {
               home-manager = {
@@ -169,7 +135,7 @@
         {
           Xaviers-MacBook-Air = inputs.darwin.lib.darwinSystem {
             inherit system;
-            pkgs = import inputs.nixpkgs { inherit system overlays; };
+            pkgs = import inputs.nixpkgs { inherit system; };
             specialArgs = { };
             modules = [
               nixModule
