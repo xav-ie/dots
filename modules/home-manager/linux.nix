@@ -41,6 +41,7 @@ in
       # tldr # barely working due to it not having many entries
       xdg-utils # ????
       weechat
+      wf-recorder
       wtype # xdotool for wayland; used as part of rofi-rbw for typing
       # passwords out
       yt-dlp # better yt-dl
