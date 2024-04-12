@@ -142,7 +142,6 @@
       packages = forEachSystem (pkgs: import ./pkgs { inherit pkgs; });
 
       nixosConfigurations = {
-        # TODO: change to "praesidium"
         praesidium = nixpkgs.lib.nixosSystem {
           specialArgs = { inherit inputs outputs; };
           modules = [
