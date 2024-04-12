@@ -148,7 +148,6 @@
           modules = [
             ./hosts/praesidium
             nixModule
-            ./nixos/configuration.nix
             ./modules/linux
             inputs.nur.nixosModules.nur
             home-manager.nixosModules.home-manager
