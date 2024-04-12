@@ -143,7 +143,7 @@
 
       nixosConfigurations = {
         # TODO: change to "praesidium"
-        nixos = nixpkgs.lib.nixosSystem {
+        praesidium = nixpkgs.lib.nixosSystem {
           specialArgs = { inherit inputs outputs; };
           modules = [
             ./hosts/praesidium
