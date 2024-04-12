@@ -335,13 +335,6 @@
   # apply and changing this just messes things up. it is a state tracker
   system.stateVersion = "23.05"; # Did you read the comment?
 
-  # woopsy I installed some malware
-  # https://github.com/NixOS/nixpkgs/issues/300055
-  # system.replaceRuntimeDependencies = [{
-  #   original = pkgs.xz;
-  #   replacement = pkgs-staging-next.xz;
-  # }];
-
   nix = {
     # This will add each flake input as a registry
     # To make nix3 commands consistent with your flake
@@ -395,30 +388,9 @@
   #   ];
   # };
   #
-  # networking = {
-  #   hostName = "maia";
-  #   useDHCP = true;
-  # };
-  #
-  # i18n.defaultLocale = "pt_BR.UTF-8";
-  #
   # boot.kernelModules = [ "coretemp" ];
   # services.thermald.enable = true;
   # environment.etc."sysconfig/lm_sensors".text = ''
   #   HWMON_MODULES="coretemp"
   # '';
-  #
-  # hardware = {
-  #   nvidia = {
-  #     prime.offload.enable = false;
-  #     modesetting.enable = true;
-  #   };
-  #   opengl = {
-  #     enable = true;
-  #     driSupport = true;
-  #     driSupport32Bit = true;
-  #   };
-  # };
-  #
-  # system.stateVersion = "22.05";
 }
