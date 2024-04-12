@@ -40,11 +40,6 @@
       final.lib.optional (final.system == "x86_64-linux") final.mpvScripts.mpris
       ;
     };
-    # TODO: do I need this?
-    # use full ffmpeg version to support all video formats
-    # mpv-unwrapped = prev.mpv-unwrapped.override {
-    # ffmpeg_5 = ffmpeg_5-full;
-    # };
     weechat = prev.weechat.override {
       configure = { availablePlugins, ... }: {
         scripts = with prev.weechatScripts; [
