@@ -9,6 +9,11 @@
     ];
   };
   inputs = {
+
+    hardware.url = "github:nixos/nixos-hardware";
+    impermanence.url = "github:nix-community/impermanence";
+    nix-colors.url = "github:misterio77/nix-colors";
+
     darwin = {
       url = "github:LnL7/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -37,9 +42,6 @@
     nixpkgs-stable = {
       url = "github:nixos/nixpkgs/nixos-23.11";
     };
-    nixpkgs-staging-next = {
-      url = "github:nixos/nixpkgs/staging-next";
-    };
     nur = {
       url = "github:nix-community/NUR";
     };
@@ -56,16 +58,9 @@
   };
   # TODO: make this simpler like misterio77's
   outputs =
-    { alacritty-theme
-    , darwin
-    , home-manager
-    , hyprland-contrib
+    { home-manager
     , nixpkgs
-    , nixpkgs-staging-next
-    , nur
     , self
-    , wezterm
-    , zjstatus
     , ...
     }@inputs:
     let
@@ -75,8 +70,8 @@
       # https://github.com/clemak27/linux_setup/blob/4970745992be98b0d00fdae336b4b9ee63f3c1af/flake.nix#L48
       # https://github.com/CosmicHalo/AndromedaNixos/blob/665668415fa72e850d322adbdacb81c1251301c0/overlays/zjstatus/default.nix#L2
       overlays = [
-        alacritty-theme.overlays.default
-        nur.overlay
+        inputs.alacritty-theme.overlays.default
+        inputs.nur.overlay
         (self: super: {
           ctpv = inputs.ctpv.packages.${self.system}.default;
           # idk if I should be using cuda version here or not
@@ -139,29 +134,27 @@
         config.allowUnfree = true;
       });
       forEachSystem = f: lib.genAttrs systems (system: f pkgsFor.${system});
-      pkgs-staging-next = import nixpkgs-staging-next {
-        system = "x86_64-linux";
-      };
     in
     {
+      inherit lib;
       # TODO: make the import of this global like misterio
       overlays = import ./overlays { inherit inputs outputs; };
       packages = forEachSystem (pkgs: import ./pkgs { inherit pkgs; });
 
       nixosConfigurations = {
+        # TODO: change to "praesidium"
         nixos = nixpkgs.lib.nixosSystem {
-          specialArgs = {
-            inherit inputs nur wezterm zjstatus outputs pkgs-staging-next;
-          };
+          specialArgs = { inherit inputs outputs; };
           modules = [
+            ./hosts/praesidium
             nixModule
             ./nixos/configuration.nix
             ./modules/linux
-            nur.nixosModules.nur
+            inputs.nur.nixosModules.nur
             home-manager.nixosModules.home-manager
             {
               home-manager = {
-                extraSpecialArgs = { inherit inputs nur wezterm zjstatus hyprland-contrib; };
+                extraSpecialArgs = { inherit inputs outputs; };
                 useGlobalPkgs = true;
                 useUserPackages = true;
                 users.x.imports = [
@@ -173,9 +166,10 @@
           ];
         };
       };
+
       darwinConfigurations = let system = "aarch64-darwin"; in
         {
-          Xaviers-MacBook-Air = darwin.lib.darwinSystem {
+          Xaviers-MacBook-Air = inputs.darwin.lib.darwinSystem {
             inherit system;
             pkgs = import inputs.nixpkgs { inherit system overlays; };
             specialArgs = { };
@@ -185,7 +179,7 @@
               home-manager.darwinModules.home-manager
               {
                 home-manager = {
-                  extraSpecialArgs = { inherit inputs nur zjstatus; };
+                  extraSpecialArgs = { inherit inputs outputs; };
                   useGlobalPkgs = true;
                   useUserPackages = true;
                   users.xavierruiz.imports = [
