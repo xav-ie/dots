@@ -3,7 +3,7 @@ writeShellApplication {
   name = "zellij-tab-name-update";
   runtimeInputs = [ zellij git ];
   text = ''
-      if [[ -n $ZELLIJ ]]; then
+    if [[ -n ''${ZELLIJ:-} ]]; then
       tab_name=""
       if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
           tab_name+=$(basename "$(git rev-parse --show-toplevel)")/
