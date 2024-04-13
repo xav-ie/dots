@@ -128,7 +128,7 @@ in
           (import ./programs/firefox/annoyances.nix)
           (import ./programs/firefox/settings.nix)
         ];
-        userChrome = ''
+        userChrome = /*css*/''
           /* ########  Sidetabs Styles  ######### */
 
           /* ~~~~~~~~ Autohiding styles ~~~~~~~~~ */
