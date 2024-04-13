@@ -56,7 +56,6 @@
       url = "github:alexghr/alacritty-theme.nix";
     };
   };
-  # TODO: make this simpler like misterio77's
   outputs =
     { home-manager
     , nixpkgs
