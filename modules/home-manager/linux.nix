@@ -12,7 +12,6 @@ in
       ################################
       # in triage - try to minimize this list
       ################################
-      microsoft-edge
       slack
       asciinema # record shell sessions and share easily
       age # the new PGP
