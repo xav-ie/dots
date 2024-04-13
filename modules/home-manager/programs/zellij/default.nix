@@ -1,15 +1,10 @@
-{ inputs, outputs, ... }:
+{ inputs, outputs, pkgs, ... }:
 let
-  # there is no difference in output...? Idk if there is good reason to use one over the other
-  #zjstatus_package = inputs.zjstatus.outputs.packages.${pkgs.stdenv.hostPlatform.system}.default;
-  zjstatus_package = inputs.zjstatus.outputs.packages."x86_64-linux".default;
-  # see https://github.com/dj95/zjstatus
-  # for some reason, I could not figure out pkgs.zjstatus
   default_tab_template = ''
     default_tab_template {
         children
         pane size=1 borderless=true {
-            plugin location="file:${zjstatus_package}/bin/zjstatus.wasm" {
+            plugin location="file:${pkgs.zjstatus}/bin/zjstatus.wasm" {
               format_left             "{mode} #[fg=#FA89B4,bold]{session} {tabs}"
               format_right            "{datetime} {command_pomo}"
               format_space            ""
