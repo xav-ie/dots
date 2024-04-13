@@ -92,6 +92,7 @@
       # homeManagerModules = import ./modules/home-manager;
 
       nixosConfigurations = {
+        # custom desktop tower
         praesidium = nixpkgs.lib.nixosSystem {
           specialArgs = { inherit inputs outputs; };
           modules = [
@@ -114,10 +115,9 @@
 
       darwinConfigurations = let system = "aarch64-darwin"; in
         {
-          # TODO: rename to castra
-          Xaviers-MacBook-Air = inputs.darwin.lib.darwinSystem {
+          # macbook air
+          castra = inputs.darwin.lib.darwinSystem {
             inherit system;
-            # pkgs = import inputs.nixpkgs { inherit system; };
             specialArgs = { inherit inputs outputs; };
             modules = [
               ./hosts/castra
