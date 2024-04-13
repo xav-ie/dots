@@ -11,9 +11,30 @@
   nixpkgs.config = {
     allowUnfree = true;
     packageOverrides = pkgs: {
-      nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
-        inherit pkgs;
-      };
+      # TODO: this clearly is not the right way to do this
+      nur = import
+        (builtins.fetchTarball {
+          url = "https://github.com/nix-community/NUR/archive/master.tar.gz";
+          sha256 = "sha256:05s8hplcmx3p15p1qjjliqbq7g70ck3r48kgmf5wxzh60sv789b0";
+        })
+        {
+          inherit pkgs;
+        };
     };
+
   };
+
+  environment.systemPackages =
+    (with pkgs;
+    [
+      # TODO: put these in a better place
+      cache-command
+      ff
+      j
+      jira-task-list
+      jira-list
+      nvim
+      searcher
+      zellij-tab-name-update
+    ]);
 }

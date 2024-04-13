@@ -117,19 +117,10 @@
     (with pkgs;
     [
       nur.repos.dustinblackman.oatmeal
-      # TODO: put these in a better place
-      cache-command
-      ff
       # TODO: fix this :/
       # g
-      j
-      jira-task-list
-      jira-list
-      nvim
       record
       record-section
-      searcher
-      zellij-tab-name-update
     ]);
 
   # trying to fix hypr anomalies
