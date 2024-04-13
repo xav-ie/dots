@@ -9,10 +9,10 @@
     ];
   };
   inputs = {
-
     hardware.url = "github:nixos/nixos-hardware";
-    impermanence.url = "github:nix-community/impermanence";
-    nix-colors.url = "github:misterio77/nix-colors";
+    # TODO: figure out how to use from misterio and vimjoyer
+    # impermanence.url = "github:nix-community/impermanence";
+    # nix-colors.url = "github:misterio77/nix-colors";
 
     darwin = {
       url = "github:LnL7/nix-darwin";
