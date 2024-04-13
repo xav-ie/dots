@@ -10,18 +10,6 @@
 
   nixpkgs.config = {
     allowUnfree = true;
-    packageOverrides = pkgs: {
-      # TODO: this clearly is not the right way to do this
-      nur = import
-        (builtins.fetchTarball {
-          url = "https://github.com/nix-community/NUR/archive/master.tar.gz";
-          sha256 = "sha256:05s8hplcmx3p15p1qjjliqbq7g70ck3r48kgmf5wxzh60sv789b0";
-        })
-        {
-          inherit pkgs;
-        };
-    };
-
   };
 
   environment.systemPackages =
