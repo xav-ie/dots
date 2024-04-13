@@ -11,7 +11,7 @@ endif
 # if using home-manager externally to config
 # home-manager switch
 
-# buggy
+# buggy, be careful to only run this for bootstrapping.
 .PHONY: init
 init:
 	nix run home-manager/master -- init --switch
@@ -28,5 +28,22 @@ bleed:
 update:
 	nix flake update
 
+# `nix flake check` only works on nixos because of
+# https://github.com/NixOS/nix/issues/4265
+# The above command basically insists on checking things it does not have to.
+# Here is excerpt from `nix flake check --help`:
+# Evaluation checks
+#     · checks.system.name
+#     · defaultPackage.system
+#     · devShell.system
+#     · devShells.system.name
+#     · nixosConfigurations.name.config.system.build.toplevel
+#     · packages.system.name
+# It would be cool to disable nixosConfigurations, but oh well. Maybe one day :).
+.PHONY: check
+check:
+	nix flake check
+
+.PHONY: check-all
 check-all:
 	NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nix flake check --impure --all-systems
