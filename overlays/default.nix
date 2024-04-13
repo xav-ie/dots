@@ -19,11 +19,6 @@
   # Adds my custom packages
   additions = final: prev:
     import ../pkgs { pkgs = final; };
-  # //
-  # {
-  #   formats = (prev.formats or { }) // import ../pkgs/formats { pkgs = final; };
-  #   vimPlugins = (prev.vimPlugins or { }) // import ../pkgs/vim-plugins { pkgs = final; };
-  # };
 
   modifications = final: prev: {
     ctpv = inputs.ctpv.packages.${final.system}.default;
