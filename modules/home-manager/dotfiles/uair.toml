@@ -1,5 +1,5 @@
 [defaults]
-format = "{time}\n"
+format = "{time}"
 
 [[sessions]]
 id = "work"
