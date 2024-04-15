@@ -39,7 +39,6 @@ in
       # file instead of the whole thing... IDK the real use for #that
       # tldr # barely working due to it not having many entries
       xdg-utils # ????
-      weechat
       wf-recorder
       wtype # xdotool for wayland; used as part of rofi-rbw for typing
       # passwords out
