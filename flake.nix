@@ -34,6 +34,10 @@
       url = "github:hyprwm/contrib";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    generate-kaomoji = {
+      url = "github:xav-ie/generate-kaomoji";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     # the latest and greatest ollama
     ollama.url = "github:abysssol/ollama-flake";
     nixpkgs = {
