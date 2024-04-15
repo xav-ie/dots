@@ -5,10 +5,10 @@ format = "{time}"
 id = "work"
 name = "Work"
 duration = "25m"
-command = "notify-send 'Work Done!'"
+command = "notify 'Work Done!'"
 
 [[sessions]]
 id = "rest"
 name = "Rest"
 duration = "5m"
-command = "notify-send 'Rest Done!'"
+command = "notify 'Rest Done!'"

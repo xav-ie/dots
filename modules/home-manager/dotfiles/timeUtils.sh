@@ -33,7 +33,8 @@ remind_me() {
     return 1
   fi
 
-  setsid bash -c "sleep $seconds && notify-send 'Reminder' '$message'"
+  # TODO: make this script explicitly depend on notify program
+  setsid bash -c "sleep $seconds && notify 'Reminder' '$message'"
 }
 
 get_elapsed_time() {
@@ -60,7 +61,7 @@ format_time() {
 list_reminders() {
   printf "%-10s | %-30s | %-20s\n" "PID" "Message" "Time Remaining"
   printf "%s\n" "---------------------------------------------------------------"
-  
+  # IDK if this needs modifications
   pgrep -af "sleep .*notify-send" | while read -r pid cmd; do
     local elapsed_time=$(get_elapsed_time $pid)
     local sleep_time=$(echo "$cmd" | awk '{print $4}')
