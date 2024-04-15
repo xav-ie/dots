@@ -24,6 +24,7 @@
       notify
       nvim
       searcher
+      uair-toggle
       zellij-tab-name-update
     ]);
 }
