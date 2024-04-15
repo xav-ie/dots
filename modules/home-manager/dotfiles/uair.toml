@@ -1,7 +1,6 @@
 [defaults]
 format = "{time}"
-time_format = "%H:%M:%S"
-# time_format = "%*-Yyear%P %*-Bmonth%P %*-Dday%P %*-Hh %*-Mm %*-Ss"
+time_format = "%*H:%M:%S"
 
 [[sessions]]
 id = "work"
