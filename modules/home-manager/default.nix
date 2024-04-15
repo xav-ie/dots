@@ -157,6 +157,7 @@
         pr = /* bash */''
           !(GH_FORCE_TTY=100% gh pr list | fzf --ansi --preview 'GH_FORCE_TTY=100% gh pr view {1}' --preview-window up --header-lines 3 | awk '{print $1}' | xargs -r gh pr checkout)
         '';
+        rmc = "rm --cached";
         s = "status";
         staash = "stash --all";
         # git log -L :functionName:/path/to/file
