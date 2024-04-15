@@ -36,19 +36,6 @@
       final.lib.optional (final.system == "x86_64-linux") final.mpvScripts.mpris
       ;
     };
-    weechat = prev.weechat.override {
-      configure = { availablePlugins, ... }: {
-        scripts = with prev.weechatScripts; [
-          # Idk how to use this one yet
-          edit # edit messages in $EDITOR
-          wee-slack # slack in weechat
-          # I think weeslack already has way to facilitate notifications
-          # weechat-notify-send # highlight and notify bindings to notify-send
-          weechat-go # command pallette jumping
-        ];
-      };
-    };
     zjstatus = inputs.zjstatus.packages.${final.system}.default;
-
   };
 }
