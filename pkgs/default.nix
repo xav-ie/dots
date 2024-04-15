@@ -15,6 +15,7 @@
   # TODO: how to use cache-command package in this one??
   jira-task-list = pkgs.callPackage ./jira-task-list { inherit cache-command; };
   jira-list = pkgs.callPackage ./jira-list { inherit cache-command; };
+  notify = pkgs.callPackage ./notify { };
   nvim = pkgs.callPackage ./nvim { };
   record = pkgs.callPackage ./record { };
   record-section = pkgs.callPackage ./record-section { };
