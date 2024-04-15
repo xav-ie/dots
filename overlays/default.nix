@@ -23,7 +23,7 @@
   modifications = final: prev: {
     ctpv = inputs.ctpv.packages.${final.system}.default;
     alacritty-theme = inputs.alacritty-theme.packages.${final.system};
-    zjstatus = inputs.zjstatus.packages.${final.system}.default;
+    generate-kaomoji = inputs.generate-kaomoji.packages.${final.system}.default;
     ollama = inputs.ollama.packages.${final.system}.default;
     mpv = prev.mpv.override {
       scripts = with final.mpvScripts; [
@@ -48,6 +48,7 @@
         ];
       };
     };
+    zjstatus = inputs.zjstatus.packages.${final.system}.default;
 
   };
 }
