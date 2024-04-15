@@ -21,6 +21,7 @@
       j
       jira-task-list
       jira-list
+      notify
       nvim
       searcher
       zellij-tab-name-update
