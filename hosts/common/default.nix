@@ -18,6 +18,7 @@
       # TODO: put these in a better place
       cache-command
       ff
+      generate-kaomoji
       j
       jira-task-list
       jira-list
