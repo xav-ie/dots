@@ -1,7 +1,5 @@
 { inputs, lib, pkgs, outputs, ... }: {
-  imports = [
-    ../common
-  ];
+  imports = [ ../common ];
   # darwin prefs and config items
   programs.zsh.enable = true;
   environment = {
@@ -11,7 +9,10 @@
     pathsToLink = [ "/Applications" ];
     # use the version of nix that is from nix-darwin and home-manager and
     # disable using /nix/var/nix/profiles/default and ~/.nixprofile
-    profiles = lib.mkForce [ "/run/current-system/sw" "/etc/profiles/per-user/xavierruiz" ];
+    profiles = lib.mkForce [
+      "/run/current-system/sw"
+      "/etc/profiles/per-user/xavierruiz"
+    ];
   };
   nix.settings = {
     experimental-features = "nix-command flakes";
@@ -142,21 +143,18 @@
       Magnet = 441258766;
       Twingate = 1501592214;
     };
-    casks = [
-      "bitwarden"
-      "firefox"
-      "protonvpn"
-      "raycast"
-      "slack"
-      "zoom"
-    ];
+    casks = [ "bitwarden" "firefox" "protonvpn" "raycast" "slack" "zoom" ];
     taps = [ "FelixKratz/formulae" ];
     brews = [ "borders" "mas" ];
   };
 
   nix.gc = {
     automatic = true;
-    interval = { Weekday = 0; Hour = 0; Minute = 0; };
+    interval = {
+      Weekday = 0;
+      Hour = 0;
+      Minute = 0;
+    };
     options = "--delete-older-than 30d";
   };
 
