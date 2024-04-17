@@ -8,24 +8,20 @@
     nur.flake = inputs.nur;
   };
 
-  nixpkgs.config = {
-    allowUnfree = true;
-  };
+  nixpkgs.config = { allowUnfree = true; };
 
-  environment.systemPackages =
-    (with pkgs;
-    [
-      # TODO: put these in a better place
-      cache-command
-      ff
-      generate-kaomoji
-      j
-      jira-task-list
-      jira-list
-      notify
-      nvim
-      searcher
-      uair-toggle
-      zellij-tab-name-update
-    ]);
+  environment.systemPackages = (with pkgs; [
+    # TODO: put these in a better place
+    cache-command
+    ff
+    generate-kaomoji
+    j
+    jira-task-list
+    jira-list
+    notify
+    nvim
+    searcher
+    uair-toggle
+    zellij-tab-name-update
+  ]);
 }

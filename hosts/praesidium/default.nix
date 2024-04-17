@@ -1,12 +1,4 @@
-{ config
-, inputs
-, outputs
-, lib
-, pkgs
-, self
-, ...
-}:
-{
+{ config, inputs, outputs, lib, pkgs, self, ... }: {
   imports = [
     # TODO: investigate what these actually do
     inputs.hardware.nixosModules.common-cpu-intel-cpu-only
@@ -44,7 +36,6 @@
       options v4l2loopback exclusive_caps=1 card_label="Virtual Camera"
     '';
   };
-
 
   networking = {
     hostName = "praesidium"; # Define your hostname.
@@ -104,7 +95,6 @@
     };
   };
 
-
   nixpkgs = {
     overlays = builtins.attrValues outputs.overlays;
     # Allow unfree packages
@@ -113,15 +103,13 @@
     config.allowUnfreePredicate = _: true;
   };
 
-  environment.systemPackages =
-    (with pkgs;
-    [
-      nur.repos.dustinblackman.oatmeal
-      # TODO: fix this :/
-      # g
-      record
-      record-section
-    ]);
+  environment.systemPackages = (with pkgs; [
+    nur.repos.dustinblackman.oatmeal
+    # TODO: fix this :/
+    # g
+    record
+    record-section
+  ]);
 
   # trying to fix hypr anomalies
   environment.sessionVariables = {
@@ -150,7 +138,6 @@
   #   nerdfonts
   # ];
   fonts.fontconfig.enable = true;
-
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
@@ -218,9 +205,7 @@
   services = {
     blueman.enable = true;
     flatpak.enable = true;
-    geoclue2 = {
-      enable = true;
-    };
+    geoclue2 = { enable = true; };
     gnome.gnome-keyring.enable = true;
     openssh = {
       enable = true;
@@ -238,9 +223,7 @@
       pulse.enable = true;
       jack.enable = true;
     };
-    redshift = {
-      enable = true;
-    };
+    redshift = { enable = true; };
     resolved = {
       enable = true;
       dnssec = "true";
@@ -311,7 +294,8 @@
       after = [ "default.target" ];
       serviceConfig = {
         Type = "simple";
-        ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
+        ExecStart =
+          "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
         Restart = "on-failure";
         RestartSec = 1;
         TimeoutStopSec = 10;
@@ -334,7 +318,8 @@
     # This will additionally add your inputs to the system's legacy channels
     # Making legacy nix commands consistent as well, awesome!
     # TODO: Yeah, idk what that means either
-    nixPath = lib.mapAttrsToList (key: value: "${key}=${value.to.path}") config.nix.registry;
+    nixPath = lib.mapAttrsToList (key: value: "${key}=${value.to.path}")
+      config.nix.registry;
 
     settings = {
       # just run this every once in a while... auto-optimization slows down evaluation

@@ -1,9 +1,7 @@
 {
   description = "My NixOS";
   nixConfig = {
-    extra-trusted-substituters = [
-      "https://nix-community.cachix.org"
-    ];
+    extra-trusted-substituters = [ "https://nix-community.cachix.org" ];
     extra-trusted-public-keys = [
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
     ];
@@ -40,32 +38,17 @@
     };
     # the latest and greatest ollama
     ollama.url = "github:abysssol/ollama-flake";
-    nixpkgs = {
-      url = "github:nixos/nixpkgs/nixos-unstable";
-    };
-    nixpkgs-stable = {
-      url = "github:nixos/nixpkgs/nixos-23.11";
-    };
-    nur = {
-      url = "github:nix-community/NUR";
-    };
+    nixpkgs = { url = "github:nixos/nixpkgs/nixos-unstable"; };
+    nixpkgs-stable = { url = "github:nixos/nixpkgs/nixos-23.11"; };
+    nur = { url = "github:nix-community/NUR"; };
     wezterm = {
       url = "github:wez/wezterm?dir=nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    zjstatus = {
-      url = "github:dj95/zjstatus";
-    };
-    alacritty-theme = {
-      url = "github:alexghr/alacritty-theme.nix";
-    };
+    zjstatus = { url = "github:dj95/zjstatus"; };
+    alacritty-theme = { url = "github:alexghr/alacritty-theme.nix"; };
   };
-  outputs =
-    { home-manager
-    , nixpkgs
-    , self
-    , ...
-    }@inputs:
+  outputs = { home-manager, nixpkgs, self, ... }@inputs:
     let
       inherit (self) outputs;
       # Good nix configs:
@@ -75,13 +58,13 @@
 
       systems = [ "x86_64-linux" "aarch64-darwin" ];
       lib = nixpkgs.lib // home-manager.lib;
-      pkgsFor = lib.genAttrs systems (system: import nixpkgs {
-        inherit system;
-        config.allowUnfree = true;
-      });
+      pkgsFor = lib.genAttrs systems (system:
+        import nixpkgs {
+          inherit system;
+          config.allowUnfree = true;
+        });
       forEachSystem = f: lib.genAttrs systems (system: f pkgsFor.${system});
-    in
-    {
+    in {
       inherit lib;
       # TODO: make the import of this global like misterio
       overlays = import ./overlays { inherit inputs outputs; };
@@ -116,28 +99,28 @@
         };
       };
 
-      darwinConfigurations = let system = "aarch64-darwin"; in
-        {
-          # macbook air
-          castra = inputs.darwin.lib.darwinSystem {
-            inherit system;
-            specialArgs = { inherit inputs outputs; };
-            modules = [
-              ./hosts/castra
-              home-manager.darwinModules.home-manager
-              {
-                home-manager = {
-                  extraSpecialArgs = { inherit inputs outputs; };
-                  useGlobalPkgs = true;
-                  useUserPackages = true;
-                  users.xavierruiz.imports = [
-                    ./modules/home-manager/default.nix
-                    ./modules/home-manager/darwin.nix
-                  ];
-                };
-              }
-            ];
-          };
+      darwinConfigurations = let system = "aarch64-darwin";
+      in {
+        # macbook air
+        castra = inputs.darwin.lib.darwinSystem {
+          inherit system;
+          specialArgs = { inherit inputs outputs; };
+          modules = [
+            ./hosts/castra
+            home-manager.darwinModules.home-manager
+            {
+              home-manager = {
+                extraSpecialArgs = { inherit inputs outputs; };
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                users.xavierruiz.imports = [
+                  ./modules/home-manager/default.nix
+                  ./modules/home-manager/darwin.nix
+                ];
+              };
+            }
+          ];
         };
+      };
     };
 }
