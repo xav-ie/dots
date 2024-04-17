@@ -1,44 +1,42 @@
 { pkgs, ... }: {
-  imports = [
-    ./programs/zellij/default.nix
-  ];
+  imports = [ ./programs/zellij/default.nix ];
   home = {
-    packages = with pkgs; [
-      curl
-      delta
-      eza
-      fd
-      ffmpeg
-      go-jira
-      gh
-      gnumake
-      (jira-cli-go.overrideAttrs (oldAttrs: {
-        postInstall = ''
-          mv $out/bin/jira $out/bin/jira-unfree
-        '';
-      }))
-      jq
-      magic-wormhole-rs # send files easily
-      moar # the best pager
-      ripgrep
-      uair
-      unzip
-      tree
-      wget
-      zip
-    ] ++ [
-      # the shell I use most often
-      nodejs
-      cloudflared
-      python3
-      yarn
-    ] ++ [
-      # experimental
-      bun
-      deno
-      ollama
-    ]
-    ;
+    packages = with pkgs;
+      [
+        curl
+        delta
+        eza
+        fd
+        ffmpeg
+        go-jira
+        gh
+        gnumake
+        (jira-cli-go.overrideAttrs (oldAttrs: {
+          postInstall = ''
+            mv $out/bin/jira $out/bin/jira-unfree
+          '';
+        }))
+        jq
+        magic-wormhole-rs # send files easily
+        moar # the best pager
+        ripgrep
+        uair
+        unzip
+        tree
+        wget
+        zip
+      ] ++ [
+        # the shell I use most often
+        nodejs
+        cloudflared
+        python3
+        yarn
+      ] ++ [
+        # experimental
+        bun
+        deno
+        ollama
+      ];
     # The state version is required and should stay at the version you
     # originally installed.
     stateVersion = "23.11";
@@ -49,7 +47,8 @@
       LC_ALL = "en_US.UTF-8";
       # causes bug if set. dont do it!
       BAT_PAGER = "";
-      PAGER = ''bat -p --pager=\"moar -quit-if-one-screen\" --terminal-width=$(expr $COLUMNS - 4)'';
+      PAGER = ''
+        bat -p --pager=\"moar -quit-if-one-screen\" --terminal-width=$(expr $COLUMNS - 4)'';
       MOAR = "-quit-if-one-screen";
       TERMINAL = "wezterm";
       # get more colors
@@ -88,22 +87,34 @@
           {
             key = "Tab";
             mods = "Control";
-            command = { program = "zellij"; args = [ "action" "go-to-next-tab" ]; };
+            command = {
+              program = "zellij";
+              args = [ "action" "go-to-next-tab" ];
+            };
           }
           {
             key = "Tab";
             mods = "Control|Shift";
-            command = { program = "zellij"; args = [ "action" "go-to-previous-tab" ]; };
+            command = {
+              program = "zellij";
+              args = [ "action" "go-to-previous-tab" ];
+            };
           }
           {
             key = "Tab";
             mods = "Alt";
-            command = { program = "zellij"; args = [ "action" "focus-next-pane" ]; };
+            command = {
+              program = "zellij";
+              args = [ "action" "focus-next-pane" ];
+            };
           }
           {
             key = "Tab";
             mods = "Alt|Shift";
-            command = { program = "zellij"; args = [ "action" "focus-previous-pane" ]; };
+            command = {
+              program = "zellij";
+              args = [ "action" "focus-previous-pane" ];
+            };
           }
         ];
       };
@@ -145,18 +156,23 @@
       userName = "xav-ie";
       # userEmail = "github@xav.ie";
       aliases = {
-        bb = ''!${./dotfiles/betterbranch.sh}'';
+        bb = "!${./dotfiles/betterbranch.sh}";
         bblame = "blame -w -C -C -C";
         cam = "commit -am";
         c = "commit";
-        dc = "diff --cached --ignore-all-space --ignore-space-at-eol --ignore-space-change --ignore-blank-lines -- . ':(exclude)*package-lock.json' -- . ':(exclude)*yarn.lock'";
-        d = "diff --ignore-all-space --ignore-space-at-eol --ignore-space-change --ignore-blank-lines -- . ':(exclude)*package-lock.json' -- . ':(exclude)*yarn.lock'";
-        graph = "log --graph --pretty=tformat:'%C(bold blue)%h%Creset %s %C(bold green)%d%Creset %C(blue)<%an>%Creset %C(dim cyan)%cr' --abbrev-commit --decorate";
-        main = /*bash*/"!(git fetch && git fetch --tags && git checkout -B main origin/main)";
+        dc =
+          "diff --cached --ignore-all-space --ignore-space-at-eol --ignore-space-change --ignore-blank-lines -- . ':(exclude)*package-lock.json' -- . ':(exclude)*yarn.lock'";
+        d =
+          "diff --ignore-all-space --ignore-space-at-eol --ignore-space-change --ignore-blank-lines -- . ':(exclude)*package-lock.json' -- . ':(exclude)*yarn.lock'";
+        graph =
+          "log --graph --pretty=tformat:'%C(bold blue)%h%Creset %s %C(bold green)%d%Creset %C(blue)<%an>%Creset %C(dim cyan)%cr' --abbrev-commit --decorate";
+        main = # bash
+          "!(git fetch && git fetch --tags && git checkout -B main origin/main)";
         p = "push";
-        pr = /* bash */''
-          !(GH_FORCE_TTY=100% gh pr list | fzf --ansi --preview 'GH_FORCE_TTY=100% gh pr view {1}' --preview-window up --header-lines 3 | awk '{print $1}' | xargs -r gh pr checkout)
-        '';
+        pr = # bash
+          ''
+            !(GH_FORCE_TTY=100% gh pr list | fzf --ansi --preview 'GH_FORCE_TTY=100% gh pr view {1}' --preview-window up --header-lines 3 | awk '{print $1}' | xargs -r gh pr checkout)
+          '';
         rmc = "rm --cached";
         s = "status";
         staash = "stash --all";
@@ -232,18 +248,10 @@
         #   line-numbers = true;
         #   true-color = "always";
         # };
-        init = {
-          defaultBranch = "main";
-        };
-        merge = {
-          conflictstyle = "diff3";
-        };
-        diff = {
-          colorMoved = "default";
-        };
-        "includeIf \"gitdir:~/\"" = {
-          path = "~/.config/git/config.default";
-        };
+        init = { defaultBranch = "main"; };
+        merge = { conflictstyle = "diff3"; };
+        diff = { colorMoved = "default"; };
+        "includeIf \"gitdir:~/\"" = { path = "~/.config/git/config.default"; };
         "includeIf \"gitdir:~/Outsmartly/\"" = {
           path = "~/.config/git/config.work";
         };
@@ -255,12 +263,14 @@
       enable = true;
       commands = {
         dragon-out = ''%${pkgs.xdragon}/bin/xdragon -a -x "$fx"'';
-        editor-open = ''$$EDITOR $f'';
-        mkdir = /*bash*/'' ''${{
-          printf "Directory Name: "
-          read DIR
-          mkdir $DIR
-        }}'';
+        editor-open = "$$EDITOR $f";
+        mkdir = # bash
+          ''
+            ''${{
+              printf "Directory Name: "
+              read DIR
+              mkdir $DIR
+            }}'';
       };
       keybindings = {
         # ?
@@ -292,62 +302,57 @@
         cleaner = "${pkgs.ctpv}/bin/ctpvclear";
       };
     };
-    mpv = {
-      enable = true;
-    };
+    mpv = { enable = true; };
     starship = {
       enable = true;
       enableZshIntegration = true;
     };
-    thefuck = {
-      enable = true;
-    };
+    thefuck = { enable = true; };
     wezterm = {
       enable = true;
-      extraConfig = /*lua*/''
-        -- Pull in the wezterm API
-        local wezterm = require 'wezterm'
-        local mux = wezterm.mux
+      extraConfig = # lua
+        ''
+          -- Pull in the wezterm API
+          local wezterm = require 'wezterm'
+          local mux = wezterm.mux
 
-        wezterm.on("gui-startup", function()
-          local tab, pane, window = mux.spawn_window{}
-          window:gui_window():maximize()
-        end)
+          wezterm.on("gui-startup", function()
+            local tab, pane, window = mux.spawn_window{}
+            window:gui_window():maximize()
+          end)
 
-        -- This table will hold the configuration.
-        local config = {}
+          -- This table will hold the configuration.
+          local config = {}
 
-        -- In newer versions of wezterm, use the config_builder which will
-        -- help provide clearer error messages
-        if wezterm.config_builder then
-          config = wezterm.config_builder()
-        end
+          -- In newer versions of wezterm, use the config_builder which will
+          -- help provide clearer error messages
+          if wezterm.config_builder then
+            config = wezterm.config_builder()
+          end
 
-        -- This is where you actually apply your config choices
+          -- This is where you actually apply your config choices
 
-        -- For example, changing the color scheme:
-        config = {
-          window_background_opacity = 0.95,
-          macos_window_background_blur = 0,
-          color_scheme = 'Argonaut',
-          window_decorations = "RESIZE",
-          enable_tab_bar = false,
-          -- use_fancy_tab_bar = false
-          window_padding = {
-            left = 0,
-            right = 0,
-            top = 0,
-            bottom = 0,
-          },
-        }
+          -- For example, changing the color scheme:
+          config = {
+            window_background_opacity = 0.95,
+            macos_window_background_blur = 0,
+            color_scheme = 'Argonaut',
+            window_decorations = "RESIZE",
+            enable_tab_bar = false,
+            -- use_fancy_tab_bar = false
+            window_padding = {
+              left = 0,
+              right = 0,
+              top = 0,
+              bottom = 0,
+            },
+          }
 
-        -- and finally, return the configuration to wezterm
-        return config
-      '';
+          -- and finally, return the configuration to wezterm
+          return config
+        '';
     };
-    watson = {
-      enable = true;
-    };
+    watson = { enable = true; };
     zoxide = { enable = true; };
     zsh = {
       enable = true;
@@ -360,40 +365,42 @@
         info = "env info --vi-keys";
         # I could not get man to respect pager width
         man = "c4 env man";
-        n = "NIXPKGS_ALLOW_UNFREE=1 exec nix shell --impure nixpkgs#nodejs-18_x nixpkgs#yarn nixpkgs#cloudflared nixpkgs#terraform nixpkgs#google-cloud-sdk nixpkgs#bun nixpkgs#nodePackages.\"prettier\" nixpkgs#deno nixpkgs#prettierd";
+        n = ''
+          NIXPKGS_ALLOW_UNFREE=1 exec nix shell --impure nixpkgs#nodejs-18_x nixpkgs#yarn nixpkgs#cloudflared nixpkgs#terraform nixpkgs#google-cloud-sdk nixpkgs#bun nixpkgs#nodePackages."prettier" nixpkgs#deno nixpkgs#prettierd'';
         # nvim = "~/Projects/xnixvim/result/bin/nvim";
         w = "watson";
         zj = "zellij attach || zellij";
       };
-      initExtra = /*bash*/''
-        function git_diff_exclude_file() {
-          if [ $# -lt 3 ]; then
-            echo "Usage: git_diff_exclude_file <start_commit> <end_commit> <exclude_file> [output_file]"
-            return 1
-          fi
+      initExtra = # bash
+        ''
+          function git_diff_exclude_file() {
+            if [ $# -lt 3 ]; then
+              echo "Usage: git_diff_exclude_file <start_commit> <end_commit> <exclude_file> [output_file]"
+              return 1
+            fi
 
-          local start_commit=$1
-          local end_commit=$2
-          local exclude_file=$3
-          local output_file=$\{4:-combined_diff.txt}
+            local start_commit=$1
+            local end_commit=$2
+            local exclude_file=$3
+            local output_file=$\{4:-combined_diff.txt}
 
-          git diff --name-only "$start_commit" "$end_commit" | grep -v "$exclude_file" | xargs -I {} git diff "$start_commit" "$end_commit" -- {} > "$output_file"
-        }
+            git diff --name-only "$start_commit" "$end_commit" | grep -v "$exclude_file" | xargs -I {} git diff "$start_commit" "$end_commit" -- {} > "$output_file"
+          }
 
-        source $HOME/.env
-        # TODO: is there a better way to do this?
-        precmd() {
-          ${pkgs.zellij-tab-name-update}/bin/zellij-tab-name-update
-        }
+          source $HOME/.env
+          # TODO: is there a better way to do this?
+          precmd() {
+            ${pkgs.zellij-tab-name-update}/bin/zellij-tab-name-update
+          }
 
-        download_nixpkgs_cache_index () {
-          filename="index-$(uname -m | sed 's/^arm64$/aarch64/')-$(uname | tr A-Z a-z)"
-          mkdir -p ~/.cache/nix-index && cd ~/.cache/nix-index
-          # -N will only download a new version if there is an update.
-          wget -q -N https://github.com/Mic92/nix-index-database/releases/latest/download/$filename
-          ln -f $filename files
-        }
-      '';
+          download_nixpkgs_cache_index () {
+            filename="index-$(uname -m | sed 's/^arm64$/aarch64/')-$(uname | tr A-Z a-z)"
+            mkdir -p ~/.cache/nix-index && cd ~/.cache/nix-index
+            # -N will only download a new version if there is an update.
+            wget -q -N https://github.com/Mic92/nix-index-database/releases/latest/download/$filename
+            ln -f $filename files
+          }
+        '';
     };
   };
   home.file.".inputrc".source = ./dotfiles/inputrc;
@@ -402,8 +409,10 @@
   # There has got to be a better way to do this :(
   home.file.".config/scripts/timeUtils.sh".source = ./dotfiles/timeUtils.sh;
   home.file.".config/scripts/colorUtils.sh".source = ./dotfiles/colorUtils.sh;
-  home.file.".config/scripts/generate_tokens.sh".source = ./dotfiles/generate_tokens.sh;
-  home.file.".config/scripts/remove_video_silence.py".source = ./dotfiles/remove_video_silence.py;
+  home.file.".config/scripts/generate_tokens.sh".source =
+    ./dotfiles/generate_tokens.sh;
+  home.file.".config/scripts/remove_video_silence.py".source =
+    ./dotfiles/remove_video_silence.py;
   home.file.".config/gh-dash/config.yml".source = ./dotfiles/gh-dash/config.yml;
   home.file.".config/uair/uair.toml".source = ./dotfiles/uair.toml;
   home.file.".config/git/config.default".source = ./dotfiles/default.gitconfig;
