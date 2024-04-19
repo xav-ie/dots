@@ -22,7 +22,7 @@ rec {
   record = pkgs.callPackage ./record { };
   record-section = pkgs.callPackage ./record-section { };
   searcher = pkgs.callPackage ./searcher { };
-  uair-toggle = pkgs.callPackage ./uair-toggle { };
+  uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
   zellij-tab-name-update = pkgs.callPackage ./zellij-tab-name-update { };
   # nix-inspect = pkgs.callPackage ./nix-inspect { };
   # minicava = pkgs.callPackage ./minicava { };
