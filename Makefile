@@ -28,6 +28,11 @@ bleed:
 update:
 	nix flake update
 
+# TODO: make this work on macos
+.PHONY: diff
+diff:
+	nix run nixpkgs\#nvd -- diff /run/booted-system /run/current-system
+
 # `nix flake check` only works on nixos because of
 # https://github.com/NixOS/nix/issues/4265
 # The above command basically insists on checking things it does not have to.
