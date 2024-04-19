@@ -15,10 +15,10 @@ rec {
   ff = pkgs.callPackage ./ff { };
   # g = pkgs.callPackage ./g { };
   j = pkgs.callPackage ./j { };
-  # TODO: how to use cache-command package in this one??
   jira-task-list = pkgs.callPackage ./jira-task-list { inherit cache-command; };
   jira-list = pkgs.callPackage ./jira-list { inherit cache-command; };
-  notify = pkgs.callPackage ./notify { inherit (pkgs) generate-kaomoji; };
+  # TODO: I think this should probably become a flake
+  notify = pkgs.callPackage ./notify { };
   nvim = pkgs.callPackage ./nvim { };
   record = pkgs.callPackage ./record { };
   record-section = pkgs.callPackage ./record-section { };
