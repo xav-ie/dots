@@ -3,6 +3,8 @@
 writeShellApplication {
   name = "notify";
   runtimeInputs = [ libnotify ];
+  # HOW DO YOU USE FLAKES????
+  # I would prefer to have generate-kaomoji as a fixed input
   text = ''
     title="''${1}"
     body="''${*:2}"

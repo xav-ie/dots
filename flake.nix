@@ -90,8 +90,6 @@
       inherit lib;
       # TODO: make the import of this global like misterio
       overlays = import ./overlays { inherit inputs outputs; };
-      # right now, these only get pure nixpkgs...
-      # idk if it is good idea to pass in pkgs and overlays.. arghghghgh
       packages = forEachSystem (pkgs: import ./pkgs { inherit pkgs; });
       # Reusable nixos modules you might want to export
       # TODO: refactor these into proper, shareable modules
