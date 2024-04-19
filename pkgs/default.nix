@@ -17,7 +17,6 @@ rec {
   j = pkgs.callPackage ./j { };
   jira-task-list = pkgs.callPackage ./jira-task-list { inherit cache-command; };
   jira-list = pkgs.callPackage ./jira-list { inherit cache-command; };
-  # TODO: I think this should probably become a flake
   notify = pkgs.callPackage ./notify { };
   nvim = pkgs.callPackage ./nvim { };
   record = pkgs.callPackage ./record { };
