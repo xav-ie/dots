@@ -1,12 +1,13 @@
-{ writeShellApplication, libnotify, generate-kaomoji }:
+{ writeShellApplication, libnotify }:
+# I think it would be better to make this a flake
 writeShellApplication {
   name = "notify";
-  runtimeInputs = [ libnotify generate-kaomoji ];
+  runtimeInputs = [ libnotify ];
   text = ''
     title="''${1}"
     body="''${*:2}"
     if [[ -z "$body" ]]; then
-      body="$(generate-kaomoji -r ".value")"
+      body="$(nix run github:xav-ie/generate-kaomoji -- -r ".value")"
     fi
 
     if [[ -n "$(command -v osascript)" ]]; then
