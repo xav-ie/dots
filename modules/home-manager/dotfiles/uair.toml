@@ -5,11 +5,11 @@ time_format = "%*H:%M:%S"
 [[sessions]]
 id = "work"
 name = "Work"
-duration = "25m"
+duration = "40m"
 command = "notify 'Work Done!'"
 
 [[sessions]]
 id = "rest"
 name = "Rest"
-duration = "5m"
+duration = "10m"
 command = "notify 'Rest Done!'"
