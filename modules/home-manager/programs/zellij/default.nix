@@ -1,4 +1,9 @@
-{ inputs, outputs, pkgs, ... }:
+{
+  inputs,
+  outputs,
+  pkgs,
+  ...
+}:
 let
   default_tab_template = ''
     default_tab_template {
@@ -38,10 +43,14 @@ let
         }
     }
   '';
-in {
-  programs = { zellij = { enable = true; }; };
-  home.file.".config/zellij/config.kdl".source =
-    ../../dotfiles/zellij/config.kdl;
+in
+{
+  programs = {
+    zellij = {
+      enable = true;
+    };
+  };
+  home.file.".config/zellij/config.kdl".source = ../../dotfiles/zellij/config.kdl;
   home.file.".config/zellij/layouts/default.kdl".text = ''
     layout {
         ${default_tab_template}
