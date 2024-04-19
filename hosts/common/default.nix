@@ -1,4 +1,10 @@
-{ config, pkgs, inputs, ... }: {
+{
+  config,
+  pkgs,
+  inputs,
+  ...
+}:
+{
   nix.registry = {
     # This setting is important because it makes things like:
     # `nix run nixpkgs#some-package` makes it use the same reference of packages as in your 
@@ -8,20 +14,25 @@
     nur.flake = inputs.nur;
   };
 
-  nixpkgs.config = { allowUnfree = true; };
+  nixpkgs.config = {
+    allowUnfree = true;
+  };
 
-  environment.systemPackages = (with pkgs; [
-    # TODO: put these in a better place
-    cache-command
-    ff
-    generate-kaomoji
-    j
-    jira-task-list
-    jira-list
-    notify
-    nvim
-    searcher
-    uair-toggle
-    zellij-tab-name-update
-  ]);
+  environment.systemPackages = (
+    with pkgs;
+    [
+      # TODO: put these in a better place
+      cache-command
+      ff
+      generate-kaomoji
+      j
+      jira-task-list
+      jira-list
+      notify
+      nvim
+      searcher
+      uair-toggle-and-notify
+      zellij-tab-name-update
+    ]
+  );
 }
