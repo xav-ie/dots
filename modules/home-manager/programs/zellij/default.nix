@@ -11,7 +11,7 @@ let
         pane size=1 borderless=true {
             plugin location="file:${pkgs.zjstatus}/bin/zjstatus.wasm" {
               format_left             "{mode} #[fg=#FA89B4,bold]{session} {tabs}"
-              format_right            "{command_pomo}{datetime}"
+              format_right            "{command_pomo}{command_time}"
               format_space            ""
               border_enabled          "false"
               mode_normal             "#[bg=magenta] "
@@ -32,13 +32,15 @@ let
               tab_normal              "#[fg=#6C7086] {name} "
               tab_active              "#[fg=magenta,bold,italic] {name} "
 
-              datetime                "#[fg=cyan,bold] {format}"
-              datetime_format         "%m/%d %I:%M"
-              datetime_timezone       "America/New_York"
-              command_pomo_command    "uairctl fetch '{state} {time}'"
+              command_pomo_command    "bash -c \"who -u | grep pts >/dev/null && uairctl fetch '{state} {time}'\""
               command_pomo_format     "#[fg=blue] {stdout}"
               command_pomo_interval   "1"
               command_pomo_rendermode "static"
+
+              command_time_command    "bash -c \"who -u | grep pts >/dev/null && date '+%a %m/%d %I:%M'\""
+              command_time_format     "#[fg=cyan,bold] {stdout}"
+              command_time_interval   "1"
+              command_time_rendermode "static"
             }
         }
     }
