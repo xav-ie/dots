@@ -1,10 +1,19 @@
-{ inputs, lib, pkgs, outputs, ... }: {
+{
+  lib,
+  pkgs,
+  outputs,
+  ...
+}:
+{
   imports = [ ../common ];
   # darwin prefs and config items
   programs.zsh.enable = true;
   environment = {
     loginShell = pkgs.zsh;
-    shells = [ pkgs.bash pkgs.zsh ];
+    shells = [
+      pkgs.bash
+      pkgs.zsh
+    ];
     systemPackages = [ pkgs.coreutils ];
     pathsToLink = [ "/Applications" ];
     # use the version of nix that is from nix-darwin and home-manager and
@@ -143,9 +152,19 @@
       Magnet = 441258766;
       Twingate = 1501592214;
     };
-    casks = [ "bitwarden" "firefox" "protonvpn" "raycast" "slack" "zoom" ];
+    casks = [
+      "bitwarden"
+      "firefox"
+      "protonvpn"
+      "raycast"
+      "slack"
+      "zoom"
+    ];
     taps = [ "FelixKratz/formulae" ];
-    brews = [ "borders" "mas" ];
+    brews = [
+      "borders"
+      "mas"
+    ];
   };
 
   nix.gc = {
