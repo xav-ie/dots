@@ -4,11 +4,8 @@
     # https://nixos.wiki/wiki/Storage_optimization
     gc = {
       automatic = true;
-      interval = {
-        Weekday = 0;
-        Hour = 0;
-        Minute = 0;
-      };
+      persistent = true;
+      dates = "weekly";
       options = "--delete-older-than 30d";
     };
     registry = {
