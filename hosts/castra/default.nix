@@ -23,10 +23,6 @@
       "/etc/profiles/per-user/xavierruiz"
     ];
   };
-  nix.settings = {
-    experimental-features = "nix-command flakes";
-    keep-derivations = true;
-  };
   # unfortanately, this must be done in nix-darwin
   fonts.fontDir.enable = true;
   fonts.fonts = [ (pkgs.nerdfonts.override { fonts = [ "Meslo" ]; }) ];
@@ -165,16 +161,6 @@
       "borders"
       "mas"
     ];
-  };
-
-  nix.gc = {
-    automatic = true;
-    interval = {
-      Weekday = 0;
-      Hour = 0;
-      Minute = 0;
-    };
-    options = "--delete-older-than 30d";
   };
 
   nixpkgs = {
