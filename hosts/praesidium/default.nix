@@ -1,4 +1,13 @@
-{ config, inputs, outputs, lib, pkgs, self, ... }: {
+{
+  config,
+  inputs,
+  outputs,
+  lib,
+  pkgs,
+  self,
+  ...
+}:
+{
   imports = [
     # TODO: investigate what these actually do
     inputs.hardware.nixosModules.common-cpu-intel-cpu-only
@@ -42,7 +51,10 @@
     # Enables wireless support via wpa_supplicant.
     # wireless.enable = true; 
     # nameservers = [ "127.0.0.1" "::1" ];
-    nameservers = [ "1.1.1.1" "9.9.9.9" ];
+    nameservers = [
+      "1.1.1.1"
+      "9.9.9.9"
+    ];
     # nameservers = [ "1.1.1.1#one.one.one.one" "1.0.0.1#one.one.one.one" ];
 
     # dhcpcd.extraConfig = "nohook resolv.conf";
@@ -89,7 +101,12 @@
     users.x = {
       isNormalUser = true;
       description = "x";
-      extraGroups = [ "networkmanager" "wheel" "docker" "video" ];
+      extraGroups = [
+        "networkmanager"
+        "wheel"
+        "docker"
+        "video"
+      ];
       # packages = with pkgs; [];
       useDefaultShell = true;
     };
@@ -103,13 +120,16 @@
     config.allowUnfreePredicate = _: true;
   };
 
-  environment.systemPackages = (with pkgs; [
-    nur.repos.dustinblackman.oatmeal
-    # TODO: fix this :/
-    # g
-    record
-    record-section
-  ]);
+  environment.systemPackages = (
+    with pkgs;
+    [
+      nur.repos.dustinblackman.oatmeal
+      # TODO: fix this :/
+      # g
+      record
+      record-section
+    ]
+  );
 
   # trying to fix hypr anomalies
   environment.sessionVariables = {
@@ -205,7 +225,9 @@
   services = {
     blueman.enable = true;
     flatpak.enable = true;
-    geoclue2 = { enable = true; };
+    geoclue2 = {
+      enable = true;
+    };
     gnome.gnome-keyring.enable = true;
     openssh = {
       enable = true;
@@ -223,12 +245,17 @@
       pulse.enable = true;
       jack.enable = true;
     };
-    redshift = { enable = true; };
+    redshift = {
+      enable = true;
+    };
     resolved = {
       enable = true;
       dnssec = "true";
       domains = [ "~." ];
-      fallbackDns = [ "1.1.1.1#one.one.one.one" "1.0.0.1#one.one.one.one" ];
+      fallbackDns = [
+        "1.1.1.1#one.one.one.one"
+        "1.0.0.1#one.one.one.one"
+      ];
       extraConfig = ''
         DNSOverTLS=yes
       '';
@@ -294,8 +321,7 @@
       after = [ "default.target" ];
       serviceConfig = {
         Type = "simple";
-        ExecStart =
-          "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
+        ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
         Restart = "on-failure";
         RestartSec = 1;
         TimeoutStopSec = 10;
@@ -318,13 +344,14 @@
     # This will additionally add your inputs to the system's legacy channels
     # Making legacy nix commands consistent as well, awesome!
     # TODO: Yeah, idk what that means either
-    nixPath = lib.mapAttrsToList (key: value: "${key}=${value.to.path}")
-      config.nix.registry;
-
+    nixPath = lib.mapAttrsToList (key: value: "${key}=${value.to.path}") config.nix.registry;
     settings = {
       # just run this every once in a while... auto-optimization slows down evaluation
       auto-optimise-store = false;
-      experimental-features = [ "nix-command" "flakes" ];
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
       fallback = true; # allow building from src
       # use max cores/threads when `enableParallelBuilding` is set for package
       cores = 0;
