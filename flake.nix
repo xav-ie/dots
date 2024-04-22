@@ -7,13 +7,20 @@
     ];
   };
   inputs = {
-    hardware.url = "github:nixos/nixos-hardware";
     # TODO: figure out how to use from misterio and vimjoyer
     # impermanence.url = "github:nix-community/impermanence";
     # nix-colors.url = "github:misterio77/nix-colors";
 
+    alacritty-theme = {
+      url = "github:alexghr/alacritty-theme.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     darwin = {
       url = "github:LnL7/nix-darwin";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    hardware = {
+      url = "github:nixos/nixos-hardware";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     ctpv = {
@@ -36,8 +43,9 @@
       url = "github:xav-ie/generate-kaomoji";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # the latest and greatest ollama
-    ollama.url = "github:abysssol/ollama-flake";
+    ollama = {
+      url = "github:abysssol/ollama-flake";
+    };
     nixpkgs = {
       url = "github:nixos/nixpkgs/nixos-unstable";
     };
@@ -46,6 +54,7 @@
     };
     nur = {
       url = "github:nix-community/NUR";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     wezterm = {
       url = "github:wez/wezterm?dir=nix";
@@ -53,9 +62,7 @@
     };
     zjstatus = {
       url = "github:dj95/zjstatus";
-    };
-    alacritty-theme = {
-      url = "github:alexghr/alacritty-theme.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
   outputs =
