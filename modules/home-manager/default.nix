@@ -1,7 +1,9 @@
-{ pkgs, ... }: {
+{ pkgs, ... }:
+{
   imports = [ ./programs/zellij/default.nix ];
   home = {
-    packages = with pkgs;
+    packages =
+      with pkgs;
       [
         curl
         delta
@@ -25,13 +27,15 @@
         tree
         wget
         zip
-      ] ++ [
+      ]
+      ++ [
         # the shell I use most often
         nodejs
         cloudflared
         python3
         yarn
-      ] ++ [
+      ]
+      ++ [
         # experimental
         bun
         deno
@@ -47,8 +51,7 @@
       LC_ALL = "en_US.UTF-8";
       # causes bug if set. dont do it!
       BAT_PAGER = "";
-      PAGER = ''
-        bat -p --pager=\"moar -quit-if-one-screen\" --terminal-width=$(expr $COLUMNS - 4)'';
+      PAGER = ''bat -p --pager=\"moar -quit-if-one-screen\" --terminal-width=$(expr $COLUMNS - 4)'';
       MOAR = "-quit-if-one-screen";
       TERMINAL = "wezterm";
       # get more colors
@@ -57,6 +60,7 @@
       HISTCONTROL = "ignorespace";
       # increase history file size (default is 500)
       HISTFILESIZE = 10000;
+      SOMETHING_RANDOM = 12;
       PATH = "$HOME/.config/scripts/:$PATH";
     };
   };
@@ -89,7 +93,10 @@
             mods = "Control";
             command = {
               program = "zellij";
-              args = [ "action" "go-to-next-tab" ];
+              args = [
+                "action"
+                "go-to-next-tab"
+              ];
             };
           }
           {
@@ -97,7 +104,10 @@
             mods = "Control|Shift";
             command = {
               program = "zellij";
-              args = [ "action" "go-to-previous-tab" ];
+              args = [
+                "action"
+                "go-to-previous-tab"
+              ];
             };
           }
           {
@@ -105,7 +115,10 @@
             mods = "Alt";
             command = {
               program = "zellij";
-              args = [ "action" "focus-next-pane" ];
+              args = [
+                "action"
+                "focus-next-pane"
+              ];
             };
           }
           {
@@ -113,7 +126,10 @@
             mods = "Alt|Shift";
             command = {
               program = "zellij";
-              args = [ "action" "focus-previous-pane" ];
+              args = [
+                "action"
+                "focus-previous-pane"
+              ];
             };
           }
         ];
@@ -160,12 +176,9 @@
         bblame = "blame -w -C -C -C";
         cam = "commit -am";
         c = "commit";
-        dc =
-          "diff --cached --ignore-all-space --ignore-space-at-eol --ignore-space-change --ignore-blank-lines -- . ':(exclude)*package-lock.json' -- . ':(exclude)*yarn.lock'";
-        d =
-          "diff --ignore-all-space --ignore-space-at-eol --ignore-space-change --ignore-blank-lines -- . ':(exclude)*package-lock.json' -- . ':(exclude)*yarn.lock'";
-        graph =
-          "log --graph --pretty=tformat:'%C(bold blue)%h%Creset %s %C(bold green)%d%Creset %C(blue)<%an>%Creset %C(dim cyan)%cr' --abbrev-commit --decorate";
+        dc = "diff --cached --ignore-all-space --ignore-space-at-eol --ignore-space-change --ignore-blank-lines -- . ':(exclude)*package-lock.json' -- . ':(exclude)*yarn.lock'";
+        d = "diff --ignore-all-space --ignore-space-at-eol --ignore-space-change --ignore-blank-lines -- . ':(exclude)*package-lock.json' -- . ':(exclude)*yarn.lock'";
+        graph = "log --graph --pretty=tformat:'%C(bold blue)%h%Creset %s %C(bold green)%d%Creset %C(blue)<%an>%Creset %C(dim cyan)%cr' --abbrev-commit --decorate";
         main = # bash
           "!(git fetch && git fetch --tags && git checkout -B main origin/main)";
         p = "push";
@@ -248,14 +261,21 @@
         #   line-numbers = true;
         #   true-color = "always";
         # };
-        init = { defaultBranch = "main"; };
-        merge = { conflictstyle = "diff3"; };
-        diff = { colorMoved = "default"; };
-        "includeIf \"gitdir:~/\"" = { path = "~/.config/git/config.default"; };
+        init = {
+          defaultBranch = "main";
+        };
+        merge = {
+          conflictstyle = "diff3";
+        };
+        diff = {
+          colorMoved = "default";
+        };
+        "includeIf \"gitdir:~/\"" = {
+          path = "~/.config/git/config.default";
+        };
         "includeIf \"gitdir:~/Outsmartly/\"" = {
           path = "~/.config/git/config.work";
         };
-
       };
     };
     # heavily borrowed from https://www.youtube.com/watch?v=z8y_qRUYEWU
@@ -302,12 +322,16 @@
         cleaner = "${pkgs.ctpv}/bin/ctpvclear";
       };
     };
-    mpv = { enable = true; };
+    mpv = {
+      enable = true;
+    };
     starship = {
       enable = true;
       enableZshIntegration = true;
     };
-    thefuck = { enable = true; };
+    thefuck = {
+      enable = true;
+    };
     wezterm = {
       enable = true;
       extraConfig = # lua
@@ -352,8 +376,12 @@
           return config
         '';
     };
-    watson = { enable = true; };
-    zoxide = { enable = true; };
+    watson = {
+      enable = true;
+    };
+    zoxide = {
+      enable = true;
+    };
     zsh = {
       enable = true;
       enableCompletion = true;
@@ -365,8 +393,7 @@
         info = "env info --vi-keys";
         # I could not get man to respect pager width
         man = "c4 env man";
-        n = ''
-          NIXPKGS_ALLOW_UNFREE=1 exec nix shell --impure nixpkgs#nodejs-18_x nixpkgs#yarn nixpkgs#cloudflared nixpkgs#terraform nixpkgs#google-cloud-sdk nixpkgs#bun nixpkgs#nodePackages."prettier" nixpkgs#deno nixpkgs#prettierd'';
+        n = ''NIXPKGS_ALLOW_UNFREE=1 exec nix shell --impure nixpkgs#nodejs-18_x nixpkgs#yarn nixpkgs#cloudflared nixpkgs#terraform nixpkgs#google-cloud-sdk nixpkgs#bun nixpkgs#nodePackages."prettier" nixpkgs#deno nixpkgs#prettierd'';
         # nvim = "~/Projects/xnixvim/result/bin/nvim";
         w = "watson";
         zj = "zellij attach || zellij";
@@ -409,10 +436,8 @@
   # There has got to be a better way to do this :(
   home.file.".config/scripts/timeUtils.sh".source = ./dotfiles/timeUtils.sh;
   home.file.".config/scripts/colorUtils.sh".source = ./dotfiles/colorUtils.sh;
-  home.file.".config/scripts/generate_tokens.sh".source =
-    ./dotfiles/generate_tokens.sh;
-  home.file.".config/scripts/remove_video_silence.py".source =
-    ./dotfiles/remove_video_silence.py;
+  home.file.".config/scripts/generate_tokens.sh".source = ./dotfiles/generate_tokens.sh;
+  home.file.".config/scripts/remove_video_silence.py".source = ./dotfiles/remove_video_silence.py;
   home.file.".config/gh-dash/config.yml".source = ./dotfiles/gh-dash/config.yml;
   home.file.".config/uair/uair.toml".source = ./dotfiles/uair.toml;
   home.file.".config/git/config.default".source = ./dotfiles/default.gitconfig;
