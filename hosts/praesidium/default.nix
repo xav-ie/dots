@@ -4,7 +4,6 @@
   outputs,
   lib,
   pkgs,
-  self,
   ...
 }:
 {
@@ -345,26 +344,6 @@
     # Making legacy nix commands consistent as well, awesome!
     # TODO: Yeah, idk what that means either
     nixPath = lib.mapAttrsToList (key: value: "${key}=${value.to.path}") config.nix.registry;
-    settings = {
-      # just run this every once in a while... auto-optimization slows down evaluation
-      auto-optimise-store = false;
-      experimental-features = [
-        "nix-command"
-        "flakes"
-      ];
-      fallback = true; # allow building from src
-      # use max cores/threads when `enableParallelBuilding` is set for package
-      cores = 0;
-      # use max CPUs for nix build jobs
-      max-jobs = "auto";
-    };
-  };
-
-  # https://nixos.wiki/wiki/Storage_optimization
-  nix.gc = {
-    automatic = true;
-    dates = "weekly";
-    options = "--delete-older-than 30d";
   };
 
   systemd = {

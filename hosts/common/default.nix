@@ -1,6 +1,16 @@
 { pkgs, inputs, ... }:
 {
   nix = {
+    # https://nixos.wiki/wiki/Storage_optimization
+    gc = {
+      automatic = true;
+      interval = {
+        Weekday = 0;
+        Hour = 0;
+        Minute = 0;
+      };
+      options = "--delete-older-than 30d";
+    };
     registry = {
       # This setting is important because it makes things like:
       # `nix run nixpkgs#some-package` makes it use the same reference of packages as in your 
@@ -8,6 +18,19 @@
       home-manager.flake = inputs.home-manager;
       nixpkgs.flake = inputs.nixpkgs;
       nur.flake = inputs.nur;
+    };
+    settings = {
+      # just run this every once in a while... auto-optimization slows down evaluation
+      auto-optimise-store = false;
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
+      fallback = true; # allow building from src
+      # use max cores/threads when `enableParallelBuilding` is set for package
+      cores = 0;
+      # use max CPUs for nix build jobs
+      max-jobs = "auto";
     };
   };
 
