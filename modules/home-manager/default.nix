@@ -179,10 +179,10 @@
         dc = "diff --cached --ignore-all-space --ignore-space-at-eol --ignore-space-change --ignore-blank-lines -- . ':(exclude)*package-lock.json' -- . ':(exclude)*yarn.lock'";
         d = "diff --ignore-all-space --ignore-space-at-eol --ignore-space-change --ignore-blank-lines -- . ':(exclude)*package-lock.json' -- . ':(exclude)*yarn.lock'";
         graph = "log --graph --pretty=tformat:'%C(bold blue)%h%Creset %s %C(bold green)%d%Creset %C(blue)<%an>%Creset %C(dim cyan)%cr' --abbrev-commit --decorate";
-        main = # bash
+        main = # sh
           "!(git fetch && git fetch --tags && git checkout -B main origin/main)";
         p = "push";
-        pr = # bash
+        pr = # sh
           ''
             !(GH_FORCE_TTY=100% gh pr list | fzf --ansi --preview 'GH_FORCE_TTY=100% gh pr view {1}' --preview-window up --header-lines 3 | awk '{print $1}' | xargs -r gh pr checkout)
           '';
@@ -284,7 +284,7 @@
       commands = {
         dragon-out = ''%${pkgs.xdragon}/bin/xdragon -a -x "$fx"'';
         editor-open = "$$EDITOR $f";
-        mkdir = # bash
+        mkdir = # sh
           ''
             ''${{
               printf "Directory Name: "
@@ -398,7 +398,7 @@
         w = "watson";
         zj = "zellij attach || zellij";
       };
-      initExtra = # bash
+      initExtra = # sh
         ''
           function git_diff_exclude_file() {
             if [ $# -lt 3 ]; then
