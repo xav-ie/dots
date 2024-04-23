@@ -1,11 +1,21 @@
 {
   description = "My NixOS";
   nixConfig = {
-    extra-trusted-substituters = [ "https://nix-community.cachix.org" ];
+    # I am still not exactly sure what the point of these are...
+    # they do not affect nix.conf
+    # read more at:
+    # https://github.com/NixOS/nix/issues/6672
+    # https://github.com/NixOS/nix/issues/5988
+    # There also seems to be some difference using "extra"
+    # https://github.com/NixOS/nix/issues/6672#issuecomment-1921937241
+    extra-trusted-substituters = [
+      "https://nix-community.cachix.org"
+      "https://devenv.cachix.or"
+    ];
     extra-trusted-public-keys = [
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+      "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
     ];
-    trusted-users = [ "x" ];
   };
   inputs = {
     # TODO: figure out how to use from misterio and vimjoyer
