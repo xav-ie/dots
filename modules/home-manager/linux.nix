@@ -17,7 +17,7 @@ in
         slack
         asciinema # record shell sessions and share easily
         age # the new PGP
-        blesh # bash extensions
+        # blesh # bash extensions
         cliphist
         clipboard-jh # a really awesome clipboard
         # cudaPackages.cuda_cccl # I wish hardware acceleration would work :/
