@@ -43,8 +43,8 @@
       ff
       generate-kaomoji
       j
-      jira-task-list
       jira-list
+      jira-task-list
       notify
       nvim
       searcher
