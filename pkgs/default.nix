@@ -19,6 +19,7 @@ rec {
   jira-list = pkgs.callPackage ./jira-list { inherit cache-command; };
   notify = pkgs.callPackage ./notify { };
   nvim = pkgs.callPackage ./nvim { };
+  is-sshed = pkgs.callPackage ./is-sshed { };
   record = pkgs.callPackage ./record { };
   record-section = pkgs.callPackage ./record-section { };
   searcher = pkgs.callPackage ./searcher { };
