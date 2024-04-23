@@ -42,6 +42,7 @@
       cache-command
       ff
       generate-kaomoji
+      is-sshed
       j
       jira-list
       jira-task-list
