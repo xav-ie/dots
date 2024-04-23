@@ -418,7 +418,7 @@
           }
 
           source $HOME/.env
-          # TODO: is there a better way to do this?
+
           precmd() {
             ${pkgs.zellij-tab-name-update}/bin/zellij-tab-name-update
           }
