@@ -400,6 +400,9 @@
       };
       initExtra = # sh
         ''
+          # comment this if you face weird direnv issues
+          export DIRENV_LOG_FORMAT=""
+
           function git_diff_exclude_file() {
             if [ $# -lt 3 ]; then
               echo "Usage: git_diff_exclude_file <start_commit> <end_commit> <exclude_file> [output_file]"
