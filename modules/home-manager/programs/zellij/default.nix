@@ -1,9 +1,4 @@
-{
-  inputs,
-  outputs,
-  pkgs,
-  ...
-}:
+{ pkgs, ... }:
 let
   default_tab_template = ''
     default_tab_template {
