@@ -30,15 +30,15 @@
       ]
       ++ [
         # the shell I use most often
-        nodejs
-        cloudflared
-        python3
-        yarn
+        # nodejs
+        # cloudflared
+        # python3
+        # yarn
       ]
       ++ [
         # experimental
-        bun
-        deno
+        # bun
+        # deno
         ollama
       ];
     # The state version is required and should stay at the version you
