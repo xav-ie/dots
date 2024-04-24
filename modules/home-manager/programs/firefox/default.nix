@@ -9,8 +9,8 @@ in
       id = 0;
       isDefault = true;
       settings = merge [
-        (import ./programs/firefox/annoyances.nix)
-        (import ./programs/firefox/settings.nix)
+        (import ./annoyances.nix)
+        (import ./settings.nix)
       ];
       userChrome = # css
         ''
