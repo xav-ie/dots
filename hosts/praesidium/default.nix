@@ -153,10 +153,8 @@
     PATH = "$HOME/.config/scripts/:$PATH";
   };
 
-  # fonts.packages = with pkgs; [
-  #   nerdfonts
-  # ];
   fonts.fontconfig.enable = true;
+  fonts.packages = [ pkgs.nerdfonts ];
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.

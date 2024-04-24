@@ -31,10 +31,6 @@
         # allows asciinema recordings to be exported to svg... this could be pretty indespensable if
         # you would like ANSI escape sequences to be interpreted by GH
         ################################
-        # awesome dev tools
-        ################################
-        #neovim # the one and only
-        ################################
         # universal utils
         ################################
         cmake
@@ -55,8 +51,6 @@
         noisetorch # noise filter
         openrgb # pc rgb control
         pavucontrol # audio mixer
-        nerdfonts
-        # (pkgs.nerdfonts.override { fonts = [ "Meslo" ]; })
         # TODO: move into hm services
         playerctl # play, pause, next
         pulseaudio # provides pactl for volume control
