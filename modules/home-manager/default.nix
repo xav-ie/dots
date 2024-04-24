@@ -57,10 +57,10 @@
     };
   };
   programs = {
-    atuin = {
-      enable = true;
-      settings.style = "compact";
-    };
+    # atuin = {
+    #   enable = true;
+    #   settings.style = "compact";
+    # };
     bat = {
       enable = true;
       config = {
