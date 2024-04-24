@@ -6,7 +6,7 @@
       userName = "xav-ie";
       # userEmail = "github@xav.ie";
       aliases = {
-        bb = "!${./dotfiles/betterbranch.sh}";
+        bb = "!${./betterbranch.sh}";
         bblame = "blame -w -C -C -C";
         cam = "commit -am";
         c = "commit";
@@ -113,6 +113,6 @@
       };
     };
   };
-  home.file.".config/git/config.default".source = ./dotfiles/default.gitconfig;
-  home.file.".config/git/config.work".source = ./dotfiles/outsmartly.gitconfig;
+  home.file.".config/git/config.default".source = ./default.gitconfig;
+  home.file.".config/git/config.work".source = ./outsmartly.gitconfig;
 }
