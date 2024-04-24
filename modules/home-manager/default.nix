@@ -14,7 +14,6 @@
       [
         curl
         delta
-        eza
         fd
         ffmpeg
         go-jira
@@ -25,29 +24,15 @@
             mv $out/bin/jira $out/bin/jira-unfree
           '';
         }))
-        jq
         magic-wormhole-rs # send files easily
         moar # the best pager
-        ripgrep
         uair
         unzip
         tree
         wget
         zip
       ]
-      ++ [
-        # the shell I use most often
-        # nodejs
-        # cloudflared
-        # python3
-        # yarn
-      ]
-      ++ [
-        # experimental
-        # bun
-        # deno
-        ollama
-      ];
+      ++ [ ollama ];
     # The state version is required and should stay at the version you
     # originally installed.
     stateVersion = "23.11";
@@ -74,7 +59,6 @@
   programs = {
     atuin = {
       enable = true;
-      enableZshIntegration = true;
       settings.style = "compact";
     };
     bat = {
@@ -95,31 +79,17 @@
     };
     eza = {
       enable = true;
-      enableZshIntegration = true;
       git = true;
       icons = true;
     };
-    fzf = {
-      enable = true;
-      # testing out atuin instead
-      # enableZshIntegration = true;
-    };
-    mpv = {
-      enable = true;
-    };
-    starship = {
-      enable = true;
-      enableZshIntegration = true;
-    };
-    thefuck = {
-      enable = true;
-    };
-    watson = {
-      enable = true;
-    };
-    zoxide = {
-      enable = true;
-    };
+    fzf.enable = true;
+    jq.enable = true;
+    mpv.enable = true;
+    ripgrep.enable = true;
+    starship.enable = true;
+    thefuck.enable = true;
+    watson.enable = true;
+    zoxide.enable = true;
   };
   home.file.".inputrc".source = ./dotfiles/inputrc;
   home.file.".config/scripts/localip".source = ./dotfiles/localip;
