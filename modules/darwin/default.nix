@@ -20,7 +20,6 @@
     };
     # unfortanately, this must be done in nix-darwin
     fonts.fontDir.enable = true;
-    fonts.fonts = [ (pkgs.nerdfonts.override { fonts = [ "Meslo" ]; }) ];
     # allow sudo to use touch id
     security.pam.enableSudoTouchIdAuth = true;
     services = {
