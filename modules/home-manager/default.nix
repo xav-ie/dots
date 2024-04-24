@@ -84,6 +84,15 @@
     };
     fzf.enable = true;
     jq.enable = true;
+    kitty = {
+      enable = true;
+      settings = {
+        background_opacity = "0.85";
+        font_size = "14.0";
+        copy_on_select = "yes";
+        font_family = "FiraCode Nerd Font";
+      };
+    };
     mpv.enable = true;
     ripgrep.enable = true;
     starship.enable = true;
