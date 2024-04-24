@@ -14,17 +14,10 @@ in
         ################################
         # in triage - try to minimize this list
         ################################
-        slack
         asciinema # record shell sessions and share easily
         age # the new PGP
-        # blesh # bash extensions
         cliphist
         clipboard-jh # a really awesome clipboard
-        # cudaPackages.cuda_cccl # I wish hardware acceleration would work :/
-        # cudaPackages.cudatoolkit
-        # cudaPackages.cudnn
-        himalaya # email
-        hstr
         manix
         nodePackages."webtorrent-cli"
         xidel # like jq but for html and much more advanced.
@@ -34,16 +27,11 @@ in
         # prusa-slicer                # does not launch currently
         python312Packages."adblock"
         rofi-rbw # bitwarden cli wrapper
-        rbw # unnofficial bitwarden client
-        # slack                       # does not launch currently
-        sops # secrets manager? idk... seems like an extension to age and
-        # other encrypters that allows you to just encrypt part of the
-        # file instead of the whole thing... IDK the real use for #that
-        # tldr # barely working due to it not having many entries
-        xdg-utils # ????
+        slack
+        sops
+        xdg-utils # xdg-open, xdg-mime, xdg-email, etc.
         wf-recorder
-        wtype # xdotool for wayland; used as part of rofi-rbw for typing
-        # passwords out
+        # wtype # xdotool for wayland; used as part of rofi-rbw for typing
         yt-dlp # better yt-dl
         zoom-us
         # https://github.com/marionebl/svg-term-cli
@@ -52,7 +40,6 @@ in
         ################################
         # awesome dev tools
         ################################
-        lazygit # easy git tui
         #neovim # the one and only
         ################################
         # universal utils
@@ -70,18 +57,17 @@ in
         bitwarden
         chromium
         discord
-        google-chrome
-        mpv # video player
+        # TODO: move into hm services
         networkmanagerapplet
         noisetorch # noise filter
         openrgb # pc rgb control
         pavucontrol # audio mixer
         nerdfonts
         # (pkgs.nerdfonts.override { fonts = [ "Meslo" ]; })
+        # TODO: move into hm services
         playerctl # play, pause, next
         pulseaudio # provides pactl for volume control
         # qutebrowser
-        sioyek # vimified pdf viewer
         ################################
         # hyprland
         ################################
@@ -117,6 +103,10 @@ in
     };
   };
   programs = {
+    rbw.enable = true; # unnofficial bitwarden client
+    lazygit.enable = true; # easy git tui
+    himalaya.enable = true; # email
+    sioyek.enable = true; # vimified pdf viewer
     firefox = {
       enable = true;
       profiles.x = {
@@ -181,12 +171,13 @@ in
         ];
       };
     };
-    wezterm = {
-      # guess this does not work with the flake version
-      enableZshIntegration = false;
-      # enable flake version because it is more up to date
-      package = inputs.wezterm.outputs.packages.${pkgs.system}.default;
-    };
+    # idk what's happening. It has not been working for awhile
+    # wezterm = {
+    #   # guess this does not work with the flake version
+    #   enableZshIntegration = false;
+    #   # enable flake version because it is more up to date
+    #   package = inputs.wezterm.outputs.packages.${pkgs.system}.default;
+    # };
   };
 
   services = {
