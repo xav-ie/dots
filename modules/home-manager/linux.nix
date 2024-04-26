@@ -3,6 +3,7 @@
   imports = [
     ./programs/firefox
     ./programs/swaynotificationcenter
+    ./programs/waybar
   ];
   home = {
     packages =
@@ -72,10 +73,6 @@
         swww
         waypipe
         wl-clipboard
-        (waybar.overrideAttrs (oldAttrs: {
-          mesonFlags = oldAttrs.mesonFlags ++ [ "-Dexperimental=true" ];
-          hyprlandSupport = true;
-        }))
       ])
       ++ [ inputs.hyprland-contrib.packages."x86_64-linux".grimblast ];
     # The state version is required and should stay at the version you
