@@ -4,6 +4,7 @@
     ./programs/alacritty
     ./programs/git
     ./programs/lf
+    ./programs/starship
     ./programs/wezterm
     ./programs/zellij
     ./programs/zsh
@@ -95,7 +96,6 @@
     };
     mpv.enable = true;
     ripgrep.enable = true;
-    starship.enable = true;
     thefuck.enable = true;
     watson.enable = true;
     zoxide.enable = true;
