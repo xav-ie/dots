@@ -1,6 +1,9 @@
 { pkgs, inputs, ... }:
 {
-  imports = [ ./programs/firefox ];
+  imports = [
+    ./programs/firefox
+    ./programs/swaynotificationcenter
+  ];
   home = {
     packages =
       (with pkgs; [
@@ -66,7 +69,6 @@
         rofi-wayland
         swayidle
         swaylock
-        swaynotificationcenter
         swww
         waypipe
         wl-clipboard
