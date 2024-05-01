@@ -109,4 +109,5 @@
   home.file.".config/scripts/remove_video_silence.py".source = ./dotfiles/remove_video_silence.py;
   home.file.".config/gh-dash/config.yml".source = ./dotfiles/gh-dash/config.yml;
   home.file.".config/uair/uair.toml".source = ./dotfiles/uair.toml;
+  home.file.".config/pijul/config.toml".source = ./dotfiles/pijul/config.toml;
 }
