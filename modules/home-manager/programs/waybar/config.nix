@@ -1,4 +1,4 @@
-{...}:
+{ ... }:
 {
   "layer" = "top";
   "margin-top" = 0;
@@ -6,9 +6,21 @@
   "margin-left" = 10;
   "margin-right" = 10;
   "position" = "bottom";
-  "modules-left" = ["custom/arch" "hyprland/workspaces"];
-  "modules-center" = ["custom/pomodoro"];
-  "modules-right" = ["tray" "cava" "pulseaudio" "bluetooth" "network" "custom/notification" "clock"];
+  "modules-left" = [
+    "custom/arch"
+    "hyprland/workspaces"
+  ];
+  "modules-center" = [ "custom/pomodoro" ];
+  "modules-right" = [
+    "custom/privacy-audio"
+    "tray"
+    "cava"
+    "pulseaudio"
+    "bluetooth"
+    "network"
+    "custom/notification"
+    "clock"
+  ];
   "custom/arch" = {
     "format" = "";
     "tooltip" = false;
@@ -29,20 +41,20 @@
     "format-alt" = "{:%H:%M}  ";
     "tooltip-format" = "<tt><small>{calendar}</small></tt>";
     "calendar" = {
-      "mode"           = "year";
-      "mode-mon-col"   = 3;
-      "weeks-pos"      = "right";
-      "on-scroll"      = 1;
+      "mode" = "year";
+      "mode-mon-col" = 3;
+      "weeks-pos" = "right";
+      "on-scroll" = 1;
       "on-click-right" = "mode";
       "format" = {
-        "months" =     "<span color='#ffead3'><b>{}</b></span>";
-        "days" =       "<span color='#ecc6d9'><b>{}</b></span>";
-        "weeks" =      "<span color='#99ffdd'><b>W{}</b></span>";
-        "weekdays" =   "<span color='#ffcc66'><b>{}</b></span>";
-        "today" =      "<span color='#ff6699'><b><u>{}</u></b></span>";
+        "months" = "<span color='#ffead3'><b>{}</b></span>";
+        "days" = "<span color='#ecc6d9'><b>{}</b></span>";
+        "weeks" = "<span color='#99ffdd'><b>W{}</b></span>";
+        "weekdays" = "<span color='#ffcc66'><b>{}</b></span>";
+        "today" = "<span color='#ff6699'><b><u>{}</u></b></span>";
       };
     };
-    "actions" =  {
+    "actions" = {
       "on-click-right" = "mode";
       "on-click-forward" = "tz_up";
       "on-click-backward" = "tz_down";
@@ -70,7 +82,16 @@
     "waves" = true;
     "noise_reduction" = 0.77;
     "input_delay" = 2;
-    "format-icons"  = ["▁" "▂" "▃" "▄" "▅" "▆" "▇" "█" ];
+    "format-icons" = [
+      "▁"
+      "▂"
+      "▃"
+      "▄"
+      "▅"
+      "▆"
+      "▇"
+      "█"
+    ];
     "actions" = {
       "on-click-right" = "mode";
     };
@@ -81,7 +102,16 @@
     "tooltip" = false;
     "format-icons" = {
       "headphone" = "";
-      "default" = ["" "" "󰕾" "󰕾" "󰕾" "" "" ""];
+      "default" = [
+        ""
+        ""
+        "󰕾"
+        "󰕾"
+        "󰕾"
+        ""
+        ""
+        ""
+      ];
     };
     "scroll-step" = 0.5;
     "reverse-scrolling" = true;
@@ -125,4 +155,12 @@
     "on-click-right" = "swaync-client -d -sw";
     "escape" = true;
   };
+  # TODO: Make it red
+  "custom/privacy-audio" = {
+    "format" = "<span></span>{}";
+    "exec" = "pactl -f json list source-outputs | jq '[.[] | select(.properties.\"application.name\" != \"cava\")] | length'";
+    "tooltip" = "pactl -f json list source-outputs | jq -r '.[] | select(.properties.\"application.name\" != \"cava\") | .properties.\"application.name\"'";
+    "tooltip-format" = "{}";
+  };
+  # TODO: add pipewire screenshare outputs
 }
