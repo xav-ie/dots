@@ -83,7 +83,8 @@
         rebase.updateRefs = true;
         rerere.enabled = true;
         fetch.writeCommitGraph = true;
-        remote.origin.fetch = "+refs/pull/*:refs/remotes/origin/pull/*";
+        # remote.origin.fetch = "+refs/pull/*:refs/remotes/origin/pull/*";
+        remote.origin.fetch = "+refs/pull/*/head:refs/remotes/origin/pr/*";
         interactive = {
           # configured by delta.enable=true
           # this is used for diff patches
