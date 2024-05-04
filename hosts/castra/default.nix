@@ -24,7 +24,7 @@
   };
   # unfortanately, this must be done in nix-darwin
   fonts.fontDir.enable = true;
-  fonts.packages = [
+  fonts.fonts = [
     (pkgs.nerdfonts.override {
       fonts = [
         "FiraCode"
