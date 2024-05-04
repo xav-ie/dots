@@ -75,11 +75,10 @@
     };
   };
   outputs =
-    {
-      home-manager,
-      nixpkgs,
-      self,
-      ...
+    { home-manager
+    , nixpkgs
+    , self
+    , ...
     }@inputs:
     let
       inherit (self) outputs;
