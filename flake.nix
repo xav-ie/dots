@@ -32,7 +32,6 @@
     };
     hardware = {
       url = "github:nixos/nixos-hardware";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
     ctpv = {
       url = "github:xav-ie/ctpv-nix";
@@ -65,7 +64,6 @@
     };
     nur = {
       url = "github:nix-community/NUR";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
     wezterm = {
       url = "github:wez/wezterm?dir=nix";
