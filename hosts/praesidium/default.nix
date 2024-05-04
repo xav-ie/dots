@@ -332,6 +332,11 @@
   system.stateVersion = "23.05"; # Did you read the comment?
 
   nix = {
+    gc = {
+      persistent = true; # nixos only
+      dates = "weekly"; # nixos only
+    };
+
     # This will add each flake input as a registry
     # To make nix3 commands consistent with your flake
     # TODO: what does this do??
