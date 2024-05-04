@@ -4,8 +4,9 @@
     # https://nixos.wiki/wiki/Storage_optimization
     gc = {
       automatic = true;
-      persistent = true;
-      dates = "weekly";
+      # these two options do not have an effect on macos... >:(
+      # persistent = true; 
+      # dates = "weekly";
       options = "--delete-older-than 30d";
     };
     registry = {
