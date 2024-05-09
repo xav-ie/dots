@@ -155,7 +155,9 @@
       Magnet = 441258766;
       Twingate = 1501592214;
     };
+    # TODO: deduplicate against darwin/default.nix
     casks = [
+      "chromium"
       "bitwarden"
       "firefox"
       "protonvpn"
