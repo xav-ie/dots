@@ -27,12 +27,27 @@
 
           -- For example, changing the color scheme:
           config = {
-            window_background_opacity = 0.95,
-            macos_window_background_blur = 0,
             color_scheme = 'Argonaut',
-            window_decorations = "RESIZE",
             enable_tab_bar = false,
+            font = wezterm.font_with_fallback {
+              -- 'Martian Mono', -- too decorated for my taste
+              'Maple Mono',
+              'CaskaydiaCove Nerd Font',
+              'MonaspiceNe Nerd Font',
+              'Fira Code Nerd Font',
+              -- these fonts did not install properly from the package.
+              -- I will have to investigate why, later. For now, I looked up
+              -- their store path and installed manually from there
+              -- 'Maple', 'Martian Mono', 
+              -- This one is just not packaged at all:
+              -- 'Twilio Sans Mono'
+
+            },
+            font_size = 12.0,
+            macos_window_background_blur = 0,
             -- use_fancy_tab_bar = false
+            window_background_opacity = 0.95,
+            window_decorations = "RESIZE",
             window_padding = {
               left = 0,
               right = 0,
