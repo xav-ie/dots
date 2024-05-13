@@ -14,7 +14,24 @@
       pkgs.bash
       pkgs.zsh
     ];
-    systemPackages = [ pkgs.coreutils ];
+    systemPackages = with pkgs; [
+      coreutils
+      # These fonts should be included with `nerdfonts`, 
+      # but I guess they are just general packages
+      # "Cascadia Code"
+      # "Maple"
+      # "Martian Mono"
+      # "Monaspace Neon"
+      # The real names are to the right if different
+      cascadia-code # "CaskaydiaCove Nerd Font"
+      monaspace # "Monspace Neon" => "MonaspiceNe Nerd Font"
+      # I had to manually install these from the store path, there is something going wrong on install
+      maple-mono
+      martian-mono
+      # These two are not packaged at all:
+      # "MonoLisa" # idk why this is not included yet in nerdfonts
+      # "Twilio Sans Mono" # <== may change very soon, open pr to add it.
+    ];
     pathsToLink = [ "/Applications" ];
     # use the version of nix that is from nix-darwin and home-manager and
     # disable using /nix/var/nix/profiles/default and ~/.nixprofile
@@ -23,13 +40,30 @@
       "/etc/profiles/per-user/xavierruiz"
     ];
   };
-  # unfortanately, this must be done in nix-darwin
+  # unfortunately, this must be done in nix-darwin
   fonts.fontDir.enable = true;
   fonts.fonts = [
     (pkgs.nerdfonts.override {
       fonts = [
+        # I like all these fonts a lot. You can test them by going to programmingfonts.org
+        # However, the real names are to the right. I imagine it was renamed this way for 
+        # licensing reasons
         "FiraCode"
+        "Hasklig"
+        "JetBrainsMono"
         "Meslo"
+        # also in general packages??
+        "Monaspace" # "MonaspiceNe Nerd Font"
+        # These ones should be in nerdfonts, but I guess they just aren't...
+        # You can find them above in package installs :(
+        # I think this is due to upstream not putting them in releases for some reason:
+        # https://github.com/ryanoasis/nerd-fonts/releases/
+        # "Cascadia Code"
+        # "Maple"
+        # "Martian Mono"
+        # "MonoLisa"
+        # "Twilio Sans Mono" # this one may be included in future release:
+        # https://github.com/ryanoasis/nerd-fonts/pull/1465
       ];
     })
   ];
