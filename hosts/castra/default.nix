@@ -99,48 +99,50 @@
       };
 
       # make every app fullscreen
-      extraConfig = ''
-        yabai -m rule --add app=".*" native-fullscreen=on
-      '';
+      extraConfig = # sh
+        ''
+          yabai -m rule --add app=".*" native-fullscreen=on
+        '';
     };
     skhd = {
       enable = true;
-      skhdConfig = ''
-        # ctrl + alt - h : yabai -m window --focus west
-        # ctrl + alt - j : yabai -m window --focus south
-        # ctrl + alt - k : yabai -m window --focus north
-        # ctrl + alt - l : yabai -m window --focus east
-        # Fill space with window
-        # ctrl + alt - 0 : yabai -m window --grid 1:1:0:0:1:1
-        # Move window
-        # ctrl + alt - e : yabai -m window --display 1; yabai -m display --focus 1
-        # ctrl + alt - d : yabai -m window --display 2; yabai -m display --focus 2
-        # ctrl + alt - f : yabai -m window --space next; yabai -m space --focus next
-        # ctrl + alt - s : yabai -m window --space prev; yabai -m space --focus prev
-        # Close current window
-        # ctrl + alt - w : $(yabai -m window $(yabai -m query --windows --window | jq -re ".id") --close)
-        # Rotate tree
-        ctrl + alt - r : yabai -m space --rotate 90
-        # Open application
-        # I really like application driven window management. I just want simple keybindings to
-        # just go where I want. Only downside is new bindings must be added for new apps.
-        ctrl + alt - 1 : open -a wezterm
-        ctrl + alt - 2 : open -a "Firefox"
-        ctrl + alt - 3 : open -a Slack
-        ctrl + alt - 4 : open -a zoom.us
-        ctrl + alt - 5 : open -a Bitwarden
-        ctrl + alt - 6 : open -a Messages
-        ctrl + alt - 7 : open -a Finder
-        ctrl + alt - 8 : open -a Safari
-        # ctrl + alt - z : yabai -m window --focus $(yabai -m query --windows | jq '.[] | select(.app == "mpv").id')
-        # ctrl + alt - t : yabai -m window --toggle float;\
-        #  yabai -m window --grid 4:4:1:1:2:2
-        # ctrl + alt - p : yabai -m window --toggle sticky;\
-        #   yabai -m window --toggle topmost;\
-        #   yabai -m window --toggle pip
-        ctrl - right : yabai -m space --focus next
-        ctrl - left : yabai -m space --focus prev
-      '';
+      skhdConfig = # sh
+        ''
+          # ctrl + alt - h : yabai -m window --focus west
+          # ctrl + alt - j : yabai -m window --focus south
+          # ctrl + alt - k : yabai -m window --focus north
+          # ctrl + alt - l : yabai -m window --focus east
+          # Fill space with window
+          # ctrl + alt - 0 : yabai -m window --grid 1:1:0:0:1:1
+          # Move window
+          # ctrl + alt - e : yabai -m window --display 1; yabai -m display --focus 1
+          # ctrl + alt - d : yabai -m window --display 2; yabai -m display --focus 2
+          # ctrl + alt - f : yabai -m window --space next; yabai -m space --focus next
+          # ctrl + alt - s : yabai -m window --space prev; yabai -m space --focus prev
+          # Close current window
+          # ctrl + alt - w : $(yabai -m window $(yabai -m query --windows --window | jq -re ".id") --close)
+          # Rotate tree
+          ctrl + alt - r : yabai -m space --rotate 90
+          # Open application
+          # I really like application driven window management. I just want simple keybindings to
+          # just go where I want. Only downside is new bindings must be added for new apps.
+          ctrl + alt - 1 : open -a wezterm
+          ctrl + alt - 2 : open -a "Firefox"
+          ctrl + alt - 3 : open -a Slack
+          ctrl + alt - 4 : open -a zoom.us
+          ctrl + alt - 5 : open -a Bitwarden
+          ctrl + alt - 6 : open -a Messages
+          ctrl + alt - 7 : open -a Finder
+          ctrl + alt - 8 : open -a Safari
+          # ctrl + alt - z : yabai -m window --focus $(yabai -m query --windows | jq '.[] | select(.app == "mpv").id')
+          # ctrl + alt - t : yabai -m window --toggle float;\
+          #  yabai -m window --grid 4:4:1:1:2:2
+          # ctrl + alt - p : yabai -m window --toggle sticky;\
+          #   yabai -m window --toggle topmost;\
+          #   yabai -m window --toggle pip
+          ctrl - right : yabai -m space --focus next
+          ctrl - left : yabai -m space --focus prev
+        '';
     };
   };
   # BECAUSE YA HAVE TO :/
