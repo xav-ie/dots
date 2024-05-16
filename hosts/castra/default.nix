@@ -200,11 +200,8 @@
       "slack"
       "zoom"
     ];
-    taps = [ "FelixKratz/formulae" ];
-    brews = [
-      "borders"
-      "mas"
-    ];
+    taps = [ ];
+    brews = [ "mas" ];
   };
 
   nixpkgs = {
