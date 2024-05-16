@@ -75,28 +75,32 @@
     yabai = {
       enable = true;
       enableScriptingAddition = true;
-      config = {
-        focus_follows_mouse = "autoraise";
-        mouse_follows_focus = "off";
-        mouse_drop_action = "stack";
-        window_placement = "second_child";
-        window_opacity = "off";
-        window_topmost = "on";
-        window_shadow = "off";
-        active_window_opacity = "1.0";
-        normal_window_opacity = "1.0";
-        split_ratio = "0.50";
-        auto_balance = "on";
-        mouse_modifier = "fn";
-        mouse_action1 = "move";
-        mouse_action2 = "resize";
-        layout = "bsp";
-        top_padding = 4;
-        bottom_padding = 4;
-        left_padding = 4;
-        right_padding = 4;
-        window_gap = 4;
-      };
+      config =
+        let
+          spacing = 0;
+        in
+        {
+          focus_follows_mouse = "autoraise";
+          mouse_follows_focus = "off";
+          mouse_drop_action = "stack";
+          window_placement = "second_child";
+          window_opacity = "off";
+          window_topmost = "on";
+          window_shadow = "off";
+          active_window_opacity = "1.0";
+          normal_window_opacity = "1.0";
+          split_ratio = "0.50";
+          auto_balance = "on";
+          mouse_modifier = "fn";
+          mouse_action1 = "move";
+          mouse_action2 = "resize";
+          layout = "bsp";
+          top_padding = spacing;
+          bottom_padding = spacing;
+          left_padding = spacing;
+          right_padding = spacing;
+          window_gap = spacing;
+        };
 
       # make every app fullscreen
       extraConfig = # sh
