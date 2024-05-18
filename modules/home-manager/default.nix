@@ -95,12 +95,12 @@
         "alt+l" = "launch --type=background zellij action move-focus-or-tab right";
       };
       settings = {
-        background_opacity = "0.88";
-        background_blur = 20;
+        background_opacity = "0.90";
+        background_blur = 10;
         copy_on_select = "yes";
         cursor = "#ff0000";
         font_family = "Maple Mono";
-        font_size = "12.0";
+        font_size = "13.0";
         hide_window_decorations = "yes";
         macos_quit_when_last_window_closed = "yes";
       };
