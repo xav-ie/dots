@@ -130,14 +130,14 @@
           # Open application
           # I really like application driven window management. I just want simple keybindings to
           # just go where I want. Only downside is new bindings must be added for new apps.
-          ctrl + alt - 1 : open -a kitty
-          ctrl + alt - 2 : open -a Firefox
-          ctrl + alt - 3 : open -a ChatGPT
-          ctrl + alt - 4 : open -a Slack
-          ctrl + alt - 5 : open -a zoom.us
-          ctrl + alt - 6 : open -a Finder
-          ctrl + alt - 7 : open -a Messages
-          ctrl + alt - 8 : open -a Safari
+          ctrl + alt - 1 : osascript -e 'tell application "kitty" to activate'
+          ctrl + alt - 2 : osascript -e 'tell application "Firefox" to activate'
+          ctrl + alt - 3 : osascript -e 'tell application "ChatGPT" to activate'
+          ctrl + alt - 4 : osascript -e 'tell application "Slack" to activate'
+          ctrl + alt - 5 : osascript -e 'tell application "zoom.us" to activate'
+          ctrl + alt - 6 : osascript -e 'tell application "Finder" to activate'
+          ctrl + alt - 7 : osascript -e 'tell application "Messages" to activate'
+          ctrl + alt - 8 : osascript -e 'tell application "Safari" to activate'
           # ctrl + alt - z : yabai -m window --focus $(yabai -m query --windows | jq '.[] | select(.app == "mpv").id')
           # ctrl + alt - t : yabai -m window --toggle float;\
           #  yabai -m window --grid 4:4:1:1:2:2
