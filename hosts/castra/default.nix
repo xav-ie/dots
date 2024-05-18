@@ -132,11 +132,11 @@
           # just go where I want. Only downside is new bindings must be added for new apps.
           ctrl + alt - 1 : open -a wezterm
           ctrl + alt - 2 : open -a Firefox
-          ctrl + alt - 3 : open -a Slack
-          ctrl + alt - 4 : open -a ChatGPT
+          ctrl + alt - 3 : open -a ChatGPT
+          ctrl + alt - 4 : open -a Slack
           ctrl + alt - 5 : open -a zoom.us
-          ctrl + alt - 6 : open -a Messages
-          ctrl + alt - 7 : open -a Finder
+          ctrl + alt - 6 : open -a Finder
+          ctrl + alt - 7 : open -a Messages
           ctrl + alt - 8 : open -a Safari
           # ctrl + alt - z : yabai -m window --focus $(yabai -m query --windows | jq '.[] | select(.app == "mpv").id')
           # ctrl + alt - t : yabai -m window --toggle float;\
