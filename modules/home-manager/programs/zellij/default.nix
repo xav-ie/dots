@@ -23,8 +23,8 @@ let
               mode_move               "#[bg=black] {name} "
               mode_prompt             "#[bg=black] {name} "
               mode_tmux               "#[bg=red] {name} "
-              tab_normal              "#[fg=#6C7086] {name} "
-              tab_active              "#[fg=magenta,bold,italic] {name} "
+              tab_normal              "#[fg=#6C7086] {name}"
+              tab_active              "#[fg=magenta,bold,italic] {name}"
 
               command_pomo_command    "bash -c \"${pkgs.is-sshed}/bin/is-sshed && ${pkgs.uair}/bin/uairctl fetch '{state} {time}'\""
               command_pomo_format     "#[fg=blue] {stdout}"
