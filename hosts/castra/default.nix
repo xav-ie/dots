@@ -101,12 +101,6 @@
           right_padding = spacing;
           window_gap = spacing;
         };
-
-      # make every app fullscreen
-      extraConfig = # sh
-        ''
-          yabai -m rule --add app=".*" native-fullscreen=on
-        '';
     };
     skhd = {
       enable = true;
