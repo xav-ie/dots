@@ -130,7 +130,7 @@
           # Open application
           # I really like application driven window management. I just want simple keybindings to
           # just go where I want. Only downside is new bindings must be added for new apps.
-          ctrl + alt - 1 : open -a wezterm
+          ctrl + alt - 1 : open -a kitty
           ctrl + alt - 2 : open -a Firefox
           ctrl + alt - 3 : open -a ChatGPT
           ctrl + alt - 4 : open -a Slack
