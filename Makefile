@@ -4,7 +4,7 @@ ifeq ($(shell uname -s), Darwin)
 	darwin-rebuild switch --flake .
 	# TODO: add full macos equivalent
 	# relaunch skhd
-	sudo launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/org.nixos.skhd.plist && sudo launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/org.nixos.skhd.plist
+	sudo launchctl bootout gui/$(shell id -u) ~/Library/LaunchAgents/org.nixos.skhd.plist && sudo launchctl bootstrap gui/$(shell id -u) ~/Library/LaunchAgents/org.nixos.skhd.plist
 else
 	sudo nixos-rebuild switch --flake .
 	@echo "Checking for bad systemd user units..."
