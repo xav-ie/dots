@@ -5,7 +5,7 @@ let
         children
         pane size=1 borderless=true {
             plugin location="file:${pkgs.zjstatus}/bin/zjstatus.wasm" {
-              format_left             "{mode} #[fg=#FA89B4,bold]{session} {tabs}"
+              format_left             "{mode}{tabs}"
               format_right            "{command_pomo}{command_time}"
               format_space            ""
               border_enabled          "false"
