@@ -87,11 +87,22 @@
     jq.enable = true;
     kitty = {
       enable = true;
+      keybindings = {
+        # because Mac likes to be extra helpful 🙃
+        "alt+h" = "launch --type=background zellij action move-focus-or-tab left";
+        "alt+j" = "launch --type=background zellij action move-focus down";
+        "alt+k" = "launch --type=background zellij action move-focus up";
+        "alt+l" = "launch --type=background zellij action move-focus-or-tab right";
+      };
       settings = {
-        background_opacity = "0.85";
-        font_size = "14.0";
+        background_opacity = "0.88";
+        background_blur = 20;
         copy_on_select = "yes";
-        font_family = "FiraCode Nerd Font";
+        cursor = "#ff0000";
+        font_family = "Maple Mono";
+        font_size = "12.0";
+        hide_window_decorations = "yes";
+        macos_quit_when_last_window_closed = "yes";
       };
     };
     mpv.enable = true;
