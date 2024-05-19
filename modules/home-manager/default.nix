@@ -88,11 +88,10 @@
     kitty = {
       enable = true;
       keybindings = {
-        # because Mac likes to be extra helpful 🙃
-        "alt+h" = "launch --type=background zellij action move-focus-or-tab left";
-        "alt+j" = "launch --type=background zellij action move-focus down";
-        "alt+k" = "launch --type=background zellij action move-focus up";
-        "alt+l" = "launch --type=background zellij action move-focus-or-tab right";
+        "alt+h" = ''send_text all \x1bh'';
+        "alt+j" = ''send_text all \x1bj'';
+        "alt+k" = ''send_text all \x1bk'';
+        "alt+l" = ''send_text all \x1bl'';
       };
       settings = {
         background_opacity = "0.90";
