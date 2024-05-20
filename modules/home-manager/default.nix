@@ -103,6 +103,20 @@
         hide_window_decorations = "yes";
         macos_quit_when_last_window_closed = "yes";
       };
+
+      # kitty +list-fonts --psnames | grep Maple
+      extraConfig =
+        let
+          mapleFontFeatures = "+cv01 +cv02 +ss01 +ss02 +ss03 +ss04 +ss05";
+        in
+        ''
+          font_features MapleMono-Bold ${mapleFontFeatures}
+          font_features MapleMono-BoldItalic ${mapleFontFeatures}
+          font_features MapleMono-Italic ${mapleFontFeatures}
+          font_features MapleMono-Light ${mapleFontFeatures}
+          font_features MapleMono-LightItalic ${mapleFontFeatures}
+          font_features MapleMono-Regular ${mapleFontFeatures}
+        '';
     };
     mpv.enable = true;
     ripgrep.enable = true;
