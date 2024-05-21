@@ -94,7 +94,7 @@
           mouse_modifier = "fn";
           mouse_action1 = "move";
           mouse_action2 = "resize";
-          layout = "bsp";
+          layout = "stack";
           top_padding = spacing;
           bottom_padding = spacing;
           left_padding = spacing;
