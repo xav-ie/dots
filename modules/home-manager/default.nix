@@ -94,7 +94,7 @@
         "alt+l" = ''send_text all \x1bl'';
       };
       settings = {
-        background_opacity = "0.90";
+        background_opacity = "0.80";
         background_blur = 10;
         copy_on_select = "yes";
         cursor = "#ff0000";

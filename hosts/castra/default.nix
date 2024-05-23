@@ -120,28 +120,35 @@
           # Close current window
           # ctrl + alt - w : $(yabai -m window $(yabai -m query --windows --window | jq -re ".id") --close)
           # Rotate tree
-          ctrl + alt - r : yabai -m space --rotate 90
+          # ctrl + alt - r : yabai -m space --rotate 90
           # Open application
           # I really like application driven window management. I just want simple keybindings to
           # just go where I want. Only downside is new bindings must be added for new apps.
-          ctrl + alt - 1 : osascript -e 'tell application "kitty" to activate'
-          ctrl + alt - 2 : osascript -e 'tell application "Firefox" to activate'
-          ctrl + alt - 3 : osascript -e 'tell application "ChatGPT" to activate'
-          ctrl + alt - 4 : osascript -e 'tell application "Slack" to activate'
-          ctrl + alt - 5 : osascript -e 'tell application "zoom.us" to activate'
-          ctrl + alt - 6 : osascript -e 'tell application "Finder" to activate'
-          ctrl + alt - 7 : osascript -e 'tell application "Messages" to activate'
-          ctrl + alt - 8 : osascript -e 'tell application "Safari" to activate'
+          ctrl - 1 : osascript -e 'tell application "kitty" to activate'
+          ctrl - 2 : osascript -e 'tell application "Firefox" to activate'
+          ctrl - 3 : osascript -e 'tell application "ChatGPT" to activate'
+          ctrl - 4 : osascript -e 'tell application "Slack" to activate'
+          ctrl - 5 : osascript -e 'tell application "zoom.us" to activate'
+          ctrl - 6 : osascript -e 'tell application "Finder" to activate'
+          ctrl - 7 : osascript -e 'tell application "Messages" to activate'
+          ctrl - 8 : osascript -e 'tell application "Safari" to activate'
           # ctrl + alt - z : yabai -m window --focus $(yabai -m query --windows | jq '.[] | select(.app == "mpv").id')
           # ctrl + alt - t : yabai -m window --toggle float;\
           #  yabai -m window --grid 4:4:1:1:2:2
           # ctrl + alt - p : yabai -m window --toggle sticky;\
           #   yabai -m window --toggle topmost;\
           #   yabai -m window --toggle pip
-          ctrl - right : yabai -m space --focus next
-          ctrl + alt - l : yabai -m space --focus next
           ctrl - left : yabai -m space --focus prev
           ctrl + alt - h : yabai -m space --focus prev
+
+          ctrl + alt - j : yabai -m window --focus stack.next
+          ctrl + down : yabai -m window --focus stack.next
+
+          ctrl + alt - k : yabai -m window --focus stack.prev
+          ctrl + up : yabai -m window --focus stack.prev
+
+          ctrl - right : yabai -m space --focus next
+          ctrl + alt - l : yabai -m space --focus next
         '';
     };
   };
