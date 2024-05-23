@@ -130,32 +130,17 @@
           ctrl + alt - k : yabai -m window --focus stack.prev
           ctrl + alt - l : yabai -m space --focus next
 
-          # ctrl - left : yabai -m space --focus prev
-          # ctrl + down : yabai -m window --focus stack.next
-          # ctrl + up : yabai -m window --focus stack.prev
-          # ctrl - right : yabai -m space --focus next
-          # ctrl + alt - t : yabai -m window --toggle float;\
-          #  yabai -m window --grid 4:4:1:1:2:2
-          # ctrl + alt - p : yabai -m window --toggle sticky;\
-          #   yabai -m window --toggle topmost;\
-          #   yabai -m window --toggle pip
-          # ctrl + alt - h : yabai -m window --focus west
-          # ctrl + alt - j : yabai -m window --focus south
-          # ctrl + alt - k : yabai -m window --focus north
-          # ctrl + alt - l : yabai -m window --focus east
-          # Fill space with window
-          # ctrl + alt - 0 : yabai -m window --grid 1:1:0:0:1:1
-          # Move window
-          # ctrl + alt - e : yabai -m window --display 1; yabai -m display --focus 1
-          # ctrl + alt - d : yabai -m window --display 2; yabai -m display --focus 2
-          # ctrl + alt - f : yabai -m window --space next; yabai -m space --focus next
-          # ctrl + alt - s : yabai -m window --space prev; yabai -m space --focus prev
-          # Close current window
-          # ctrl + alt - w : $(yabai -m window $(yabai -m query --windows --window | jq -re ".id") --close)
-          # Rotate tree
-          # ctrl + alt - r : yabai -m space --rotate 90
-          # Open application
-          # ctrl + alt - z : yabai -m window --focus $(yabai -m query --windows | jq '.[] | select(.app == "mpv").id')
+          ctrl + alt - q : yabai -m window --space prev
+          ctrl + alt - w : yabai -m space --focus prev
+          ctrl + alt - e : yabai -m space --focus next
+          ctrl + alt - r : yabai -m window --space next
+
+          ctrl + alt - f : yabai -m window --toggle float;\
+           yabai -m window --grid 4:4:1:1:2:2
+
+          ctrl + alt - s : yabai -m window --toggle sticky;\
+            yabai -m window --toggle topmost;\
+            yabai -m window --toggle pip
         '';
     };
   };
