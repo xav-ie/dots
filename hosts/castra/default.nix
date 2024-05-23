@@ -116,6 +116,14 @@
           ctrl - 6 : osascript -e 'tell application "Finder" to activate'
           ctrl - 7 : osascript -e 'tell application "Messages" to activate'
           ctrl - 8 : osascript -e 'tell application "Safari" to activate'
+          ctrl + alt - 1 : osascript -e 'tell application "kitty" to activate'
+          ctrl + alt - 2 : osascript -e 'tell application "Firefox" to activate'
+          ctrl + alt - 3 : osascript -e 'tell application "ChatGPT" to activate'
+          ctrl + alt - 4 : osascript -e 'tell application "Slack" to activate'
+          ctrl + alt - 5 : osascript -e 'tell application "zoom.us" to activate'
+          ctrl + alt - 6 : osascript -e 'tell application "Finder" to activate'
+          ctrl + alt - 7 : osascript -e 'tell application "Messages" to activate'
+          ctrl + alt - 8 : osascript -e 'tell application "Safari" to activate'
 
           ctrl + alt - h : yabai -m space --focus prev
           ctrl + alt - j : yabai -m window --focus stack.next
