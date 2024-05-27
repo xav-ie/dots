@@ -94,8 +94,10 @@
         "alt+l" = ''send_text all \x1bl'';
       };
       settings = {
-        background_opacity = "0.80";
+        background = "#0a0a0f";
         background_blur = 10;
+        background_opacity = "0.80";
+        clipboard_control = "write-clipboard write-primary read-clipboard read-primary";
         copy_on_select = "yes";
         cursor = "#ff0000";
         font_family = "Maple Mono";
