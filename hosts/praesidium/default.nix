@@ -178,6 +178,8 @@
       # TODO: additional settings should occur in home-manager
     };
     nix-ld.enable = true;
+    # installs a special kernel module to enable tracing
+    sysdig.enable = true;
     # must be enabled system-wide in order to be a default shell
     # additional settings should occur in home-manager
     zsh.enable = true;
