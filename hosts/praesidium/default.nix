@@ -1,9 +1,10 @@
-{ config
-, inputs
-, outputs
-, lib
-, pkgs
-, ...
+{
+  config,
+  inputs,
+  outputs,
+  lib,
+  pkgs,
+  ...
 }:
 {
   imports = [
@@ -42,6 +43,12 @@
       # https://github.com/umlaeute/v4l2loopback
       options v4l2loopback exclusive_caps=1 card_label="Virtual Camera"
     '';
+  };
+
+  documentation = {
+    dev.enable = true;
+    man.generateCaches = true;
+    nixos.includeAllModules = true;
   };
 
   networking = {
