@@ -1,8 +1,8 @@
 # Stolen from:
 # https://github.com/Misterio77/nix-config/blob/e360a9ecf6de7158bea813fc075f3f6228fc8fc0/pkgs/default.nix
 # TODO: go through all commented packages and see how they are implemented
-{
-  pkgs ? import <nixpkgs> { },
+{ pkgs ? import <nixpkgs> { }
+,
 }:
 rec {
   # Packages with an actual source
