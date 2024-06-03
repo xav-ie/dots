@@ -106,6 +106,7 @@
       # TODO: make the import of this global like misterio
       overlays = import ./overlays { inherit inputs outputs; };
       packages = forEachSystem (pkgs: import ./pkgs { inherit pkgs; });
+      formatter = forEachSystem (pkgs: pkgs.nixpkgs-fmt);
       # Reusable nixos modules you might want to export
       # TODO: refactor these into proper, shareable modules
       # These are usually stuff you would upstream into nixpkgs
