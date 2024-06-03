@@ -30,6 +30,7 @@
           # this is for commands that do not properly adjust their output to given width
           c4 = "COLUMNS=$COLUMNS-4";
           info = "env info --vi-keys";
+          gake = "git pull && make";
           # I could not get man to respect pager width
           man = "c4 env man";
           # nvim = "~/Projects/xnixvim/result/bin/nvim";
