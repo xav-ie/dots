@@ -109,7 +109,7 @@
       # kitty +list-fonts --psnames | grep Maple
       extraConfig =
         let
-          mapleFontFeatures = "+cv01 +cv02 +ss01 +ss02 +ss03 +ss04 +ss05";
+          mapleFontFeatures = "+cv01 +cv02 +cv04 +ss01 +ss02 +ss03 +ss04 +ss05";
         in
         ''
           font_features MapleMono-Bold ${mapleFontFeatures}

@@ -191,8 +191,8 @@
       Twingate = 1501592214;
     };
     casks = [
-      "chromium"
       "bitwarden"
+      "chromium"
       "firefox"
       "protonvpn"
       "raycast"
