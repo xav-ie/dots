@@ -1,7 +1,7 @@
-{
-  writeShellApplication,
-  uair,
-  notify,
+{ writeShellApplication
+, uair
+, notify
+,
 }:
 writeShellApplication {
   name = "uair-toggle-and-notify";
