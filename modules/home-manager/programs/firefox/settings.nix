@@ -12,8 +12,7 @@
   "browser.download.always_ask_before_handling_new_types" = true;
   "browser.download.panel.shown" = true;
   "browser.download.useDownloadDir" = false;
-  "browser.download.viewableInternally.typeWasRegistered.avif\n                    " =
-    true;
+  "browser.download.viewableInternally.typeWasRegistered.avif\n                    " = true;
   "browser.download.viewableInternally.typeWasRegistered.webp" = true;
   "browser.engagement.ctrlTab.has-used" = true;
   "browser.startup.homepage" = "about:profiles";
@@ -93,8 +92,7 @@
   "pdfjs.migrationVersion" = 2;
   "privacy.donottrackheader.enabled" = true;
   "privacy.purge_trackers.date_in_cookie_database" = 0;
-  "privacy.sanitize.pending" =
-    "[{'id':'newtab-container','itemsToClear':[],'options':{}}]";
+  "privacy.sanitize.pending" = "[{'id':'newtab-container','itemsToClear':[],'options':{}}]";
   "privacy.userContext.enabled" = true;
   "privacy.userContext.extension" = "tabcenter-reborn@ariasuni";
   "privacy.userContext.ui.enabled" = true;

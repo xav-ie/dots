@@ -1,4 +1,5 @@
-{ ... }: {
+{ ... }:
+{
   home = {
     packages = [ ];
     # The state version is required and should stay at the version you
@@ -9,7 +10,7 @@
   };
   programs = {
     zsh = {
-      initExtra = '' '';
+      initExtra = '''';
     };
   };
   home.file.".config/borders/bordersrc".source = ./dotfiles/bordersrc;
