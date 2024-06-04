@@ -1,7 +1,14 @@
-{ writeShellApplication, zellij, git }:
+{
+  writeShellApplication,
+  zellij,
+  git,
+}:
 writeShellApplication {
   name = "zellij-tab-name-update";
-  runtimeInputs = [ zellij git ];
+  runtimeInputs = [
+    zellij
+    git
+  ];
   text = ''
     if [[ -n ''${ZELLIJ:-} ]]; then
       tab_name=""

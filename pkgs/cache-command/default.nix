@@ -1,4 +1,4 @@
-{ writeShellApplication, }:
+{ writeShellApplication }:
 writeShellApplication {
   name = "cache-command";
   # TODO: make it easy to invalidate whole cache or clear cache by command_hash/command
