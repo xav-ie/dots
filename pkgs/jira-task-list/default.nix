@@ -1,7 +1,16 @@
-{ writeShellApplication, fzf, jira-cli-go, cache-command }:
+{
+  writeShellApplication,
+  fzf,
+  jira-cli-go,
+  cache-command,
+}:
 writeShellApplication {
   name = "jira-task-list";
-  runtimeInputs = [ cache-command fzf jira-cli-go ];
+  runtimeInputs = [
+    cache-command
+    fzf
+    jira-cli-go
+  ];
   text = ''
     # Get issues directly into variable
     issues_raw=$(jira issue list -a xavier@outsmartly.com --columns key,priority,updated,status,summary --plain)
