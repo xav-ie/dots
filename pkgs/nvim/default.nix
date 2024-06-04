@@ -1,4 +1,4 @@
-{ writeShellApplication, }:
+{ writeShellApplication }:
 writeShellApplication {
   name = "nvim";
   text = ''

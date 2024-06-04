@@ -1,7 +1,14 @@
-{ writeShellApplication, fzf, jq }:
+{
+  writeShellApplication,
+  fzf,
+  jq,
+}:
 writeShellApplication {
   name = "searcher";
-  runtimeInputs = [ fzf jq ];
+  runtimeInputs = [
+    fzf
+    jq
+  ];
   text = ''
     # Check if two or more arguments are provided
     if [ $# -ge 2 ]; then
