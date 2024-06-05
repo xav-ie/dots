@@ -55,10 +55,21 @@
         # yourself. There is a lot of set up this one flag does
         enable = true;
         options = {
-          navigate = true;
-          line-numbers = true;
-          true-color = "always";
           dark = true;
+          features = "decorations unobtrusive-line-numbers";
+          line-numbers = true;
+          navigate = true;
+          true-color = "always";
+          decorations = {
+            commit-decoration-style = "bold yellow box ul";
+            file-decoration-style = "none";
+            file-style = "bold yellow ul";
+          };
+          unobtrusive-line-numbers = {
+            line-numbers = true;
+            line-numbers-left-format = "{nm:>4}┊";
+            line-numbers-right-format = "{np:>4}│";
+          };
         };
       };
       extraConfig = {
