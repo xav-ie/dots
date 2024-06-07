@@ -108,14 +108,14 @@
         ''
           # I really like application driven window management. I just want simple keybindings to
           # just go where I want. Only downside is new bindings must be added for new apps.
-          ctrl - 1 : osascript -e 'tell application "kitty" to activate'
+          ctrl - 1 : osascript -e 'tell application "wezterm" to activate'
           ctrl - 2 : osascript -e 'tell application "Firefox" to activate'
           ctrl - 3 : osascript -e 'tell application "Slack" to activate'
           ctrl - 4 : osascript -e 'tell application "zoom.us" to activate'
           ctrl - 5 : osascript -e 'tell application "Finder" to activate'
           ctrl - 6 : osascript -e 'tell application "Messages" to activate'
           ctrl - 7 : osascript -e 'tell application "Safari" to activate'
-          ctrl + alt - 1 : osascript -e 'tell application "kitty" to activate'
+          ctrl + alt - 1 : osascript -e 'tell application "wezterm" to activate'
           ctrl + alt - 2 : osascript -e 'tell application "Firefox" to activate'
           ctrl + alt - 3 : osascript -e 'tell application "Slack" to activate'
           ctrl + alt - 4 : osascript -e 'tell application "zoom.us" to activate'
