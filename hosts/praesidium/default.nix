@@ -160,7 +160,11 @@
   };
 
   fonts.fontconfig.enable = true;
-  fonts.packages = [ pkgs.nerdfonts ];
+  fonts.packages = with pkgs; [
+    maple-mono
+    maple-mono-NF
+    nerdfonts
+  ];
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
