@@ -148,6 +148,9 @@
     # PAGER = ''bat -p --terminal-width=123 --pager="moar -quit-if-one-screen" '';
     # TODO: figure out the numbers thing
     PAGER = ''bat -p --terminal-width=123 --pager="moar" '';
+    MANPAGER = "nvim +Man!";
+    # This ensures man-width is not pre-cut before it reaches nvim. Nvim can do that. 
+    MANWIDTH = "999";
     MOAR = "-quit-if-one-screen";
     TERMINAL = "wezterm";
     # get more colors
