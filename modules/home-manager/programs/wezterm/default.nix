@@ -90,6 +90,7 @@
               -- },
               -- l 5, c 5
               -- mellows out the intensity of the colors
+              -- not very noticeable on my desktop
               colors = {
                 '#190e11', '#190e0e', '#190e0b', '#180f09',
                 '#171007', '#151006', '#121107', '#0f1208',
@@ -116,6 +117,13 @@
 
 
             enable_tab_bar = false,
+            -- TODO: investigate these threads to see if I can enable again
+            -- wez/wezterm#5103
+            -- wez/wezterm#3121
+            -- wez/wezterm#484
+            -- wez/wezterm#1701
+            front_end = "WebGpu",
+            enable_wayland = false,
             font = wezterm.font_with_fallback {
               {
                 family = 'Maple Mono',
