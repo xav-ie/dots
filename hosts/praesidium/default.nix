@@ -152,6 +152,8 @@
     # This ensures man-width is not pre-cut before it reaches nvim. Nvim can do that. 
     MANWIDTH = "999";
     MOAR = "-quit-if-one-screen";
+    # This makes animations in neovide not have to sync, unlocking faster refresh rates.
+    NEOVIDE_VSYNC = "0";
     TERMINAL = "wezterm";
     # get more colors
     HSTR_CONFIG = "hicolor";
