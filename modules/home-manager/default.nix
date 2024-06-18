@@ -46,7 +46,7 @@
       BAT_PAGER = "";
       PAGER = ''bat -p --pager=\"moar -quit-if-one-screen\" --terminal-width=$(expr $COLUMNS - 4)'';
       MOAR = "-quit-if-one-screen";
-      TERMINAL = "wezterm";
+      TERMINAL = "kitty";
       # get more colors
       HSTR_CONFIG = "hicolor";
       # leading space hides commands from history

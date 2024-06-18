@@ -28,6 +28,8 @@
     loader.systemd-boot.enable = true;
     loader.efi.canTouchEfiVariables = true;
     supportedFilesystems = [ "ntfs" ];
+    # TODO: what does this do?
+    kernelParams = [ "nvidia-drm.fbdev=1" ];
     kernelModules = [
       "i2c-dev"
       # Virtual Camera
@@ -158,9 +160,7 @@
     # This ensures man-width is not pre-cut before it reaches nvim. Nvim can do that. 
     MANWIDTH = "999";
     MOAR = "-quit-if-one-screen";
-    # This makes animations in neovide not have to sync, unlocking faster refresh rates.
-    NEOVIDE_VSYNC = "0";
-    TERMINAL = "wezterm";
+    TERMINAL = "kitty";
     # get more colors
     HSTR_CONFIG = "hicolor";
     # leading space hides commands from history
@@ -168,6 +168,12 @@
     # increase history file size (default is 500)
     HISTFILESIZE = "10000";
     PATH = "$HOME/.config/scripts/:$PATH";
+    # TODO: move into state.session variables or hyprland init
+    NIXOS_OZONE_WL = "1";
+    LIBVA_DRIVER_NAME = "nvidia";
+    GBM_BACKEND = "nvidia-drm";
+    __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+    WLR_RENDERER_ALLOW_SOFTWARE = "1";
   };
 
   fonts.fontconfig.enable = true;
@@ -186,12 +192,6 @@
   # };
 
   programs = {
-    hyprland = {
-      enable = true;
-      xwayland.enable = true;
-      package = inputs.hyprland.packages."${pkgs.system}".hyprland;
-      # TODO: additional settings should occur in home-manager
-    };
     nix-ld.enable = true;
     # installs a special kernel module to enable tracing
     sysdig.enable = true;
@@ -207,6 +207,8 @@
       enable = true;
       driSupport = true;
       driSupport32Bit = true;
+      # TODO: what does this do?
+      extraPackages = [ pkgs.vaapiVdpau ];
       # package = pkgs.nvidia-vaapi-driver; # For NVIDIA
       # extraPackages = with pkgs; [
       # nvidia-vaapi-driver # For NVIDIA
@@ -238,12 +240,14 @@
       # };
       open = false;
       nvidiaSettings = true;
-      package = config.boot.kernelPackages.nvidiaPackages.production;
+      # TODO: go back to production?
+      package = config.boot.kernelPackages.nvidiaPackages.beta;
     };
   };
 
   services = {
     blueman.enable = true;
+    # TODO: figure out the "right way" to do xdg portals from Misterio
     flatpak.enable = true;
     geoclue2 = {
       enable = true;
@@ -387,6 +391,20 @@
       timerConfig.OnCalendar = "weekly UTC";
     };
   };
+
+  # TODO: changing something here will fix screenshare?
+  xdg.portal =
+    let
+      hyprland = inputs.hyprland.packages.${pkgs.system}.hyprland;
+    in
+    let
+      xdph = pkgs.xdg-desktop-portal-hyprland.override { inherit hyprland; };
+    in
+    {
+      enable = true;
+      extraPortals = [ xdph ];
+      configPackages = [ hyprland ];
+    };
   # boot = {
   #   kernelPackages = pkgs.linuxKernel.packages.linux_zen;
   #   binfmt.emulatedSystems = [
