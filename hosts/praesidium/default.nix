@@ -43,6 +43,12 @@
       # https://github.com/umlaeute/v4l2loopback
       options v4l2loopback exclusive_caps=1 card_label="Virtual Camera"
     '';
+    initrd = {
+      preDeviceCommands = ''
+        message="Hello, this is Praesidium."
+        printf "$message" | ${pkgs.cowsay}/bin/cowsay -n
+      '';
+    };
   };
 
   documentation = {
