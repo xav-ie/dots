@@ -65,6 +65,10 @@
     nur = {
       url = "github:nix-community/NUR";
     };
+    waybar = {
+      url = "github:Alexays/waybar";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     wezterm = {
       url = "github:wez/wezterm?dir=nix";
       inputs.nixpkgs.follows = "nixpkgs";
