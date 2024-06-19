@@ -210,7 +210,7 @@
 
           # Execute your favorite apps at launch
           exec-once = swww init && swww img "~/Downloads/ether.gif"
-          # exec-once = waybar -- crashes :(
+          exec-once = waybar 
           exec-once = swaync
           exec-once = noisetorch -i # load suppressor for input
           exec-once = wl-paste --type text --watch cliphist store
