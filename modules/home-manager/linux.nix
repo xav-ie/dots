@@ -216,7 +216,7 @@
           exec-once = wl-paste --type text --watch cliphist store
           exec-once = wl-paste --type image --watch cliphist store
           exec-once = firefox
-          exec-once = kitty
+          exec-once = neovide
           # exec-once = swayidle timeout 300 'grimblast save screen - | convert png:- -scale 10% -blur 0x2.5 -resize 1000% ~/Pictures/out.png && swaylock -i ~/Pictures/out.png' timeout 600 'hyprctl dispatch dpms off && openrgb -p off' resume 'hyprctl dispatch dpms on && openrgb -p pink'
 
           # Source a file (multi-file configs)
