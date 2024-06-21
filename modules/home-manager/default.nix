@@ -27,6 +27,7 @@
         }))
         magic-wormhole-rs # send files easily
         moar # the best pager
+        neovide
         uair
         unzip
         tree
