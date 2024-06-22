@@ -76,10 +76,12 @@
   "layout.css.osx-font-smoothing.enabled" = true;
   "layout.css.prefers-color-scheme.content-override" = 0;
   "layout.spellcheckDefault" = 0;
+  "media.av1.enabled" = true;
   "media.eme.enabled" = true;
   "media.ffmpeg.vaapi.enabled" = true;
   "media.gmp.storage.version.observed" = 1;
   "media.peerconnection.ice.no_host" = false;
+  "media.rdd-ffmpeg.enabled" = true;
   "media.videocontrols.picture-in-picture.video-toggle.has-used" = true;
   "middlemouse.paste" = false;
   "network.dns.disablePrefetch" = true;
@@ -115,7 +117,7 @@
   "webgl.dxgl.enabled" = true;
   "webgl.disabled" = false;
   "webgl.force-enabled" = true;
-  "widget.dmabuf.force-enabled" = false;
+  "widget.dmabuf.force-enabled" = true; # required in recent firefoxes?
   "widget.wayland-dmabuf-webgl.enabled" = true;
   "widget.wayland-dmabuf-textures.enabled" = true;
   "widget.dmabuf-textures.enabled" = true;
