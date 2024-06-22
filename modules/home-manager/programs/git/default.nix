@@ -82,6 +82,13 @@
         };
         branch.sort = "-committerdate";
         column.ui = "auto";
+        # This is needed so programs like Fugitive will use delta
+        pager = {
+          blame = "delta";
+          diff = "delta";
+          reflog = "delta";
+          show = "delta";
+        };
         # This is *very* helpful for stacked branches.
         # This is the situation.
         # You are on your third stacked PR.
