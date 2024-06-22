@@ -41,9 +41,8 @@
     ];
   };
   # unfortunately, this must be done in nix-darwin
-  fonts.fontDir.enable = true;
-  fonts.fonts = [
-    (pkgs.nerdfonts.override {
+  fonts.packages = with pkgs; [
+    (nerdfonts.override {
       fonts = [
         # I like all these fonts a lot. You can test them by going to programmingfonts.org
         # However, the real names are to the right. I imagine it was renamed this way for 
@@ -66,6 +65,7 @@
         # https://github.com/ryanoasis/nerd-fonts/pull/1465
       ];
     })
+    maple-mono-NF
   ];
   # allow sudo to use touch id
   security.pam.enableSudoTouchIdAuth = true;
