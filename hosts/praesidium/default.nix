@@ -160,6 +160,8 @@
     # This ensures man-width is not pre-cut before it reaches nvim. Nvim can do that. 
     MANWIDTH = "999";
     MOAR = "-quit-if-one-screen";
+    NVD_BACKEND = "direct"; # github:elFarto
+    MOZ_DISABLE_RDD_SANDBOX = "1";
     TERMINAL = "kitty";
     # get more colors
     HSTR_CONFIG = "hicolor";
@@ -320,7 +322,7 @@
       driSupport32Bit = true;
       # TODO: what does this do?
       extraPackages = [ pkgs.vaapiVdpau ];
-      # package = pkgs.nvidia-vaapi-driver; # For NVIDIA
+      package = pkgs.nvidia-vaapi-driver; # For NVIDIA
       # extraPackages = with pkgs; [
       # nvidia-vaapi-driver # For NVIDIA
       # This one below would probably be helpful if you had integrated graphics
