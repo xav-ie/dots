@@ -1,0 +1,57 @@
+* searcher
+  Easily search and enter shell of any valid package provider!
+
+  Nixpkgs searching script with fzf. Lets you easily search and enter shell of a package without having to look it up on nixpkgs search.
+** Usage
+   Depending on your system:
+   #+BEGIN_SRC sh
+   nix run github:xav-ie/dots#packages.x86_64-linux.searcher
+   nix run github:xav-ie/dots#packages.aarch64-darwin.searcher
+   #+END_SRC
+
+   This will search all of nixpkgs and output fzf list of all of them.
+   Hitting enter on a result will enter you into a shell of that package.
+   #+BEGIN_SRC sh
+   searcher
+   #+END_SRC
+
+
+   This will search all of nixpkgs with your query and output fzf list of all of them.
+   Hitting enter on a result will enter you into a shell of that package.
+   #+BEGIN_SRC sh
+   searcher query_without_spaces
+   #+END_SRC
+
+   This will search all of nixpkgs with your query and output fzf list of all of them.
+   Hitting enter on a result will enter you into a shell of that package.
+   #+BEGIN_SRC sh
+   searcher nixpkgs query with spaces
+   #+END_SRC
+
+   Basically, to use spaces in your search, you need to specify where to search. You can search other places too:
+   #+BEGIN_SRC sh
+   searcher nixpkgs/21.05 query with spaces
+   #+END_SRC
+
+** Installation
+   I recommend adding this to your NixOS flake if you want to use this long term:
+   #+BEGIN_SRC nix
+   # ...
+   inputs = {
+     xav-ie.url = "github:xav-ie/dots";
+   };
+   # ...
+   #+END_SRC
+   Then, in your zsh's `initExtra` code:
+   #+BEGIN_SRC nix
+   # ...
+   pkgs = with pkgs; [
+     # ...
+     # ...
+     # ...
+   ] ++ [
+     inputs.xav-ie.packages.${pkgs.system}.zellij-tab-name-update
+   ];
+   # ...
+   #+END_SRC
+   This is untested, so please open issue if you have problems!

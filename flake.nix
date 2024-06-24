@@ -87,11 +87,6 @@
     }@inputs:
     let
       inherit (self) outputs;
-      # Good nix configs:
-      # https://github.com/Misterio77/nix-config/blob/e360a9ecf6de7158bea813fc075f3f6228fc8fc0/flake.nix
-      # https://github.com/clemak27/linux_setup/blob/4970745992be98b0d00fdae336b4b9ee63f3c1af/flake.nix#L48
-      # https://github.com/CosmicHalo/AndromedaNixos/blob/665668415fa72e850d322adbdacb81c1251301c0/overlays/zjstatus/default.nix#L2
-
       systems = [
         "x86_64-linux"
         "aarch64-darwin"

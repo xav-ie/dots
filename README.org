@@ -1,51 +1,92 @@
 * My NixOS
-  Right now, I only run this on my desktop, but I hope to get this config to my other machines
+  I love NixOS! It has helped me further my development more than any other tool I have used. I hope that my config is helpful for you. If you have questions, please create an issue or privately message me by emailing github@xav.ie <3.
+
+  You might also enjoy my [[https://github.com/xav-ie/xnixvim][Neovim Config]].
+
+
+  /Project Layout/
+  #+BEGIN_SRC mermaid
+  flowchart LR
+    subgraph "dots"
+        subgraph "hosts"
+            desc["Contains configurations\n for different machines \n"]
+            notacomputer("common")
+            computer1("castra<br>(laptop)")
+            computer2("praesidium<br>(desktop)")
+        end
+        subgraph "modules/home-manager"
+            desc2["Home-manager configurations\nfor different environments"]
+            config_common("common")
+            config_linux("linux")
+            config_mac("mac")
+        end
+        subgraph "pkgs"
+            desc3["My custom packages"]
+            package1("searcher")
+            package2("zellij-tab-name-update")
+            package3("...")
+        end
+    end
+  #+END_SRC
+
 ** Usage
-   Check the Makefile!
-** Things to work on
-   - ( ) Make it cross-system compatible ... there are some resources and other configs that do this 
-   - ( ) Move everything from {:/home/x/.config/:} into home-manager. If my dot-files were immutable, then random-ass programs would not be able to mess with and edit them, which happened more times than you would think :/
-   - ( ) SECRETS - right now, I am thinking of using `pass` or `age` to just store all my ENV variables, but then it is another master password to remember, so I think I would rather figure something out with the bitwarden cli, my manager of choice. Honestly, I don't really know the best course of action, because what if I want to change my manager?? I might also want to just completely forgo bitwarden and just use good old encryption... There has to be someone else who thought of this
-   -- ( ) Resarch secret solutions others have worked on.
-   - ( ) Lights, I want my lights to be fully controlled from my computer:
-   -- Computer lights are semi-controllable through `open-rgb -p`, but I need to set up more profiles. 
-   -- Govee light is controlled via an API. I think I just have to build a simple script to do so.
-   -- Apple Home / TP-Link Switches.. I have no idea how to connect to these yet, but I do know it is annoying to open my phone to turn on my lights... I probably need to buy a homepod mini to also make them "always connected" bc my phone takes like 10-20 seconds to connect to them when I get home, which is really annoying bc it also sometimes does not connect.
-   - ( ) Waybar replacement - I think I might go with EWW... They are actual windows that can be spawned, meaning native wayland effects and borders can be applied to them. To my understanding, Waybar uses a gtk-layer-shell, which is:
-         1. Difficult to blur: Most compositors would have to blur the entire bar where there are transparent pixels. Hyprland has feature to avoid blurring transparent pixels, but it is still not very good
-         2. Not focusable via keyboard? : I just know if EWW spawns native windows, Waybar does not, which means that I cant easily access the separate parts with my keyboard
-   - ( ) Global mute - this will require building a virtual HID device that is recognized by Zoom. Then, when you mute this virtual device, the state is reflected in Zoom as well. This opens up many possibilities, the most obvious being a notification tray icon you can use to easily see muted state
-   - ( ) Hardware acceleration - Zoom only works on chromium on my computer, which does not have acceleration. Zoom kind of works on firefox, but then firefox zoom has a memory leak and it eats all of my ram. 
-   - ( ) Qutebrowser screenshare - for some reason, Qutebrowser does not appear to be using xdg-desktop-portal-wlr for screensharing... idk what that is about. Here are some resources to diagnose:
-   -- https://github.com/emersion/xdg-desktop-portal-wlr/wiki/%22It-doesn't-work%22-Troubleshooting-Checklist
-   -- https://gitlab.com/jokeyrhyme/dotfiles/-/blob/main/usr/local/bin/dotfiles-sway.sh
-   -- https://soyuka.me/make-screen-sharing-wayland-sway-work/
-   - ( ) Better fonts: overall, the fonts could be a lot better
-   - ( ) Backgrounds repo/drive sync: I need to sync my backgrounds with proton drive.
-   - ( ) Email notifications - web browser email notifications are acceptable, but they do not have a "delete" nor a "mark as read action", which would really help me to get to inbox 0. 
-   - ( ) PETS - I really want to modify Spamton-Linux-Shimejii repo to have multiple different types of Shimejii. Right now, there is just this really ugly one. I also want to fix the divide by zero errors that keep making it crash.
-   - ( ) Transparent Qutebrowser. Qutebrowser actually works well enough already for transparent, or mostly transparent web backgrounds. There are a couple of things that need to happen first:
-   -- File issue and begin work on drawing hints on top of webpage with slight transparency - As soon as you set webpage.bg to be slightly transparent, the qutebrowser seems to draw things under where they should be, and I am not sure why. First, document the anomalies then begin work on them
-   -- Write a simple greasemonkey script to apply these transparency modifications to my favorite websites
-   -- Qutebrowser has a final issue of tabs while switching resizing the webpage. I am not sure who would actually want that to happen... It should be drawn as an overlay on top of the webpage itself...
+   I don't think you should try and directly use my dotfiles; it probably would not work. You should intead check out my [[./pkgs][packages]] and other bits of config.
+** Things you should check out
+*** My Packages
+    Check out [[./pkgs]] !
+** Things I am working on
+*** Secrets
+    I want to configure secrets the "right way". I mainl
+    - [ ] Use `pass` or `age` to just store all my ENV variables, but then it is another master password to remember, so I think I would rather figure something out with the bitwarden cli, my manager of choice. Honestly, I don't really know the best course of action, because what if I want to change my manager?? I might also want to just completely forgo bitwarden and just use good old encryption... There has to be someone else who thought of this
+    - [ ] Look into these secret solutions others have worked on:
+      - [[https://youtube.com/watch?v=G5f6GC7SnhU][Secrets Management with SOPS-NIX by Vimjoyer]]
+      - [[https://youtube.com/watch?v=G5f6GC7SnhU][NixOS Secrets Management by Emergent Mind]]
+      - [[https://xeiaso.net/blog/nixos-encrypted-secrets-2021-01-20/][Encrypted Secrets with NixOS]]
+      - [[https://discourse.nixos.org/t/a-modern-and-secure-desktop-setup/41154][A Modern and Secure Desktop Setup]]
+      - [[https://youtube.com/watch?v=YFXwV0ZO9NE][We should manage secrets the systemd way!]]
+      - [[https://discourse.nixos.org/t/alternative-way-to-handle-secrets/35511][Alternative way to handle secrets]]
+      - [[https://journal.platonic.systems/introducing-secrix][Introducing Secrix]]
+      - [[https://discourse.nixos.org/t/handling-secrets-in-nixos-an-overview-git-crypt-agenix-sops-and-when-to-use-them/35462][Handling Secrets in NixOS: An Overview]]
+*** IOT
+    I have some things in my house that I want control with my computer.
+    - Computer lights are semi-controllable through `open-rgb -p`, but I need to set up more profiles.
+    - Govee light is controlled via an API. I think I just have to build a simple script to do so.
+    - Apple Home / TP-Link Switches.. I have no idea how to connect to these yet, but I do know it is annoying to open my phone to turn on my lights... I probably need to buy a homepod mini to also make them "always connected" bc my phone takes like 10-20 seconds to connect to them when I get home, which is really annoying bc it also sometimes does not connect.
+*** Waybar replacement
+    I am not 100% happy with Waybar. It is a great tool for getting started, but I want complete control. Also, the blur is controled through hacks.
+    Vimjoyer made a video on AGS:
+    https://youtube.com/watch?v=GvpTUKaXqNk
 
-   - ( ) File browser - I have no good terminal file browser 😭 ... my LF uses some ueberzug alternative in go that always crashes and stays crashed... even on restart. I need to find an excellent terminal file browser preview
-   - ( ) RSS - I have a lot of blogs bookmarked in Firefox, but no way to really view them
-   - ( ) Email - just set up himalaya email client in vim.
-   - ( ) Reminders - I want my gcal to appear in my system and I want to be able to easily manage past and future reminders, a calendar. So I just have to set up a good and pretty system calendar
-   - ( ) Pomodoro - Set up system pomodoro
-   - ( ) Time tracking - It would be nice to get analytics of how I spend my time and what I did for that day, I think this would mostly be a qutebrowser extension + a thin launcher client in Rofi / Kitty to monitor all launched programs. 
-   - ( ) Screenshots/recording - wf-recorder is ... fine. I would prefer somebindings and a bit more chrome/indicators in my bar to show that I am recording screen. I dislike that I could be screensharing and not really be aware that I am.
-   - ( ) DND - I would like to trigger DND when I am scrensharing. I really dislike that notifications come through on screenshare. Maybe I can still allow notifications, but hide them from screenshare entirely??? That would be really cool.
+    I think this is a good idea to learn because it seems extremely extensible to make future applications.
 
-   - ( ) CONSOOM - PIP in Qutebrowser lowkey sucks. It does not have PIP support. The suggested workaround is to use MPV. This has a few problems. 
-         1. Videos do not show as watched on youtube - what I do right now is set the quality to 144p and mute and just let it play in background
-         2. MPV does not autochange the yt-dlp source as I resize MPV. When MPV is really smol, the source url from YT is always really high quality which is wasteful and causes weird artifacts
-         3. I want better snapping of PIP windows. Ideally, the PIP behaves exactly like MacOS Arc PIP works. It anchors the PIP to some corner and resizing happens from that corner alone. 
-         4. I also just need to figure out binding to make this mostly happen automatically for already open video, I have "M" binding to open video link on page, but not current page itself.
+    This should also mean I get keyboad access!
+*** Firefox Sync
+    - [ ] I need to just make my firefox configured more through Nix. A lot of my plugins and settings are not 100% synced properly.
+    - [ ] I also need to find a RSS reader that can read/sync with a file system. I am currently using FeedBro, but it does not sync between my desktop and laptop.
+*** Automated Testing
+    You will notice that a lot of my commits are update, then fixing the update. This is because I update depencies from my desktop or laptop, and then update from the other. This often leads to build time errors that only occurs on the other system due to new options/drivers/etc.
 
-   - ( ) use nix-colors repo for theming everything
-     This is interesting:
-     - https://github.com/colemickens/nixcfg/blob/3705032fd67f231fe83fd3bc25d4021b80394b1c/mixins/_preferences.nix#L53
+    There is a person who has a twitter thread (I can't remember who >:[) who explain how they set up automated Github CI to test their config.
 
+    This would be *amazing* and I want to set this up, too.
 
+    I also want it to be where it will also boot up the desktop and take a screenshot of it open and maybe even do some actions.
+*** Miscellaneous
+    - [ ] Global mute - this will require building a virtual HID device that is recognized by Zoom. Then, when you mute this virtual device, the state is reflected in Zoom as well. This opens up many possibilities, the most obvious being a notification tray icon you can use to easily see muted state
+    - [ ] Backgrounds repo/drive sync: I need to sync my backgrounds with proton drive.
+    - [ ] Email notifications - web browser email notifications are acceptable, but they do not have a "delete" nor a "mark as read action", which would really help me to get to inbox 0.
+    - [ ] PETS - I really want to modify Spamton-Linux-Shimejii repo to have multiple different types of Shimejii. Right now, there is just this really ugly one. I also want to fix the divide by zero errors that keep making it crash.
+    - [ ] Email - just set up himalaya email client in vim.
+    - [ ] Reminders - I want my gcal to appear in my system and I want to be able to easily manage past and future reminders, a calendar. So I just have to set up a good and pretty system calendar
+    - [ ] Pomodoro - Set up system pomodoro
+    - [ ] Screensharing - I would prefer somebindings and a bit more chrome/indicators in my bar to show that I am sharing screen. I dislike that I could be screensharing and not really be aware that I am.
+    - [ ] Do Not Disturb - I would like to trigger DND when I am scrensharing. I really dislike that notifications come through on screenshare. Maybe I can still allow notifications, but hide them from screenshare entirely??? That would be really cool.
+    - [ ] use nix-colors repo for theming everything
+      This is interesting:
+      - https://github.com/colemickens/nixcfg/blob/3705032fd67f231fe83fd3bc25d4021b80394b1c/mixins/_preferences.nix#L53
+
+** Other Nix Configs
+   I used these configs to help build mine:
+   - [[https://github.com/Misterio77/nix-config/blob/e360a9ecf6de7158bea813fc075f3f6228fc8fc0/flake.nix]]
+   - [[https://github.com/clemak27/linux_setup/blob/4970745992be98b0d00fdae336b4b9ee63f3c1af/flake.nix#L48]]
+   - [[https://github.com/CosmicHalo/AndromedaNixos/blob/665668415fa72e850d322adbdacb81c1251301c0/overlays/zjstatus/default.nix#L2]]

@@ -1,0 +1,27 @@
+* home-manager
+  Home Manager is an amazing tool for configuring your systems. Generally, these configurations are portable and easy-to-use. They come with convenient nixified knobs to configure programs you want installed and it is simple to escape into raw config when necessary.
+
+  You can find out more about Home Manager on [[https://nix-community.github.io/home-manager/][their homepage]].
+
+  Instead of reading through the giant manual, I highly recommend [[https://home-manager-options.extranix.com/][Home Manager Option Search]] when you are trying to find options.
+
+  /My Home Manager Layout/:
+  #+BEGIN_SRC mermaid
+  flowchart TB
+    subgraph "home-manager"
+        subgraph "dotfiles"
+            desc["Random dotfiles not deeply integrated into home-manager"]
+        end
+        subgraph "programs"
+            desc2["program-specific configuration"]
+            config_common("firefox")
+            config_linux("git")
+            config_mac("...")
+        end
+        subgraph "./"
+            package1("default")
+            package2("linux")
+            package3("mac")
+        end
+    end
+  #+END_SRC
