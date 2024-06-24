@@ -1,9 +1,9 @@
 { pkgs, inputs, ... }:
 {
   imports = [
-    ./programs/firefox
-    ./programs/swaynotificationcenter
-    ./programs/waybar
+    ../programs/firefox
+    ../programs/swaynotificationcenter
+    ../programs/waybar
   ];
   home = {
     packages = (
@@ -142,7 +142,7 @@
       };
       Service = {
         Type = "oneshot";
-        ExecStart = ./dotfiles/kill-spyware.sh;
+        ExecStart = ../dotfiles/kill-spyware.sh;
         # I guess you need this? :/
         Environment = "PATH=/run/current-system/sw/bin";
       };
@@ -171,7 +171,7 @@
       };
       Service = {
         Type = "oneshot";
-        ExecStart = ./dotfiles/start-work.sh;
+        ExecStart = ../dotfiles/start-work.sh;
         Environment = "PATH=/run/current-system/sw/bin";
       };
     };
