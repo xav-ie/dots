@@ -6,6 +6,17 @@ in
   home.sessionVariables = {
     BROWSER = "firefox";
   };
+  xdg.mimeApps.defaultApplications = {
+    "text/plain" = [ "firefox.desktop" ];
+    "image/*" = [ "firefox.desktop" ];
+    "text/html" = [ "firefox.desktop" ];
+    "x-scheme-handler/http" = [ "firefox.desktop" ];
+    "x-scheme-handler/https" = [ "firefox.desktop" ];
+    "x-scheme-handler/ftp" = [ "firefox.desktop" ];
+    "application/xhtml+xml" = [ "firefox.desktop" ];
+    "application/xml" = [ "firefox.desktop" ];
+    "application/nonsense" = [ "firefox.desktop" ];
+  };
   programs = {
     firefox = {
       enable = true;
