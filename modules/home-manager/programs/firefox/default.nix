@@ -3,6 +3,9 @@ let
   merge = lib.foldr (a: b: a // b) { };
 in
 {
+  home.sessionVariables = {
+    BROWSER = "firefox";
+  };
   programs = {
     firefox = {
       enable = true;
