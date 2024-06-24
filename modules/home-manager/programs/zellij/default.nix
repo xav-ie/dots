@@ -46,7 +46,7 @@ in
       enable = true;
     };
   };
-  home.file.".config/zellij/config.kdl".source = ../../dotfiles/zellij/config.kdl;
+  home.file.".config/zellij/config.kdl".source = ./config.kdl;
   home.file.".config/zellij/layouts/default.kdl".text = ''
     layout {
         ${default_tab_template}
