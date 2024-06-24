@@ -2,7 +2,6 @@
   config,
   inputs,
   outputs,
-  lib,
   pkgs,
   ...
 }:
@@ -152,9 +151,6 @@
     BAT_PAGER = "";
     # TODO: figure out the numbers thing
     PAGER = ''bat -p --terminal-width=123 --pager="moar" '';
-    MANPAGER = "nvim +Man!";
-    # This ensures man-width is not pre-cut before it reaches nvim. Nvim can do that. 
-    MANWIDTH = "999";
     MOAR = "-quit-if-one-screen";
     NVD_BACKEND = "direct"; # github:elFarto
     MOZ_DISABLE_RDD_SANDBOX = "1";
@@ -460,16 +456,6 @@
       persistent = true; # nixos only
       dates = "weekly"; # nixos only
     };
-
-    # This will add each flake input as a registry
-    # To make nix3 commands consistent with your flake
-    # TODO: what does this do??
-    registry = lib.mapAttrs (_: value: { flake = value; }) inputs;
-
-    # This will additionally add your inputs to the system's legacy channels
-    # Making legacy nix commands consistent as well, awesome!
-    # TODO: Yeah, idk what that means either
-    nixPath = lib.mapAttrsToList (key: value: "${key}=${value.to.path}") config.nix.registry;
   };
 
   systemd = {

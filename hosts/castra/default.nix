@@ -14,24 +14,7 @@
       pkgs.bash
       pkgs.zsh
     ];
-    systemPackages = with pkgs; [
-      coreutils
-      # These fonts should be included with `nerdfonts`, 
-      # but I guess they are just general packages
-      # "Cascadia Code"
-      # "Maple"
-      # "Martian Mono"
-      # "Monaspace Neon"
-      # The real names are to the right if different
-      cascadia-code # "CaskaydiaCove Nerd Font"
-      monaspace # "Monspace Neon" => "MonaspiceNe Nerd Font"
-      # I had to manually install these from the store path, there is something going wrong on install
-      maple-mono
-      martian-mono
-      # These two are not packaged at all:
-      # "MonoLisa" # idk why this is not included yet in nerdfonts
-      # "Twilio Sans Mono" # <== may change very soon, open pr to add it.
-    ];
+    systemPackages = with pkgs; [ coreutils ];
     pathsToLink = [ "/Applications" ];
     # use the version of nix that is from nix-darwin and home-manager and
     # disable using /nix/var/nix/profiles/default and ~/.nixprofile
@@ -65,7 +48,13 @@
         # https://github.com/ryanoasis/nerd-fonts/pull/1465
       ];
     })
+    maple-mono
     maple-mono-NF
+    cascadia-code # "CaskaydiaCove Nerd Font"
+    martian-mono
+    # These two are not packaged at all:
+    # "MonoLisa" # idk why this is not included yet in nerdfonts
+    # "Twilio Sans Mono" # <== may change very soon, open pr to add it.
   ];
   # allow sudo to use touch id
   security.pam.enableSudoTouchIdAuth = true;
@@ -110,18 +99,20 @@
           # just go where I want. Only downside is new bindings must be added for new apps.
           ctrl - 1 : osascript -e 'tell application "wezterm" to activate'
           ctrl - 2 : osascript -e 'tell application "Firefox" to activate'
-          ctrl - 3 : osascript -e 'tell application "Slack" to activate'
-          ctrl - 4 : osascript -e 'tell application "zoom.us" to activate'
-          ctrl - 5 : osascript -e 'tell application "Finder" to activate'
-          ctrl - 6 : osascript -e 'tell application "Messages" to activate'
-          ctrl - 7 : osascript -e 'tell application "Safari" to activate'
+          ctrl - 3 : osascript -e 'tell application ".neovide-wrapped" to activate'
+          ctrl - 4 : osascript -e 'tell application "Slack" to activate'
+          ctrl - 5 : osascript -e 'tell application "zoom.us" to activate'
+          ctrl - 6 : osascript -e 'tell application "Finder" to activate'
+          ctrl - 7 : osascript -e 'tell application "Messages" to activate'
+          ctrl - 8 : osascript -e 'tell application "Safari" to activate'
           ctrl + alt - 1 : osascript -e 'tell application "wezterm" to activate'
           ctrl + alt - 2 : osascript -e 'tell application "Firefox" to activate'
-          ctrl + alt - 3 : osascript -e 'tell application "Slack" to activate'
-          ctrl + alt - 4 : osascript -e 'tell application "zoom.us" to activate'
-          ctrl + alt - 5 : osascript -e 'tell application "Finder" to activate'
-          ctrl + alt - 6 : osascript -e 'tell application "Messages" to activate'
-          ctrl + alt - 7 : osascript -e 'tell application "Safari" to activate'
+          ctrl + alt - 3 : osascript -e 'tell application ".neovide-wrapped" to activate'
+          ctrl + alt - 4 : osascript -e 'tell application "Slack" to activate'
+          ctrl + alt - 5 : osascript -e 'tell application "zoom.us" to activate'
+          ctrl + alt - 6 : osascript -e 'tell application "Finder" to activate'
+          ctrl + alt - 7 : osascript -e 'tell application "Messages" to activate'
+          ctrl + alt - 8 : osascript -e 'tell application "Safari" to activate'
 
           ctrl + alt - h : yabai -m space --focus prev
           ctrl + alt - j : yabai -m window --focus stack.next
