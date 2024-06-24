@@ -4,6 +4,7 @@
     ./programs/alacritty
     ./programs/git
     ./programs/lf
+    ./programs/neovide
     ./programs/starship
     ./programs/wezterm
     ./programs/zellij
