@@ -12,16 +12,8 @@
     inputs.hardware.nixosModules.common-cpu-intel-cpu-only
     inputs.hardware.nixosModules.common-gpu-nvidia-nonprime
     inputs.hardware.nixosModules.common-pc-ssd
-
-    ./hardware-configuration.nix
-
     ../common
-    # ../common/global
-    # ../common/users/misterio
-    # ../common/users/layla
-
-    # ../common/optional/pantheon.nix
-    # ../common/optional/quietboot.nix
+    ./hardware-configuration.nix
   ];
 
   boot = {
@@ -95,18 +87,24 @@
   time.timeZone = "America/New_York";
 
   # Select internationalisation properties.
-  i18n.defaultLocale = "en_US.UTF-8";
-  i18n.extraLocaleSettings = {
-    LC_ADDRESS = "en_US.UTF-8";
-    LC_IDENTIFICATION = "en_US.UTF-8";
-    LC_MEASUREMENT = "en_US.UTF-8";
-    LC_MONETARY = "en_US.UTF-8";
-    LC_NAME = "en_US.UTF-8";
-    LC_NUMERIC = "en_US.UTF-8";
-    LC_PAPER = "en_US.UTF-8";
-    LC_TELEPHONE = "en_US.UTF-8";
-    LC_TIME = "en_US.UTF-8";
-  };
+  i18n =
+    let
+      language = "en_US.UTF-8";
+    in
+    {
+      defaultLocale = language;
+      extraLocaleSettings = {
+        LC_ADDRESS = language;
+        LC_IDENTIFICATION = language;
+        LC_MEASUREMENT = language;
+        LC_MONETARY = language;
+        LC_NAME = language;
+        LC_NUMERIC = language;
+        LC_PAPER = language;
+        LC_TELEPHONE = language;
+        LC_TIME = language;
+      };
+    };
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users = {
@@ -152,8 +150,6 @@
     LC_ALL = "en_US.UTF-8";
     # causes bug if set. dont do it!
     BAT_PAGER = "";
-    # PAGER = ''bat -p --pager="moar -quit-if-one-screen" --terminal-width=\$(expr $COLUMNS - 4)'';
-    # PAGER = ''bat -p --terminal-width=123 --pager="moar -quit-if-one-screen" '';
     # TODO: figure out the numbers thing
     PAGER = ''bat -p --terminal-width=123 --pager="moar" '';
     MANPAGER = "nvim +Man!";
@@ -178,12 +174,14 @@
     WLR_RENDERER_ALLOW_SOFTWARE = "1";
   };
 
-  fonts.fontconfig.enable = true;
-  fonts.packages = with pkgs; [
-    maple-mono
-    maple-mono-NF
-    nerdfonts
-  ];
+  fonts = {
+    fontconfig.enable = true;
+    packages = with pkgs; [
+      maple-mono
+      maple-mono-NF
+      nerdfonts
+    ];
+  };
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
@@ -316,21 +314,10 @@
   hardware = {
     enableAllFirmware = true;
     bluetooth.enable = true;
-    opengl = {
+    graphics = {
       enable = true;
-      driSupport = true;
-      driSupport32Bit = true;
-      # TODO: what does this do?
-      extraPackages = [ pkgs.vaapiVdpau ];
+      enable32Bit = true;
       package = pkgs.nvidia-vaapi-driver; # For NVIDIA
-      # extraPackages = with pkgs; [
-      # nvidia-vaapi-driver # For NVIDIA
-      # This one below would probably be helpful if you had integrated graphics
-      # intel-media-driver # LIBVA_DRIVER_NAME=iHD
-      # vaapiIntel # LIBVA_DRIVER_NAME=i965 (older but works better for Firefox/Chromium)
-      # vaapiVdpau
-      # libvdpau-va-gl
-      # ];
     };
     nvidia = {
       modesetting.enable = true;
@@ -353,8 +340,7 @@
       # };
       open = false;
       nvidiaSettings = true;
-      # TODO: go back to production?
-      package = config.boot.kernelPackages.nvidiaPackages.beta;
+      package = config.boot.kernelPackages.nvidiaPackages.production;
     };
   };
 
@@ -398,8 +384,6 @@
       '';
     };
 
-    # twingate.enable = true;
-    # TODO: fix
     udev = {
       packages = [ pkgs.openrgb ];
       extraRules = ''
@@ -417,7 +401,6 @@
     };
   };
 
-  # location.provider = "geoclue2";
   location = {
     longitude = 40.0;
     latitude = 90.0;
@@ -468,8 +451,8 @@
 
   virtualisation.docker.enable = true;
 
-  # just don't change this. there is never a good reason to change this as all updates still 
-  # apply and changing this just messes things up. it is a state tracker
+  # Just don't change this. There is never a good reason to change this as all updates still 
+  # apply and changing this just messes things up. It is a state tracker
   system.stateVersion = "23.05"; # Did you read the comment?
 
   nix = {
@@ -509,8 +492,6 @@
   xdg.portal =
     let
       hyprland = inputs.hyprland.packages.${pkgs.system}.hyprland;
-    in
-    let
       xdph = pkgs.xdg-desktop-portal-hyprland.override { inherit hyprland; };
     in
     {
@@ -518,6 +499,7 @@
       extraPortals = [ xdph ];
       configPackages = [ hyprland ];
     };
+
   # boot = {
   #   kernelPackages = pkgs.linuxKernel.packages.linux_zen;
   #   binfmt.emulatedSystems = [
