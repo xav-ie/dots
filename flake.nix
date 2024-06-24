@@ -132,8 +132,8 @@
                 useGlobalPkgs = true;
                 useUserPackages = true;
                 users.x.imports = [
-                  ./modules/home-manager/default.nix
-                  ./modules/home-manager/linux.nix
+                  ./modules/home-manager
+                  ./modules/home-manager/linux
                 ];
               };
             }
@@ -159,8 +159,8 @@
                 useGlobalPkgs = true;
                 useUserPackages = true;
                 users.xavierruiz.imports = [
-                  ./modules/home-manager/default.nix
-                  ./modules/home-manager/darwin.nix
+                  ./modules/home-manager
+                  ./modules/home-manager/darwin
                 ];
               };
             }
