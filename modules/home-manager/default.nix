@@ -11,6 +11,7 @@
     ./programs/kitty
     ./programs/lf
     ./programs/moar
+    ./programs/mpv
     ./programs/neovide
     ./programs/nvim
     ./programs/starship
@@ -24,7 +25,6 @@
     btop.enable = true;
     fzf.enable = true;
     jq.enable = true;
-    mpv.enable = true;
     ripgrep.enable = true;
     thefuck.enable = true;
     watson.enable = true;
@@ -76,8 +76,6 @@
     stateVersion = "23.11";
     sessionVariables = {
       EDITOR = "$HOME/Projects/xnixvim/result/bin/nvim";
-      LANG = "en_US.UTF-8";
-      LC_ALL = "en_US.UTF-8";
       HSTR_CONFIG = "hicolor"; # get more colors
       HISTCONTROL = "ignorespace"; # leading space hides commands from history
       HISTFILESIZE = 100000; # increase history file size (default is 500)

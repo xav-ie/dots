@@ -93,6 +93,8 @@
     {
       defaultLocale = language;
       extraLocaleSettings = {
+        LANG = language;
+        LC_ALL = language;
         LC_ADDRESS = language;
         LC_IDENTIFICATION = language;
         LC_MEASUREMENT = language;
@@ -141,34 +143,7 @@
     ]
   );
 
-  # trying to fix hypr anomalies
-  environment.sessionVariables = {
-    BROWSER = "firefox";
-    EDITOR = "$HOME/Projects/xnixvim/result/bin/nvim";
-    LANG = "en_US.UTF-8";
-    LC_ALL = "en_US.UTF-8";
-    # causes bug if set. dont do it!
-    BAT_PAGER = "";
-    # TODO: figure out the numbers thing
-    PAGER = ''bat -p --terminal-width=123 --pager="moar" '';
-    MOAR = "-quit-if-one-screen";
-    NVD_BACKEND = "direct"; # github:elFarto
-    MOZ_DISABLE_RDD_SANDBOX = "1";
-    TERMINAL = "kitty";
-    # get more colors
-    HSTR_CONFIG = "hicolor";
-    # leading space hides commands from history
-    HISTCONTROL = "ignorespace";
-    # increase history file size (default is 500)
-    HISTFILESIZE = "10000";
-    PATH = "$HOME/.config/scripts/:$PATH";
-    # TODO: move into state.session variables or hyprland init
-    NIXOS_OZONE_WL = "1";
-    LIBVA_DRIVER_NAME = "nvidia";
-    GBM_BACKEND = "nvidia-drm";
-    __GLX_VENDOR_LIBRARY_NAME = "nvidia";
-    WLR_RENDERER_ALLOW_SOFTWARE = "1";
-  };
+  environment.sessionVariables = { };
 
   fonts = {
     fontconfig.enable = true;
@@ -344,6 +319,7 @@
     blueman.enable = true;
     # TODO: figure out the "right way" to do xdg portals from Misterio
     flatpak.enable = true;
+    # TODO: required?
     geoclue2 = {
       enable = true;
     };
@@ -382,6 +358,7 @@
 
     udev = {
       packages = [ pkgs.openrgb ];
+      # TODO: ???
       extraRules = ''
         SUBSYSTEM=="usb", ATTRS{idVendor}=="057e", ATTRS{idProduct}=="3000", MODE="0666"
         SUBSYSTEM=="usb", ATTRS{idVendor}=="0955", ATTRS{idProduct}=="7321", MODE="0666"
