@@ -14,8 +14,7 @@ writeShellApplication {
     if [[ "$toggle_success" != "false" ]]; then 
       notify "$(uairctl fetch "{state}")"
     else
-      nohup uair > /dev/null 2>&1 &
-      disown
+      nohup uair > /dev/null 2>&1 & disown
       sleep 1
       if uairctl toggle; then
         notify "Starting new session..."
