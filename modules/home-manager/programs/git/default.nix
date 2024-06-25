@@ -93,6 +93,9 @@
         fetch.writeCommitGraph = true;
         diff = {
           colorMoved = "default";
+          # pair lockfiles to come after their source file
+          # requires that these file types come first, but that is okay for me
+          orderFile = "${./gitorderfile.conf}";
         };
         # configured by delta.enable=true
         # delta = {
