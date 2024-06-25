@@ -46,6 +46,7 @@
             mv $out/bin/jira $out/bin/jira-unfree
           '';
         }))
+        jless
         magic-wormhole-rs # send files easily
         neovide
         uair
