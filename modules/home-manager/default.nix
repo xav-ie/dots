@@ -9,7 +9,7 @@
     # ./programs/firefox
     ./programs/git
     ./programs/kitty
-    ./programs/lf
+    # ./programs/lf
     ./programs/moar
     ./programs/mpv
     ./programs/neovide
@@ -46,14 +46,15 @@
             mv $out/bin/jira $out/bin/jira-unfree
           '';
         }))
-        jless
+        jless # best JSON and YAML viewer
         magic-wormhole-rs # send files easily
         neovide
-        uair
+        uair # pomodoro manager
         unzip
         tldr
         tree
         wget
+        yazi # better lf
         zip
       ]
       # custom packages
