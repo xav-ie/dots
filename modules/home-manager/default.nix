@@ -36,6 +36,7 @@
       [
         curl
         delta
+        devenv # idk... I think I like plain flake approach
         fd
         ffmpeg
         go-jira
