@@ -96,6 +96,4 @@
   home.file.".config/gh-dash/config.yml".source = ./dotfiles/gh-dash/config.yml;
   home.file.".config/uair/uair.toml".source = ./dotfiles/uair.toml;
   home.file.".config/pijul/config.toml".source = ./dotfiles/pijul/config.toml;
-
-  xdg.mimeApps.enable = true;
 }

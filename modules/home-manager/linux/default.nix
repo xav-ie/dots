@@ -101,10 +101,8 @@
     iconTheme.name = "GruvboxPlus";
   };
 
-  # TODO: can global xdg config be moved here?
-  # xdg = {
-  #   mimeApps.defaultApplications = {
-  #     "video/*" = [ "mpv.desktop" ];
-  #   };
-  # };
+  # TODO: somehow make mac support this
+  xdg.mimeApps.enable = true;
+  # TODO: can global xdg.portal config be moved here?
+  # I need the flatpak option, too, I think
 }
