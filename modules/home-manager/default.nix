@@ -16,6 +16,7 @@
     ./programs/nvim
     ./programs/starship
     # ./programs/swaynotificationcenter
+    ./programs/transmission
     # ./programs/waybar
     ./programs/wezterm
     ./programs/zellij
