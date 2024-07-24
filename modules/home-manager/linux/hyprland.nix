@@ -75,8 +75,8 @@
               kb_variant =
               kb_model =
               kb_rules =
-              # only half works :/
-              kb_options = caps:swapescape
+              # probably don't do this
+              # kb_options = caps:swapescape
               follow_mouse = 1
 
               touchpad {
