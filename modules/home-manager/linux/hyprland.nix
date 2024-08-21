@@ -101,8 +101,6 @@
 
           general {
               # See https://wiki.hyprland.org/Configuring/Variables/ for more
-              sensitivity = 2.2
-
               gaps_in = 5
               gaps_out = 10
               border_size = 4
