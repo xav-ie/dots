@@ -235,12 +235,12 @@
         openssl
         pango
         # I am sorry, but this works. Okay?
-        (pcre.out.overrideAttrs (oldAttrs: {
+        (pcre.out.overrideAttrs {
           # nix-ld only looks at top level lib and share
           postInstall = ''
             ln -s $out/lib/libpcre.so.1.2.13 $out/lib/libpcre.so.3
           '';
-        }))
+        })
         pciutils
         pipewire
         # TODO: find more "official" ditribution of libwebp.so.6
@@ -267,12 +267,12 @@
         xorg.libxshmfence
         xorg.libXtst
         zlib
-        (rigsofrods-bin.overrideAttrs (oldAttrs: {
+        (rigsofrods-bin.overrideAttrs {
           # nix-ld only looks at top level lib and share
           postInstall = ''
             mv $out/share/rigsofrods/lib $out/lib
           '';
-        }))
+        })
       ];
     };
     # installs a special kernel module to enable tracing
