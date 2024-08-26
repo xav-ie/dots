@@ -51,6 +51,7 @@ diff:
 .PHONY: check
 check:
 	nix flake check
+	nix run nixpkgs#deadnix -- -f # check for dead code, fails if any
 
 .PHONY: check-all
 check-all:
