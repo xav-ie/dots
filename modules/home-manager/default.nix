@@ -44,11 +44,11 @@
         go-jira
         gh
         gnumake
-        (jira-cli-go.overrideAttrs (oldAttrs: {
+        (jira-cli-go.overrideAttrs {
           postInstall = ''
             mv $out/bin/jira $out/bin/jira-unfree
           '';
-        }))
+        })
         jless # best JSON and YAML viewer
         magic-wormhole-rs # send files easily
         neovide
