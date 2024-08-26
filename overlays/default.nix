@@ -1,4 +1,7 @@
-{ inputs, outputs }:
+{
+  inputs, # outputs
+  ...
+}:
 {
   nur = inputs.nur.overlay;
   # For every flake input, aliases 'pkgs.inputs.${flake}' to
@@ -16,7 +19,7 @@
   };
 
   # Adds my custom packages
-  additions = final: prev: import ../pkgs { pkgs = final; };
+  additions = final: _: import ../pkgs { pkgs = final; };
 
   modifications = final: prev: {
     ctpv = inputs.ctpv.packages.${final.system}.default;
