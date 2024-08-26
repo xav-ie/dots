@@ -36,6 +36,7 @@
       with pkgs;
       [
         curl
+        deadnix # dead code linter
         delta
         devenv # idk... I think I like plain flake approach
         fd
