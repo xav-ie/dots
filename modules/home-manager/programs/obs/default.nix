@@ -2,6 +2,7 @@
 { pkgs, ... }@attrs:
 let
   obs-advanced-masks = pkgs.callPackage ./obs-advanced-masks.nix { inherit attrs; };
+  obs-stroke-glow-shadow = pkgs.callPackage ./obs-stroke-glow-shadow.nix { inherit attrs; };
 in
 {
   # camera magic 
@@ -26,7 +27,10 @@ in
         # obs-websocket # remote control obs... I think this is built-in?
         wlrobs # make obs work with wayland
       ]
-      ++ [ obs-advanced-masks ];
+      ++ [
+        obs-advanced-masks
+        obs-stroke-glow-shadow
+      ];
     # TODO: why does not work, but the above `let...in` does?
     #   ++ [
     #   pkgs.callPackage ./obs-advanced-masks.nix { inherit attrs; }
