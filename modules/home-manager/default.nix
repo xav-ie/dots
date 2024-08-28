@@ -14,6 +14,7 @@
     ./programs/mpv
     ./programs/neovide
     ./programs/nvim
+    ./programs/obs
     ./programs/starship
     # ./programs/swaynotificationcenter
     ./programs/transmission
