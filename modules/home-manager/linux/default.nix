@@ -36,7 +36,6 @@
         wf-recorder
         # wtype # xdotool for wayland; used as part of rofi-rbw for typing
         yt-dlp # better yt-dl
-        zoom-us
         # https://github.com/marionebl/svg-term-cli
         # allows asciinema recordings to be exported to svg... this could be pretty indespensable if
         # you would like ANSI escape sequences to be interpreted by GH
