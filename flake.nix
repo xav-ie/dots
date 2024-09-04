@@ -102,7 +102,6 @@
       forEachSystem = f: lib.genAttrs systems (system: f pkgsFor.${system});
     in
     {
-      inherit lib;
       # TODO: make the import of this global like misterio
       overlays = import ./overlays { inherit inputs outputs; };
       packages = forEachSystem (pkgs: import ./pkgs { inherit pkgs; });
