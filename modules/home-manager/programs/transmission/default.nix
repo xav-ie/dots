@@ -1,6 +1,6 @@
 { pkgs, ... }:
 {
-  home.packages = [ pkgs.transmission-gtk ];
+  home.packages = [ pkgs.transmission_3-gtk ];
   xdg.mimeApps.defaultApplications =
     let
       # TODO: make this more rigorous?
