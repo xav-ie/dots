@@ -24,7 +24,9 @@
     waypipe
     wl-clipboard
   ];
+
   wayland.windowManager.hyprland =
+
     let
       hyprland = inputs.hyprland.packages.${pkgs.system}.hyprland;
     in
@@ -51,7 +53,7 @@
           exec-once = wl-paste --type image --watch cliphist store
           exec-once = firefox
           exec-once = alacritty
-          # exec-once = swayidle timeout 300 'grimblast save screen - | convert png:- -scale 10% -blur 0x2.5 -resize 1000% ~/Pictures/out.png && swaylock -i ~/Pictures/out.png' timeout 600 'hyprctl dispatch dpms off && openrgb -p off' resume 'hyprctl dispatch dpms on && openrgb -p pink'
+          exec-once = ${pkgs.swayidle}/bin/swayidle timeout 300 '${pkgs.grimblast}/bin/grimblast save screen - | ${pkgs.imagemagick}/bin/magick png:- -scale 10% -blur 0x2.5 -resize 1000% ~/Pictures/out.png && ${pkgs.swaylock}/bin/swaylock -i ~/Pictures/out.png' timeout 600 'hyprctl dispatch dpms off' resume 'hyprctl dispatch dpms on'
 
           # Source a file (multi-file configs)
           # source = ~/.config/hypr/myColors.conf
