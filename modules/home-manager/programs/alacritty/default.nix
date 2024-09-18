@@ -14,7 +14,7 @@
         # but has worse special characters. Fira has some cool letters but both
         # have letter spacing problems "ma" "wa" both look bad when not italic
         # font.normal.family = "Hack Nerd Font";
-        font.size = 14;
+        font.size = 16;
         window = {
           decorations = "None";
           opacity = 0.8;
