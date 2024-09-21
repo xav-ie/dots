@@ -151,6 +151,7 @@
       maple-mono
       maple-mono-NF
       nerdfonts
+      noto-fonts-color-emoji
     ];
   };
 
