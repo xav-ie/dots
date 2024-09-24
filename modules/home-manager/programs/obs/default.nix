@@ -22,7 +22,18 @@ in
         obs-move-transition # move transitions
         # obs-ndi # audio/video enc/dec through lan with NDI protocol
         obs-pipewire-audio-capture # use pipewire audio/video source; desktop capture
-        obs-shaderfilter # cool source filters, also includes face-tracking
+        # see https://github.com/exeldro/obs-shaderfilter/issues/58
+        (obs-shaderfilter.overrideAttrs (
+          prev: current: {
+            version = "2.1.3";
+            src = pkgs.fetchFromGitHub {
+              owner = "exeldro";
+              repo = "obs-shaderfilter";
+              rev = "2.1.3";
+              sha256 = "sha256-CTklthfZpQPr4KGBWrlNGTUKdzQWuIvGUyysLEWm9QM=";
+            };
+          }
+        )) # cool source filters, also includes face-tracking
         obs-source-clone # clone sources for applying effects
         # obs-websocket # remote control obs... I think this is built-in?
         wlrobs # make obs work with wayland
