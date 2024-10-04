@@ -95,8 +95,9 @@
       enable = true;
       skhdConfig = # sh
         ''
-          # I really like application driven window management. I just want simple keybindings to
-          # just go where I want. Only downside is new bindings must be added for new apps.
+          # I really like application driven window management. I just want
+          # simple keybindings to just go where I want. Only downside is new
+          # bindings must be added for new apps.
           ctrl - 1 : osascript -e 'tell application "wezterm" to activate'
           ctrl - 2 : osascript -e 'tell application "Firefox" to activate'
           ctrl - 3 : osascript -e 'tell application "Slack" to activate'
@@ -128,6 +129,10 @@
           ctrl + alt - s : yabai -m window --toggle sticky;\
             yabai -m window --toggle topmost;\
             yabai -m window --toggle pip
+
+          # sketchybar spacing, ensure windows do not overlap on monitors
+          # without foreheads
+          yabai -m config external_bar all:32:0
         '';
     };
   };
