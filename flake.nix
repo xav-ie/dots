@@ -26,7 +26,12 @@
       url = "github:alexghr/alacritty-theme.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    darwin = {
+    brew-nix = {
+      url = "github:BatteredBunny/brew-nix";
+      inputs.nix-darwin.follows = "nix-darwin";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nix-darwin = {
       url = "github:LnL7/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
     };
@@ -141,8 +146,8 @@
       };
 
       darwinConfigurations = {
-        # macbook air
-        castra = inputs.darwin.lib.darwinSystem {
+        # macbook air - m1
+        castra = inputs.nix-darwin.lib.darwinSystem {
           system = "aarch64-darwin";
           specialArgs = {
             inherit inputs outputs;
@@ -158,6 +163,38 @@
                 useGlobalPkgs = true;
                 useUserPackages = true;
                 users.xavierruiz.imports = [
+                  ./modules/home-manager
+                  ./modules/home-manager/darwin
+                ];
+              };
+            }
+          ];
+        };
+
+        # macbook air - m3
+        stella = inputs.nix-darwin.lib.darwinSystem {
+          system = "aarch64-darwin";
+          specialArgs = {
+            inherit inputs outputs;
+          };
+          modules = [
+            ./hosts/stella
+            inputs.brew-nix.darwinModules.default
+            (
+              { ... }:
+              {
+                brew-nix.enable = true;
+              }
+            )
+            home-manager.darwinModules.home-manager
+            {
+              home-manager = {
+                extraSpecialArgs = {
+                  inherit inputs outputs;
+                };
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                users.x.imports = [
                   ./modules/home-manager
                   ./modules/home-manager/darwin
                 ];
