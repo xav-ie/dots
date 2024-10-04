@@ -3,7 +3,6 @@
   home = {
     packages = with pkgs; [
       sketchybar
-      sketchybar-app-font
     ];
     file.".config/sketchybar/sketchybarrc".source = ./sketchybarrc;
     file.".config/sketchybar/plugins/battery.sh".source = ./plugins/battery.sh;
