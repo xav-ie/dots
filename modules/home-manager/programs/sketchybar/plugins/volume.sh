@@ -7,22 +7,14 @@ if [ "$SENDER" = "volume_change" ]; then
   VOLUME="$INFO"
 
   case "$VOLUME" in
-    [6-9][0-9]|100) ICON="󰕾"
+    [6-9][0-9]|100) ICON="󰕾" ICON_SIZE=20.0 ICON_PADDING_RIGHT=0
     ;;
-    [3-5][0-9]) ICON="󰕾"
+    [3-5][0-9]) ICON="󰖀" ICON_SIZE=16.0 ICON_PADDING_RIGHT=2
     ;;
-    [1-9]|[1-2][0-9]) ICON="󰕾"
+    [1-9]|[1-2][0-9]) ICON="󰕿" ICON_SIZE=10.0 ICON_PADDING_RIGHT=6
     ;;
-    # because of icon sizing inconsitency issues
-    # these icons are too big!
-    # can't use these right now :(
-    # [3-5][0-9]) ICON="󰖀"
-    # ;;
-    # [1-9]|[1-2][0-9]) ICON="󰕿"
-    # ;;
-    # TODO: fix icon sizing
-    *) ICON="󰖁"
+    *) ICON="󰖁" ICON_SIZE=20.0 ICON_PADDING_RIGHT=0
   esac
 
-  sketchybar --set "$NAME" icon="$ICON" label="$VOLUME%"
+  sketchybar --set "$NAME" icon="$ICON" icon.font.size=$ICON_SIZE icon.padding_right=$ICON_PADDING_RIGHT label="$VOLUME%"
 fi

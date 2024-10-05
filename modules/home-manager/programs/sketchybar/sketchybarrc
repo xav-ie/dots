@@ -22,7 +22,7 @@ sketchybar --bar position=top height=32 blur_radius=30 color=0x90000000
 default=(
   padding_left=-10
   padding_right=-10
-  icon.font="Maple Mono NF:Normal:22.0"
+  icon.font="Maple Mono NF:Normal:24.0"
   label.font="Maple Mono NF:Normal:14.0"
   icon.color=0xffffffff
   label.color=0xffffffff
@@ -57,12 +57,12 @@ sketchybar --add item front_app left \
 
 sketchybar --add item clock right \
            --set clock update_freq=30 script="$PLUGIN_DIR/clock.sh" \
-           --add item volume right \
-           --set volume script="$PLUGIN_DIR/volume.sh" \
-           --subscribe volume volume_change \
            --add item battery right \
            --set battery update_freq=120 script="$PLUGIN_DIR/battery.sh" \
-           --subscribe battery system_woke power_source_change
+           --subscribe battery system_woke power_source_change \
+           --add item volume right \
+           --set volume script="$PLUGIN_DIR/volume.sh" \
+           --subscribe volume volume_change
 
 ##### Force all scripts to run the first time (never do this in a script) #####
 sketchybar --update
