@@ -31,6 +31,8 @@ if [[ "$CHARGING" != "" ]]; then
     ;;
     *) ICON="󰢟"
   esac
+  ICON_SIZE=25.0
+  ICON_PADDING_RIGHT=0
 else
   case "${PERCENTAGE}" in
     100) ICON="󰁹"
@@ -55,8 +57,10 @@ else
     ;;
     *) ICON="󰂎"
   esac
+  ICON_SIZE=14.0
+  ICON_PADDING_RIGHT=7
 fi
 
 # The item invoking this script (name $NAME) will get its icon and label
 # updated with the current battery status
-sketchybar --set "$NAME" icon="$ICON" label="${PERCENTAGE}%"
+sketchybar --set "$NAME" icon="$ICON" icon.font.size=$ICON_SIZE icon.padding_right=$ICON_PADDING_RIGHT label="${PERCENTAGE}%"
