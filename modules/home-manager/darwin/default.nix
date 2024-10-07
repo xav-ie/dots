@@ -23,6 +23,7 @@
       brewCasks.protonvpn
       brewCasks.raycast
       brewCasks.slack
+      # for sketchybar
       brewCasks.sf-symbols
 
       # to install MAS (Mac App-Store) apps
