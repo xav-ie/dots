@@ -57,9 +57,15 @@ sketchybar --add item front_app left \
 
 sketchybar --add item clock right \
            --set clock update_freq=30 script="$PLUGIN_DIR/clock.sh" \
+           --add alias "Control Center,BentoBox" right \
+           --set "Control Center,BentoBox" icon.padding_left=0 padding_left=0 padding_right=-20 click_script="osascript -e 'tell application \"System Events\" to tell process \"Control Center\" to perform action \"AXPress\" of menu bar item 2 of menu bar 1'" \
+           --add alias "Control Center,WiFi" right \
+           --set "Control Center,WiFi" icon.padding_left=4 padding_left=0 padding_right=-20 click_script="osascript -e 'tell application \"System Events\" to tell process \"Control Center\" to perform action \"AXPress\" of menu bar item 3 of menu bar 1'" \
            --add item battery right \
-           --set battery update_freq=120 script="$PLUGIN_DIR/battery.sh" \
-           --subscribe battery system_woke power_source_change \
+           --set battery update_freq=120 script="$PLUGIN_DIR/battery.sh" click_script="osascript -e 'tell application \"System Events\" to tell process \"Control Center\" to perform action \"AXPress\" of menu bar item 4 of menu bar 1'" \
+           --subscribe battery system_woke \
+           --add alias "Control Center,Battery" right \
+           --set "Control Center,Battery" icon.padding_left=4 padding_left=0 click_script="osascript -e 'tell application \"System Events\" to tell process \"Control Center\" to perform action \"AXPress\" of menu bar item 4 of menu bar 1'" \
            --add item volume right \
            --set volume script="$PLUGIN_DIR/volume.sh" \
            --subscribe volume volume_change
