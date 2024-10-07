@@ -95,17 +95,17 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1728279782,
-        "narHash": "sha256-ujmSdqOCEChWtlv8AitVHavSWf9pv6vc2UQXwDq40cg=",
+        "lastModified": 1728303497,
+        "narHash": "sha256-ltZ07pC2I5caI5TPK/9aCqSWM+7oy4UNXha6tP+1BaI=",
         "owner": "xav-ie",
         "repo": "brew-nix",
-        "rev": "f39516281b9fece004f2eb0702e8970ccfd25624",
+        "rev": "14799b06d60a6dc46b4f68c0e2f9eb4ec33e6c42",
         "type": "github"
       },
       "original": {
         "owner": "xav-ie",
         "repo": "brew-nix",
-        "rev": "f39516281b9fece004f2eb0702e8970ccfd25624",
+        "rev": "14799b06d60a6dc46b4f68c0e2f9eb4ec33e6c42",
         "type": "github"
       }
     },
