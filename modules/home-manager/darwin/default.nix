@@ -16,13 +16,14 @@
       (brewCasks.chromium.overrideAttrs (oldAttrs: {
         src = pkgs.fetchurl {
           url = builtins.head oldAttrs.src.urls;
-          hash = "sha256-WOqVh1b52Zj/DmOTDZcLjRH4wqzephurGQObCkXRUfc=";
+          hash = "sha256-zZHAB7TozshPfoVRfAllYFl4kXrXAok2KqHPa3gSu/c=";
         };
       }))
       brewCasks.firefox
       brewCasks.protonvpn
       brewCasks.raycast
       brewCasks.slack
+      brewCasks.sf-symbols
 
       # to install MAS (Mac App-Store) apps
       mas
