@@ -74,11 +74,11 @@
     "brew-api": {
       "flake": false,
       "locked": {
-        "lastModified": 1728029614,
-        "narHash": "sha256-rNV9Lxw6PGb3elodUCuTRr4asGFASPzQq1YQzIvIaeA=",
+        "lastModified": 1715459953,
+        "narHash": "sha256-ZIee5pYbALp/8vEdGC/4RPWR+Eja80ZA4tPxeZjq18o=",
         "owner": "BatteredBunny",
         "repo": "brew-api",
-        "rev": "2b7377cf9362a01fcfedd159d1482215d2653a39",
+        "rev": "f90513befc4e9acb7905e6c227e9926d126a7d67",
         "type": "github"
       },
       "original": {
@@ -91,24 +91,21 @@
       "inputs": {
         "brew-api": "brew-api",
         "flake-utils": "flake-utils",
-        "nix-darwin": [
-          "nix-darwin"
-        ],
-        "nixpkgs": [
-          "nixpkgs"
-        ]
+        "nix-darwin": "nix-darwin",
+        "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1724407874,
-        "narHash": "sha256-3nw5O0wLkeTeBXJTyY2pZ57JaRtouLva1a6nVx2syLU=",
-        "owner": "BatteredBunny",
+        "lastModified": 1728279782,
+        "narHash": "sha256-ujmSdqOCEChWtlv8AitVHavSWf9pv6vc2UQXwDq40cg=",
+        "owner": "xav-ie",
         "repo": "brew-nix",
-        "rev": "d3d3a2666e5330e83b6a64b1eb3e1e9380f6da9b",
+        "rev": "f39516281b9fece004f2eb0702e8970ccfd25624",
         "type": "github"
       },
       "original": {
-        "owner": "BatteredBunny",
+        "owner": "xav-ie",
         "repo": "brew-nix",
+        "rev": "f39516281b9fece004f2eb0702e8970ccfd25624",
         "type": "github"
       }
     },
@@ -572,6 +569,27 @@
     "nix-darwin": {
       "inputs": {
         "nixpkgs": [
+          "brew-nix",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1722500642,
+        "narHash": "sha256-Vls0TQRdplex1JslnBxEk3M26Q1vR+OSg+sk5rBG4DA=",
+        "owner": "LnL7",
+        "repo": "nix-darwin",
+        "rev": "b47af8628624856ad6853168298f1f96364d92d6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LnL7",
+        "repo": "nix-darwin",
+        "type": "github"
+      }
+    },
+    "nix-darwin_2": {
+      "inputs": {
+        "nixpkgs": [
           "nixpkgs"
         ]
       },
@@ -591,15 +609,15 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1723991338,
-        "narHash": "sha256-Grh5PF0+gootJfOJFenTTxDTYPidA3V28dqJ/WV7iis=",
-        "owner": "nixos",
+        "lastModified": 1715266358,
+        "narHash": "sha256-doPgfj+7FFe9rfzWo1siAV2mVCasW+Bh8I1cToAXEE4=",
+        "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "8a3354191c0d7144db9756a74755672387b702ba",
+        "rev": "f1010e0469db743d14519a1efd37e23f8513d714",
         "type": "github"
       },
       "original": {
-        "owner": "nixos",
+        "owner": "NixOS",
         "ref": "nixos-unstable",
         "repo": "nixpkgs",
         "type": "github"
@@ -662,6 +680,22 @@
     },
     "nixpkgs_2": {
       "locked": {
+        "lastModified": 1723991338,
+        "narHash": "sha256-Grh5PF0+gootJfOJFenTTxDTYPidA3V28dqJ/WV7iis=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "8a3354191c0d7144db9756a74755672387b702ba",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_3": {
+      "locked": {
         "lastModified": 1716715802,
         "narHash": "sha256-usk0vE7VlxPX8jOavrtpOqphdfqEQpf9lgedlY/r66c=",
         "owner": "NixOS",
@@ -693,7 +727,7 @@
     },
     "ollama": {
       "inputs": {
-        "nixpkgs": "nixpkgs_2",
+        "nixpkgs": "nixpkgs_3",
         "nixpkgs-unfree": "nixpkgs-unfree"
       },
       "locked": {
@@ -720,8 +754,8 @@
         "home-manager": "home-manager",
         "hyprland": "hyprland",
         "hyprland-contrib": "hyprland-contrib",
-        "nix-darwin": "nix-darwin",
-        "nixpkgs": "nixpkgs",
+        "nix-darwin": "nix-darwin_2",
+        "nixpkgs": "nixpkgs_2",
         "nixpkgs-stable": "nixpkgs-stable",
         "nur": "nur",
         "ollama": "ollama",
