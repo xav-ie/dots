@@ -43,6 +43,7 @@
       cores = 0;
       # use max CPUs for nix build jobs
       max-jobs = "auto";
+      sandbox = true;
     };
   };
 
