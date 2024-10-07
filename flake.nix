@@ -27,9 +27,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     brew-nix = {
-      url = "github:BatteredBunny/brew-nix";
-      inputs.nix-darwin.follows = "nix-darwin";
-      inputs.nixpkgs.follows = "nixpkgs";
+      # url = "git+file:///Users/x/Projects/brew-nix";
+      url = "github:xav-ie/brew-nix/f39516281b9fece004f2eb0702e8970ccfd25624";
+      # inputs.nix-darwin.follows = "nix-darwin";
+      # inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-darwin = {
       url = "github:LnL7/nix-darwin";
