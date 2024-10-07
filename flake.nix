@@ -28,7 +28,7 @@
     };
     brew-nix = {
       # url = "git+file:///Users/x/Projects/brew-nix";
-      url = "github:xav-ie/brew-nix/f39516281b9fece004f2eb0702e8970ccfd25624";
+      url = "github:xav-ie/brew-nix/14799b06d60a6dc46b4f68c0e2f9eb4ec33e6c42";
       # inputs.nix-darwin.follows = "nix-darwin";
       # inputs.nixpkgs.follows = "nixpkgs";
     };
