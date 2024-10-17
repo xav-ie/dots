@@ -21,6 +21,7 @@
       }))
       brewCasks.firefox
       brewCasks.protonvpn
+      brewCasks.microsoft-edge
       brewCasks.raycast
       brewCasks.slack
       # for sketchybar
