@@ -1,9 +1,10 @@
+# ~/Projects/dots/modules/home-manager/programs/sketchybar/./sketchybarrc
 # This is a demo config to showcase some of the most important commands.
 # It is meant to be changed and configured, as it is intentionally kept sparse.
 # For a (much) more advanced configuration example see my dotfiles:
 # https://github.com/FelixKratz/dotfiles
 
-PLUGIN_DIR="$CONFIG_DIR/plugins"
+PLUGIN_DIR="~/.config/sketchybar/plugins"
 
 ##### Bar Appearance #####
 # Configuring the general appearance of the bar.
@@ -40,7 +41,9 @@ sketchybar --bar font_smoothing=on
 # We add some regular items to the left side of the bar, where
 # only the properties deviating from the current defaults need to be set
 
-sketchybar --add item front_app left \
+sketchybar --add alias "Menu Bar Dock,Item-0" left \
+           --set "Menu Bar Dock,Item-0" icon.padding_left=0 padding_left=-20 padding_right=-5 \
+           --add item front_app left \
            --set front_app icon.drawing=off script="$PLUGIN_DIR/front_app.sh" \
            --subscribe front_app front_app_switched
 
@@ -67,8 +70,10 @@ sketchybar --add item clock right \
            --add alias "Control Center,Battery" right \
            --set "Control Center,Battery" icon.padding_left=4 padding_left=0 click_script="osascript -e 'tell application \"System Events\" to tell process \"Control Center\" to perform action \"AXPress\" of menu bar item 4 of menu bar 1'" \
            --add item volume right \
-           --set volume script="$PLUGIN_DIR/volume.sh" \
-           --subscribe volume volume_change
+           --set volume script="$PLUGIN_DIR/volume.sh" icon.padding_left=8 padding_left=0 \
+           --subscribe volume volume_change \
+           --add alias "Twingate,Item-0" right \
+           --set "Twingate,Item-0" icon.padding_left=0 padding_left=0 padding_right=-20
 
 ##### Force all scripts to run the first time (never do this in a script) #####
 sketchybar --update
