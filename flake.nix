@@ -59,6 +59,7 @@
       url = "github:xav-ie/generate-kaomoji";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    ghostty.url = "git+ssh://git@github.com/ghostty-org/ghostty";
     ollama = {
       url = "github:abysssol/ollama-flake";
     };
