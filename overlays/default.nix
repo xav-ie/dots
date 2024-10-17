@@ -25,6 +25,7 @@
     ctpv = inputs.ctpv.packages.${final.system}.default;
     alacritty-theme = inputs.alacritty-theme.packages.${final.system};
     generate-kaomoji = inputs.generate-kaomoji.packages.${final.system}.default;
+    ghostty = inputs.ghostty.packages.${final.system}.default;
     ollama = inputs.ollama.packages.${final.system}.default;
     mpv = prev.mpv.override {
       scripts =
