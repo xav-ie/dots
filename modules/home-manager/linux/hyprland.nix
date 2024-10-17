@@ -53,6 +53,9 @@
           exec-once = wl-paste --type image --watch cliphist store
           exec-once = firefox
           exec-once = alacritty
+
+          exec-once = ${pkgs.networkmanagerapplet}/bin/nm-applet
+          exec-once = ${pkgs.blueman}/bin/blueman-applet
           exec-once = ${pkgs.swayidle}/bin/swayidle timeout 300 '${pkgs.grimblast}/bin/grimblast save screen - | ${pkgs.imagemagick}/bin/magick png:- -scale 10% -blur 0x2.5 -resize 1000% ~/Pictures/out.png && ${pkgs.swaylock}/bin/swaylock -i ~/Pictures/out.png' timeout 600 'hyprctl dispatch dpms off' resume 'hyprctl dispatch dpms on'
 
           # Source a file (multi-file configs)
