@@ -21,8 +21,10 @@
       }))
       brewCasks.firefox
       brewCasks.protonvpn
+      brewCasks.microsoft-edge
       brewCasks.raycast
       brewCasks.slack
+      # for sketchybar
       brewCasks.sf-symbols
 
       # to install MAS (Mac App-Store) apps
@@ -131,8 +133,9 @@
     # '
     #
     # # Apps to install/keep:
-    # 1501592214 # twingate
     # 6446206067 # klack
+    # 1501592214 # twingate
+    # 497799835 # xcode
     # TODO: how to run the above script on every system rebuild?
 
     stateVersion = "23.11";
