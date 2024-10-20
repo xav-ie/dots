@@ -1,8 +1,10 @@
 { ... }:
 {
-  programs.eza = {
-    enable = true;
-    git = true;
-    icons = true;
+  config = {
+    programs.eza = {
+      enable = true;
+      git = true;
+      icons = true;
+    };
   };
 }

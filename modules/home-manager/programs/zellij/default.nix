@@ -41,16 +41,16 @@ let
   '';
 in
 {
-  programs = {
-    zellij = {
+  config = {
+    programs.zellij = {
       enable = true;
     };
+    home.file.".config/zellij/config.kdl".source = ./config.kdl;
+    home.file.".config/zellij/layouts/default.kdl".text = ''
+      layout {
+          ${default_tab_template}
+          tab
+      }
+    '';
   };
-  home.file.".config/zellij/config.kdl".source = ./config.kdl;
-  home.file.".config/zellij/layouts/default.kdl".text = ''
-    layout {
-        ${default_tab_template}
-        tab
-    }
-  '';
 }
