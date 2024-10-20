@@ -1,8 +1,8 @@
 { pkgs, ... }:
 {
-  programs = {
+  config = {
     # heavily borrowed from https://www.youtube.com/watch?v=z8y_qRUYEWU
-    lf = {
+    programs.lf = {
       enable = true;
       commands = {
         dragon-out = ''%${pkgs.xdragon}/bin/xdragon -a -x "$fx"'';
@@ -45,6 +45,6 @@
         cleaner = "${pkgs.ctpv}/bin/ctpvclear";
       };
     };
+    home.file.".config/lf/icons".source = ./icons;
   };
-  home.file.".config/lf/icons".source = ./icons;
 }

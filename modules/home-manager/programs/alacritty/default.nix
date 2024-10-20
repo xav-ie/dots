@@ -1,7 +1,7 @@
 { pkgs, ... }:
 {
-  programs = {
-    alacritty = {
+  config = {
+    programs.alacritty = {
       enable = true;
       settings = {
         # == === => ->
