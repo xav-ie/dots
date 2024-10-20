@@ -1,7 +1,7 @@
 { ... }:
 {
-  programs = {
-    git = {
+  config = {
+    programs.git = {
       enable = true;
       userName = "xav-ie";
       # userEmail = "github@xav.ie";
@@ -141,7 +141,7 @@
         rerere.enabled = true;
       };
     };
+    home.file.".config/git/config.default".source = ./default.gitconfig;
+    home.file.".config/git/config.work".source = ./outsmartly.gitconfig;
   };
-  home.file.".config/git/config.default".source = ./default.gitconfig;
-  home.file.".config/git/config.work".source = ./outsmartly.gitconfig;
 }

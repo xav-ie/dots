@@ -1,7 +1,7 @@
 { ... }:
 {
-  programs = {
-    wezterm = {
+  config = {
+    programs.wezterm = {
       enable = true;
       extraConfig = # lua
         ''

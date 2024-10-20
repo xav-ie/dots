@@ -1,7 +1,7 @@
 { pkgs, ... }:
 {
-  programs = {
-    zsh =
+  config = {
+    programs.zsh =
       let
         # TODO: move this and plugin config into a separate file
         fzfTabInitExtra = # sh

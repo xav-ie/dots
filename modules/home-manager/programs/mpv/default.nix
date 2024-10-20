@@ -1,7 +1,9 @@
 { ... }:
 {
-  xdg.mimeApps.defaultApplications = {
-    "video/*" = [ "mpv.desktop" ];
+  config = {
+    programs.mpv.enable = true;
+    xdg.mimeApps.defaultApplications = {
+      "video/*" = [ "mpv.desktop" ];
+    };
   };
-  programs.mpv.enable = true;
 }
