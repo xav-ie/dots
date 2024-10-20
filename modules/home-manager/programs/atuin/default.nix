@@ -1,7 +1,9 @@
 { ... }:
 {
-  programs.atuin = {
-    enable = true;
-    settings.style = "compact";
+  config = {
+    programs.atuin = {
+      enable = true;
+      settings.style = "compact";
+    };
   };
 }

@@ -3,25 +3,8 @@ let
   merge = lib.foldr (a: b: a // b) { };
 in
 {
-  home.sessionVariables = {
-    BROWSER = "firefox";
-  };
-  xdg.mimeApps.defaultApplications =
-    let
-      browser = "firefox.desktop";
-    in
-    {
-      "application/xhtml+xml" = browser;
-      "application/xml" = browser;
-      "image/*" = browser;
-      "text/html" = browser;
-      "text/plain" = browser;
-      "x-scheme-handler/ftp" = browser;
-      "x-scheme-handler/http" = browser;
-      "x-scheme-handler/https" = browser;
-    };
-  programs = {
-    firefox = {
+  config = {
+    programs.firefox = {
       enable = true;
       profiles.x = {
         id = 0;
@@ -85,5 +68,22 @@ in
         ];
       };
     };
+    home.sessionVariables = {
+      BROWSER = "firefox";
+    };
+    xdg.mimeApps.defaultApplications =
+      let
+        browser = "firefox.desktop";
+      in
+      {
+        "application/xhtml+xml" = browser;
+        "application/xml" = browser;
+        "image/*" = browser;
+        "text/html" = browser;
+        "text/plain" = browser;
+        "x-scheme-handler/ftp" = browser;
+        "x-scheme-handler/http" = browser;
+        "x-scheme-handler/https" = browser;
+      };
   };
 }

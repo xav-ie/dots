@@ -1,8 +1,8 @@
 { inputs, pkgs, ... }:
 {
-  # https://github.com/elythh/nixdots/blob/58db47f160c219c3e2a9630651dfd9aab0408b1a/modules/home/opt/wayland/services/swaync/default.nix
-  programs = {
-    waybar = {
+  config = {
+    programs.waybar = {
+      # https://github.com/elythh/nixdots/blob/58db47f160c219c3e2a9630651dfd9aab0408b1a/modules/home/opt/wayland/services/swaync/default.nix
       enable = true;
       package = inputs.waybar.packages.${pkgs.system}.default;
       settings = {
