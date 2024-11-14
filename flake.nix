@@ -26,12 +26,22 @@
       url = "github:alexghr/alacritty-theme.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    brew-nix = {
-      # url = "git+file:///Users/x/Projects/brew-nix";
-      url = "github:xav-ie/brew-nix/4255abeaaf860d6716f5ab1c36165eaf8f039130";
-      # inputs.nix-darwin.follows = "nix-darwin";
-      # inputs.nixpkgs.follows = "nixpkgs";
+
+    nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
+    # Optional: Declarative tap management
+    homebrew-core = {
+      url = "github:homebrew/homebrew-core";
+      flake = false;
     };
+    homebrew-cask = {
+      url = "github:homebrew/homebrew-cask";
+      flake = false;
+    };
+    homebrew-bundle = {
+      url = "github:homebrew/homebrew-bundle";
+      flake = false;
+    };
+
     nix-darwin = {
       url = "github:LnL7/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -181,13 +191,37 @@
           };
           modules = [
             ./hosts/stella
-            inputs.brew-nix.darwinModules.default
+            # TODO: clean this up
+            inputs.nix-homebrew.darwinModules.nix-homebrew
+            {
+              nix-homebrew = {
+                # Install Homebrew under the default prefix
+                enable = true;
+                # Apple Silicon Only: Also install Homebrew under the default Intel prefix for Rosetta 2
+                enableRosetta = true;
+                # User owning the Homebrew prefix
+                # TODO: make this inherit from user variable
+                user = "x";
+                # Optional: Declarative tap management
+                taps = {
+                  "homebrew/homebrew-core" = inputs.homebrew-core;
+                  "homebrew/homebrew-cask" = inputs.homebrew-cask;
+                  "homebrew/homebrew-bundle" = inputs.homebrew-bundle;
+                };
+                # Optional: Enable fully-declarative tap management
+                # With mutableTaps disabled, taps can no longer be added imperatively with `brew tap`.
+                mutableTaps = false;
+              };
+            }
             (
-              { ... }:
+              { config, ... }:
               {
-                brew-nix.enable = true;
+                # https://github.com/zhaofengli/nix-homebrew/issues/5
+                # You must tell nix-darwin to just inherit the same taps as nix-homebrew
+                homebrew.taps = builtins.attrNames config.nix-homebrew.taps;
               }
             )
+
             home-manager.darwinModules.home-manager
             {
               home-manager = {
