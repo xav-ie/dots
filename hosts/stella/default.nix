@@ -235,25 +235,18 @@
             # I really like application driven window management. I just want
             # simple keybindings to just go where I want. Only downside is new
             # bindings must be added for new apps.
-            ctrl - 1 : osascript -e 'tell application "wezterm" to activate'
-            ctrl - 2 : osascript -e 'tell application "Firefox" to activate'
-            ctrl - 3 : osascript -e 'tell application "Slack" to activate'
-            ctrl - 4 : osascript -e 'tell application "zoom.us" to activate'
-            ctrl - 5 : osascript -e 'tell application "Finder" to activate'
-            ctrl - 6 : osascript -e 'tell application "Messages" to activate'
-            ctrl - 7 : osascript -e 'tell application "Safari" to activate'
-            ctrl + alt - 1 : osascript -e 'tell application "wezterm" to activate'
-            ctrl + alt - 2 : osascript -e 'tell application "Firefox" to activate'
-            ctrl + alt - 3 : osascript -e 'tell application "Slack" to activate'
-            ctrl + alt - 4 : osascript -e 'tell application "zoom.us" to activate'
-            ctrl + alt - 5 : osascript -e 'tell application "Finder" to activate'
-            ctrl + alt - 6 : osascript -e 'tell application "Messages" to activate'
-            ctrl + alt - 7 : osascript -e 'tell application "Safari" to activate'
+            cmd - 1 : osascript -e 'tell application "Ghostty" to activate'
+            cmd - 2 : osascript -e 'tell application "Firefox" to activate'
+            cmd - 3 : osascript -e 'tell application "Slack" to activate'
+            cmd - 4 : osascript -e 'tell application "zoom.us" to activate'
+            cmd - 5 : osascript -e 'tell application "Finder" to activate'
+            cmd - 6 : osascript -e 'tell application "Messages" to activate'
+            cmd - 7 : osascript -e 'tell application "Safari" to activate'
 
-            ctrl + alt - h : yabai -m space --focus prev
-            ctrl + alt - j : yabai -m window --focus stack.next
-            ctrl + alt - k : yabai -m window --focus stack.prev
-            ctrl + alt - l : yabai -m space --focus next
+            cmd - h : yabai -m space --focus prev
+            cmd - j : yabai -m window --focus stack.next
+            cmd - k : yabai -m window --focus stack.prev
+            cmd - l : yabai -m space --focus next
 
             ctrl + alt - q : yabai -m window --space prev
             ctrl + alt - w : yabai -m space --focus prev
@@ -269,7 +262,8 @@
 
             # sketchybar spacing, ensure windows do not overlap on monitors
             # without foreheads
-            yabai -m config external_bar all:32:0
+            # TODO: fix this
+            # yabai -m config external_bar all:32:0
           '';
       };
     };
