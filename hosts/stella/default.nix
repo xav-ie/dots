@@ -243,10 +243,10 @@
             cmd - 6 : osascript -e 'tell application "Messages" to activate'
             cmd - 7 : osascript -e 'tell application "Safari" to activate'
 
-            cmd - h : yabai -m space --focus prev
-            cmd - j : yabai -m window --focus stack.next
-            cmd - k : yabai -m window --focus stack.prev
-            cmd - l : yabai -m space --focus next
+            ctrl + alt - h : yabai -m space --focus prev
+            ctrl + alt - j : yabai -m window --focus stack.next
+            ctrl + alt - k : yabai -m window --focus stack.prev
+            ctrl + alt - l : yabai -m space --focus next
 
             ctrl + alt - q : yabai -m window --space prev
             ctrl + alt - w : yabai -m space --focus prev
