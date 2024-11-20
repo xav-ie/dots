@@ -20,6 +20,7 @@
           graph = "log --graph --pretty=tformat:'%C(bold blue)%h%Creset %s %C(bold green)%d%Creset %C(blue)<%an>%Creset %C(dim cyan)%cr' --abbrev-commit --decorate";
           main = # sh
             "!(git fetch && git fetch --tags && git checkout -B main origin/main)";
+          patch = "show --patch";
           p = "push";
           pr = # sh
             ''
