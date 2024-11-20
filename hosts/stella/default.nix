@@ -31,6 +31,7 @@
         "raycast"
         "slack"
         "zoom"
+        "little-snitch"
         "microsoft-edge"
         "sf-symbols"
       ];
