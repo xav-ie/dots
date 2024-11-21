@@ -31,6 +31,7 @@
           c4 = "COLUMNS=$COLUMNS-4";
           info = "env info --vi-keys";
           gake = "git pull && make";
+          gp = "gh pr view";
           l = "ls -lah";
           # I could not get man to respect pager width
           man = "c4 env man";
