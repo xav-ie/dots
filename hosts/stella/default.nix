@@ -243,7 +243,8 @@
             cmd - 4 : osascript -e 'tell application "zoom.us" to activate'
             cmd - 5 : osascript -e 'tell application "Finder" to activate'
             cmd - 6 : osascript -e 'tell application "Messages" to activate'
-            cmd - 7 : osascript -e 'tell application "Safari" to activate'
+            cmd - 7 : osascript -e 'tell application "Chromium" to activate'
+            cmd - 8 : osascript -e 'tell application "Safari" to activate'
 
             ctrl + alt - h : yabai -m space --focus prev
             ctrl + alt - j : yabai -m window --focus stack.next
