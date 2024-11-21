@@ -27,6 +27,7 @@
         "bitwarden"
         "chromium"
         "firefox"
+        "loom"
         "protonvpn"
         "raycast"
         "slack"
