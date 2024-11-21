@@ -32,6 +32,7 @@
           info = "env info --vi-keys";
           gake = "git pull && make";
           gp = "gh pr view";
+          gpw = "gh pr view -w";
           l = "ls -lah";
           # I could not get man to respect pager width
           man = "c4 env man";
