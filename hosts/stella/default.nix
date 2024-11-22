@@ -24,6 +24,7 @@
         Twingate = 1501592214;
       };
       casks = [
+        "android-studio"
         "bitwarden"
         "chromium"
         "firefox"
