@@ -22,6 +22,7 @@
       masApps = {
         Klack = 6446206067;
         Twingate = 1501592214;
+        XCode = 497799835;
       };
       casks = [
         "android-studio"
