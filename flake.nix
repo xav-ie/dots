@@ -70,14 +70,15 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     ghostty.url = "git+ssh://git@github.com/ghostty-org/ghostty";
-    ollama = {
-      url = "github:abysssol/ollama-flake";
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     nixpkgs = {
       url = "github:nixos/nixpkgs/nixos-unstable";
     };
     nixpkgs-stable = {
-      url = "github:nixos/nixpkgs/nixos-23.11";
+      url = "github:nixos/nixpkgs/nixos-24.05";
     };
     nur = {
       url = "github:nix-community/NUR";
@@ -93,6 +94,7 @@
     zjstatus = {
       url = "github:dj95/zjstatus";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.rust-overlay.follows = "rust-overlay";
     };
   };
   outputs =
