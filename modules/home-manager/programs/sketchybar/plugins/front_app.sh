@@ -7,6 +7,4 @@
 
 if [ "$SENDER" = "front_app_switched" ]; then
   sketchybar --set "$NAME" label="$INFO"
-  # force SketchyBar to update the bar for the logo change
-  sketchybar --update
 fi

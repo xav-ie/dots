@@ -245,14 +245,30 @@
             # I really like application driven window management. I just want
             # simple keybindings to just go where I want. Only downside is new
             # bindings must be added for new apps.
-            cmd - 1 : osascript -e 'tell application "Ghostty" to activate'
-            cmd - 2 : osascript -e 'tell application "Firefox" to activate'
-            cmd - 3 : osascript -e 'tell application "Slack" to activate'
-            cmd - 4 : osascript -e 'tell application "zoom.us" to activate'
-            cmd - 5 : osascript -e 'tell application "Finder" to activate'
-            cmd - 6 : osascript -e 'tell application "Messages" to activate'
-            cmd - 7 : osascript -e 'tell application "Chromium" to activate'
-            cmd - 8 : osascript -e 'tell application "Safari" to activate'
+            cmd - 1 : osascript -e 'tell application "Ghostty" to activate' \
+             && sketchybar --update \
+             && sketchybar --set "front_app" label="Ghostty"
+            cmd - 2 : osascript -e 'tell application "Firefox" to activate' \
+             && sketchybar --update \
+             && sketchybar --set "front_app" label="Firefox"
+            cmd - 3 : osascript -e 'tell application "Slack" to activate' \
+             && sketchybar --update \
+             && sketchybar --set "front_app" label="Slack"
+            cmd - 4 : osascript -e 'tell application "zoom.us" to activate' \
+             && sketchybar --update \
+             && sketchybar --set "front_app" label="zoom.us"
+            cmd - 5 : osascript -e 'tell application "Finder" to activate' \
+             && sketchybar --update \
+             && sketchybar --set "front_app" label="Finder"
+            cmd - 6 : osascript -e 'tell application "Messages" to activate' \
+             && sketchybar --update \
+             && sketchybar --set "front_app" label="Messages"
+            cmd - 7 : osascript -e 'tell application "Chromium" to activate' \
+             && sketchybar --update \
+             && sketchybar --set "front_app" label="Chromium"
+            cmd - 8 : osascript -e 'tell application "Safari" to activate' \
+             && sketchybar --update \
+             && sketchybar --set "front_app" label="Safari"
 
             ctrl + alt - h : yabai -m space --focus prev
             ctrl + alt - j : yabai -m window --focus stack.next
