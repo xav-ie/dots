@@ -24,7 +24,8 @@ in
         ".config/sketchybar/sketchybarrc".source = mkSketchybarScript "sketchybarrc" ./sketchybarrc;
         ".config/sketchybar/plugins/battery.sh".source = mkSketchybarScript "battery" ./plugins/battery.sh;
         ".config/sketchybar/plugins/clock.sh".source = mkSketchybarScript "clock" ./plugins/clock.sh;
-        ".config/sketchybar/plugins/front_app.sh".source = mkSketchybarScript "front_app" ./plugins/front_app.sh;
+        ".config/sketchybar/plugins/front_app.sh".source =
+          mkSketchybarScript "front_app" ./plugins/front_app.sh;
         ".config/sketchybar/plugins/space.sh".source = mkSketchybarScript "space" ./plugins/space.sh;
         ".config/sketchybar/plugins/volume.sh".source = mkSketchybarScript "volume" ./plugins/volume.sh;
       };
