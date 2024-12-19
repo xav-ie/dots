@@ -11,6 +11,7 @@ let
 
   # so that I don't have to hard-code $HOME
   sketchybarWrapper = pkgs.writeShellScript "sketchybar-wrapper" ''
+    pgrep sketchybar || \
     exec ${pkgs.sketchybar}/bin/sketchybar --config "$HOME/.config/sketchybar/sketchybarrc" "$@"
   '';
 in
