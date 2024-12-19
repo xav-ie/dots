@@ -230,6 +230,13 @@
             right_padding = spacing;
             window_gap = spacing;
           };
+        extraConfig = # sh
+          ''
+            yabai -m rule --add app=".*" sub-layer=normal
+            # sketchybar spacing, ensure windows do not overlap on monitors
+            # without foreheads
+            yabai -m config external_bar all:32:0
+          '';
       };
       skhd = {
         enable = true;
@@ -263,11 +270,6 @@
             ctrl + alt - s : yabai -m window --toggle sticky;\
               yabai -m window --toggle topmost;\
               yabai -m window --toggle pip
-
-            # sketchybar spacing, ensure windows do not overlap on monitors
-            # without foreheads
-            # TODO: fix this
-            # yabai -m config external_bar all:32:0
           '';
       };
     };
