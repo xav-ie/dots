@@ -36,6 +36,7 @@
         "zoom"
         "little-snitch"
         "microsoft-edge"
+        "openvpn-connect"
         "sf-symbols"
       ];
       brews = [ "mas" ];
