@@ -236,6 +236,9 @@
             # sketchybar spacing, ensure windows do not overlap on monitors
             # without foreheads
             yabai -m config external_bar all:32:0
+            # fix sketchybar bar not showing up on wake
+            # https://github.com/FelixKratz/SketchyBar/issues/512#issuecomment-2409228441
+            yabai -m signal --add event=system_woke action="sh -c 'sleep 1; sketchybar --reload'"
           '';
       };
       skhd = {
