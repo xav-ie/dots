@@ -80,6 +80,9 @@
     nixpkgs-stable = {
       url = "github:nixos/nixpkgs/nixos-24.05";
     };
+    nixpkgs-bleeding = {
+      url = "github:nixos/nixpkgs/master";
+    };
     nur = {
       url = "github:nix-community/NUR";
     };
