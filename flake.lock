@@ -816,6 +816,22 @@
         "type": "indirect"
       }
     },
+    "nixpkgs-bleeding": {
+      "locked": {
+        "lastModified": 1735227852,
+        "narHash": "sha256-wId235QT/RguzitooXlfaK3tYwzOf/jL0UMOlBEGyeg=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "1557114798a3951db0794379f26b68a5fdf68b12",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "master",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs-lib": {
       "locked": {
         "dir": "lib",
@@ -1022,6 +1038,7 @@
         "nix-darwin": "nix-darwin",
         "nix-homebrew": "nix-homebrew",
         "nixpkgs": "nixpkgs_3",
+        "nixpkgs-bleeding": "nixpkgs-bleeding",
         "nixpkgs-stable": "nixpkgs-stable_3",
         "nur": "nur",
         "rust-overlay": "rust-overlay",
