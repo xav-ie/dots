@@ -14,7 +14,9 @@
     ./programs/mpv
     ./programs/neovide
     ./programs/nvim
+    ./programs/nushell
     #./programs/obs
+    ./programs/pueue
     ./programs/starship
     # ./programs/swaynotificationcenter
     ./programs/transmission
@@ -27,6 +29,9 @@
   config = {
     programs = {
       btop.enable = true;
+      # excellent completions that are fast
+      # https://carapace-sh.github.io/carapace-bin/
+      carapace.enable = true;
       fzf.enable = true;
       jq.enable = true;
       ripgrep.enable = true;
