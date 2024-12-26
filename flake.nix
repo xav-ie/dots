@@ -93,8 +93,6 @@
     };
     zjstatus = {
       url = "github:dj95/zjstatus";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.rust-overlay.follows = "rust-overlay";
     };
   };
   outputs =
