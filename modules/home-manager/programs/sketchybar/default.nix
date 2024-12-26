@@ -14,6 +14,13 @@ let
     pgrep sketchybar || \
     exec ${pkgs.sketchybar}/bin/sketchybar --config "$HOME/.config/sketchybar/sketchybarrc" "$@"
   '';
+
+  # TODO: get this to work
+  # sketchybarReload = pkgs.writeShellScript "sketchybar-reload" ''
+  #   # SDKROOT="$(xcrun --show-sdk-path)"
+  #   swift ${./sketchybarReload.swift}
+  # '';
+
 in
 {
   config = {
@@ -43,5 +50,19 @@ in
         StartInterval = 5;
       };
     };
+
+    # # reload sketchybar on screen off/on
+    # # https://github.com/FelixKratz/SketchyBar/issues/512#issuecomment-2560079227
+    # launchd.agents.sketchybarReload = {
+    #   enable = true;
+    #   config = {
+    #     Debug = true;
+    #     Program = "${sketchybarReload}";
+    #     KeepAlive = true;
+    #     RunAtLoad = true;
+    #     StandardOutPath = "/tmp/sketchybarReload.log";
+    #     StandardErrorPath = "/tmp/sketchybarReload.err";
+    #   };
+    # };
   };
 }
