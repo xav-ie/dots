@@ -5,7 +5,8 @@
 $env.STARSHIP_SHELL = "nu"
 
 def get_time [] {
-  date now | format date '%m/%d %I:%M'
+  # date now | format date '%m/%d %I:%M%p'
+  date now | format date '%m/%d %H:%M'
 }
 
 def create_left_prompt [] {
