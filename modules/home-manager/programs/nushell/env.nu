@@ -3,6 +3,7 @@
 # version = "0.96.1"
 
 $env.STARSHIP_SHELL = "nu"
+$env.SHELL = "nu"
 
 def get_time [] {
   # date now | format date '%m/%d %I:%M%p'
