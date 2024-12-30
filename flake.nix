@@ -1,22 +1,22 @@
 {
   description = "My NixOS";
-  nixConfig = {
-    # I am still not exactly sure what the point of these are...
-    # they do not affect nix.conf
-    # read more at:
-    # https://github.com/NixOS/nix/issues/6672
-    # https://github.com/NixOS/nix/issues/5988
-    # There also seems to be some difference using "extra"
-    # https://github.com/NixOS/nix/issues/6672#issuecomment-1921937241
-    extra-trusted-substituters = [
-      "https://nix-community.cachix.org"
-      "https://devenv.cachix.org"
-    ];
-    extra-trusted-public-keys = [
-      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
-      "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
-    ];
-  };
+  # nixConfig = {
+  #   # I am still not exactly sure what the point of these are...
+  #   # they do not affect nix.conf
+  #   # read more at:
+  #   # https://github.com/NixOS/nix/issues/6672
+  #   # https://github.com/NixOS/nix/issues/5988
+  #   # There also seems to be some difference using "extra"
+  #   # https://github.com/NixOS/nix/issues/6672#issuecomment-1921937241
+  #   extra-trusted-substituters = [
+  #     "https://nix-community.cachix.org"
+  #     "https://devenv.cachix.org"
+  #   ];
+  #   extra-trusted-public-keys = [
+  #     "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+  #     "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
+  #   ];
+  # };
   inputs = {
     # TODO: figure out how to use from misterio and vimjoyer
     # impermanence.url = "github:nix-community/impermanence";
@@ -29,74 +29,38 @@
 
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
     # Optional: Declarative tap management
-    homebrew-core = {
-      url = "github:homebrew/homebrew-core";
-      flake = false;
-    };
-    homebrew-cask = {
-      url = "github:homebrew/homebrew-cask";
-      flake = false;
-    };
-    homebrew-bundle = {
-      url = "github:homebrew/homebrew-bundle";
-      flake = false;
-    };
+    homebrew-bundle.url = "github:homebrew/homebrew-bundle";
+    homebrew-bundle.flake = false;
+    homebrew-cask.url = "github:homebrew/homebrew-cask";
+    homebrew-cask.flake = false;
+    homebrew-core.url = "github:homebrew/homebrew-core";
+    homebrew-core.flake = false;
 
-    nix-darwin = {
-      url = "github:LnL7/nix-darwin";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    hardware = {
-      url = "github:nixos/nixos-hardware";
-    };
-    ctpv = {
-      url = "github:xav-ie/ctpv-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    home-manager = {
-      url = "github:nix-community/home-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    hyprland = {
-      url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    hyprland-contrib = {
-      url = "github:hyprwm/contrib";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    generate-kaomoji = {
-      url = "github:xav-ie/generate-kaomoji";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    ctpv.inputs.nixpkgs.follows = "nixpkgs";
+    ctpv.url = "github:xav-ie/ctpv-nix";
+    generate-kaomoji.inputs.nixpkgs.follows = "nixpkgs";
+    generate-kaomoji.url = "github:xav-ie/generate-kaomoji";
     ghostty.url = "git+ssh://git@github.com/ghostty-org/ghostty";
-    rust-overlay = {
-      url = "github:oxalica/rust-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    nixpkgs = {
-      url = "github:nixos/nixpkgs/nixos-unstable";
-    };
-    nixpkgs-stable = {
-      url = "github:nixos/nixpkgs/nixos-24.05";
-    };
-    nixpkgs-bleeding = {
-      url = "github:nixos/nixpkgs/master";
-    };
-    nur = {
-      url = "github:nix-community/NUR";
-    };
-    waybar = {
-      url = "github:Alexays/waybar";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    wezterm = {
-      url = "github:wez/wezterm?dir=nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    zjstatus = {
-      url = "github:dj95/zjstatus";
-    };
+    hardware.url = "github:nixos/nixos-hardware";
+    home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    home-manager.url = "github:nix-community/home-manager";
+    hyprland-contrib.inputs.nixpkgs.follows = "nixpkgs";
+    hyprland-contrib.url = "github:hyprwm/contrib";
+    hyprland.inputs.nixpkgs.follows = "nixpkgs";
+    hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
+    nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
+    nix-darwin.url = "github:LnL7/nix-darwin";
+    nixpkgs-bleeding.url = "github:nixos/nixpkgs/master";
+    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nur.url = "github:nix-community/NUR";
+    rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
+    rust-overlay.url = "github:oxalica/rust-overlay";
+    waybar.inputs.nixpkgs.follows = "nixpkgs";
+    waybar.url = "github:Alexays/waybar";
+    wezterm.inputs.nixpkgs.follows = "nixpkgs";
+    wezterm.url = "github:wez/wezterm?dir=nix";
+    zjstatus.url = "github:dj95/zjstatus";
   };
   outputs =
     {
