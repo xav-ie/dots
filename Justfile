@@ -35,12 +35,22 @@ invoke function *args:
 
 system:
   #!/usr/bin/env nu
+  def launchctl_list [] {
+    launchctl list | split row -r '\n' | skip 1 | split column --regex '\s+' PID Status Label
+  }
+
   match (uname | get operating-system) {
     "Darwin" => {
       just invoke darwin-rebuild ...[switch --flake .] out+err>| nom;
-      # TODO: relaunch all nixos services
-      try { sudo launchctl bootout $"gui/(id -u)" ~/Library/LaunchAgents/org.nixos.skhd.plist }
-      try { sudo launchctl bootstrap $"gui/(id -u)" ~/Library/LaunchAgents/org.nixos.skhd.plist }
+      # TODO: relaunch hm services?
+      launchctl_list | where Label =~ "^org.nixos" | each {|e|
+        print $"🍃 Relaunching ($e.Label)"
+        let agentPath = $"~/Library/LaunchAgents/($e.Label).plist"
+        let launchGroup = $"gui/(id -u)"
+        try { launchtl bootout $launchGroup $agentPath }
+        try { launchtl bootstrap $launchGroup $agentPath }
+      }
+      null
     }
     "Linux" => {
       sudo just invoke nixos-rebuild ...[switch --flake .] out+err>| nom;
