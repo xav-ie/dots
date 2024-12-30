@@ -58,7 +58,9 @@
             '';
           })
           jless # best JSON and YAML viewer
+          just # better make
           magic-wormhole-rs # send files easily
+          nix-output-monitor # better nix build
           neovide
           uair # pomodoro manager
           unzip
