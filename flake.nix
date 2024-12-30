@@ -1,41 +1,8 @@
 {
-  description = "My NixOS";
-  # nixConfig = {
-  #   # I am still not exactly sure what the point of these are...
-  #   # they do not affect nix.conf
-  #   # read more at:
-  #   # https://github.com/NixOS/nix/issues/6672
-  #   # https://github.com/NixOS/nix/issues/5988
-  #   # There also seems to be some difference using "extra"
-  #   # https://github.com/NixOS/nix/issues/6672#issuecomment-1921937241
-  #   extra-trusted-substituters = [
-  #     "https://nix-community.cachix.org"
-  #     "https://devenv.cachix.org"
-  #   ];
-  #   extra-trusted-public-keys = [
-  #     "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
-  #     "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
-  #   ];
-  # };
+  description = "Xavier's NixOS";
   inputs = {
-    # TODO: figure out how to use from misterio and vimjoyer
-    # impermanence.url = "github:nix-community/impermanence";
-    # nix-colors.url = "github:misterio77/nix-colors";
-
-    alacritty-theme = {
-      url = "github:alexghr/alacritty-theme.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
-    # Optional: Declarative tap management
-    homebrew-bundle.url = "github:homebrew/homebrew-bundle";
-    homebrew-bundle.flake = false;
-    homebrew-cask.url = "github:homebrew/homebrew-cask";
-    homebrew-cask.flake = false;
-    homebrew-core.url = "github:homebrew/homebrew-core";
-    homebrew-core.flake = false;
-
+    alacritty-theme.inputs.nixpkgs.follows = "nixpkgs";
+    alacritty-theme.url = "github:alexghr/alacritty-theme.nix";
     ctpv.inputs.nixpkgs.follows = "nixpkgs";
     ctpv.url = "github:xav-ie/ctpv-nix";
     generate-kaomoji.inputs.nixpkgs.follows = "nixpkgs";
@@ -50,17 +17,30 @@
     hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
     nix-darwin.url = "github:LnL7/nix-darwin";
+    nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
     nixpkgs-bleeding.url = "github:nixos/nixpkgs/master";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-24.05";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nur.url = "github:nix-community/NUR";
     rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
     rust-overlay.url = "github:oxalica/rust-overlay";
+    treefmt-nix.url = "github:numtide/treefmt-nix";
     waybar.inputs.nixpkgs.follows = "nixpkgs";
     waybar.url = "github:Alexays/waybar";
     wezterm.inputs.nixpkgs.follows = "nixpkgs";
     wezterm.url = "github:wez/wezterm?dir=nix";
+
+    # Optional: Declarative tap management
+    homebrew-bundle.url = "github:homebrew/homebrew-bundle";
+    homebrew-bundle.flake = false;
+    homebrew-cask.url = "github:homebrew/homebrew-cask";
+    homebrew-cask.flake = false;
+    homebrew-core.url = "github:homebrew/homebrew-core";
+    homebrew-core.flake = false;
     zjstatus.url = "github:dj95/zjstatus";
+    # TODO: figure out how to use from misterio and vimjoyer
+    # impermanence.url = "github:nix-community/impermanence";
+    # nix-colors.url = "github:misterio77/nix-colors";
   };
   outputs =
     {
@@ -71,6 +51,7 @@
     }@inputs:
     let
       inherit (self) outputs;
+      user = "x";
       systems = [
         "x86_64-linux"
         "aarch64-darwin"
@@ -114,7 +95,7 @@
                 };
                 useGlobalPkgs = true;
                 useUserPackages = true;
-                users.x.imports = [
+                users."${user}".imports = [
                   ./modules/home-manager
                   ./modules/home-manager/linux
                 ];
@@ -141,7 +122,7 @@
                 };
                 useGlobalPkgs = true;
                 useUserPackages = true;
-                users.xavierruiz.imports = [
+                users."${user}".imports = [
                   ./modules/home-manager
                   ./modules/home-manager/darwin
                 ];
@@ -167,8 +148,7 @@
                 # Apple Silicon Only: Also install Homebrew under the default Intel prefix for Rosetta 2
                 enableRosetta = true;
                 # User owning the Homebrew prefix
-                # TODO: make this inherit from user variable
-                user = "x";
+                inherit user;
                 # Optional: Declarative tap management
                 taps = {
                   "homebrew/homebrew-core" = inputs.homebrew-core;
@@ -197,7 +177,7 @@
                 };
                 useGlobalPkgs = true;
                 useUserPackages = true;
-                users.x.imports = [
+                users."${user}".imports = [
                   ./modules/home-manager
                   ./modules/home-manager/darwin
                 ];
