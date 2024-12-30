@@ -1,5 +1,4 @@
-{ pkgs, ... }:
-{
+_: {
   config = {
     programs.alacritty = {
       enable = true;
@@ -10,7 +9,7 @@
         # not available yet, awaiting full test
         # font.normal.family = "Cartograph Nerd Font";
         font.normal.family = "Maple Mono";
-        # Hack has better spacing and numbers than Fira, 
+        # Hack has better spacing and numbers than Fira,
         # but has worse special characters. Fira has some cool letters but both
         # have letter spacing problems "ma" "wa" both look bad when not italic
         # font.normal.family = "Hack Nerd Font";
@@ -22,7 +21,7 @@
           # startup_mode = "SimpleFullscreen";
           #option_as_alt = "Both";
         };
-        import = [ pkgs.alacritty-theme.hyper ];
+        # import = [ pkgs.alacritty-theme.hyper ];
         # import = [ pkgs.alacritty-theme.papercolor_light ];
         keyboard.bindings = [
           {
