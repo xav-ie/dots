@@ -41,7 +41,7 @@ system:
 
   match (uname | get operating-system) {
     "Darwin" => {
-      just invoke darwin-rebuild ...[switch --flake .] out+err>| nom;
+      sh -c "set -o pipefail; just invoke darwin-rebuild switch --flake . |& nom"
       # TODO: relaunch hm services?
       launchctl_list | where Label =~ "^org.nixos" | each {|e|
         print $"🍃 Relaunching ($e.Label)"
@@ -53,8 +53,9 @@ system:
       null
     }
     "Linux" => {
-      sudo just invoke nixos-rebuild ...[switch --flake .] out+err>| nom;
+      sh -c "set -o pipefail; sudo just invoke nixos-rebuild switch --flake . |& nom"
       print "Checking for bad systemd user units..."
+      # TODO: nu-ify this
       # systemctl --user list-unit-files | awk '{print $1}' | while read unit; do systemctl --user status "$unit" 2>&1 | grep -q 'bad-setting' && echo "Bad setting in $unit" || true; done
     }
     _ => {
