@@ -8,7 +8,7 @@
     ./programs/eza
     # ./programs/firefox
     ./programs/git
-    ./programs/kitty
+    # ./programs/kitty
     # ./programs/lf
     ./programs/moar
     ./programs/mpv
@@ -21,7 +21,7 @@
     # ./programs/swaynotificationcenter
     ./programs/transmission
     # ./programs/waybar
-    ./programs/wezterm
+    # ./programs/wezterm
     ./programs/zellij
     ./programs/zsh
   ];
