@@ -105,7 +105,10 @@ def "from env" []: string -> record {
     | get column1
     | filter {($in | str length) > 0}
     | parse "{key}={value}"
-    | update value {str trim -c '"'}
+    | update value {
+        str trim -c '"' |
+        str replace -a "\\n" "\n"
+    }
     | transpose -r -d
 }
 
