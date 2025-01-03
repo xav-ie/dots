@@ -6,7 +6,8 @@ default:
 invoke function *args:
   #!/usr/bin/env nu
   def shell_command [cmd: list<string>, cmd_backup: list<string>, args: list<string> = []] {
-    if (command -v ($cmd | first) | str length) > 0 {
+    let cmd_path = which ($cmd | first) | get path | first | default ""
+    if ($cmd_path | str length) > 0 {
       sh -c ($args | prepend $cmd | str join " ")
     } else {
       print $"💡 Consider installing (ansi green)($cmd | first)(ansi reset) into your PATH"
@@ -39,7 +40,7 @@ system:
     launchctl list | split row -r '\n' | skip 1 | split column --regex '\s+' PID Status Label
   }
 
-  match (uname | get operating-system) {
+  match (uname | get kernel-name) {
     "Darwin" => {
       sh -c "set -o pipefail; just invoke darwin-rebuild switch --flake . |& nom"
       # TODO: relaunch hm services?
@@ -53,10 +54,25 @@ system:
       null
     }
     "Linux" => {
-      sh -c "set -o pipefail; sudo just invoke nixos-rebuild switch --flake . |& nom"
+      sudo sh -c "set -o pipefail; just invoke nixos-rebuild switch --flake . --show-trace |& nom"
+
       print "Checking for bad systemd user units..."
-      # TODO: nu-ify this
-      # systemctl --user list-unit-files | awk '{print $1}' | while read unit; do systemctl --user status "$unit" 2>&1 | grep -q 'bad-setting' && echo "Bad setting in $unit" || true; done
+      let bad_settings = (systemctl --user list-unit-files --legend=false |
+                          lines |
+                          split column -r '\s+' unit state preset |
+                          where unit !~ "@\\." |
+                          each {|row|
+                            let unit = $row.unit
+                            let has_bad_setting = systemctl --user status $unit | str contains 'bad-setting'
+                            { unit: $unit, bad_setting: $has_bad_setting }
+                          } |
+                          where bad_setting == true)
+
+      if ($bad_settings | length) > 0 {
+        error make {msg: $"Bad settings found: ($bad_settings)"}
+      } else {
+        print "No bad units found!"
+      }
     }
     _ => {
       print "Unknown OS"

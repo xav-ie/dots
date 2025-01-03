@@ -16,10 +16,9 @@
     ./programs/nvim
     ./programs/nushell
     #./programs/obs
-    ./programs/pueue
     ./programs/starship
     # ./programs/swaynotificationcenter
-    ./programs/transmission
+    # ./programs/transmission
     # ./programs/waybar
     # ./programs/wezterm
     ./programs/zellij

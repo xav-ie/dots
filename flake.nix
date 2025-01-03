@@ -11,10 +11,10 @@
     generate-kaomoji.inputs.flake-utils.follows = "flake-utils";
     generate-kaomoji.inputs.nixpkgs.follows = "nixpkgs";
     generate-kaomoji.url = "github:xav-ie/generate-kaomoji";
-    ghostty.inputs.flake-compat.follows = "flake-compat";
-    ghostty.inputs.nixpkgs-stable.follows = "nixpkgs-stable";
-    ghostty.inputs.zig.follows = "zig";
-    ghostty.url = "git+ssh://git@github.com/ghostty-org/ghostty";
+    # ghostty.inputs.flake-compat.follows = "flake-compat";
+    # ghostty.inputs.nixpkgs-stable.follows = "nixpkgs-stable";
+    # ghostty.inputs.zig.follows = "zig";
+    # ghostty.url = "git+ssh://git@github.com/ghostty-org/ghostty";
     hardware.url = "github:nixos/nixos-hardware";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.url = "github:nix-community/home-manager";
@@ -50,10 +50,10 @@
     waybar.inputs.flake-compat.follows = "flake-compat";
     waybar.inputs.nixpkgs.follows = "nixpkgs";
     waybar.url = "github:Alexays/waybar";
-    zig.inputs.flake-compat.follows = "flake-compat";
-    zig.inputs.flake-utils.follows = "flake-utils";
-    zig.inputs.nixpkgs.follows = "nixpkgs";
-    zig.url = "github:mitchellh/zig-overlay";
+    # zig.inputs.flake-compat.follows = "flake-compat";
+    # zig.inputs.flake-utils.follows = "flake-utils";
+    # zig.inputs.nixpkgs.follows = "nixpkgs";
+    # zig.url = "github:mitchellh/zig-overlay";
     # zj has exact inputs
     # zjstatus.inputs.flake-utils.follows = "flake-utils";
     # zjstatus.inputs.nixpkgs.follows = "nixpkgs";
