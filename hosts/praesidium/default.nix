@@ -54,7 +54,7 @@
     networking = {
       hostName = "praesidium"; # Define your hostname.
       # Enables wireless support via wpa_supplicant.
-      # wireless.enable = true; 
+      # wireless.enable = true;
       # nameservers = [ "127.0.0.1" "::1" ];
       nameservers = [
         "1.1.1.1"
@@ -148,12 +148,14 @@
 
     fonts = {
       fontconfig.enable = true;
-      packages = with pkgs; [
-        maple-mono
-        maple-mono-NF
-        nerdfonts
-        noto-fonts-color-emoji
-      ];
+      packages =
+        with pkgs;
+        [
+          maple-mono
+          maple-mono-NF
+          noto-fonts-color-emoji
+        ]
+        ++ builtins.filter lib.attrsets.isDerivation (builtins.attrValues pkgs.nerd-fonts);
     };
 
     # Some programs need SUID wrappers, can be configured further or are
@@ -424,7 +426,7 @@
 
     virtualisation.docker.enable = true;
 
-    # Just don't change this. There is never a good reason to change this as all updates still 
+    # Just don't change this. There is never a good reason to change this as all updates still
     # apply and changing this just messes things up. It is a state tracker
     system.stateVersion = "23.05"; # Did you read the comment?
 

@@ -21,7 +21,7 @@
           ################################
           asciinema # record shell sessions and share easily
           age # the new PGP
-          ghostty
+          # ghostty
           cliphist
           clipboard-jh # a really awesome clipboard
           manix
