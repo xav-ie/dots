@@ -21,7 +21,7 @@ def create_left_prompt_transient [] {
 
 def make_prompt_indicator [symbol]: string -> string {
   let color = if ($env.LAST_EXIT_CODE == 0) { (ansi gb) } else { (ansi rb) }
-  $"(ansi reset)\b($color)($symbol)(ansi reset) "
+  $"(ansi reset)($color)($symbol)(ansi reset) "
 }
 
 $env.PROMPT_COMMAND_RIGHT = ""
