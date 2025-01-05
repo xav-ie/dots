@@ -6,16 +6,16 @@ $env.STARSHIP_SHELL = "nu"
 $env.SHELL = "nu"
 $env.TERM = "xterm-256color"
 
-def get_time [] {
+def get_time []: nothing -> string {
   # date now | format date '%m/%d %I:%M%p'
   date now | format date '%m/%d %H:%M'
 }
 
-def create_left_prompt [] {
+def create_left_prompt []: nothing -> string {
   starship prompt --cmd-duration $env.CMD_DURATION_MS $'--status=($env.LAST_EXIT_CODE)'
 }
 
-def create_left_prompt_transient [] {
+def create_left_prompt_transient []: nothing -> string {
   create_left_prompt | str replace "\n" $"(ansi wi)(get_time)(ansi reset)\n"
 }
 
