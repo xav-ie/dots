@@ -83,6 +83,7 @@
       home-manager,
       nixpkgs,
       self,
+      flake-parts,
       ...
     }@inputs:
     let
@@ -119,24 +120,12 @@
         # custom desktop tower
         praesidium = nixpkgs.lib.nixosSystem {
           specialArgs = {
-            inherit inputs outputs;
+            inherit inputs outputs user;
           };
           modules = [
             ./hosts/praesidium
             home-manager.nixosModules.home-manager
-            {
-              home-manager = {
-                extraSpecialArgs = {
-                  inherit inputs outputs;
-                };
-                useGlobalPkgs = true;
-                useUserPackages = true;
-                users."${user}".imports = [
-                  ./modules/home-manager
-                  ./modules/home-manager/linux
-                ];
-              };
-            }
+            ./linux-home-manager.nix
           ];
         };
       };
@@ -146,24 +135,12 @@
         castra = inputs.nix-darwin.lib.darwinSystem {
           system = "aarch64-darwin";
           specialArgs = {
-            inherit inputs outputs;
+            inherit inputs outputs user;
           };
           modules = [
             ./hosts/castra
             home-manager.darwinModules.home-manager
-            {
-              home-manager = {
-                extraSpecialArgs = {
-                  inherit inputs outputs;
-                };
-                useGlobalPkgs = true;
-                useUserPackages = true;
-                users."${user}".imports = [
-                  ./modules/home-manager
-                  ./modules/home-manager/darwin
-                ];
-              };
-            }
+            ./darwin-home-manager.nix
           ];
         };
 
@@ -171,54 +148,15 @@
         stella = inputs.nix-darwin.lib.darwinSystem {
           system = "aarch64-darwin";
           specialArgs = {
-            inherit inputs outputs;
+            inherit inputs outputs user;
           };
           modules = [
             ./hosts/stella
-            # TODO: clean this up
             inputs.nix-homebrew.darwinModules.nix-homebrew
-            {
-              nix-homebrew = {
-                # Install Homebrew under the default prefix
-                enable = true;
-                # Apple Silicon Only: Also install Homebrew under the default Intel prefix for Rosetta 2
-                enableRosetta = true;
-                # User owning the Homebrew prefix
-                inherit user;
-                # Optional: Declarative tap management
-                taps = {
-                  "homebrew/homebrew-core" = inputs.homebrew-core;
-                  "homebrew/homebrew-cask" = inputs.homebrew-cask;
-                  "homebrew/homebrew-bundle" = inputs.homebrew-bundle;
-                };
-                # Optional: Enable fully-declarative tap management
-                # With mutableTaps disabled, taps can no longer be added imperatively with `brew tap`.
-                mutableTaps = false;
-              };
-            }
-            (
-              { config, ... }:
-              {
-                # https://github.com/zhaofengli/nix-homebrew/issues/5
-                # You must tell nix-darwin to just inherit the same taps as nix-homebrew
-                homebrew.taps = builtins.attrNames config.nix-homebrew.taps;
-              }
-            )
-
+            ./nix-homebrew.nix
+            ./homebrew-taps.nix
             home-manager.darwinModules.home-manager
-            {
-              home-manager = {
-                extraSpecialArgs = {
-                  inherit inputs outputs;
-                };
-                useGlobalPkgs = true;
-                useUserPackages = true;
-                users."${user}".imports = [
-                  ./modules/home-manager
-                  ./modules/home-manager/darwin
-                ];
-              };
-            }
+            ./darwin-home-manager.nix
           ];
         };
       };
