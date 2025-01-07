@@ -6,7 +6,8 @@ default:
 invoke function *args:
   #!/usr/bin/env nu
   def shell_command [cmd: list<string>, cmd_backup: list<string>, args: list<string> = []] {
-    let cmd_path = which ($cmd | first) | get path | first | default ""
+    # the exernal `which` seems to resolve better...
+    let cmd_path = try { (^which ($cmd | first)) | lines | first } catch { "" }
     if ($cmd_path | str length) > 0 {
       sh -c ($args | prepend $cmd | str join " ")
     } else {
@@ -39,10 +40,18 @@ system:
   def launchctl_list [] {
     launchctl list | split row -r '\n' | skip 1 | split column --regex '\s+' PID Status Label
   }
+  def pipefail [] {
+    let results = complete
+    match $results {
+      {exit_code: 0} => $results.stdout,
+      _ => (error make { msg: $results.stdout })
+    }
+  }
+
 
   match (uname | get kernel-name) {
     "Darwin" => {
-      sh -c "set -o pipefail; just invoke darwin-rebuild switch --flake . |& nom"
+      just invoke darwin-rebuild switch --flake . --show-trace out+err>| tee { just invoke nom } | pipefail
       # TODO: relaunch hm services?
       launchctl_list | where Label =~ "^org.nixos" | each {|e|
         print $"🍃 Relaunching ($e.Label)"
@@ -54,7 +63,7 @@ system:
       null
     }
     "Linux" => {
-      sudo sh -c "set -o pipefail; just invoke nixos-rebuild switch --flake . --show-trace |& nom"
+      just invoke nixos-rebuild switch --flake . --show-trace out+err>| tee { just invoke nom } | pipefail
 
       print "Checking for bad systemd user units..."
       let bad_settings = (systemctl --user list-unit-files --legend=false |
