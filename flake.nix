@@ -26,7 +26,6 @@
     hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
     nix-darwin.url = "github:LnL7/nix-darwin";
-    nix-homebrew.inputs.flake-utils.follows = "flake-utils";
     nix-homebrew.inputs.nix-darwin.follows = "nix-darwin";
     nix-homebrew.inputs.nixpkgs.follows = "nixpkgs";
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
@@ -38,13 +37,13 @@
     nur.inputs.treefmt-nix.follows = "treefmt-nix";
     nur.url = "github:nix-community/NUR";
     pre-commit-hooks.inputs.flake-compat.follows = "flake-compat";
-    pre-commit-hooks.inputs.nixpkgs-stable.follows = "nixpkgs-stable";
     pre-commit-hooks.inputs.nixpkgs.follows = "nixpkgs";
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
     rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
     rust-overlay.url = "github:oxalica/rust-overlay";
     systems-linux.url = "github:nix-systems/default-linux";
     systems.url = "github:nix-systems/default";
+    # kind of breaks `nix flake check` but idk for sure
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     waybar.inputs.flake-compat.follows = "flake-compat";
@@ -78,87 +77,65 @@
     homebrew-core.flake = false;
     homebrew-core.url = "github:homebrew/homebrew-core";
   };
+
   outputs =
-    {
-      home-manager,
-      nixpkgs,
-      self,
-      flake-parts,
-      ...
-    }@inputs:
-    let
-      inherit (self) outputs;
-      user = "x";
-      systems = [
-        "x86_64-linux"
-        "aarch64-darwin"
+    inputs@{ flake-parts, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } (toplevel: {
+      debug = true;
+
+      systems = import inputs.systems;
+
+      imports = [
+        # inputs.git-hooks.flakeModule
+        inputs.treefmt-nix.flakeModule
       ];
-      lib = nixpkgs.lib // home-manager.lib;
-      pkgsFor = lib.genAttrs systems (
-        system:
-        import nixpkgs {
-          inherit system;
-          config.allowUnfree = true;
-        }
-      );
-      forEachSystem = f: lib.genAttrs systems (system: f pkgsFor.${system});
-    in
-    {
-      # TODO: make the import of this global like misterio
-      overlays = import ./overlays { inherit inputs outputs; };
-      packages = forEachSystem (pkgs: import ./pkgs { inherit pkgs; });
-      formatter = forEachSystem (pkgs: pkgs.nixfmt-rfc-style);
-      # Reusable nixos modules you might want to export
-      # TODO: refactor these into proper, shareable modules
-      # These are usually stuff you would upstream into nixpkgs
-      # nixosModules = import ./modules/nixos;
-      # Reusable home-manager modules you might want to export
-      # These are usually stuff you would upstream into home-manager
-      # homeManagerModules = import ./modules/home-manager;
 
-      nixosConfigurations = {
-        # custom desktop tower
-        praesidium = nixpkgs.lib.nixosSystem {
-          specialArgs = {
-            inherit inputs outputs user;
+      perSystem =
+        { pkgs, ... }:
+        {
+          # uncomment if you need overlays at the top level for some reason...
+          # _module.args.pkgs = import inputs.nixpkgs {
+          #   inherit system;
+          #   overlays = builtins.attrValues self.overlays;
+          # };
+
+          packages = import ./pkgs { inherit pkgs; };
+
+          treefmt = {
+            programs = {
+              # buggy so far...
+              # nufmt.enable = true;
+              deadnix.enable = true;
+              just.enable = true;
+              nixfmt.enable = true;
+              prettier.enable = true;
+              ruff.enable = true;
+              shfmt.enable = true;
+              statix.enable = true;
+              swift-format.enable = true;
+              # makes `nix flake check` fail...
+              taplo.enable = false;
+            };
+            settings.global.excludes = [
+              # TODO: fix formatter
+              "*.nu"
+              # TODO: find formatter
+              "*.conf"
+              # TODO: add formatter
+              "*.kdl"
+              # TODO: taplo is broken
+              "*.toml"
+              # TODO: add ini formatter
+              ".git-blame-ignore-revs"
+            ];
           };
-          modules = [
-            ./hosts/praesidium
-            home-manager.nixosModules.home-manager
-            ./linux-home-manager.nix
-          ];
+
         };
+
+      flake = {
+        overlays = import ./overlays toplevel;
+        darwinConfigurations = import ./darwinConfigurations toplevel;
+        nixosConfigurations = import ./nixosConfigurations toplevel;
       };
-
-      darwinConfigurations = {
-        # macbook air - m1
-        castra = inputs.nix-darwin.lib.darwinSystem {
-          system = "aarch64-darwin";
-          specialArgs = {
-            inherit inputs outputs user;
-          };
-          modules = [
-            ./hosts/castra
-            home-manager.darwinModules.home-manager
-            ./darwin-home-manager.nix
-          ];
-        };
-
-        # macbook air - m3
-        stella = inputs.nix-darwin.lib.darwinSystem {
-          system = "aarch64-darwin";
-          specialArgs = {
-            inherit inputs outputs user;
-          };
-          modules = [
-            ./hosts/stella
-            inputs.nix-homebrew.darwinModules.nix-homebrew
-            ./nix-homebrew.nix
-            ./homebrew-taps.nix
-            home-manager.darwinModules.home-manager
-            ./darwin-home-manager.nix
-          ];
-        };
-      };
-    };
+    });
 }
