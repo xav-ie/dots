@@ -12,6 +12,7 @@ rec {
   # Personal scripts
   cache-command = pkgs.callPackage ./cache-command { };
   ff = pkgs.callPackage ./ff { };
+  fix-yabai = pkgs.callPackage ./fix-yabai { };
   # g = pkgs.callPackage ./g { };
   j = pkgs.callPackage ./j { };
   jira-task-list = pkgs.callPackage ./jira-task-list { inherit cache-command; };

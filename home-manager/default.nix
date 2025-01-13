@@ -73,6 +73,7 @@
         ++ [
           cache-command
           ff
+          fix-yabai
           generate-kaomoji
           is-sshed
           j
