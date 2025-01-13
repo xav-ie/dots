@@ -1,0 +1,73 @@
+prSections:
+  - title: Needs Review
+    filters: review-requested:@me -reviewed-by:@me
+  - title: Approved
+    filters: is:open author:@me review:approved -review:changes_requested
+    layout:
+      author:
+        hidden: true
+  - title: Needs Work
+    filters: is:open author:@me review:changes_requested
+    layout:
+      author:
+        hidden: true
+  - title: Reviewed (Open)
+    filters: is:open reviewed-by:@me -author:@me
+  - title: All My PRs
+    filters: is:open author:@me
+    layout:
+      author:
+        hidden: true
+issuesSections:
+  - title: My Issues
+    filters: is:open author:@me
+  - title: Assigned
+    filters: is:open assignee:@me
+  - title: Involved
+    filters: is:open involves:@me -author:@me
+defaults:
+  preview:
+    open: true
+    width: 90
+  prsLimit: 20
+  issuesLimit: 20
+  view: prs
+  layout:
+    prs:
+      updatedAt:
+        width: 7
+      repo:
+        width: 15
+      author:
+        width: 15
+      assignees:
+        width: 20
+        hidden: true
+      base:
+        width: 15
+        hidden: true
+      lines:
+        width: 16
+    issues:
+      updatedAt:
+        width: 7
+      repo:
+        width: 15
+      creator:
+        width: 10
+      assignees:
+        width: 20
+        hidden: true
+  refetchIntervalMinutes: 30
+keybindings:
+  issues: []
+  prs: []
+repoPaths:
+  outsmartly/*: ~/Outsmartly/*
+  default: ~/Projects/*
+theme:
+  ui:
+    table:
+      showSeparator: true
+pager:
+  diff: "delta"

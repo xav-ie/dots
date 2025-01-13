@@ -1,14 +1,13 @@
 # Stolen from:
 # https://github.com/Misterio77/nix-config/blob/e360a9ecf6de7158bea813fc075f3f6228fc8fc0/pkgs/default.nix
 # TODO: go through all commented packages and see how they are implemented
-{
-  pkgs ? import <nixpkgs> { },
-}:
+{ pkgs, ... }:
 rec {
   # Packages with an actual source
   # rgbdaemon = pkgs.callPackage ./rgbdaemon { };
   # shellcolord = pkgs.callPackage ./shellcolord { };
   # trekscii = pkgs.callPackage ./trekscii { };
+  default = pkgs.callPackage ./cache-command { };
 
   # Personal scripts
   cache-command = pkgs.callPackage ./cache-command { };
@@ -20,8 +19,8 @@ rec {
   notify = pkgs.callPackage ./notify { };
   nvim = pkgs.callPackage ./nvim { };
   is-sshed = pkgs.callPackage ./is-sshed { };
-  record = pkgs.callPackage ./record { };
-  record-section = pkgs.callPackage ./record-section { };
+  # record = pkgs.callPackage ./record { };
+  # record-section = pkgs.callPackage ./record-section { };
   searcher = pkgs.callPackage ./searcher { };
   uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
   zellij-tab-name-update = pkgs.callPackage ./zellij-tab-name-update { };

@@ -1,22 +1,22 @@
-{
-  inputs, # outputs
-  ...
-}:
+toplevel:
+let
+  inherit (toplevel) inputs;
+in
 {
   nur = inputs.nur.overlays.default;
   # For every flake input, aliases 'pkgs.inputs.${flake}' to
   # 'inputs.${flake}.packages.${pkgs.system}' or
   # 'inputs.${flake}.legacyPackages.${pkgs.system}'
-  flake-inputs = final: _: {
-    inputs = builtins.mapAttrs (
-      _: flake:
-      let
-        legacyPackages = ((flake.legacyPackages or { }).${final.system} or { });
-        packages = ((flake.packages or { }).${final.system} or { });
-      in
-      if legacyPackages != { } then legacyPackages else packages
-    ) inputs;
-  };
+  # flake-inputs = final: _: {
+  #   inputs = builtins.mapAttrs (
+  #     _: flake:
+  #     let
+  #       legacyPackages = ((flake.legacyPackages or { }).${final.system} or { });
+  #       packages = ((flake.packages or { }).${final.system} or { });
+  #     in
+  #     if legacyPackages != { } then legacyPackages else packages
+  #   ) inputs;
+  # };
 
   # Adds my custom packages
   additions = final: _: import ../pkgs { pkgs = final; };
@@ -37,7 +37,7 @@
         ]
         ++
           # extends mpv to be controllable with MPD
-          final.lib.optional (final.system == "x86_64-linux") final.mpvScripts.mpris;
+          final.lib.optional final.stdenv.isLinux final.mpvScripts.mpris;
     };
     zjstatus = inputs.zjstatus.packages.${final.system}.default;
   };
