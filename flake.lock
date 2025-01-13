@@ -552,6 +552,27 @@
         "type": "github"
       }
     },
+    "morlana": {
+      "inputs": {
+        "nix-filter": "nix-filter",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1735715689,
+        "narHash": "sha256-t/OrkBdbpEdn0KtwWlJfB6LS8orYwISv7nWDzAOqFeg=",
+        "owner": "ryanccn",
+        "repo": "morlana",
+        "rev": "ba50dc3a6332002f1d4ee254afd73ef00dc92dbc",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ryanccn",
+        "repo": "morlana",
+        "type": "github"
+      }
+    },
     "nix-darwin": {
       "inputs": {
         "nixpkgs": [
@@ -569,6 +590,21 @@
       "original": {
         "owner": "LnL7",
         "repo": "nix-darwin",
+        "type": "github"
+      }
+    },
+    "nix-filter": {
+      "locked": {
+        "lastModified": 1710156097,
+        "narHash": "sha256-1Wvk8UP7PXdf8bCCaEoMnOT1qe5/Duqgj+rL8sRQsSM=",
+        "owner": "numtide",
+        "repo": "nix-filter",
+        "rev": "3342559a24e85fc164b295c3444e8a139924675b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "nix-filter",
         "type": "github"
       }
     },
@@ -737,6 +773,7 @@
         "homebrew-core": "homebrew-core",
         "hyprland": "hyprland",
         "hyprland-contrib": "hyprland-contrib",
+        "morlana": "morlana",
         "nix-darwin": "nix-darwin",
         "nix-homebrew": "nix-homebrew",
         "nixpkgs": "nixpkgs",
