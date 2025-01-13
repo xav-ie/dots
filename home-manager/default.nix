@@ -59,6 +59,7 @@
           jless # best JSON and YAML viewer
           just # better make
           magic-wormhole-rs # send files easily
+          morlana # better nix build on mac
           nix-output-monitor # better nix build
           neovide
           uair # pomodoro manager
