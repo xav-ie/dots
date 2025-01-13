@@ -24,6 +24,8 @@
     hyprland.inputs.pre-commit-hooks.follows = "pre-commit-hooks";
     hyprland.inputs.systems.follows = "systems-linux";
     hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
+    morlana.url = "github:ryanccn/morlana";
+    morlana.inputs.nixpkgs.follows = "nixpkgs";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-homebrew.inputs.nix-darwin.follows = "nix-darwin";

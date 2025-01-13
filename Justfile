@@ -20,6 +20,9 @@ invoke function *args:
     def darwin_rebuild [args: list<string> = []] {
       shell_command [darwin-rebuild] [nix shell nix-darwin --command darwin-rebuild] $args
     }
+    def morlana [args: list<string> = []] {
+      shell_command [morlana] [nix shell "github:ryanccn/morlana" --command morlana] $args
+    }
     def nixos_rebuild [args: list<string> = []] {
       shell_command [nixos-rebuild] [nix shell "nixpkgs#nixos-rebuild" --command nixos-rebuild] $args
     }
@@ -29,6 +32,7 @@ invoke function *args:
 
     match "{{ function }}" {
       "darwin-rebuild" => { darwin_rebuild [{{ args }}] }
+      "morlana" => { morlana [{{ args }}] }
       "nixos-rebuild" => { nixos_rebuild [{{ args }}] }
       "nom" => { nom [{{ args }}] }
       _ => { error make {msg: "Unknown function: {{ function }}"} }
@@ -49,7 +53,8 @@ system:
 
     match (uname | get kernel-name) {
       "Darwin" => {
-        just invoke darwin-rebuild switch --flake . --show-trace out+err>| tee { just invoke nom } | pipefail
+        # just invoke darwin-rebuild switch --flake . --show-trace out+err>| tee { just invoke nom } | pipefail
+        just invoke morlana switch --flake . --no-confirm -- --show-trace
         # TODO: relaunch hm services?
         launchctl_list | where Label =~ "^org.nixos" | each {|e|
           print $"🍃 Relaunching ($e.Label)"
