@@ -1,20 +1,20 @@
-_: {
+{ config, lib, ... }:
+let
+  cfg = config.programs.bat;
+in
+{
   config = {
     programs.bat = {
       enable = true;
       config = {
         theme = "ansi";
-        pager = "moar -quit-if-one-screen";
-        paging = "auto";
+        paging = "always";
         style = "plain";
-        wrap = "character";
+        wrap = "never";
       };
     };
-    home.sessionVariables = {
-      # causes bug if set. dont do it!
-      BAT_PAGER = "";
-      # TODO: somehow link moar
-      PAGER = ''bat -p --pager=\"moar -quit-if-one-screen\" --terminal-width=$(expr $COLUMNS - 4)'';
+    home.sessionVariables = lib.mkIf cfg.enable {
+      PAGER = lib.getExe cfg.package;
     };
   };
 }
