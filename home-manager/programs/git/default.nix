@@ -10,7 +10,19 @@ in
       # userEmail = "github@xav.ie";
       aliases =
         let
-          diffTweaks = "--ignore-all-space --ignore-space-at-eol --ignore-space-change --ignore-blank-lines --patch-with-stat -- . ':(exclude)*lock.json' -- . ':(exclude)*.lock'";
+          diffTweaks = builtins.concatStringsSep " " [
+            "--ignore-all-space"
+            "--ignore-space-at-eol"
+            "--ignore-space-change"
+            "--ignore-blank-lines"
+            "--patch-with-stat"
+            "--"
+            "."
+            "':(exclude)*lock.json'"
+            "--"
+            "."
+            "':(exclude)*.lock'"
+          ];
         in
         {
           bb = "!${./betterbranch.sh}";
@@ -20,14 +32,27 @@ in
           cm = "commit -m";
           d = "diff ${diffTweaks}";
           dc = "diff --cached ${diffTweaks}";
-          graph = "log --graph --pretty=tformat:'%C(bold blue)%h%Creset %s %C(bold green)%d%Creset %C(blue)<%an>%Creset %C(dim cyan)%cr' --abbrev-commit --decorate";
+          graph =
+            let
+              columns = builtins.concatStringsSep " " [
+                "%C(bold blue)%h%Creset"
+                "%s"
+                "%C(bold green)%d%Creset"
+                "%C(blue)<%an>%Creset"
+                "%C(dim cyan)%cr"
+              ];
+            in
+            "log --graph --pretty=tformat:'${columns}' --abbrev-commit --decorate";
           main = # sh
             "!(git fetch && git fetch --tags && git checkout -B main origin/main)";
           patch = "show --patch";
           p = "push";
           pr = # sh
             ''
-              !(GH_FORCE_TTY=100% gh pr list | fzf --ansi --preview 'GH_FORCE_TTY=100% gh pr view {1}' --preview-window up --header-lines 3 | awk '{print $1}' | xargs -r gh pr checkout)
+              !(GH_FORCE_TTY=100% gh pr list \
+              | fzf --ansi --preview 'GH_FORCE_TTY=100% gh pr view {1}' --preview-window up --header-lines 3 \
+              | awk '{print $1}' \
+              | xargs -r gh pr checkout)
             '';
           rmc = "rm --cached";
           s = "status";
@@ -72,6 +97,14 @@ in
           line-numbers = true;
           navigate = true;
           true-color = "always";
+          side-by-side = true;
+          file-style = "yellow";
+          paging = "always";
+          hyperlinks = true;
+          # TODO: fix
+          # https://dandavison.github.io/delta/hyperlinks.html
+          # Something along the lines of https://github.com/`git remote get-url origin | some-filter`/`git branch -r --points-at COMMIT || COMMIT/{file}L{line}`
+          # hyperlinks-file-link-format = "https://github.com/{path}:{line}";
           decorations = {
             commit-decoration-style = "bold yellow box ul";
             file-decoration-style = "none";
@@ -86,11 +119,8 @@ in
       };
       extraConfig = {
         core = {
-          # configured by delta.enable=true
-          # actually had to override that ^
-          # in order to get better column width output
-          # pager = "delta -n -w $(expr $COLUMNS - 4)";
-          # pager = "delta";
+          # configured by delta.enable=true and
+          # ov.enable=true
         };
         branch.sort = "-committerdate";
         column.ui = "auto";
@@ -153,12 +183,14 @@ in
           conflictstyle = "diff3";
         };
         # This is needed so programs like Fugitive will use delta
-        pager = {
-          blame = "delta";
-          diff = "delta";
-          reflog = "delta";
-          show = "delta";
-        };
+        # Set by ov
+        # pager = {
+        #   blame = "delta";
+        #   diff = "delta --features ov-diff";
+        #   log = "delta --features ov-log";
+        #   reflog = "delta";
+        #   show = "delta --pager='ov --header 3'";
+        # };
         # This is *very* helpful for stacked branches.
         # This is the situation.
         # You are on your third stacked PR.
@@ -175,15 +207,11 @@ in
     };
 
     home.file.".config/git/config.default".source = gitIniFmt.generate "config.default" {
-      user = {
-        email = "github@xav.ie";
-      };
+      user.email = "github@xav.ie";
     };
 
     home.file.".config/git/config.work".source = gitIniFmt.generate "config.work" {
-      user = {
-        email = "xavier@outsmartly.com";
-      };
+      user.email = "xavier@outsmartly.com";
     };
   };
 }
