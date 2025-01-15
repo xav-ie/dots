@@ -13,6 +13,7 @@
     ./programs/moar
     ./programs/mpv
     ./programs/neovide
+    ./programs/ov
     ./programs/nvim
     ./programs/nushell
     #./programs/obs

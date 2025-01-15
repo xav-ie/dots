@@ -26,15 +26,15 @@
         "bitwarden"
         "chromium"
         "firefox"
-        "loom"
-        "protonvpn"
-        "raycast"
-        "slack"
-        "zoom"
         "little-snitch"
+        "loom"
         "microsoft-edge"
         "openvpn-connect"
+        "protonvpn"
+        "raycast"
         "sf-symbols"
+        "slack"
+        "zoom"
       ];
       brews = [ "mas" ];
     };

@@ -80,7 +80,6 @@ I want to configure secrets the "right way".
   - [Alternative way to handle secrets](https://discourse.nixos.org/t/alternative-way-to-handle-secrets/35511)
   - [Introducing Secrix](https://journal.platonic.systems/introducing-secrix)
   - [Handling Secrets in NixOS: An Overview](https://discourse.nixos.org/t/handling-secrets-in-nixos-an-overview-git-crypt-agenix-sops-and-when-to-use-them/35462)
-
   </details>
 
 <details>
