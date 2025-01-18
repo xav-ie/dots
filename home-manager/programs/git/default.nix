@@ -25,6 +25,8 @@ in
           ];
         in
         {
+          # aliases are case-insensitive
+          b = "checkout -B";
           bb = "!${./betterbranch.sh}";
           blame-better = "blame -w -C -C -C";
           cam = "commit -am";
