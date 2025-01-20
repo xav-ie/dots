@@ -41,7 +41,9 @@ invoke function *args:
 system:
     #!/usr/bin/env nu
     def launchctl_list [] {
-      launchctl list | split row -r '\n' | skip 1 | split column --regex '\s+' PID Status Label
+      launchctl list | split row -r '\n'
+      | skip 1
+      | split column --regex '\s+' PID Status Label
     }
     def pipefail [] {
       let results = complete
@@ -69,16 +71,17 @@ system:
         just invoke nixos-rebuild switch --flake . --show-trace out+err>| tee { just invoke nom } | pipefail
 
         print "Checking for bad systemd user units..."
-        let bad_settings = (systemctl --user list-unit-files --legend=false |
-                            lines |
-                            split column -r '\s+' unit state preset |
-                            where unit !~ "@\\." |
-                            each {|row|
+        let bad_settings = (systemctl --user list-unit-files --legend=false
+                            | lines
+                            | split column -r '\s+' unit state preset
+                            | where unit !~ "@\\."
+                            | each {|row|
                               let unit = $row.unit
-                              let has_bad_setting = systemctl --user status $unit | str contains 'bad-setting'
+                              let has_bad_setting = systemctl --user status $unit
+                                                    | str contains 'bad-setting'
                               { unit: $unit, bad_setting: $has_bad_setting }
-                            } |
-                            where bad_setting == true)
+                            }
+                            | where bad_setting == true)
 
         if ($bad_settings | length) > 0 {
           error make {msg: $"Bad settings found: ($bad_settings)"}
