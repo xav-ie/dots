@@ -125,13 +125,20 @@ diff:
 # It would be cool to disable nixosConfigurations, but oh well. Maybe one day :).
 check:
     #!/usr/bin/env nu
+    def pipefail [] {
+      let results = complete
+      match $results {
+        {exit_code: 0} => $results.stdout,
+        _ => (error make { msg: $results.stdout })
+      }
+    }
     match (uname | get kernel-name) {
       "Darwin" => {
         # This is the only way I know how to skip nixosConfigurations on darwin :/
-        nix flake check --override-input systems github:nix-systems/aarch64-darwin
+        nix flake check --override-input systems github:nix-systems/aarch64-darwin out+err>| tee { just invoke nom } | pipefail
       }
       "Linux" => {
-        nix flake check
+        nix flake check out+err>| tee { just invoke nom } | pipefail
       }
       _ => {
         print "Unknown OS"
