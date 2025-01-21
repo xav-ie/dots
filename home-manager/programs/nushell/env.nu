@@ -48,7 +48,6 @@ $env.PROMPT_MULTILINE_INDICATOR = "⟶ "
 # simplify the prompts after running and remove indicators
 $env.TRANSIENT_PROMPT_MULTILINE_INDICATOR = ""
 
-
 # Specifies how environment variables are:
 # - converted from a string to a value on Nushell startup (from_string)
 # - converted from a value back to a string when running external commands
@@ -231,7 +230,6 @@ def rgb_to_hex []  {
   }
 }
 
-
 def hex_to_rgb [] {
   each {|line|
     if $line =~ "^#?([0-9a-fA-F]{6})" {
@@ -356,7 +354,7 @@ def hsl_to_rgb [] {
   }
 }
 
-
+try { open ~/.env | load-env }
 # To add entries to PATH (on Windows you might use Path), you can use the
 # following pattern:
 # $env.PATH = ($env.PATH | split row (char esep) | prepend '/some/path')
