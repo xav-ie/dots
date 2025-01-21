@@ -1,7 +1,7 @@
 {
   inputs,
   pkgs,
-  lib,
+  # lib,
   ...
 }:
 let
@@ -22,18 +22,18 @@ in
       # environment variables (and other configuration) using config.nu and the
       # autoload directories below.
       shellAliases = {
-        done =
-          let
-            terminal-notifier = lib.getExe' pkgs.terminal-notifier "terminal-notifier";
-          in
-          # nu
-          ''
-            do { 
-              ${terminal-notifier} -message Done; 
-              say -v Organ "Done"; 
-              ${terminal-notifier} -remove ALL 
-            }
-          '';
+        # done =
+        #   let
+        #     terminal-notifier = lib.getExe' pkgs.terminal-notifier "terminal-notifier";
+        #   in
+        #   # nu
+        #   ''
+        #     do {
+        #       ${terminal-notifier} -message Done;
+        #       say -v Organ "Done";
+        #       ${terminal-notifier} -remove ALL
+        #     }
+        #   '';
         gake = "do { git pull; make }";
         gits = "git status";
         g = "nvim `+Git | only`";
