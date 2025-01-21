@@ -107,6 +107,8 @@
             programs = {
               # buggy so far...
               # nufmt.enable = true;
+              clang-format.enable = true;
+              clang-format.includes = [ "*.glsl" ];
               deadnix.enable = true;
               just.enable = true;
               nixfmt.enable = true;

@@ -1,6 +1,7 @@
 { pkgs, ... }:
 {
   imports = [
+    ./dotfiles
     ./programs/alacritty
     # ./programs/atuin
     ./programs/bat
