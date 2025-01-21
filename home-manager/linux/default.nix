@@ -2,6 +2,7 @@
 {
   imports = [
     ../programs/firefox
+    ../programs/obs
     ../programs/sioyek
     ../programs/swaynotificationcenter
     ../programs/waybar
@@ -22,6 +23,7 @@
         # ghostty
         cliphist
         clipboard-jh # a really awesome clipboard
+        ghostty
         manix
         # nodePackages."webtorrent-cli"
         xidel # like jq but for html and much more advanced.
@@ -31,7 +33,7 @@
         # prusa-slicer                # does not launch currently
         python312Packages."adblock"
         rofi-rbw # bitwarden cli wrapper
-        # slack
+        slack
         sops
         xdg-utils # xdg-open, xdg-mime, xdg-email, etc.
         wf-recorder
