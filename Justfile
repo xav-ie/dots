@@ -68,9 +68,21 @@ system:
         null
       }
       "Linux" => {
-        just invoke nixos-rebuild switch --flake . --show-trace out+err>| tee { just invoke nom } | pipefail
+        just invoke nixos-rebuild build --flake . --show-trace out+err>| tee { just invoke nom } | pipefail
 
-        print "Checking for bad systemd user units..."
+        # TODO: make `invoke`
+        def get_pass [] {
+          try { sudo -n true } catch {
+            # TODO: add to invoke
+            nix run nixpkgs#zenity -- --password | sudo -S true
+          }
+        }
+        try { get_pass } catch {
+        try { get_pass } catch {
+        try { get_pass } catch {
+          error make {msg: "Failed to get password"}
+        }}}
+        sudo -n nixos-rebuild switch --flake . --show-trace
         let bad_settings = (systemctl --user list-unit-files --legend=false
                             | lines
                             | split column -r '\s+' unit state preset

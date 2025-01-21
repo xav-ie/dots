@@ -17,6 +17,7 @@ rec {
   j = pkgs.callPackage ./j { };
   jira-task-list = pkgs.callPackage ./jira-task-list { inherit cache-command; };
   jira-list = pkgs.callPackage ./jira-list { inherit cache-command; };
+  move-active = pkgs.callPackage ./move-active { };
   notify = pkgs.callPackage ./notify { };
   nvim = pkgs.callPackage ./nvim { };
   is-sshed = pkgs.callPackage ./is-sshed { };

@@ -25,7 +25,7 @@ in
     ctpv = inputs.ctpv.packages.${final.system}.default;
     # alacritty-theme = inputs.alacritty-theme.packages.${final.system};
     generate-kaomoji = inputs.generate-kaomoji.packages.${final.system}.default;
-    morlana = inputs.morlana.packages.${final.system}.default;
+    morlana = if final.stdenv.isDarwin then inputs.morlana.packages.${final.system}.default else null;
     # ghostty = inputs.ghostty.packages.${final.system}.default;
     mpv = prev.mpv.override {
       scripts =
