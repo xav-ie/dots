@@ -48,6 +48,7 @@ in
           main = # sh
             "!(git fetch && git fetch --tags && git checkout -B main origin/main)";
           patch = "show --patch";
+          pull-force = "!git fetch && git reset --hard origin/$(git branch --show-current)";
           p = "push";
           pr = # sh
             ''
