@@ -26,6 +26,7 @@
         "bitwarden"
         "chromium"
         "firefox"
+        "ghostty"
         "little-snitch"
         "loom"
         "microsoft-edge"
