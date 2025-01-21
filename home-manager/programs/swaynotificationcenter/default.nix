@@ -7,35 +7,38 @@
       ''
         {
           "$schema": "${pkgs.swaynotificationcenter.outPath}/etc/xdg/swaync/configSchema.json",
-          "positionX": "right",
-          "positionY": "top",
+          "control-center-exclusive-zone": true,
+          "control-center-height": 1200,
+          "control-center-layer": "overlay",
+          "control-center-margin-bottom": 0,
+          "control-center-margin-left": 0,
+          "control-center-margin-right": 0,
+          "control-center-margin-top": 0,
           "control-center-positionX": "none",
           "control-center-positionY": "none",
-          "control-center-margin-top": 0,
-          "control-center-margin-bottom": 0,
-          "control-center-margin-right": 0,
-          "control-center-margin-left": 0,
           "control-center-width": 900,
-          "control-center-height": 1200,
-          "fit-to-screen": false,
-          "layer-shell": false,
-          "layer": "overlay",
-          "control-center-layer": "overlay",
           "cssPriority": "user",
-          "notification-icon-size": 64,
+          "fit-to-screen": false,
+          "hide-on-action": true,
+          "hide-on-clear": true,
+          "image-visibility": "when-available",
+          "keyboard-shortcuts": true,
+          "layer": "overlay",
+          "layer-shell": false,
+          "notification-2fa-action": true,
           "notification-body-image-height": 100,
           "notification-body-image-width": 200,
+          "notification-icon-size": 64,
           "notification-inline-replies": true,
-          "timeout": 10,
-          "timeout-low": 5,
-          "timeout-critical": 0,
-          "notification-window-width": 880,
-          "keyboard-shortcuts": true,
-          "image-visibility": "when-available",
-          "transition-time": 200,
-          "hide-on-clear": true,
-          "hide-on-action": true,
+          "notification-window-width": 680,
+          "positionX": "right",
+          "positionY": "top",
+          "relative-timestamps": true,
           "script-fail-notify": true,
+          "timeout": 10,
+          "timeout-critical": 0,
+          "timeout-low": 5,
+          "transition-time": 200,
           "widgets": ["dnd", "mpris", "notifications"],
           "widget-config": {
             "title": {
@@ -54,10 +57,7 @@
               "image-size": 96,
               "image-radius": 12
             }
-          },
-          "relative-timestamps": true,
-          "control-center-exclusive-zone": true,
-          "notification-2fa-action": true
+          }
         }
       '';
     # I am not sure how I would use sed on this file now that is in nix...
@@ -68,7 +68,7 @@
         @define-color cc-bg rgba(19,6,10,0.65);
         @define-color default-border #631f33;
 
-        @define-color noti-border-color rgba(255, 0, 255, 0.95);
+        @define-color noti-border-color rgba(0, 0, 0, 0.0);
         @define-color noti-bg rgba(255, 255, 0, 0.65);
         @define-color noti-bg-hover rgba(65, 65, 65, 0.8);
         @define-color noti-bg-focus rgba(68, 68, 68, 0.6);
