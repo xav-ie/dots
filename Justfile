@@ -102,6 +102,10 @@ bleed:
     #!/usr/bin/env nu
     nix flake lock --update-input nixpkgs-bleeding
 
+show:
+    #!/usr/bin/env nu
+    nix run github:DeterminateSystems/nix-src/flake-schemas -- flake show .
+
 update:
     #!/usr/bin/env nu
     nix flake update
