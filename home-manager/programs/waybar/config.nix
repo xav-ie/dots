@@ -1,10 +1,17 @@
-_: {
-  "layer" = "top";
-  "margin-top" = 0;
-  "margin-bottom" = 10;
+_:
+let
+  # "top" or "bottom"
+  position = "top";
+  margin-top = if position == "top" then 10 else 0;
+  margin-bottom = if position == "top" then 0 else 10;
+in
+{
+  "layer" = position;
+  "margin-top" = margin-top;
+  "margin-bottom" = margin-bottom;
   "margin-left" = 10;
   "margin-right" = 10;
-  "position" = "bottom";
+  "position" = "top";
   "modules-left" = [
     "custom/arch"
     "hyprland/workspaces"

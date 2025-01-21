@@ -1,4 +1,9 @@
-{ inputs, pkgs, ... }:
+{
+  inputs,
+  pkgs,
+  lib,
+  ...
+}:
 {
   config = {
     home.sessionVariables = {
@@ -36,7 +41,31 @@
         systemd.enable = true;
         xwayland.enable = true;
         # TODO: make proper options
-        extraConfig = # hyprlang
+        extraConfig =
+          let
+            gapsNumeric = 10;
+            borderSizeNumeric = 4;
+            # TODO: sync with waybar
+            waybarHeightNumeric = 34;
+            gapAndBorderNumeric = gapsNumeric + borderSizeNumeric;
+            waybarSpaceNumeric = gapAndBorderNumeric + waybarHeightNumeric;
+            # waybarPosition = "top";
+            windowTopNumeric = gapAndBorderNumeric + waybarSpaceNumeric;
+            windowLeftNumeric = gapsNumeric + borderSizeNumeric;
+          in
+          let
+            gaps = toString gapsNumeric;
+            windowLeft = toString windowLeftNumeric;
+            windowTop = toString windowTopNumeric;
+            windowRight = "100%-w-${windowLeft}";
+            # windowBottom = ''100%-${
+            #   toString (
+            #     if waybarPosition == "top" then gapAndBorderNumeric else gapAndBorderNumeric + waybarSpaceNumeric
+            #   )
+            # }'';
+            move-active = lib.getExe pkgs.move-active;
+          in
+          # hyprlang
           ''
             # See https://wiki.hyprland.org/Configuring/Monitors/
             monitor=,preferred,auto,auto
@@ -46,7 +75,7 @@
 
             # Execute your favorite apps at launch
             exec-once = swww init && swww img "~/Downloads/ether.gif"
-            exec-once = waybar 
+            exec-once = waybar
             exec-once = swaync
             exec-once = noisetorch -i # load suppressor for input
             exec-once = wl-paste --type text --watch cliphist store
@@ -105,9 +134,9 @@
 
             general {
                 # See https://wiki.hyprland.org/Configuring/Variables/ for more
-                gaps_in = 5
-                gaps_out = 10
-                border_size = 4
+                gaps_in = ${toString (gapsNumeric / 2)}
+                gaps_out = ${gaps}
+                border_size = ${toString borderSizeNumeric}
 
                 # avg
                 col.inactive_border = rgb(631f33)
@@ -125,13 +154,12 @@
                 blur {
                     enabled = true
                     size = 8
-                    passes = 2
+                    passes = 3
                 }
 
-                drop_shadow = yes
-                shadow_range = 4
-                shadow_render_power = 3
-                col.shadow = rgba(1a1a1aee)
+                shadow {
+                    enabled = false
+                }
             }
 
             animations {
@@ -140,7 +168,7 @@
                 # Some default animations, see https://wiki.hyprland.org/Configuring/Animations/ for more
 
                 bezier = myBezier, 0.05, 0.9, 0.1, 1.05
-                bezier=overshot,0.05,0.9,0.1,1.1
+                bezier = overshot,0.05,0.9,0.1,1.1
 
                 animation = windows, 1, 4, overshot, popin 80%
                 animation = windowsOut, 1, 4, default, popin 90%
@@ -189,40 +217,45 @@
             # https://wiki.hyprland.org/Configuring/Window-Rules/
             # firefox pip (hacky workaround)
             # https://github.com/hyprwm/Hyprland/issues/2942#issuecomment-1923813933
-            windowrulev2 = size 640 360, title:(Picture-in-Picture)
-            windowrulev2 = pin, title:^(Picture-in-Picture)$
-            windowrulev2 = move 1906 14, title:(Picture-in-Picture)
             windowrulev2 = float, title:^(Picture-in-Picture)$
-            # windowrulev2 = size 640 360, title:(Firefox)
-            # windowrulev2 = pin, title:^(Firefox)$
-            # windowrulev2 = move 1906 14, title:(Firefox)
+            windowrulev2 = move ${windowRight} ${windowTop}, title:(Picture-in-Picture)
+            windowrulev2 = noinitialfocus, title:^(Picture-in-Picture)$
+            windowrulev2 = pin, title:^(Picture-in-Picture)$
+            windowrulev2 = size 640 360, title:(Picture-in-Picture)
 
             # shimeji desktop pets
-            windowrule=float, com-group_finity-mascot-Main
-            windowrule=noblur, com-group_finity-mascot-Main
-            windowrule=nofocus, com-group_finity-mascot-Main
-            windowrule=noshadow, com-group_finity-mascot-Main
-            windowrule=noborder, com-group_finity-mascot-Main
+            windowrulev2 = float, title:^(com-group_finity-mascot-Main)$
+            windowrulev2 = noblur, title:^(com-group_finity-mascot-Main)$
+            windowrulev2 = noborder, title:^(com-group_finity-mascot-Main)$
+            windowrulev2 = nofocus, title:^(com-group_finity-mascot-Main)$
+            windowrulev2 = noshadow, title:^(com-group_finity-mascot-Main)$
 
             # elkowar's wacky widgets
-            windowrule=float, ^(eww)$
+            windowrulev2 = float, title:^(eww)$
 
             # zoom windows?
-            windowrule=float, title:^()$
-            windowrule=size 25% 100%, title:^()$
-            windowrule=center, title:^()$
-            windowrule=noblur, title:^()$
-            windowrule=noborder, title:^()$
-            windowrule=noshadow, title:^()$
+            windowrulev2 = center, title:^()$
+            windowrulev2 = float, title:^()$
+            windowrulev2 = noblur, title:^()$
+            windowrulev2 = noborder, title:^()$
+            windowrulev2 = noshadow, title:^()$
+            windowrulev2 = size 25% 100%, title:^()$
 
+            # sway notifications
+            windowrulev2 = move ${windowRight} ${windowTop}, title:^(swaync)$
+            windowrulev2 = noinitialfocus, title:^(swaync)$
+            windowrulev2 = pin, title:^(swaync)$
 
-            blurls=notifications
-            blurls=swaync
-            blurls=swaynotificationcenter
-            blurls=waybar
-            layerrule=ignorezero,waybar
-            blurls=rofi
-            layerrule=ignorezero,rofi
+            # zenity
+            windowrulev2 = pin, title:^(zenity)$
+
+            layerrule = blur,notifications
+            layerrule = blur,rofi
+            layerrule = blur,swaync
+            layerrule = blur,swaynotificationcenter
+            layerrule = blur,waybar
+            layerrule = ignorezero,rofi
+            layerrule = ignorezero,waybar
 
             # See https://wiki.hyprland.org/Configuring/Keywords/ for more
             $mainMod = SUPER
@@ -231,14 +264,13 @@
             bind = $mainMod, Q, killactive,
             bind = $mainMod, T, exec, alacritty
             bind = $mainMod SHIFT, F, togglefloating,
-            bind = $mainMod, F, exec, hyprctl --batch "dispatch togglefloating active; dispatch pin active; dispatch moveactive exact 14 14; dispatch resizeactive exact 640 360"
+            bind = $mainMod, F, exec, hyprctl --batch "dispatch togglefloating active; dispatch pin active; dispatch moveactive exact ${windowLeft} ${windowTop}; dispatch resizeactive exact 640 360"
             bind = $mainMod, minus, resizeactive,-128 -72
             bind = $mainMod SHIFT, minus, resizeactive,128 72
-            bind = $mainMod ALT,1,moveactive,exact 14 14
-            bind = $mainMod ALT,2,moveactive,exact 1906 14
-            bind = $mainMod ALT,3,moveactive,exact 1906 1024
-            bind = $mainMod ALT,4,moveactive,exact 14 1024
-            # hyprctl --batch "dispatch togglefloating active; dispatch pin active; dispatch moveactive exact 14 14; dispatch resizeactive exact 384 216"
+            bind = $mainMod ALT,1,exec,${move-active} topLeft
+            bind = $mainMod ALT,2,exec,${move-active} topRight
+            bind = $mainMod ALT,3,exec,${move-active} bottomRight
+            bind = $mainMod ALT,4,exec,${move-active} bottomLeft
             bind = $mainMod, P, pin,
             # bind = $mainMod, E, exec, dolphin
             bind = $mainMod, SPACE, exec, rofi -show drun -show-icons
@@ -279,6 +311,7 @@
             bind = $mainMod, L, movefocus, r
             bind = $mainMod, J, movefocus, u
             bind = $mainMod, K, movefocus, d
+            bind = $mainMod, Tab, cyclenext,           # change focus to another window
 
             # Switch workspaces with mainMod + [0-9]
             bind = $mainMod, 1, workspace, 1
@@ -310,7 +343,7 @@
 
             # Move/resize windows with mainMod + LMB/RMB and dragging
             bindm = $mainMod, mouse:272, movewindow
-            bindm = SHIFT, mouse:273, resizewindow
+            bindm = $mainMod SHIFT, mouse:272, resizewindow
 
             # will switch to a submap called resize
             bind=ALT,R,submap,resize
@@ -323,14 +356,14 @@
             binde=,down,resizeactive,0 10
             binde=,minus,resizeactive,-128 -72
             binde=SHIFT,minus,resizeactive,128 72
-            bind=,1,moveactive,exact 14 14
-            bind=,2,moveactive,exact 1906 14
-            bind=,3,moveactive,exact 1906 1024
-            bind=,4,moveactive,exact 14 1024
-            binde=,l,moveactive,14 0
-            binde=,h,moveactive,-14 0
-            binde=,j,moveactive,0 14
-            binde=,k,moveactive,0 -14
+            bind=,1,exec,${move-active} topLeft
+            bind=,2,exec,${move-active} topRight
+            bind=,3,exec,${move-active} bottomRight
+            bind=,4,exec,${move-active} bottomLeft
+            binde=,l,moveactive,${gaps} 0
+            binde=,h,moveactive,-${gaps} 0
+            binde=,j,moveactive,0 ${gaps}
+            binde=,k,moveactive,0 -${gaps}
 
             bind=,escape,submap,reset
 
