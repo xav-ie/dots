@@ -66,6 +66,7 @@
         # TODO: move into hm services
         playerctl # play, pause, next
         pulseaudio # provides pactl for volume control
+        move-active
         # qutebrowser
       ];
       # The state version is required and should stay at the version you

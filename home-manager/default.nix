@@ -76,7 +76,6 @@
         j
         jira-list
         jira-task-list
-        move-active
         notify
         nvim
         searcher
