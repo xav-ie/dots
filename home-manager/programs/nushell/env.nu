@@ -53,33 +53,55 @@ $env.TRANSIENT_PROMPT_MULTILINE_INDICATOR = ""
 # - converted from a value back to a string when running external commands
 #   (to_string)
 # Note: The conversions happen *after* config.nu is loaded
+# TODO: should I even be path expanding?
 def from_string_simple [s] {
   $s | split row (char esep) | path expand --no-symlink
 }
 def to_string_simple [v] {
   $v | path expand --no-symlink | str join (char esep)
 }
-
 let SIMPLE_ENV_CONVERTER = {
   from_string: { |s| from_string_simple $s }
   to_string: { |v| to_string_simple $v }
+}
+
+# Path expansion brakes some envs
+def from_string_simpler [s] {
+  $s | split row (char esep)
+}
+def to_string_simpler [v] {
+  $v | str join (char esep)
+}
+let SIMPLER_ENV_CONVERTER = {
+  from_string: { |s| from_string_simpler $s }
+  to_string: { |v| to_string_simpler $v }
 }
 
 # add simple env conversions here
 let simple_envs = [
   "XDG_CONFIG_DIRS",
   "XDG_DATA_DIRS",
-  "NIX_PATH",
   "PATH",
   "Path",
   "TERMINFO_DIRS",
 ];
 
-let simple_env_conversions = $simple_envs | each { |it| {($it): $SIMPLE_ENV_CONVERTER} } | into record
+let simpler_envs = [
+  "NIX_PATH"
+]
 
-$env.ENV_CONVERSIONS = $simple_env_conversions | merge {
-  # add complicated env conversions here
-}
+let simple_env_conversions = $simple_envs
+                             | each { |it| {($it): $SIMPLE_ENV_CONVERTER} }
+                             | into record
+let simpler_env_conversions = $simpler_envs
+                              | each { |it| {($it): $SIMPLER_ENV_CONVERTER} }
+                              | into record
+
+$env.ENV_CONVERSIONS = $simple_env_conversions
+                       | merge $simpler_env_conversions
+                       | merge {
+                           # add complicated env conversions here
+                       }
 
 # Directories to search for scripts when calling source or use
 # The default for this is $nu.default-config-dir/scripts
