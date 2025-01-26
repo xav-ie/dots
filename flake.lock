@@ -1,5 +1,45 @@
 {
   "nodes": {
+    "alacritty-theme": {
+      "inputs": {
+        "alacritty-theme": "alacritty-theme_2",
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1736330853,
+        "narHash": "sha256-+S1jBCQhlTfyVO4Ay9F1mogJ32L0QLVno7deLRgKKP0=",
+        "owner": "alexghr",
+        "repo": "alacritty-theme.nix",
+        "rev": "91dbbdb8728108dde579bd39b56a6bc8a286c72b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "alexghr",
+        "repo": "alacritty-theme.nix",
+        "type": "github"
+      }
+    },
+    "alacritty-theme_2": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1735899244,
+        "narHash": "sha256-IQubMo048bS+RFw/5Gcwlj6fTuadn8r2Q1kZ3ezJR9Q=",
+        "owner": "alacritty",
+        "repo": "alacritty-theme",
+        "rev": "aff9d111d43e1ad5c22d4e27fc1c98176e849fb9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "alacritty",
+        "repo": "alacritty-theme",
+        "type": "github"
+      }
+    },
     "aquamarine": {
       "inputs": {
         "hyprutils": [
@@ -761,6 +801,7 @@
     },
     "root": {
       "inputs": {
+        "alacritty-theme": "alacritty-theme",
         "ctpv": "ctpv",
         "flake-compat": "flake-compat",
         "flake-parts": "flake-parts",
