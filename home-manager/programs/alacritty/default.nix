@@ -1,4 +1,5 @@
-_: {
+{ pkgs, ... }:
+{
   config = {
     programs.alacritty = {
       enable = true;
@@ -21,7 +22,7 @@ _: {
           # startup_mode = "SimpleFullscreen";
           #option_as_alt = "Both";
         };
-        # import = [ pkgs.alacritty-theme.hyper ];
+        general.import = [ pkgs.alacritty-theme.hyper ];
         # import = [ pkgs.alacritty-theme.papercolor_light ];
         keyboard.bindings = [
           {

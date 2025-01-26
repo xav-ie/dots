@@ -23,7 +23,8 @@ in
 
   modifications = final: prev: {
     ctpv = inputs.ctpv.packages.${final.system}.default;
-    # alacritty-theme = inputs.alacritty-theme.packages.${final.system};
+    alacritty-theme =
+      if final.stdenv.isLinux then inputs.alacritty-theme.packages.${final.system} else null;
     generate-kaomoji = inputs.generate-kaomoji.packages.${final.system}.default;
     morlana = if final.stdenv.isDarwin then inputs.morlana.packages.${final.system}.default else null;
     # ghostty = inputs.ghostty.packages.${final.system}.default;

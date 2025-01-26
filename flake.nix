@@ -1,6 +1,9 @@
 {
   description = "Xavier's NixOS";
   inputs = {
+    alacritty-theme.inputs.flake-parts.follows = "flake-parts";
+    alacritty-theme.inputs.nixpkgs.follows = "nixpkgs";
+    alacritty-theme.url = "github:alexghr/alacritty-theme.nix";
     ctpv.inputs.flake-utils.follows = "flake-utils";
     ctpv.inputs.nixpkgs.follows = "nixpkgs";
     ctpv.url = "github:xav-ie/ctpv-nix";
@@ -61,9 +64,6 @@
     # zjstatus.inputs.rust-overlay.follows = "rust-overlay";
     zjstatus.url = "github:dj95/zjstatus";
 
-    # alacritty-theme.inputs.flake-parts.follows = "flake-parts";
-    # alacritty-theme.inputs.nixpkgs.follows = "nixpkgs";
-    # alacritty-theme.url = "github:alexghr/alacritty-theme.nix";
     # wezterm.inputs.flake-utils.follows = "flake-utils";
     # wezterm.inputs.nixpkgs.follows = "nixpkgs";
     # wezterm.url = "github:wez/wezterm?dir=nix";
