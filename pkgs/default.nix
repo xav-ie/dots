@@ -21,8 +21,8 @@ rec {
   notify = pkgs.callPackage ./notify { };
   nvim = pkgs.callPackage ./nvim { };
   is-sshed = pkgs.callPackage ./is-sshed { };
-  # record = pkgs.callPackage ./record { };
-  # record-section = pkgs.callPackage ./record-section { };
+  record = pkgs.callPackage ./record { };
+  record-section = pkgs.callPackage ./record-section { };
   searcher = pkgs.callPackage ./searcher { };
   uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
   zellij-tab-name-update = pkgs.callPackage ./zellij-tab-name-update { };
