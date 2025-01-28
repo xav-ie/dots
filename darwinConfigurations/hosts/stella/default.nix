@@ -25,6 +25,7 @@
         "android-studio"
         "bitwarden"
         "chromium"
+        "ente"
         "firefox"
         "ghostty"
         "little-snitch"
