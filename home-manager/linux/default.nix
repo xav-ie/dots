@@ -68,6 +68,8 @@
         pulseaudio # provides pactl for volume control
         move-active
         # qutebrowser
+        record
+        record-section
       ];
       # The state version is required and should stay at the version you
       # originally installed.
