@@ -78,8 +78,6 @@
         jira-task-list
         notify
         nvim
-        record
-        record-section
         searcher
         uair-toggle-and-notify
         zellij-tab-name-update

@@ -22,7 +22,7 @@
           # startup_mode = "SimpleFullscreen";
           #option_as_alt = "Both";
         };
-        general.import = [ pkgs.alacritty-theme.hyper ];
+        general.import = if pkgs.stdenv.isLinux then [ pkgs.alacritty-theme.hyper ] else [ ];
         # import = [ pkgs.alacritty-theme.papercolor_light ];
         keyboard.bindings = [
           {
