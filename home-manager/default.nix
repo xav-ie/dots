@@ -34,6 +34,7 @@
       carapace.enable = true;
       fzf.enable = true;
       jq.enable = true;
+      jujutsu.enable = true;
       ripgrep.enable = true;
       thefuck.enable = true;
       watson.enable = true;
