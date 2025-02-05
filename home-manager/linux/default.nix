@@ -70,6 +70,7 @@
         # qutebrowser
         record
         record-section
+        signal-desktop
       ];
       # The state version is required and should stay at the version you
       # originally installed.
