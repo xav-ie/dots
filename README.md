@@ -170,6 +170,11 @@ screenshot of it open and maybe even do some actions.
       from screenshare entirely??? That would be really cool.
 - [ ] use nix-colors repo for theming everything This is interesting: 
       [colemickens/nixcfg/mixins/_preferences.nix](https://github.com/colemickens/nixcfg/blob/3705032fd67f231fe83fd3bc25d4021b80394b1c/mixins/_preferences.nix)
+- [ ] create a zellij key overlay plugin
+  - [ ] [awesome-zellij](https://github.com/zellij-org/awesome-zellij)
+  - [ ] [zellij plugin system walkthrough](https://github.com/Kangaxx-0/first-zellij-plugin)  
+  - [ ] [Learning from Developing a Zellij Plugin](https://blog.nerd.rocks/posts/profiling-zellij-plugins/) 
+  - [ ] [Common Snippets for Developing Zellij Plugins](https://blog.nerd.rocks/posts/common-snippets-for-zellij-development/) 
 </details>
 
 ## Other Nix Configs
