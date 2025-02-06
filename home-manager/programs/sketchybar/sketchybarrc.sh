@@ -4,6 +4,7 @@
 # For a (much) more advanced configuration example see my dotfiles:
 # https://github.com/FelixKratz/dotfiles
 
+# $CONFIG_DIR is the directory where the currently loaded sketchybarrc is located
 PLUGIN_DIR="~/.config/sketchybar/plugins"
 
 ##### Bar Appearance #####
@@ -41,10 +42,17 @@ sketchybar --bar font_smoothing=on
 # We add some regular items to the left side of the bar, where
 # only the properties deviating from the current defaults need to be set
 
-sketchybar --add alias "Menu Bar Dock,Item-0" left \
-  --set "Menu Bar Dock,Item-0" icon.padding_left=0 padding_left=-20 padding_right=-5 \
-  --add item front_app left \
-  --set front_app icon.drawing=off script="$PLUGIN_DIR/front_app.sh" \
+front_app=(
+  label.padding_left=4
+  label.padding_right=10
+  icon.background.drawing=on
+  display=active
+  script="$PLUGIN_DIR/front_app.sh"
+  click_script="open -a 'Mission Control'"
+)
+
+sketchybar --add item front_app left \
+  --set front_app "${front_app[@]}" \
   --subscribe front_app front_app_switched
 
 ##### Adding Right Items #####
