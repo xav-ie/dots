@@ -52,8 +52,7 @@
             # waybarPosition = "top";
             windowTopNumeric = gapAndBorderNumeric + waybarSpaceNumeric;
             windowLeftNumeric = gapsNumeric + borderSizeNumeric;
-          in
-          let
+          
             gaps = toString gapsNumeric;
             windowLeft = toString windowLeftNumeric;
             windowTop = toString windowTopNumeric;
