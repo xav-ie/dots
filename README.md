@@ -168,14 +168,19 @@ screenshot of it open and maybe even do some actions.
       scrensharing. I really dislike that notifications come through on
       screenshare. Maybe I can still allow notifications, but hide them
       from screenshare entirely??? That would be really cool.
-- [ ] use nix-colors repo for theming everything This is interesting: 
-      [colemickens/nixcfg/mixins/_preferences.nix](https://github.com/colemickens/nixcfg/blob/3705032fd67f231fe83fd3bc25d4021b80394b1c/mixins/_preferences.nix)
+- [ ] use nix-colors repo for theming everything This is interesting:
+      [colemickens/nixcfg/mixins/\_preferences.nix](https://github.com/colemickens/nixcfg/blob/3705032fd67f231fe83fd3bc25d4021b80394b1c/mixins/_preferences.nix)
 - [ ] create a zellij key overlay plugin
   - [ ] [awesome-zellij](https://github.com/zellij-org/awesome-zellij)
-  - [ ] [zellij plugin system walkthrough](https://github.com/Kangaxx-0/first-zellij-plugin)  
-  - [ ] [Learning from Developing a Zellij Plugin](https://blog.nerd.rocks/posts/profiling-zellij-plugins/) 
-  - [ ] [Common Snippets for Developing Zellij Plugins](https://blog.nerd.rocks/posts/common-snippets-for-zellij-development/) 
-</details>
+  - [ ] [zellij plugin system walkthrough](https://github.com/Kangaxx-0/first-zellij-plugin)
+  - [ ] [Learning from Developing a Zellij Plugin](https://blog.nerd.rocks/posts/profiling-zellij-plugins/)
+  - [ ] [Common Snippets for Developing Zellij Plugins](https://blog.nerd.rocks/posts/common-snippets-for-zellij-development/)
+- [ ] Try out and get good at Jujutsu
+  - [ ] [What if version control was AWESOME?](https://www.youtube.com/watch?v=2otjrTzRfVk)
+  - [ ] [jj-init](https://v5.chriskrycho.com/essays/jj-init/)
+  - [ ] [Steve's Jujutsu Tutorial](https://steveklabnik.github.io/jujutsu-tutorial)
+  - [ ] [Jujutsu Tutorial](https://jj-vcs.github.io/jj/latest/tutorial/)
+  </details>
 
 ## Other Nix Configs
 
