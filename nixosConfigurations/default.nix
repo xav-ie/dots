@@ -1,11 +1,11 @@
-{ lib, inputs, ... }:
+{ lib, inputs, ... }@toplevel:
 # TODO: refactor
 let
   user = "x";
   hasSystem = system: builtins.elem system (import inputs.systems);
   addSystem = system: systemConfig: lib.attrsets.optionalAttrs (hasSystem system) systemConfig;
   system = "x86_64-linux";
-  # TODO: do this a better way
+  # TODO: do this a better way?
   configurations =
     { }
     // addSystem system {
@@ -13,7 +13,12 @@ let
       praesidium = inputs.nixpkgs.lib.nixosSystem {
         inherit system;
         specialArgs = {
-          inherit inputs user system;
+          inherit
+            inputs
+            system
+            toplevel
+            user
+            ;
         };
         modules = [
           ../common

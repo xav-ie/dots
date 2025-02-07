@@ -19,7 +19,7 @@ in
   # };
 
   # Adds my custom packages
-  additions = final: _: import ../pkgs { pkgs = final; };
+  # additions = final: _: import ../pkgs { pkgs = final; };
 
   modifications = final: prev: {
     ctpv = inputs.ctpv.packages.${final.system}.default;
