@@ -81,7 +81,7 @@
             exec-once = wl-paste --type text --watch cliphist store
             exec-once = wl-paste --type image --watch cliphist store
             exec-once = firefox
-            exec-once = alacritty
+            exec-once = ghostty
 
             exec-once = ${pkgs.networkmanagerapplet}/bin/nm-applet
             exec-once = ${pkgs.blueman}/bin/blueman-applet
@@ -262,11 +262,11 @@
 
             # Example binds, see https://wiki.hyprland.org/Configuring/Binds/ for more
             bind = $mainMod, Q, killactive,
-            bind = $mainMod, T, exec, alacritty
+            bind = $mainMod, T, exec, ghostty
             bind = $mainMod SHIFT, F, togglefloating,
             bind = $mainMod, F, exec, hyprctl --batch "dispatch togglefloating active; dispatch pin active; dispatch moveactive exact ${windowLeft} ${windowTop}; dispatch resizeactive exact 640 360"
-            bind = $mainMod, minus, resizeactive,-128 -72
-            bind = $mainMod SHIFT, minus, resizeactive,128 72
+            binde = $mainMod, minus, exec,${move-active} shrink
+            binde = $mainMod SHIFT, minus, exec,${move-active} grow
             bind = $mainMod ALT,1,exec,${move-active} topLeft
             bind = $mainMod ALT,2,exec,${move-active} topRight
             bind = $mainMod ALT,3,exec,${move-active} bottomRight
