@@ -1,7 +1,8 @@
 {
   inputs,
-  pkgs,
   lib,
+  pkgs,
+  toplevel,
   ...
 }:
 {
@@ -62,7 +63,7 @@
             #     if waybarPosition == "top" then gapAndBorderNumeric else gapAndBorderNumeric + waybarSpaceNumeric
             #   )
             # }'';
-            move-active = lib.getExe pkgs.move-active;
+            move-active = lib.getExe toplevel.self.packages.${pkgs.system}.move-active;
           in
           # hyprlang
           ''
