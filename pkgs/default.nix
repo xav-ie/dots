@@ -1,6 +1,9 @@
 # Based on:
 # https://github.com/Misterio77/nix-config/blob/e360a9ecf6de7158bea813fc075f3f6228fc8fc0/pkgs/default.nix
-{ lib, pkgs, ... }:
+{ pkgs }:
+let
+  optionalAttrs = bool: attrSet: if bool then attrSet else { };
+in
 rec {
   default = pkgs.callPackage ./cache-command { };
 
@@ -18,10 +21,10 @@ rec {
   uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
   zellij-tab-name-update = pkgs.callPackage ./zellij-tab-name-update { };
 }
-// (lib.attrsets.optionalAttrs pkgs.stdenv.isDarwin {
+// (optionalAttrs pkgs.stdenv.isDarwin {
   fix-yabai = pkgs.callPackage ./fix-yabai { };
 })
-// (lib.attrsets.optionalAttrs pkgs.stdenv.isLinux {
+// (optionalAttrs pkgs.stdenv.isLinux {
   move-active = pkgs.callPackage ./move-active { };
   record = pkgs.callPackage ./record { };
   record-section = pkgs.callPackage ./record-section { };
