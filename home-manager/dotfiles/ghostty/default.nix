@@ -38,10 +38,12 @@ in
           font-feature = ss04
           font-feature = ss05
 
-          # I use zellij for maximum portability, so I dont want to depend on
+          # I use zellij for maximum portability, so I don't want to depend on
           # Ghostty window management primitives.
-          keybind = ctrl+shift+t=unbind
+          keybind = ctrl+shift+e=unbind
+          keybind = ctrl+shift+n=unbind
           keybind = ctrl+shift+o=unbind
+          keybind = ctrl+shift+t=unbind
         '';
 
       # Only here in order to make it easier to inspect shaders and theme
