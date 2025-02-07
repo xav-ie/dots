@@ -1,4 +1,11 @@
-{ pkgs, ... }:
+{
+  pkgs,
+  toplevel,
+  ...
+}:
+let
+  myPackages = toplevel.self.packages.${pkgs.system};
+in
 {
   imports = [
     ./dotfiles
@@ -41,48 +48,52 @@
       zoxide.enable = true;
     };
     home = {
-      packages = with pkgs; [
-        curl
-        deadnix # dead code linter
-        delta
-        devenv # idk... I think I like plain flake approach
-        fd
-        ffmpeg
-        go-jira
-        gh
-        gnumake
-        (jira-cli-go.overrideAttrs {
-          postInstall = ''
-            mv $out/bin/jira $out/bin/jira-unfree
-          '';
-        })
-        jless # best JSON and YAML viewer
-        just # better make
-        magic-wormhole-rs # send files easily
-        nix-output-monitor # better nix build
-        neovide
-        ollama
-        uair # pomodoro manager
-        unzip
-        tldr
-        tree
-        wget
-        yazi # better lf
-        zip
+      packages =
+        (with pkgs; [
+          curl
+          deadnix # dead code linter
+          delta
+          devenv # idk... I think I like plain flake approach
+          fd
+          ffmpeg
+          go-jira
+          gh
+          gnumake
+          (jira-cli-go.overrideAttrs {
+            postInstall = ''
+              mv $out/bin/jira $out/bin/jira-unfree
+            '';
+          })
+          jless # best JSON and YAML viewer
+          just # better make
+          magic-wormhole-rs # send files easily
+          nix-output-monitor # better nix build
+          neovide
+          ollama
+          uair # pomodoro manager
+          unzip
+          tldr
+          tree
+          wget
+          yazi # better lf
+          zip
+        ])
         # custom packages
-        cache-command
-        ff
-        generate-kaomoji
-        is-sshed
-        j
-        jira-list
-        jira-task-list
-        notify
-        nvim
-        searcher
-        uair-toggle-and-notify
-        zellij-tab-name-update
-      ];
+        ++ (with myPackages; [
+          cache-command
+          ff
+          is-sshed
+          # generate-kaomoji
+          j
+          jira-list
+          jira-task-list
+          notify
+          nvim
+          searcher
+          uair-toggle-and-notify
+          zellij-tab-name-update
+        ]);
+
       # The state version is required and should stay at the version you
       # originally installed.
       stateVersion = "23.11";

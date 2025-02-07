@@ -1,6 +1,8 @@
 {
   inputs,
   user,
+  config,
+  toplevel,
   ...
 }:
 {
@@ -11,7 +13,8 @@
   home-manager = {
     # backupFileExtension = "backup";
     extraSpecialArgs = {
-      inherit inputs;
+      flake-partsConfig = config;
+      inherit inputs toplevel;
     };
     useGlobalPkgs = true;
     useUserPackages = true;
