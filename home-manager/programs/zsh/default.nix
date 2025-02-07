@@ -1,4 +1,12 @@
-{ pkgs, ... }:
+{
+  lib,
+  pkgs,
+  toplevel,
+  ...
+}:
+let
+  zellij-tab-name-update = lib.getExe toplevel.self.packages.${pkgs.system}.is-sshed;
+in
 {
   config = {
     programs.zsh =
@@ -63,7 +71,7 @@
             source $HOME/.env
 
             precmd() {
-              ${pkgs.zellij-tab-name-update}/bin/zellij-tab-name-update
+              ${zellij-tab-name-update}
             }
 
             download_nixpkgs_cache_index () {
