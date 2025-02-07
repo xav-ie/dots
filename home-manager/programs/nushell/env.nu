@@ -19,7 +19,7 @@ def create_left_prompt_transient []: nothing -> string {
   create_left_prompt | str replace "\n" $"(ansi wi)(get_time)(ansi reset)\n"
 }
 
-def make_prompt_indicator [symbol]: string -> string {
+def make_prompt_indicator [symbol: string]: nothing -> string {
   let color = if ($env.LAST_EXIT_CODE == 0) { (ansi gb) } else { (ansi rb) }
   $"(ansi reset)($color)($symbol)(ansi reset) "
 }
