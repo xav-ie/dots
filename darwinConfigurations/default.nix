@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ inputs, ... }@toplevel:
 let
   user = "x";
   system = "aarch64-darwin";
@@ -9,7 +9,7 @@ in
   castra = darwinSystem {
     inherit system;
     specialArgs = {
-      inherit inputs user;
+      inherit inputs user toplevel;
     };
     modules = [
       ../common
@@ -22,7 +22,7 @@ in
   stella = darwinSystem {
     inherit system;
     specialArgs = {
-      inherit inputs user;
+      inherit inputs user toplevel;
     };
     modules = [
       ../common
