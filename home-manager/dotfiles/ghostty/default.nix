@@ -44,6 +44,8 @@ in
           keybind = ctrl+shift+n=unbind
           keybind = ctrl+shift+o=unbind
           keybind = ctrl+shift+t=unbind
+          keybind = ctrl+plus=increase_font_size:1
+          keybind = ctrl+minus=decrease_font_size:1
         '';
 
       # Only here in order to make it easier to inspect shaders and theme
