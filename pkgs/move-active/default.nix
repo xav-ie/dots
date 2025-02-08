@@ -30,7 +30,21 @@ writeShellApplication {
           ''
             const waybar_height = 34
 
-            export def windowInfo [] {
+            export def windowDimensions [] {
+              hyprctl activewindow -j
+              | jq '{
+                width: .size[0],
+                height: .size[1],
+                x: .at[0],
+                y: .at[1],
+              }'
+              | from json
+            }
+
+            export def windowInfo [
+              window_dimensions_override?:
+                record<width: number, height: number, x: number, y: number>
+            ] {
               let border_size = (hyprctl getoption general:border_size -j
                                  | jq .int) | from json
               let gaps = (hyprctl getoption general:gaps_out -j
@@ -59,14 +73,7 @@ writeShellApplication {
               }
 
 
-              let window_dimensions = hyprctl activewindow -j
-                                      | jq '{
-                                              width: .size[0],
-                                              height: .size[1],
-                                              x: .at[0],
-                                              y: .at[1],
-                                            }'
-                                      | from json
+              let window_dimensions = $window_dimensions_override | default (windowDimensions)
               let window_height = $window_dimensions.height
               let window_width = $window_dimensions.width
               let window_center = {
@@ -97,17 +104,28 @@ writeShellApplication {
               hyprctl dispatch moveactive exact 0 0
             }
 
-            export def move_position [position: record<top: bool, left: bool>] {
-              let window_info = windowInfo
+            export def move_position [
+              position: record<top: bool, left: bool>,
+              window_dimensions_override?:
+                record<width: number, height: number, x: number, y: number>
+            ] {
+              let window_info = windowInfo ($window_dimensions_override
+                                            | default (windowDimensions))
+              # rounding bad?
+              let top = $window_info.window_top | math round
+              let bottom = $window_info.window_bottom | math round
+              let left = $window_info.window_left | math round
+              let right = $window_info.window_right | math round
+
               match $position {
                 { top: true, left: true } =>
-                  { $"moveactive exact ($window_info.window_left) ($window_info.window_top)" }
+                  { $"moveactive exact ($left) ($top)" }
                 { top: true, left: false } =>
-                  { $"moveactive exact ($window_info.window_right) ($window_info.window_top)" }
+                  { $"moveactive exact ($right) ($top)" }
                 { top: false, left: false } =>
-                  { $"moveactive exact ($window_info.window_right) ($window_info.window_bottom)" }
+                  { $"moveactive exact ($right) ($bottom)" }
                 { top: false, left: true } =>
-                  { $"moveactive exact ($window_info.window_left) ($window_info.window_bottom)" }
+                  { $"moveactive exact ($left) ($bottom)" }
               }
             }
 
@@ -137,20 +155,23 @@ writeShellApplication {
 
             # Smartly resize a window respecting its current corner.
             export def resize [percentage: number] {
-              let window_info = windowInfo
-              let shrink_width = ($window_info.window_dimensions.width * (1 + $percentage) | math round)
-              let shrink_height = ($window_info.window_dimensions.height * (1 + $percentage) | math round)
+              let window_info = windowInfo (windowDimensions)
+              let resized_width = ($window_info.window_dimensions.width
+                                   * (1 + $percentage) | math round)
+              let resized_height = ($window_info.window_dimensions.height
+                                    * (1 + $percentage) | math round)
+              # pre-calculate the resized, desired window dimensions for moving
+              let window_dimensions_override = {
+                width: $resized_width,
+                height: $resized_height,
+                x: $window_info.window_dimensions.x,
+                y: $window_info.window_dimensions.y,
+              }
 
               # Does not work properly, maybe in the next release. Or, pre-calculate the moved coordinates.
-              # hyprctl --batch $"dispatch resizeactive exact ($shrink_width) ($shrink_height) ;
-              #                   dispatch (windowInfo | move_position $in.window_quadrant)"
-              # This solution has jitter, but there is not much to be done
-              # about that :/
-              hyprctl dispatch resizeactive exact $shrink_width $shrink_height
-              # it is important to notice the detail that we pass the *current*
-              # window's quadrant before resizing as resizing could change a
-              # window's quadrant
-              move $window_info.window_quadrant
+              hyprctl --batch $"dispatch resizeactive exact ($resized_width) ($resized_height) ;
+                                dispatch (move_position
+                                          $window_info.window_quadrant $window_dimensions_override)"
             }
 
             export def shrink [] {
