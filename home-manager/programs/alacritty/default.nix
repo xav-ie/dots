@@ -1,35 +1,36 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
+let
+  zellij-bin = lib.getExe pkgs.zellij;
+in
 {
   config = {
     programs.alacritty = {
       enable = true;
       settings = {
-        # == === => ->
-        # A lot like Lato, but mono
-        # font.normal.family = "MonaspiceAr NF Medium";
-        # not available yet, awaiting full test
-        # font.normal.family = "Cartograph Nerd Font";
-        font.normal.family = "Maple Mono";
-        # Hack has better spacing and numbers than Fira,
-        # but has worse special characters. Fira has some cool letters but both
-        # have letter spacing problems "ma" "wa" both look bad when not italic
-        # font.normal.family = "Hack Nerd Font";
+        # no ligatures lol: https://github.com/alacritty/alacritty/issues/50
+        font.normal.family = "Maple Mono NF";
         font.size = 16;
         window = {
           decorations = "None";
           opacity = 0.8;
           blur = true;
-          # startup_mode = "SimpleFullscreen";
           #option_as_alt = "Both";
         };
-        general.import = if pkgs.stdenv.isLinux then [ pkgs.alacritty-theme.hyper ] else [ ];
-        # import = [ pkgs.alacritty-theme.papercolor_light ];
+        general.import =
+          if pkgs.stdenv.isLinux then
+            with pkgs.alacritty-theme;
+            [
+              monokai_charcoal
+              # xterm
+            ]
+          else
+            [ ];
         keyboard.bindings = [
           {
             key = "Tab";
             mods = "Control";
             command = {
-              program = "zellij";
+              program = zellij-bin;
               args = [
                 "action"
                 "go-to-next-tab"
@@ -48,10 +49,22 @@
             };
           }
           {
-            key = "Tab";
-            mods = "Alt";
+            key = "o";
+            mods = "Control|Shift";
             command = {
-              program = "/etc/profiles/per-user/xavierruiz/bin/zellij";
+              program = "zellij";
+              args = [
+                "action"
+                "switch-mode"
+                "session"
+              ];
+            };
+          }
+          {
+            key = "Tab";
+            mods = "Alt|Shift";
+            command = {
+              program = zellij-bin;
               args = [
                 "action"
                 "focus-next-pane"
@@ -62,19 +75,18 @@
             key = "Tab";
             mods = "Alt|Shift";
             command = {
-              program = "/etc/profiles/per-user/xavierruiz/bin/zellij";
+              program = zellij-bin;
               args = [
                 "action"
                 "focus-previous-pane"
               ];
             };
           }
-          # TODO: make cross-platform
           {
             key = "h";
-            mods = "Alt";
+            mods = "Alt|Shift";
             command = {
-              program = "/etc/profiles/per-user/xavierruiz/bin/zellij";
+              program = zellij-bin;
               args = [
                 "action"
                 "move-focus-or-tab"
@@ -84,9 +96,9 @@
           }
           {
             key = "j";
-            mods = "Alt";
+            mods = "Alt|Shift";
             command = {
-              program = "/etc/profiles/per-user/xavierruiz/bin/zellij";
+              program = zellij-bin;
               args = [
                 "action"
                 "move-focus"
@@ -96,9 +108,9 @@
           }
           {
             key = "k";
-            mods = "Alt";
+            mods = "Alt|Shift";
             command = {
-              program = "/etc/profiles/per-user/xavierruiz/bin/zellij";
+              program = zellij-bin;
               args = [
                 "action"
                 "move-focus"
@@ -108,9 +120,9 @@
           }
           {
             key = "l";
-            mods = "Alt";
+            mods = "Alt|Shift";
             command = {
-              program = "/etc/profiles/per-user/xavierruiz/bin/zellij";
+              program = zellij-bin;
               args = [
                 "action"
                 "move-focus-or-tab"
