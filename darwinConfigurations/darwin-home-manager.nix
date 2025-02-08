@@ -1,6 +1,7 @@
 {
   inputs,
   user,
+  toplevel,
   ...
 }:
 {
@@ -10,7 +11,7 @@
 
   home-manager = {
     extraSpecialArgs = {
-      inherit inputs;
+      inherit inputs toplevel;
     };
     useGlobalPkgs = true;
     useUserPackages = true;
