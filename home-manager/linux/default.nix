@@ -33,7 +33,8 @@ in
           xidel # like jq but for html and much more advanced.
           # required by mpvScripts.webtorrent-mpv-hook
           pciutils
-          pinentry-gnome3 # I wish I could figure out pinentry-rofi but it does not work
+          # I wish I could figure out pinentry-rofi but it does not work
+          pinentry-gnome3
           # prusa-slicer                # does not launch currently
           python312Packages."adblock"
           rofi-rbw # bitwarden cli wrapper
@@ -44,8 +45,9 @@ in
           # wtype # xdotool for wayland; used as part of rofi-rbw for typing
           yt-dlp # better yt-dl
           # https://github.com/marionebl/svg-term-cli
-          # allows asciinema recordings to be exported to svg... this could be pretty indespensable if
-          # you would like ANSI escape sequences to be interpreted by GH
+          # allows asciinema recordings to be exported to svg... this could be
+          # pretty indespensable if you would like ANSI escape sequences to be
+          # interpreted by GH
           ################################
           # universal utils
           ################################
