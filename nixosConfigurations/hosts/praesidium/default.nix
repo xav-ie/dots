@@ -116,12 +116,13 @@
       defaultUserShell = pkgs.zsh;
       users."${user}" = {
         isNormalUser = true;
-        description = "x";
+        description = user;
         extraGroups = [
-          "networkmanager"
-          "wheel"
           "docker"
+          "input"
+          "networkmanager"
           "video"
+          "wheel"
         ];
         # packages = with pkgs; [];
         useDefaultShell = true;
