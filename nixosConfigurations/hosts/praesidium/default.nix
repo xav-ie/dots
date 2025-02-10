@@ -54,12 +54,17 @@
       hostName = "praesidium"; # Define your hostname.
       # Enables wireless support via wpa_supplicant.
       # wireless.enable = true;
-      # nameservers = [ "127.0.0.1" "::1" ];
-      nameservers = [
-        "1.1.1.1"
-        "9.9.9.9"
-      ];
-      # nameservers = [ "1.1.1.1#one.one.one.one" "1.0.0.1#one.one.one.one" ];
+      nameservers =
+        let
+          ips = [
+            "1.1.1.1"
+            "1.0.0.1"
+            "2606:4700:4700::1111"
+            "2606:4700:4700::1001"
+          ];
+          sni = "one.one.one.one";
+        in
+        map (ip: "${ip}#${sni}") ips;
 
       # dhcpcd.extraConfig = "nohook resolv.conf";
 
@@ -70,15 +75,14 @@
       # Enable networking
       networkmanager = {
         enable = true;
-        # do not override my dns?
-        # dns = "none";
+        # Please, use the resolved service for DNS.
         dns = "systemd-resolved";
       };
 
       # Open ports in the firewall.
       # firewall.allowedTCPPorts = [ ... ];
       # firewall.allowedUDPPorts = [ ... ];
-      # Or disable the firewall altogether.
+      # Or, disable the firewall altogether.
       firewall.enable = false;
     };
 
@@ -338,14 +342,20 @@
       resolved = {
         enable = true;
         dnssec = "true";
+        dnsovertls = "true";
         domains = [ "~." ];
-        fallbackDns = [
-          "1.1.1.1#one.one.one.one"
-          "1.0.0.1#one.one.one.one"
-        ];
-        extraConfig = ''
-          DNSOverTLS=yes
-        '';
+        # dns => defaults to config.networking.nameservers
+        fallbackDns =
+          let
+            ips = [
+              "9.9.9.9"
+              "149.112.112.112"
+              "2620:fe::fe"
+              "2620:fe::9"
+            ];
+            sni = "dns.quad9.net";
+          in
+          map (ip: "${ip}#${sni}") ips;
       };
 
       udev = {
