@@ -17,7 +17,6 @@
       WLR_RENDERER_ALLOW_SOFTWARE = "1";
     };
     home.packages = with pkgs; [
-      cava # audio visualizer
       grimblast # screenshot tool
       # TODO: necessary?
       libnotify

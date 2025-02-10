@@ -1,9 +1,47 @@
-_:
+{
+  lib,
+  pkgs,
+  toplevel,
+}:
 let
   # "top" or "bottom"
   position = "top";
   margin-top = if position == "top" then 10 else 0;
   margin-bottom = if position == "top" then 0 else 10;
+  myPackages = toplevel.self.packages.${pkgs.system};
+  get-uair-status = lib.getExe (
+    pkgs.writeShellApplication {
+      name = "get-uair-status";
+      runtimeInputs = [
+        pkgs.uair
+        myPackages.is-sshed
+      ];
+      text = ''
+        is-sshed || uairctl fetch '{state} {time}' 2>/dev/null
+      '';
+    }
+  );
+  writeAudioApplication =
+    name: text:
+    lib.getExe (
+      pkgs.writeShellApplication {
+        inherit name text;
+        runtimeInputs = with pkgs; [
+          pavucontrol
+          jq
+        ];
+      }
+    );
+  writeNotificationApplication =
+    name: text:
+    lib.getExe (
+      pkgs.writeShellApplication {
+        inherit name text;
+        runtimeInputs = with pkgs; [
+          swaynotificationcenter
+        ];
+      }
+    );
 in
 {
   "layer" = position;
@@ -16,7 +54,9 @@ in
     "custom/arch"
     "hyprland/workspaces"
   ];
-  "modules-center" = [ "custom/pomodoro" ];
+  "modules-center" = [
+    "custom/pomodoro"
+  ];
   "modules-right" = [
     "custom/privacy-audio"
     "tray"
@@ -30,6 +70,7 @@ in
   "custom/arch" = {
     "format" = "";
     "tooltip" = false;
+    # TODO: use direct path after integrating rofi
     "on-click" = "sh $HOME/.config/rofi/powermenu/type-4/powermenu.sh";
   };
   "hyprland/workspaces" = {
@@ -121,7 +162,7 @@ in
     };
     "scroll-step" = 0.5;
     "reverse-scrolling" = true;
-    "on-click" = "pavucontrol";
+    "on-click" = lib.getExe pkgs.pavucontrol;
   };
   "bluetooth" = {
     "format" = "<span></span> {status}";
@@ -141,8 +182,8 @@ in
   "custom/pomodoro" = {
     "format" = "{}";
     "tooltip" = false;
-    "on-click" = "uair-toggle-and-notify";
-    "exec" = "bash -c \"is-sshed || uairctl fetch '{state} {time}'\"";
+    "on-click" = lib.getExe myPackages.uair-toggle-and-notify;
+    "exec" = get-uair-status;
     "interval" = 1;
   };
   "custom/notification" = {
@@ -155,20 +196,25 @@ in
     };
     "return-type" = "json";
     "tooltip" = false;
-    "exec-if" = "which swaync-client";
-    "exec" = "swaync-client -swb";
-    "on-click" = "sleep 0.1; swaync-client -t -sw";
-    "on-click-right" = "swaync-client -d -sw";
+    "exec" = writeNotificationApplication "get-notification-status" "swaync-client -swb";
+    "on-click" = writeNotificationApplication "toggle-notification-center" "swaync-client -t -sw";
+    "on-click-right" = writeNotificationApplication "toggle-do-not-disturb" "swaync-client -d -sw";
     "escape" = true;
   };
-  # TODO: Make it red
   "custom/privacy-audio" = {
     "format" = "<span></span>{}";
     "exec" =
-      "pactl -f json list source-outputs | jq '[.[] | select(.properties.\"application.name\" != \"cava\")] | length'";
+      writeAudioApplication "get-audio-status" # sh
+        ''
+          pactl -f json list source-outputs | \
+          jq '[.[] | select(.properties."application.name" != "cava")] | length'
+        '';
     "tooltip" =
-      "pactl -f json list source-outputs | jq -r '.[] | select(.properties.\"application.name\" != \"cava\") | .properties.\"application.name\"'";
+      writeAudioApplication "get-applications-using-audio" # sh
+        ''
+          pactl -f json list source-outputs | \
+          jq -r '.[] | select(.properties."application.name" != "cava") | .properties."application.name"'
+        '';
     "tooltip-format" = "{}";
   };
-  # TODO: add pipewire screenshare outputs
 }
