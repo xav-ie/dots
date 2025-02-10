@@ -452,7 +452,8 @@
       };
     };
 
-    # TODO: changing something here will fix screenshare?
+    # TIP: run `nix run nixpkgs#door-knocker` and check that portal
+    # implemenation has expected support
     xdg.portal =
       let
         inherit (inputs.hyprland.packages.${pkgs.system}) hyprland;
@@ -460,8 +461,27 @@
       in
       {
         enable = true;
-        extraPortals = [ xdph ];
-        configPackages = [ hyprland ];
+        extraPortals = [
+          xdph
+          pkgs.xdg-desktop-portal-gnome
+        ];
+        config =
+          let
+            common = {
+              default = [
+                "hyprland"
+                "gnome"
+              ];
+              # TODO: what kinds of other useful settings can I set?
+              # "org.freedesktop.impl.portal.Secret" = [ "gnome-keyring" ];
+            };
+          in
+          {
+            inherit common;
+            hyprland = common;
+          };
+        # I don't think this is necessary...
+        # configPackages = [ hyprland ];
       };
 
     # boot = {
