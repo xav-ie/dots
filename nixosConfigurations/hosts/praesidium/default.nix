@@ -16,6 +16,10 @@
 
   config = {
     boot = {
+      # binfmt.emulatedSystems = [
+      #   "aarch64-linux"
+      #   "i686-linux"
+      # ];
       loader.systemd-boot.enable = true;
       loader.efi.canTouchEfiVariables = true;
       supportedFilesystems = [ "ntfs" ];
@@ -27,8 +31,11 @@
         "v4l2loopback"
         # Virtual Microphone, built-in
         "snd-aloop"
+        # TODO: ???
+        # "coretemp"
       ];
       kernelPackages = pkgs.linuxPackages_latest;
+      # kernelPackages = pkgs.linuxKernel.packages.linux_zen;
       extraModulePackages = with config.boot.kernelPackages; [ v4l2loopback.out ];
       extraModprobeConfig = ''
         # exclusive_caps: Skype, Zoom, Teams etc. will only show device when actually streaming
@@ -129,12 +136,12 @@
       };
     };
 
+    # environment.etc."sysconfig/lm_sensors".text = ''
+    #   HWMON_MODULES="coretemp"
+    # '';
+
     environment.systemPackages = with pkgs; [
       nur.repos.dustinblackman.oatmeal
-      # TODO: fix this :/
-      # g
-      # record
-      # record-section
     ];
 
     environment.sessionVariables = { };
@@ -301,10 +308,12 @@
         #     enable = true;
         #     enableOffloadCmd = true;
         #   };
-        #   # 01:00.0 VGA compatible controller: NVIDIA Corporation GA104 [GeForce RTX 3060 Ti Lite Hash Rate] (rev a1)
+        #   # 01:00.0 VGA compatible controller: NVIDIA Corporation GA104
+        #   # [GeForce RTX 3060 Ti Lite Hash Rate] (rev a1)
         #   nvidiaBusId = "PCI:1:0:0";
-        #   # darn it, I will have to remember to buy a cpu with integrated graphics next time :(((((
-        #   intelBusId = "???";
+        #   # darn it, I will have to remember to buy a cpu with integrated
+        #   # graphics next time (;´༎ຶД༎ຶ`)
+        #   intelBusId = "N/A";
         # };
         open = false;
         nvidiaSettings = true;
@@ -314,17 +323,14 @@
 
     services = {
       blueman.enable = true;
-      # TODO: figure out the "right way" to do xdg portals from Misterio
       flatpak.enable = true;
-      # TODO: required?
-      geoclue2 = {
-        enable = true;
-      };
+      geoclue2.enable = true;
       gnome.gnome-keyring.enable = true;
       openssh = {
         enable = true;
-        # since I use zellij, I don't mind disconnecting often and just reconnecting to my session;
-        # I want to avoid stale/unresponsive connections
+        # since I use zellij, I don't mind disconnecting often and just
+        # reconnecting to my session; I want to avoid stale/unresponsive
+        # connections
         extraConfig = ''
           ClientAliveInterval 30
           ClientAliveCountMax 3
@@ -337,9 +343,8 @@
         pulse.enable = true;
         jack.enable = true;
       };
-      redshift = {
-        enable = true;
-      };
+      # TODO: set up
+      redshift.enable = true;
       resolved = {
         enable = true;
         dnssec = "true";
@@ -358,7 +363,8 @@
           in
           map (ip: "${ip}#${sni}") ips;
       };
-
+      # TODO: ???
+      # thermald.enable = true;
       udev = {
         packages = [ pkgs.openrgb ];
         # TODO: ???
@@ -369,10 +375,8 @@
       };
       # Configure keymap in X11
       xserver = {
-        xkb = {
-          layout = "us";
-          variant = "";
-        };
+        xkb.layout = "us";
+        xkb.variant = "";
         videoDrivers = [ "nvidia" ];
       };
     };
@@ -383,21 +387,22 @@
     };
 
     security = {
-      pam.services.swaylock.text = ''
-        # Account management.
-        account required pam_unix.so
+      pam.services.swaylock.text = # sh
+        ''
+          # Account management.
+          account required pam_unix.so
 
-        # Authentication management.
-        auth sufficient pam_unix.so   likeauth try_first_pass
-        auth required pam_deny.so
+          # Authentication management.
+          auth sufficient pam_unix.so   likeauth try_first_pass
+          auth required pam_deny.so
 
-        # Password management.
-        password sufficient pam_unix.so nullok sha512
+          # Password management.
+          password sufficient pam_unix.so nullok sha512
 
-        # Session management.
-        session required pam_env.so conffile=/etc/pam/environment readenv=0
-        session required pam_unix.so
-      '';
+          # Session management.
+          session required pam_env.so conffile=/etc/pam/environment readenv=0
+          session required pam_unix.so
+        '';
       polkit.enable = true;
       rtkit.enable = true;
       wrappers.noisetorch = {
@@ -483,19 +488,5 @@
         # I don't think this is necessary...
         # configPackages = [ hyprland ];
       };
-
-    # boot = {
-    #   kernelPackages = pkgs.linuxKernel.packages.linux_zen;
-    #   binfmt.emulatedSystems = [
-    #     "aarch64-linux"
-    #     "i686-linux"
-    #   ];
-    # };
-    #
-    # boot.kernelModules = [ "coretemp" ];
-    # services.thermald.enable = true;
-    # environment.etc."sysconfig/lm_sensors".text = ''
-    #   HWMON_MODULES="coretemp"
-    # '';
   };
 }
