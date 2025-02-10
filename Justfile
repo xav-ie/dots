@@ -1,4 +1,3 @@
-# List available commands by default
 default:
     @just system
 
