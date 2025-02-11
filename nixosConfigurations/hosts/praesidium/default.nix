@@ -365,6 +365,7 @@
       };
       # TODO: ???
       # thermald.enable = true;
+      hardware.openrgb.enable = true;
       # udev = {
       #   # TODO: for `ns-usbloader`
       #   extraRules = # python
