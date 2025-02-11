@@ -1,10 +1,12 @@
 {
+  inputs,
   pkgs,
   toplevel,
   ...
 }:
 let
   myPackages = toplevel.self.packages.${pkgs.system};
+  pkgs-bleeding = inputs.nixpkgs-bleeding.legacyPackages.${pkgs.system};
 in
 {
   imports = [
@@ -46,6 +48,7 @@ in
       thefuck.enable = true;
       watson.enable = true;
       zoxide.enable = true;
+      zoxide.package = pkgs-bleeding.zoxide;
     };
     home = {
       packages =
