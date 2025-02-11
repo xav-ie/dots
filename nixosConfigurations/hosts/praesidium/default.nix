@@ -365,14 +365,14 @@
       };
       # TODO: ???
       # thermald.enable = true;
-      udev = {
-        packages = [ pkgs.openrgb ];
-        # TODO: ???
-        extraRules = ''
-          SUBSYSTEM=="usb", ATTRS{idVendor}=="057e", ATTRS{idProduct}=="3000", MODE="0666"
-          SUBSYSTEM=="usb", ATTRS{idVendor}=="0955", ATTRS{idProduct}=="7321", MODE="0666"
-        '';
-      };
+      # udev = {
+      #   # TODO: for `ns-usbloader`
+      #   extraRules = # python
+      #     ''
+      #       SUBSYSTEM=="usb", ATTRS{idVendor}=="057e", ATTRS{idProduct}=="3000", MODE="0666"
+      #       SUBSYSTEM=="usb", ATTRS{idVendor}=="0955", ATTRS{idProduct}=="7321", MODE="0666"
+      #     '';
+      # };
       # Configure keymap in X11
       xserver = {
         xkb.layout = "us";
