@@ -67,7 +67,6 @@ in
           # TODO: move into hm services
           networkmanagerapplet
           noisetorch # noise filter
-          openrgb # pc rgb control
           pavucontrol # audio mixer
           # TODO: move into hm services
           playerctl # play, pause, next
