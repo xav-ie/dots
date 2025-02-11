@@ -22,17 +22,16 @@ writeNuApplication {
           $repository = $args | first
           $args = $args | skip 1
         }
-        let systemName = "x86_64-linux"
-        let prefix = $"* legacyPackages.($systemName)." | str length
-        let ansiCode = "[0;1m" | str length
-        let len = $prefix + $ansiCode + 1 # idk why +1
+        # idk why +1
+        let prefixLen = ($"* [0;1mlegacyPackages.${system}." | str length) + 1
+        let len = if $repository == "nixpkgs" { $prefixLen } else { 0 }
 
         let selected = (
-          nix search $repository ...$args 
-          | lines 
-          | filter {|| $in | str starts-with '*'} 
-          | str substring 36..  
-          | str join "\n" 
+          nix search $repository ...$args
+          | lines
+          | filter {|| $in | str starts-with '*'}
+          | str substring $len..
+          | str join "\n"
           | fzf --ansi --preview="echo {1} | xargs -I {} nix eval --json nixpkgs#{}.meta | jq -C . " -d " "
         )
 
