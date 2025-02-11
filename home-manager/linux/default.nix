@@ -107,6 +107,13 @@ in
       };
     };
 
+    dconf.settings = {
+      # tell gtk applications to prefer dark mode, please!
+      "org/gnome/desktop/interface" = {
+        color-scheme = "prefer-dark";
+      };
+    };
+
     gtk = {
       enable = true;
       theme.name = "adw-gtk3";
