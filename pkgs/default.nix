@@ -17,9 +17,10 @@ rec {
   notify = pkgs.callPackage ./notify { };
   nvim = pkgs.callPackage ./nvim { };
   is-sshed = pkgs.callPackage ./is-sshed { };
-  searcher = pkgs.callPackage ./searcher { };
+  searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
   uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
   zellij-tab-name-update = pkgs.callPackage ./zellij-tab-name-update { };
+  writeNuApplication = pkgs.callPackage ./writeNuApplication { };
 }
 // (optionalAttrs pkgs.stdenv.isDarwin {
   fix-yabai = pkgs.callPackage ./fix-yabai { };
