@@ -20,6 +20,7 @@ config:
 ---
 classDiagram
     %% Unfortunately, we cannot use relative links and must specify a branch :/
+    class lib["<a href='https://github.com/xav-ie/dots/tree/main/lib'>./lib</a>"]
     class common["<a href='https://github.com/xav-ie/dots/tree/main/common'>./common</a>"]
     class darwinConfigurations["<a href='https://github.com/xav-ie/dots/tree/main/darwinConfigurations'>./darwinConfigurations</a>"]
     class home-manager["<a href='https://github.com/xav-ie/dots/tree/main/home-manager'>./home-manager</a>"]
@@ -27,6 +28,7 @@ classDiagram
     class overlays["<a href='https://github.com/xav-ie/dots/tree/main/overlays'>./overlays</a>"]
     class pkgs["<a href='https://github.com/xav-ie/dots/tree/main/pkgs'>./pkgs</a>"]
 
+    lib: various utilities
     common: overlay setup and nix settings
     darwinConfigurations: • castra
     darwinConfigurations: • stella
