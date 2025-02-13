@@ -36,6 +36,7 @@ in
         #   '';
         gake = "do { git pull; make }";
         gits = "git status";
+        gitd = "gitd";
         g = "nvim `+Git | only`";
         gp = "gh pr view";
         gpw = "gh pr view -w";

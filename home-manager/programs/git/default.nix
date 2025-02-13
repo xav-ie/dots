@@ -31,6 +31,7 @@ in
           blame-better = "blame -w -C -C -C";
           cam = "commit -am";
           c = "commit";
+          chekcout = "checkout";
           cm = "commit -m";
           d = "diff ${diffTweaks}";
           dc = "diff --cached ${diffTweaks}";
@@ -53,9 +54,9 @@ in
           pr = # sh
             ''
               !(GH_FORCE_TTY=100% gh pr list \
-              | fzf --ansi --preview 'GH_FORCE_TTY=100% gh pr view {1}' --preview-window up --header-lines 3 \
-              | awk '{print $1}' \
-              | xargs -r gh pr checkout)
+                | fzf --ansi --preview 'GH_FORCE_TTY=100% gh pr view {1}' --preview-window up --header-lines 3 \
+                | awk '{print $1}' \
+                | xargs -r gh pr checkout)
             '';
           rmc = "rm --cached";
           s = "status";
