@@ -26,7 +26,7 @@ classDiagram
     class home-manager["<a href='https://github.com/xav-ie/dots/tree/main/home-manager'>./home-manager</a>"]
     class nixosConfigurations["<a href='https://github.com/xav-ie/dots/tree/main/nixosConfigurations'>./nixosConfigurations</a>"]
     class overlays["<a href='https://github.com/xav-ie/dots/tree/main/overlays'>./overlays</a>"]
-    class pkgs["<a href='https://github.com/xav-ie/dots/tree/main/pkgs'>./pkgs</a>"]
+    class packages["<a href='https://github.com/xav-ie/dots/tree/main/packages'>./packages</a>"]
 
     lib: various utilities
     common: overlay setup and nix settings
@@ -35,12 +35,12 @@ classDiagram
     home-manager: hm modules and setup for linux and mac
     nixosConfigurations: • praesidium
     overlays: package overrides
-    pkgs: • cache-command
-    pkgs: • jira-list
-    pkgs: • record
-    pkgs: • record-section
-    pkgs: • zellij-tab-name-update
-    pkgs: • ...
+    packages: • cache-command
+    packages: • jira-list
+    packages: • record
+    packages: • record-section
+    packages: • zellij-tab-name-update
+    packages: • ...
 
     common ..> overlays
     darwinConfigurations ..> common
@@ -56,7 +56,7 @@ classDiagram
 ## Usage
 
 I don't think you should try and directly use my dotfiles; it probably
-would not work. You should intead check out my [packages](./pkgs) and
+would not work. You should intead check out my [packages](./packages) and
 other bits of config.
 
 ## Things I am working on

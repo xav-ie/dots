@@ -101,7 +101,7 @@
           #   overlays = builtins.attrValues self.overlays;
           # };
 
-          packages = import ./pkgs { inherit lib pkgs; };
+          packages = import ./packages { inherit lib pkgs; };
 
           treefmt = {
             programs = {
