@@ -18,8 +18,8 @@ in
           custom-shader = ${./watersubtle.glsl}
 
           cursor-style-blink = false
-          background-opacity = 0.75
-          background-blur-radius = 15
+          background-opacity = 0.80
+          background-blur-radius = 20
           background = 000000
           foreground = ffffff
           # theme = Abernathy
