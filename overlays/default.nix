@@ -18,9 +18,6 @@ in
   #   ) inputs;
   # };
 
-  # Adds my custom packages
-  # additions = final: _: import ../pkgs { pkgs = final; };
-
   modifications = final: prev: {
     ctpv = inputs.ctpv.packages.${final.system}.default;
     alacritty-theme =
