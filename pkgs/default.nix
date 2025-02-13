@@ -1,8 +1,9 @@
 # Based on:
 # https://github.com/Misterio77/nix-config/blob/e360a9ecf6de7158bea813fc075f3f6228fc8fc0/pkgs/default.nix
-{ pkgs }:
+{ lib, pkgs }:
 let
   optionalAttrs = bool: attrSet: if bool then attrSet else { };
+  writeNuApplication = import ../lib/writeNuApplication { inherit lib pkgs; };
 in
 rec {
   default = pkgs.callPackage ./cache-command { };
@@ -20,7 +21,6 @@ rec {
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
   uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
   zellij-tab-name-update = pkgs.callPackage ./zellij-tab-name-update { };
-  writeNuApplication = pkgs.callPackage ./writeNuApplication { };
 }
 // (optionalAttrs pkgs.stdenv.isDarwin {
   fix-yabai = pkgs.callPackage ./fix-yabai { };
