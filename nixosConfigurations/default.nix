@@ -21,7 +21,7 @@ let
             ;
         };
         modules = [
-          ../common
+          ../lib/common
           ./hosts/praesidium
           ./linux-home-manager.nix
           {
