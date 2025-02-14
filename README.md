@@ -21,15 +21,13 @@ config:
 classDiagram
     %% Unfortunately, we cannot use relative links and must specify a branch :/
     class lib["<a href='https://github.com/xav-ie/dots/tree/main/lib'>./lib</a>"]
-    class common["<a href='https://github.com/xav-ie/dots/tree/main/common'>./common</a>"]
     class darwinConfigurations["<a href='https://github.com/xav-ie/dots/tree/main/darwinConfigurations'>./darwinConfigurations</a>"]
     class home-manager["<a href='https://github.com/xav-ie/dots/tree/main/home-manager'>./home-manager</a>"]
     class nixosConfigurations["<a href='https://github.com/xav-ie/dots/tree/main/nixosConfigurations'>./nixosConfigurations</a>"]
     class overlays["<a href='https://github.com/xav-ie/dots/tree/main/overlays'>./overlays</a>"]
     class packages["<a href='https://github.com/xav-ie/dots/tree/main/packages'>./packages</a>"]
 
-    lib: various utilities
-    common: overlay setup and nix settings
+    lib: overlay setup, nix settings, utilities
     darwinConfigurations: • castra
     darwinConfigurations: • stella
     home-manager: hm modules and setup for linux and mac
@@ -42,10 +40,10 @@ classDiagram
     packages: • zellij-tab-name-update
     packages: • ...
 
-    common ..> overlays
-    darwinConfigurations ..> common
+    lib ..> overlays
+    darwinConfigurations ..> lib
     darwinConfigurations ..> home-manager
-    nixosConfigurations ..> common
+    nixosConfigurations ..> lib
     nixosConfigurations ..> home-manager
 ```
 
