@@ -486,8 +486,7 @@
             inherit common;
             hyprland = common;
           };
-        # I don't think this is necessary...
-        # configPackages = [ hyprland ];
+        configPackages = [ hyprland ];
       };
   };
 }
