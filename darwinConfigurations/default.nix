@@ -12,7 +12,7 @@ in
       inherit inputs user toplevel;
     };
     modules = [
-      ../common
+      ../lib/common
       ./darwin-home-manager.nix
       ./hosts/castra
     ];
@@ -25,7 +25,7 @@ in
       inherit inputs user toplevel;
     };
     modules = [
-      ../common
+      ../lib/common
       ./darwin-home-manager.nix
       ./hosts/stella
       ./nix-homebrew.nix
