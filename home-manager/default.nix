@@ -12,7 +12,7 @@ in
   imports = [
     ./dotfiles
     ./programs/alacritty
-    # ./programs/atuin
+    ./programs/atuin
     ./programs/bat
     ./programs/direnv
     ./programs/eza
