@@ -1,4 +1,4 @@
-# dots ◌ ⋅ ⋯ ⦿ .̇ ⨀ ⊚ ⋮ ⧂ ○ ∘ ⦾ : … ◎ <a href="https://builtwithnix.org"><img src="https://builtwithnix.org/badge.svg" alt="built with nix" height="39" align="right"/></a>
+# dots ◌ ⋅ ⋯ ⦿ .̇ ⨀ ⊚ ⋮ ○ ∘ ⦾ : … ◎ <a href="https://builtwithnix.org"><img src="https://builtwithnix.org/badge.svg" alt="built with nix" height="39" align="right"/></a>
 
 I love Nix! It has helped me further my development more than any
 other tool I have used. I hope that my config is helpful for you. If you
