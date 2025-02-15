@@ -20,12 +20,13 @@ in
     ./programs/git
     # ./programs/kitty
     # ./programs/lf
+    ./programs/pueue
     ./programs/moar
     ./programs/mpv
     ./programs/neovide
-    ./programs/ov
-    ./programs/nvim
     ./programs/nushell
+    ./programs/nvim
+    ./programs/ov
     ./programs/starship
     # ./programs/swaynotificationcenter
     # ./programs/transmission
