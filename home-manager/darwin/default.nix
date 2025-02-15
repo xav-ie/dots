@@ -5,7 +5,6 @@ in
 {
   imports = [
     ../programs/sketchybar
-    ../programs/pueue
   ];
 
   config = {
