@@ -1,11 +1,27 @@
 {
+  config,
   inputs,
   lib,
   pkgs,
   toplevel,
   ...
 }:
+let
+  cfg = config.programs.hyprland;
+  waybarCfg = config.programs.waybar;
+in
 {
+  options.programs.hyprland = {
+    gapsNumeric = lib.mkOption {
+      default = 10;
+      type = lib.types.ints.unsigned;
+    };
+    borderSizeNumeric = lib.mkOption {
+      default = 4;
+      type = lib.types.ints.unsigned;
+    };
+  };
+
   config = {
     home.sessionVariables = {
       NVD_BACKEND = "direct"; # github:elFarto
@@ -34,6 +50,7 @@
     wayland.windowManager.hyprland =
       let
         inherit (inputs.hyprland.packages.${pkgs.system}) hyprland;
+        inherit (cfg) borderSizeNumeric gapsNumeric;
       in
       {
         enable = true;
@@ -43,13 +60,9 @@
         # TODO: make proper options
         extraConfig =
           let
-            gapsNumeric = 10;
-            borderSizeNumeric = 4;
-            # TODO: sync with waybar
-            waybarHeightNumeric = 34;
+            waybarHeightNumeric = waybarCfg.barHeight;
             gapAndBorderNumeric = gapsNumeric + borderSizeNumeric;
-            waybarSpaceNumeric = gapAndBorderNumeric + waybarHeightNumeric;
-            # waybarPosition = "top";
+            waybarSpaceNumeric = gapAndBorderNumeric + waybarHeightNumeric - borderSizeNumeric;
             windowTopNumeric = gapAndBorderNumeric + waybarSpaceNumeric;
             windowLeftNumeric = gapsNumeric + borderSizeNumeric;
 
@@ -57,11 +70,6 @@
             windowLeft = toString windowLeftNumeric;
             windowTop = toString windowTopNumeric;
             windowRight = "100%-w-${windowLeft}";
-            # windowBottom = ''100%-${
-            #   toString (
-            #     if waybarPosition == "top" then gapAndBorderNumeric else gapAndBorderNumeric + waybarSpaceNumeric
-            #   )
-            # }'';
             move-active = lib.getExe toplevel.self.packages.${pkgs.system}.move-active;
           in
           # hyprlang
