@@ -1,13 +1,17 @@
 {
+  config,
   lib,
   pkgs,
   toplevel,
 }:
 let
+  cfg = config.programs.waybar;
+  hyprCfg = config.programs.hyprland;
+  marginAmount = hyprCfg.gapsNumeric;
   # "top" or "bottom"
   position = "top";
-  margin-top = if position == "top" then 10 else 0;
-  margin-bottom = if position == "top" then 0 else 10;
+  margin-top = if position == "top" then marginAmount else 0;
+  margin-bottom = if position == "top" then 0 else marginAmount;
   myPackages = toplevel.self.packages.${pkgs.system};
   get-uair-status = lib.getExe (
     pkgs.writeShellApplication {
@@ -44,11 +48,12 @@ let
     );
 in
 {
+  "height" = cfg.barHeight;
   "layer" = position;
   "margin-top" = margin-top;
   "margin-bottom" = margin-bottom;
-  "margin-left" = 10;
-  "margin-right" = 10;
+  "margin-left" = marginAmount;
+  "margin-right" = marginAmount;
   "position" = "top";
   "modules-left" = [
     "custom/arch"
