@@ -19,6 +19,7 @@ in
   # };
 
   modifications = final: prev: {
+    pkgs-bleeding = inputs.nixpkgs-bleeding.legacyPackages.${final.system};
     pkgs-mine = toplevel.self.packages.${final.system};
 
     ctpv = inputs.ctpv.packages.${final.system}.default;
