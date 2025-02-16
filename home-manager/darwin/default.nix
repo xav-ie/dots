@@ -1,7 +1,4 @@
-{ pkgs, toplevel, ... }:
-let
-  myPackages = toplevel.self.packages.${pkgs.system};
-in
+{ pkgs, ... }:
 {
   imports = [
     ../programs/sketchybar
@@ -15,7 +12,7 @@ in
         (with pkgs; [
           morlana # better nix build on mac
         ])
-        ++ (with myPackages; [
+        ++ (with pkgs.pkgs-mine; [
           fix-yabai
         ]);
     };

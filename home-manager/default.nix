@@ -1,11 +1,10 @@
 {
+  lib,
   inputs,
   pkgs,
-  toplevel,
   ...
 }:
 let
-  myPackages = toplevel.self.packages.${pkgs.system};
   pkgs-bleeding = inputs.nixpkgs-bleeding.legacyPackages.${pkgs.system};
 in
 {
@@ -61,9 +60,9 @@ in
           devenv # idk... I think I like plain flake approach
           fd
           ffmpeg
-          go-jira
           gh
           gnumake
+          go-jira
           (jira-cli-go.overrideAttrs {
             postInstall = ''
               mv $out/bin/jira $out/bin/jira-unfree
@@ -84,11 +83,11 @@ in
           zip
         ])
         # custom packages
-        ++ (with myPackages; [
+        ++ (with pkgs.pkgs-mine; [
           cache-command
           ff
-          is-sshed
           # generate-kaomoji
+          is-sshed
           j
           jira-list
           jira-task-list

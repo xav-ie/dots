@@ -2,7 +2,6 @@
   config,
   lib,
   pkgs,
-  toplevel,
 }:
 let
   cfg = config.programs.waybar;
@@ -12,13 +11,12 @@ let
   position = "top";
   margin-top = if position == "top" then marginAmount else 0;
   margin-bottom = if position == "top" then 0 else marginAmount;
-  myPackages = toplevel.self.packages.${pkgs.system};
   get-uair-status = lib.getExe (
     pkgs.writeShellApplication {
       name = "get-uair-status";
       runtimeInputs = [
         pkgs.uair
-        myPackages.is-sshed
+        pkgs.pkgs-mine.is-sshed
       ];
       text = ''
         is-sshed || uairctl fetch '{state} {time}' 2>/dev/null
@@ -187,7 +185,7 @@ in
   "custom/pomodoro" = {
     "format" = "{}";
     "tooltip" = false;
-    "on-click" = lib.getExe myPackages.uair-toggle-and-notify;
+    "on-click" = lib.getExe pkgs.pkgs-mine.uair-toggle-and-notify;
     "exec" = get-uair-status;
     "interval" = 1;
   };
