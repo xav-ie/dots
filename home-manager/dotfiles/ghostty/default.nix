@@ -44,6 +44,7 @@ in
           keybind = ctrl+shift+n=unbind
           keybind = ctrl+shift+o=unbind
           keybind = ctrl+shift+t=unbind
+          keybind = ctrl+comma=unbind
           keybind = ctrl+plus=increase_font_size:1
           keybind = ctrl+minus=decrease_font_size:1
         '';
