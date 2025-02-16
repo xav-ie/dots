@@ -29,14 +29,15 @@
         #       ${terminal-notifier} -remove ALL
         #     }
         #   '';
-        gake = "do { git pull; make }";
-        gits = "git status";
-        gitd = "gitd";
         g = "nvim `+Git | only`";
+        gake = "do { git pull; make }";
+        gitd = "gitd";
+        gits = "git status";
         gp = "gh pr view";
         gpw = "gh pr view -w";
         gust = "do { git pull; just }";
         info = "info --vi-keys";
+        jsut = "just";
         l = "ls -la";
         tm = "try { tmux attach } catch { tmux }";
         w = "watson";
