@@ -19,6 +19,8 @@ in
   # };
 
   modifications = final: prev: {
+    pkgs-mine = toplevel.self.packages.${final.system};
+
     ctpv = inputs.ctpv.packages.${final.system}.default;
     alacritty-theme =
       if final.stdenv.isLinux then inputs.alacritty-theme.packages.${final.system} else null;

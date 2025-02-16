@@ -3,7 +3,6 @@
   inputs,
   lib,
   pkgs,
-  toplevel,
   ...
 }:
 let
@@ -47,7 +46,6 @@ in
             config
             lib
             pkgs
-            toplevel
             ;
         };
       };
