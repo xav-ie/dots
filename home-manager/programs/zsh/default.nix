@@ -1,11 +1,10 @@
 {
   lib,
   pkgs,
-  toplevel,
   ...
 }:
 let
-  zellij-tab-name-update = lib.getExe toplevel.self.packages.${pkgs.system}.is-sshed;
+  tmux-tab-name-update = lib.getExe pkgs.pkgs-mine.is-sshed;
 in
 {
   config = {
@@ -37,14 +36,15 @@ in
         shellAliases = {
           # this is for commands that do not properly adjust their output to given width
           c4 = "COLUMNS=$COLUMNS-4";
-          info = "env info --vi-keys";
           gake = "git pull && make";
           gp = "gh pr view";
           gpw = "gh pr view -w";
+          info = "env info --vi-keys";
           l = "ls -lah";
           # I could not get man to respect pager width
           man = "c4 env man";
           # nvim = "~/Projects/xnixvim/result/bin/nvim";
+          tm = "tmux attach || tmux";
           w = "watson";
           zj = "zellij attach || zellij";
         };
@@ -71,7 +71,7 @@ in
             source $HOME/.env
 
             precmd() {
-              ${zellij-tab-name-update}
+              ${tmux-tab-name-update}
             }
 
             download_nixpkgs_cache_index () {

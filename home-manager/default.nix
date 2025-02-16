@@ -1,5 +1,4 @@
 {
-  lib,
   pkgs,
   ...
 }:
@@ -19,6 +18,7 @@
     ./programs/moar
     ./programs/mpv
     ./programs/neovide
+    ./programs/tmux
     ./programs/nushell
     ./programs/nvim
     ./programs/ov
@@ -91,6 +91,7 @@
           nvim
           searcher
           uair-toggle-and-notify
+          tmux-tab-name-update
           zellij-tab-name-update
         ]);
 
