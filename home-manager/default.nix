@@ -1,12 +1,8 @@
 {
   lib,
-  inputs,
   pkgs,
   ...
 }:
-let
-  pkgs-bleeding = inputs.nixpkgs-bleeding.legacyPackages.${pkgs.system};
-in
 {
   imports = [
     ./dotfiles
@@ -48,7 +44,7 @@ in
       thefuck.enable = true;
       watson.enable = true;
       zoxide.enable = true;
-      zoxide.package = pkgs-bleeding.zoxide;
+      zoxide.package = pkgs.pkgs-bleeding.zoxide;
       yazi.enable = true;
     };
     home = {
