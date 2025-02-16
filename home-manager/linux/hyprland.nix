@@ -253,6 +253,9 @@ in
             windowrulev2 = noinitialfocus, title:^(swaync)$
             windowrulev2 = pin, title:^(swaync)$
 
+            # improve animation on ueberzugpp windows
+            windowrulev2 = animation slide right, title:^(ueberzugpp.*)
+
             # zenity
             windowrulev2 = pin, title:^(zenity)$
 
