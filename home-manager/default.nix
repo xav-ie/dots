@@ -50,6 +50,7 @@ in
       watson.enable = true;
       zoxide.enable = true;
       zoxide.package = pkgs-bleeding.zoxide;
+      yazi.enable = true;
     };
     home = {
       packages =
@@ -79,7 +80,6 @@ in
           tldr
           tree
           wget
-          yazi # better lf
           zip
         ])
         # custom packages
