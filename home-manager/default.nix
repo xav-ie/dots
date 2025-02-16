@@ -72,13 +72,14 @@ in
           jless # best JSON and YAML viewer
           just # better make
           magic-wormhole-rs # send files easily
-          nix-output-monitor # better nix build
           neovide
+          nix-output-monitor # better nix build
           ollama
-          uair # pomodoro manager
-          unzip
           tldr
           tree
+          uair # pomodoro manager
+          ueberzugpp
+          unzip
           wget
           zip
         ])
