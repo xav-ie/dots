@@ -1,7 +1,4 @@
-{ pkgs, toplevel, ... }:
-let
-  myPackages = toplevel.self.packages.${pkgs.system};
-in
+{ pkgs, ... }:
 {
   imports = [
     ../programs/firefox
@@ -74,7 +71,7 @@ in
           # qutebrowser
           signal-desktop
         ])
-        ++ (with myPackages; [
+        ++ (with pkgs.pkgs-mine; [
           move-active
           record
           record-section

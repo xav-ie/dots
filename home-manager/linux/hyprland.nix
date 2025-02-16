@@ -3,7 +3,6 @@
   inputs,
   lib,
   pkgs,
-  toplevel,
   ...
 }:
 let
@@ -70,7 +69,7 @@ in
             windowLeft = toString windowLeftNumeric;
             windowTop = toString windowTopNumeric;
             windowRight = "100%-w-${windowLeft}";
-            move-active = lib.getExe toplevel.self.packages.${pkgs.system}.move-active;
+            move-active = lib.getExe pkgs.pkgs-mine.move-active;
           in
           # hyprlang
           ''
