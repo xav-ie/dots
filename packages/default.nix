@@ -19,6 +19,7 @@ rec {
   nvim = pkgs.callPackage ./nvim { };
   is-sshed = pkgs.callPackage ./is-sshed { };
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
+  tmux-tab-name-update = pkgs.callPackage ./tmux-tab-name-update { };
   uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
   zellij-tab-name-update = pkgs.callPackage ./zellij-tab-name-update { };
 }

@@ -38,6 +38,7 @@
         gust = "do { git pull; just }";
         info = "info --vi-keys";
         l = "ls -la";
+        tm = "try { tmux attach } catch { tmux }";
         w = "watson";
         zj = "try { zellij attach } catch { zellij }";
       };
