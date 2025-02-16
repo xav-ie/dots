@@ -1,17 +1,12 @@
 {
-  inputs,
   pkgs,
-  # lib,
   ...
 }:
-let
-  pkgs-bleeding = inputs.nixpkgs-bleeding.legacyPackages.${pkgs.system};
-in
 {
   config = {
     programs.nushell = {
       # latest, please!
-      package = pkgs-bleeding.nushell;
+      package = pkgs.pkgs-bleeding.nushell;
       enable = true;
       # https://www.nushell.sh/book/configuration.html#configuration-overview
       # (?) -> loading order
@@ -52,7 +47,7 @@ in
       # (3) Files in $nu.vendor-autoload-dirs are loaded. These files can be
       # used for any purpose and are a convenient way to modularize a
       # configuration.
-      plugins = with pkgs-bleeding; [
+      plugins = with pkgs.pkgs-bleeding; [
         nushellPlugins.gstat
       ];
       # (4) login.nu runs commands or handles configuration that should only
