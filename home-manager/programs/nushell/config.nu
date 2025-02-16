@@ -51,7 +51,7 @@ $env.config.explore = {
 }
 
 $env.config.hooks.pre_prompt = [
-  { || zellij-tab-name-update }
+  { || tmux-tab-name-update }
 ]
 
 $env.config.keybindings ++= [
