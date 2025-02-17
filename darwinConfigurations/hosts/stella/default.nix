@@ -158,10 +158,11 @@
                 cmd - ${builtins.toString index}: osascript -e 'tell application "${elem}" to activate'
               '') applications;
             commandString = builtins.concatStringsSep "\n" commands;
+            move-pip = lib.getExe pkgs.pkgs-mine.move-pip;
           in
           # sh
           ''
-            # I really like application driven window management. I just want
+            # I really like application-driven window management. I just want
             # simple keybindings to just go where I want. Only downside is new
             # bindings must be added for new apps.
             ${commandString}
@@ -170,6 +171,11 @@
             ctrl + alt - j : yabai -m window --focus stack.next
             ctrl + alt - k : yabai -m window --focus stack.prev
             ctrl + alt - l : yabai -m space --focus next
+
+            cmd + alt - 1 : ${move-pip} top-left
+            cmd + alt - 2 : ${move-pip} top-right
+            cmd + alt - 3 : ${move-pip} bottom-right
+            cmd + alt - 4 : ${move-pip} bottom-left
 
             ctrl + alt - q : yabai -m window --space prev
             ctrl + alt - w : yabai -m space --focus prev
