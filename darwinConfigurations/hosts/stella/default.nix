@@ -90,8 +90,12 @@
         # "Twilio Sans Mono" # this one may be included in future release:
         # https://github.com/ryanoasis/nerd-fonts/pull/1465
       ]);
-    # allow sudo to use touch id
-    security.pam.enableSudoTouchIdAuth = true;
+    security.pam = {
+      # fix mac os touch id in screen/tmux
+      enablePamReattach = true;
+      # allow sudo to use touch id
+      enableSudoTouchIdAuth = true;
+    };
     services = {
       nix-daemon.enable = true;
       # a lot of this is taken from https://github.com/shaunsingh/nix-darwin-dotfiles/commit/a457a0b2d0e68d810e3503f84217db8698dd9533
