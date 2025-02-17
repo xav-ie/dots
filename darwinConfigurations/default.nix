@@ -15,6 +15,7 @@ in
       ../lib/common
       ./darwin-home-manager.nix
       ./hosts/castra
+      ./modules/pam-reattach.nix
     ];
   };
 
@@ -29,6 +30,7 @@ in
       ./darwin-home-manager.nix
       ./hosts/stella
       ./nix-homebrew.nix
+      ./modules/pam-reattach.nix
       # {
       #   nix.settings.trusted-users = [ user ];
       #   nix.linux-builder.enable = true;
