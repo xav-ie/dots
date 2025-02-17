@@ -28,9 +28,20 @@
           bind '"' split-window -c "#{pane_current_path}"
           bind 'j' split-window -c "#{pane_current_path}"
           bind '%' split-window -h -c "#{pane_current_path}"
-          bind ';' split-window -h -c "#{pane_current_path}"
+          bind 'l' split-window -h -c "#{pane_current_path}"
+          bind -r H resize-pane -L 5
+          bind -r J resize-pane -D 5
+          bind -r K resize-pane -U 5
+          bind -r L resize-pane -R 5
+
+          set-option -g escape-time 5 # ms
+          set-option -g history-limit 50000
+
+          bind-key -T copy-mode-vi v send-keys -X begin-selection
+          bind-key -T copy-mode-vi y send-keys -X copy-selection
+
           unbind-key -n C-.
-          bind-key -n C-. send-keys C-. 
+          bind-key -n C-. send-keys C-.
           set -s set-clipboard on
           unbind r
           bind r command-prompt -I "#W" "rename-window '%%'"
