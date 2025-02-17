@@ -9,9 +9,6 @@
       mouse = true;
       newSession = true;
       plugins = with pkgs.tmuxPlugins; [
-        # override dumb defaults
-        # https://github.com/tmux-plugins/tmux-sensible
-        sensible
         # allows seamless window/pane navigation with nvim
         # needs the accompanying vim plugin
         # https://github.com/christoomey/vim-tmux-navigator/
