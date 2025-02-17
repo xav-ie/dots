@@ -14,6 +14,7 @@
         ])
         ++ (with pkgs.pkgs-mine; [
           fix-yabai
+          move-pip
         ]);
     };
   };
