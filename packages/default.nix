@@ -25,6 +25,7 @@ rec {
 }
 // (optionalAttrs pkgs.stdenv.isDarwin {
   fix-yabai = pkgs.callPackage ./fix-yabai { };
+  move-pip = pkgs.callPackage ./move-pip { inherit writeNuApplication; };
 })
 // (optionalAttrs pkgs.stdenv.isLinux {
   move-active = pkgs.callPackage ./move-active { };
