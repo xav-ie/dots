@@ -1,4 +1,6 @@
-# Directly stolen from https://github.com/sherubthakur/dotfiles/blob/3faecc65228055efd02bb6de2356c2b010f881b6/modules/firefox/config/annoyances.nix
+# Taken from:
+# https://github.com/sherubthakur/dotfiles/blob/3faecc65228055efd02bb6de2356c2b010f881b6/modules/firefox/config/annoyances.nix
+# MIT License
 {
   # Disable firefox intro tabs on the first start
   # Disable the first run tabs with advertisements for the latest firefox features
