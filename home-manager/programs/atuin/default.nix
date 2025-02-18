@@ -2,7 +2,14 @@ _: {
   config = {
     programs.atuin = {
       enable = true;
-      settings.style = "compact";
+      daemon.enable = true;
+      enableZshIntegration = false;
+      # https://docs.atuin.sh/configuration/config
+      settings = {
+        style = "compact";
+        show_tabs = false;
+        workspaces = true;
+      };
     };
   };
 }
