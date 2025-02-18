@@ -106,19 +106,15 @@ system:
     }
 
 init:
-    #!/usr/bin/env nu
     nix run home-manager/master -- init --switch
 
 bleed:
-    #!/usr/bin/env nu
     nix flake lock --update-input nixpkgs-bleeding
 
 show:
-    #!/usr/bin/env nu
     nix run github:DeterminateSystems/nix-src/flake-schemas -- flake show .
 
 update:
-    #!/usr/bin/env nu
     nix flake update
 
 diff:
@@ -163,5 +159,4 @@ check:
     nix run nixpkgs#deadnix -- -f # check for dead code, fails if any
 
 check-all:
-    #!/usr/bin/env nu
     NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nix flake check --impure --all-systems
