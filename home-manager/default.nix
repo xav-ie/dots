@@ -80,6 +80,7 @@
         ])
         # custom packages
         ++ (with pkgs.pkgs-mine; [
+          apple-emoji-linux
           cache-command
           ff
           # generate-kaomoji
