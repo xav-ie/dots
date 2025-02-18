@@ -53,17 +53,20 @@ writeNuApplication {
         help main
       }
 
+      # move window to top left
       export def "main top-left" []: nothing -> nothing {
         let pipInfo = (get-pip-info-full)
         yabai -m window $"($pipInfo.id)" --move abs:0:0
       }
 
+      # move window to top right
       export def "main top-right" []: nothing -> nothing {
         let pipInfo = (get-pip-info-full)
         let moveX = $pipInfo.screenWidth - $pipInfo.w
         yabai -m window $"($pipInfo.id)" --move $"abs:($moveX):0"
       }
 
+      # move window to bottom right
       export def "main bottom-right" []: nothing -> nothing {
         let pipInfo = (get-pip-info-full)
         let moveX = $pipInfo.screenWidth - $pipInfo.w
@@ -71,6 +74,7 @@ writeNuApplication {
         yabai -m window $"($pipInfo.id)" --move $"abs:($moveX):($moveY)"
       }
 
+      # move window to bottom left
       export def "main bottom-left" []: nothing -> nothing {
         let pipInfo = (get-pip-info-full)
         let moveY = $pipInfo.screenHeight - $pipInfo.h
