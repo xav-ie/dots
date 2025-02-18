@@ -9,6 +9,7 @@ rec {
   default = pkgs.callPackage ./cache-command { };
 
   # Personal scripts
+  apple-emoji-linux = pkgs.callPackage ./apple-emoji-linux { };
   cache-command = pkgs.callPackage ./cache-command { };
   ff = pkgs.callPackage ./ff { };
   # g = pkgs.callPackage ./g { };
