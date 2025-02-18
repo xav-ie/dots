@@ -21,15 +21,12 @@
           ################################
           asciinema # record shell sessions and share easily
           age # the new PGP
-          # ghostty
           cliphist
           clipboard-jh # a really awesome clipboard
           ghostty
           manix
           # nodePackages."webtorrent-cli"
           xidel # like jq but for html and much more advanced.
-          # required by mpvScripts.webtorrent-mpv-hook
-          pciutils
           # I wish I could figure out pinentry-rofi but it does not work
           pinentry-gnome3
           # prusa-slicer                # does not launch currently
