@@ -27,7 +27,9 @@ in
           # theme = Monokai Remastered
           theme = ${./theme.sh}
 
-          font-family = Maple Mono NF
+          font-family = ""
+          font-family = "Maple Mono NF"
+          font-family = "Apple Color Emoji"
           font-size = 15
           font-feature = cv01
           font-feature = cv02
