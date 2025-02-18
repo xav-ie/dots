@@ -56,8 +56,10 @@
   "extensions.webcompat.perform_injections" = true;
   "extensions.webcompat.perform_ua_overrides" = true;
   "fission.experiment.max-origins.qualified" = true;
-  "font.name.monospace.x-western" = "FiraCode Nerd Font";
-  "font.name.serif.x-western" = "Times Newer Roman";
+  # TODO: factor out
+  "font.name.monospace.x-western" = "Maple Mono NF";
+  "font.name.sans-serif.x-western" = "Inter";
+  "font.name.serif.x-western" = "Libertinus Serif";
   "gecko.handlerService.defaultHandlersVersion" = 1;
   "gfx.canvas.accelerated" = true;
   "gfx.font_rendering.ahem_antialias_none" = true;

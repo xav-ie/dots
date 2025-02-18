@@ -150,6 +150,8 @@
       packages =
         with pkgs;
         [
+          inter
+          libertinus
           maple-mono
           maple-mono-NF
           noto-fonts-color-emoji
@@ -161,7 +163,7 @@
 
         defaultFonts = {
           serif = [
-            "Inter"
+            "Libertinus Serif"
             "Symbols Nerd Font"
           ];
           sansSerif = [
@@ -170,7 +172,6 @@
           ];
           monospace = [
             "Maple Mono NF"
-            "Symbols Nerd Font Mono"
           ];
           emoji = [ "Apple Color Emoji" ];
         };
