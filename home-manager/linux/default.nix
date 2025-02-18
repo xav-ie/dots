@@ -110,9 +110,19 @@
 
     gtk = {
       enable = true;
-      theme.name = "adw-gtk3";
-      cursorTheme.name = "Bibata-Modern-Ice";
-      iconTheme.name = "GruvboxPlus";
+      font = {
+        name = "Inter";
+        package = pkgs.inter;
+        size = 14;
+      };
+      iconTheme = {
+        name = "Adwaita";
+        package = pkgs.adwaita-icon-theme;
+      };
+      theme = {
+        name = "adw-gtk3-dark";
+        package = pkgs.adw-gtk3;
+      };
     };
 
     # TODO: somehow make mac support this
