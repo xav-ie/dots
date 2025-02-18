@@ -147,15 +147,34 @@
     environment.sessionVariables = { };
 
     fonts = {
-      fontconfig.enable = true;
       packages =
         with pkgs;
         [
           maple-mono
           maple-mono-NF
           noto-fonts-color-emoji
+          pkgs-mine.apple-emoji-linux
         ]
         ++ builtins.filter lib.attrsets.isDerivation (builtins.attrValues pkgs.nerd-fonts);
+      fontconfig = {
+        enable = true;
+
+        defaultFonts = {
+          serif = [
+            "Inter"
+            "Symbols Nerd Font"
+          ];
+          sansSerif = [
+            "Inter"
+            "Symbols Nerd Font"
+          ];
+          monospace = [
+            "Maple Mono NF"
+            "Symbols Nerd Font Mono"
+          ];
+          emoji = [ "Apple Color Emoji" ];
+        };
+      };
     };
 
     # Some programs need SUID wrappers, can be configured further or are
