@@ -27,12 +27,8 @@ writeNuApplication {
               display: $in.display
             }
         } catch {
-          error make {
+          error make --unspanned {
             msg: "Could not find any PiP windows."
-            label: {
-              text: "Failed on calling this function"
-              span: (metadata get-pip-info).span
-            }
           }
         }
       }
