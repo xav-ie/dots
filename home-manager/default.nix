@@ -101,9 +101,12 @@
       stateVersion = "23.11";
       sessionVariables = {
         EDITOR = "$HOME/Projects/xnixvim/result/bin/nvim";
-        HSTR_CONFIG = "hicolor"; # get more colors
-        HISTCONTROL = "ignorespace"; # leading space hides commands from history
-        HISTFILESIZE = 100000; # increase history file size (default is 500)
+        # get more colors
+        HSTR_CONFIG = "hicolor";
+        # ignore both leading space commands and re-run commands from history
+        HISTCONTROL = "ignoreboth";
+        # increase history file size (default is 500)
+        HISTFILESIZE = 100000;
         PATH = "$HOME/.config/scripts/:$PATH";
       };
     };
