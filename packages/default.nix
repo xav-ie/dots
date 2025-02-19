@@ -30,6 +30,7 @@ rec {
 })
 // (optionalAttrs pkgs.stdenv.isLinux {
   move-active = pkgs.callPackage ./move-active { };
+  openrgb-appimage = pkgs.callPackage ./openrgb-appimage { };
   record = pkgs.callPackage ./record { };
   record-section = pkgs.callPackage ./record-section { };
 })
