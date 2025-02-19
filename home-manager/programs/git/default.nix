@@ -35,6 +35,7 @@ in
           cm = "commit -m";
           d = "diff ${diffTweaks}";
           dc = "diff --cached ${diffTweaks}";
+          ds = "!git d && git s";
           graph =
             let
               columns = builtins.concatStringsSep " " [
@@ -61,6 +62,7 @@ in
             '';
           rmc = "rm --cached";
           s = "status";
+          sd = "!git s && git d";
           sh = "show --patch-with-stat";
           shove = "git push --force-with-lease";
           stash-all = "stash --all";
