@@ -69,7 +69,7 @@
         @define-color default-border #631f33;
 
         @define-color noti-border-color rgba(0, 0, 0, 0.0);
-        @define-color noti-bg rgba(255, 255, 0, 0.65);
+        @define-color noti-bg rgba(19,6,10,0.65);
         @define-color noti-bg-hover rgba(65, 65, 65, 0.8);
         @define-color noti-bg-focus rgba(68, 68, 68, 0.6);
         @define-color noti-close-bg rgba(255, 255, 255, 0.1);
@@ -78,7 +78,7 @@
         @define-color mpris-album-art-overlay rgba(255, 0, 0, 0.95);
         @define-color mpris-button-hover rgba(0, 255, 0, 0.50);
 
-        @define-color bg-selected rgb(0, 128, 255);
+        @define-color bg-selected rgb(100, 0, 0);
 
 
         .notification-row {
@@ -88,13 +88,13 @@
           border-radius: 12px;
         }
         .notification-row:hover {
-          background: transparent;
+          background: red;
         }
 
         .control-center .notification-row:focus,
         .control-center .notification-row:hover {
           opacity: 1;
-          background: transparent;
+          background: blue;
         }
 
         .notification-row:focus .notification,
@@ -237,32 +237,31 @@
           border: 3px solid pink;
         }
 
+        /* Notification title text */
         .summary {
           font-size: 16px;
           font-weight: bold;
           background: transparent;
           color: white;
           text-shadow: none;
-          /* border: 3px solid orange; */
         }
 
+        /* Notification timestamp */
         .time {
           font-size: 16px;
           font-weight: bold;
           background: transparent;
           color: white;
           text-shadow: none;
-          /* margin-right: 18px; */
-          /* border: 3px solid purple; */
         }
 
+        /* Notification body */
         .body {
           font-size: 15px;
           font-weight: normal;
           background: transparent;
           color: white;
           text-shadow: none;
-          /* border: 3px solid yellow; */
         }
 
         .control-center {
@@ -271,7 +270,7 @@
         }
 
         .control-center-list {
-          background: transparent;
+          background: red;
         }
 
         .control-center-list-placeholder {
@@ -279,7 +278,7 @@
         }
 
         .floating-notifications {
-          background: transparent;
+          background: @noti-bg;
         }
 
         /* Window behind control center and on all other monitors */
@@ -326,8 +325,7 @@
           box-shadow: none;
         }
         .widget-dnd > switch:checked {
-          /* background: @bg-selected; */
-          background: blue;
+          background: @bg-selected;
         }
         .widget-dnd > switch:checked slider {
           /* background: @bg-selected; */
