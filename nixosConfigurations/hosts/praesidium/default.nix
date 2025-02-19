@@ -26,7 +26,6 @@
       # TODO: what does this do?
       kernelParams = [ "nvidia-drm.fbdev=1" ];
       kernelModules = [
-        "i2c-dev"
         # Virtual Camera
         "v4l2loopback"
         # Virtual Microphone, built-in
