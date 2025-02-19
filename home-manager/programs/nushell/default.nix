@@ -31,8 +31,8 @@
         #   '';
         g = "nvim `+Git | only`";
         gake = "do { git pull; make }";
-        gitd = "gitd";
-        gits = "git status";
+        gitd = "git d";
+        gits = "git s";
         gp = "gh pr view";
         gpw = "gh pr view -w";
         gust = "do { git pull; just }";
