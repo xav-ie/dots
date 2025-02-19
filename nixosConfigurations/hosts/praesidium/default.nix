@@ -385,7 +385,10 @@
       };
       # TODO: ???
       # thermald.enable = true;
-      hardware.openrgb.enable = true;
+      hardware.openrgb = {
+        enable = true;
+        package = pkgs.pkgs-mine.openrgb-appimage;
+      };
       # udev = {
       #   # TODO: for `ns-usbloader`
       #   extraRules = # python
