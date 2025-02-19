@@ -23,13 +23,16 @@ in
 
   config = {
     home.sessionVariables = {
-      NVD_BACKEND = "direct"; # github:elFarto
+      GBM_BACKEND = "nvidia-drm";
+      LIBVA_DRIVER_NAME = "nvidia";
       MOZ_DISABLE_RDD_SANDBOX = "1";
       NIXOS_OZONE_WL = "1";
-      LIBVA_DRIVER_NAME = "nvidia";
-      GBM_BACKEND = "nvidia-drm";
-      __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+      NVD_BACKEND = "direct"; # github:elFarto
+      WLR_NO_HARDWARE_CURSORS = "1";
       WLR_RENDERER_ALLOW_SOFTWARE = "1";
+      XCURSOR_SIZE = "24";
+      XDG_SESSION_TYPE = "wayland";
+      __GLX_VENDOR_LIBRARY_NAME = "nvidia";
     };
     home.packages = with pkgs; [
       grimblast # screenshot tool
@@ -93,18 +96,6 @@ in
             exec-once = ${pkgs.blueman}/bin/blueman-applet
             exec-once = ${pkgs.swayidle}/bin/swayidle timeout 300 '${pkgs.grimblast}/bin/grimblast save screen - | ${pkgs.imagemagick}/bin/magick png:- -scale 10% -blur 0x2.5 -resize 1000% ~/Pictures/out.png && ${pkgs.swaylock}/bin/swaylock -i ~/Pictures/out.png' timeout 600 'hyprctl dispatch dpms off' resume 'hyprctl dispatch dpms on'
 
-            # Source a file (multi-file configs)
-            # source = ~/.config/hypr/myColors.conf
-
-            # Some default env vars.
-            env = XCURSOR_SIZE,24
-            # I guess this is how you can set better nvidia variables
-            env = LIBVA_DRIVER_NAME,nvidia
-            env = XDG_SESSION_TYPE,wayland
-            env = GBM_BACKEND,nvidia-drm
-            env = __GLX_VENDOR_LIBRARY_NAME,nvidia
-            env = WLR_NO_HARDWARE_CURSORS,1
-            env = WLR_RENDERER_ALLOW_SOFTWARE,1
             # There is lots of weird edge cases listed here:
             # https://wiki.hyprland.org/Nvidia/#how-to-get-hyprland-to-possibly-work-on-nvidia
 
