@@ -163,11 +163,11 @@
         defaultFonts = {
           serif = [
             "Libertinus Serif"
-            "Symbols Nerd Font"
+            "Apple Color Emoji"
           ];
           sansSerif = [
             "Inter"
-            "Symbols Nerd Font"
+            "Apple Color Emoji"
           ];
           monospace = [
             "Maple Mono NF"
