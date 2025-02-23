@@ -160,6 +160,30 @@
       fontconfig = {
         enable = true;
 
+        localConf = # xml
+          ''
+            <?xml version="1.0"?>
+            <!DOCTYPE fontconfig SYSTEM "urn:fontconfig:font.dtd">
+            <fontconfig>
+              <match target="font">
+                <description>Enable some typographic features of Maple Mono NF font, for all applications.</description>
+                <test name="family" compare="eq" ignore-blanks="true">
+                  <string>Maple Mono NF</string>
+                </test>
+                <edit name="fontfeatures" mode="append">
+                  <string>cv01 on</string>
+                  <string>cv02 on</string>
+                  <string>cv04 on</string>
+                  <string>ss01 on</string>
+                  <string>ss02 on</string>
+                  <string>ss03 on</string>
+                  <string>ss04 on</string>
+                  <string>ss05 on</string>
+                </edit>
+              </match>
+            </fontconfig>
+          '';
+
         defaultFonts = {
           serif = [
             "Libertinus Serif"
