@@ -1,10 +1,14 @@
 {
   config,
   inputs,
+  lib,
   pkgs,
   user,
   ...
 }:
+let
+  fontCfg = config.fonts.fontconfig;
+in
 {
   imports = [
     # TODO: investigate what these actually do
@@ -181,6 +185,24 @@
                   <string>ss05 on</string>
                 </edit>
               </match>
+              <alias>
+                <description>Some websites do not respect lacking Arial, use font-sans as fallback</description>
+                <family>Arial</family>
+                <prefer>
+                ${lib.concatStringsSep "\n    " (
+                  map (font: "  <family>${font}</family>") fontCfg.defaultFonts.sansSerif
+                )}
+                </prefer>
+              </alias>
+              <alias>
+                <description>Some websites do not respect sans-serif and demand a ui-sans-serif</description>
+                <family>ui-sans-serif</family>
+                <prefer>
+                ${lib.concatStringsSep "\n    " (
+                  map (font: "  <family>${font}</family>") fontCfg.defaultFonts.sansSerif
+                )}
+                </prefer>
+              </alias>
             </fontconfig>
           '';
 
