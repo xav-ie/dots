@@ -53,7 +53,7 @@
           curl
           deadnix # dead code linter
           delta
-          devenv # idk... I think I like plain flake approach
+          pkgs-bleeding.devenv # idk... I think I like plain flake approach
           fd
           ffmpeg
           gh
