@@ -35,7 +35,6 @@
         "protonvpn"
         "raycast"
         "sf-symbols"
-        "slack"
         "zoom"
       ];
       brews = [ "mas" ];
@@ -249,13 +248,6 @@
                 };
                 LSHandlerRoleAll = "com.bitwarden.desktop";
                 LSHandlerURLScheme = "bitwarden";
-              }
-              {
-                LSHandlerPreferredVersions = {
-                  LSHandlerRoleAll = "-";
-                };
-                LSHandlerRoleAll = "com.tinyspeck.slackmacgap";
-                LSHandlerURLScheme = "slack";
               }
               {
                 LSHandlerPreferredVersions = {

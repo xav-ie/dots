@@ -32,7 +32,6 @@
           # prusa-slicer                # does not launch currently
           python312Packages."adblock"
           rofi-rbw # bitwarden cli wrapper
-          slack
           sops
           xdg-utils # xdg-open, xdg-mime, xdg-email, etc.
           wf-recorder
