@@ -1,7 +1,13 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
+let
+  writeNuApplication = import ../../lib/writeNuApplication { inherit lib pkgs; };
+in
 {
   config = {
     systemd.user = {
+      # Nicely reload system units when changing configs
+      startServices = "sd-switch";
+
       services.ollama-server = {
         Unit = {
           Description = "Run ollama server";
@@ -14,29 +20,44 @@
         };
       };
 
-      # Zoom and Slack love to "helpfully" stay open even when I kill them through UI
+      # Zoom loves to "helpfully" stay open even when I kill through UI
       services.kill-spyware = {
         Unit = {
           Description = "Stop spyware";
         };
         Service = {
           Type = "oneshot";
-          ExecStart = ../dotfiles/kill-spyware.sh;
-          # TODO: I guess you need this? :/
-          Environment = "PATH=/run/current-system/sw/bin";
+          ExecStart = lib.getExe (writeNuApplication {
+            name = "kill-spyware";
+            runtimeInputs = with pkgs; [
+              libnotify
+              hyprland
+              zenity
+            ];
+            text = # nu
+              ''
+                notify-send "Work is done. Time to log off..."
+                let zoom_window_client = (hyprctl clients -j
+                                          | from json
+                                          | filter {|| $in.title == "Zoom" })
+                if ($zoom_window_client | length) == 1 {
+                  try {
+                    zenity --question --text="Close Zoom?"; kill ($zoom_window_client | first | get pid)
+                  } catch {
+                    notify-send "No (or more than one) zoom windows found."
+                  }
+                }
+              '';
+          });
         };
       };
-
-      # Nicely reload system units when changing configs
-      startServices = "sd-switch";
-
       timers.kill-spyware = {
         Unit = {
           Description = "Stop spyware after working hours";
         };
         Timer = {
           Unit = "kill-spyware.service";
-          OnCalendar = "18:00";
+          OnCalendar = "Mon..Fri 18:00";
           Persistent = true;
         };
         Install = {
@@ -50,8 +71,17 @@
         };
         Service = {
           Type = "oneshot";
-          ExecStart = ../dotfiles/start-work.sh;
-          Environment = "PATH=/run/current-system/sw/bin";
+          ExecStart = lib.getExe (
+            pkgs.writeShellApplication {
+              name = "start-work";
+              runtimeInputs = with pkgs; [
+                libnotify
+              ];
+              text = ''
+                notify-send "Good morning, time to start work!"
+              '';
+            }
+          );
         };
       };
       timers.start-work = {
