@@ -5,20 +5,6 @@ let
   inherit (inputs.nix-darwin.lib) darwinSystem;
 in
 {
-  # macbook air - m1
-  castra = darwinSystem {
-    inherit system;
-    specialArgs = {
-      inherit inputs user toplevel;
-    };
-    modules = [
-      ../lib/common
-      ./darwin-home-manager.nix
-      ./hosts/castra
-      ./modules/pam-reattach.nix
-    ];
-  };
-
   # macbook air - m3
   stella = darwinSystem {
     inherit system;
