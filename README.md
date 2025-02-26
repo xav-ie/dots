@@ -28,7 +28,6 @@ classDiagram
     class packages["<a href='https://github.com/xav-ie/dots/tree/main/packages'>./packages</a>"]
 
     lib: overlay setup, nix settings, utilities
-    darwinConfigurations: • castra
     darwinConfigurations: • stella
     home-manager: hm modules and setup for linux and mac
     nixosConfigurations: • praesidium
@@ -60,7 +59,7 @@ other bits of config.
 ## Things I am working on
 
 <details>
-<summary>Secrets</summary>  
+<summary>Secrets</summary>
 I want to configure secrets the "right way".
 
 - [ ] Use `pass` or `age` to just store all my ENV variables, but
@@ -83,7 +82,7 @@ I want to configure secrets the "right way".
   </details>
 
 <details>
-<summary>IOT</summary>  
+<summary>IOT</summary>
 I have some things in my house that I want control with my computer.
 
 - Computer lights are semi-controllable through `open-rgb -p`, but I
@@ -99,7 +98,7 @@ sometimes does not connect.
 </details>
 
 <details>
-<summary>Waybar replacement</summary>  
+<summary>Waybar replacement</summary>
 I am not 100% happy with Waybar. It is a great tool for getting started,
 but I want complete control. Also, the blur is controled through hacks.
 Vimjoyer made a video on AGS: https://youtube.com/watch?v=GvpTUKaXqNk
