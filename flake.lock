@@ -183,25 +183,7 @@
     },
     "flake-utils_2": {
       "inputs": {
-        "systems": "systems"
-      },
-      "locked": {
-        "lastModified": 1731533236,
-        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
-        "owner": "numtide",
-        "repo": "flake-utils",
-        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
-        "type": "github"
-      },
-      "original": {
-        "owner": "numtide",
-        "repo": "flake-utils",
-        "type": "github"
-      }
-    },
-    "flake-utils_3": {
-      "inputs": {
-        "systems": "systems_3"
+        "systems": "systems_2"
       },
       "locked": {
         "lastModified": 1731533236,
@@ -299,11 +281,11 @@
     "homebrew-bundle": {
       "flake": false,
       "locked": {
-        "lastModified": 1735781944,
-        "narHash": "sha256-E6CPy530y7I2mg4Gn3LQJ7J8IZDcZcCjh5yA213UlS0=",
+        "lastModified": 1740523861,
+        "narHash": "sha256-Mo8RcWSYVb56iW4Ndo5MbVpZRW8LaZHqjBa6IeoxdnU=",
         "owner": "homebrew",
         "repo": "homebrew-bundle",
-        "rev": "4bb232bbd187b1f0dc8171acaecf0ffb039d4b37",
+        "rev": "1b5784d6f5d32cd5c4347cda687e14362bfd5030",
         "type": "github"
       },
       "original": {
@@ -315,11 +297,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1735865673,
-        "narHash": "sha256-r+KoRqPg3SG6nZ/bTIrHZd8EhKUCXpy0jds2QVd7b6o=",
+        "lastModified": 1740545115,
+        "narHash": "sha256-bkwBNlyCqBGbbEXFPrWXXbx3aEBWoVBmYsEw+pvcMcQ=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "18d5740beb50072df2df975655452617c4eecb37",
+        "rev": "2d0ff38605e9aa68525412536cccc7eac7a116cf",
         "type": "github"
       },
       "original": {
@@ -331,11 +313,11 @@
     "homebrew-core": {
       "flake": false,
       "locked": {
-        "lastModified": 1735864829,
-        "narHash": "sha256-MhiFrj/3OZkQ3Ws1PSeHc1L/4ksPnxb6vIG2om8NwhY=",
+        "lastModified": 1740544411,
+        "narHash": "sha256-u5GrFku9I13sMIL7OgrQypNtz6k5bJ9Uj6dB63EogTQ=",
         "owner": "homebrew",
         "repo": "homebrew-core",
-        "rev": "2a37cd38f34a5ddf6b80bdc3f9e837226751e5d3",
+        "rev": "bbb64322f795d45a8041c5dcd88c60888e3d80e0",
         "type": "github"
       },
       "original": {
@@ -651,7 +633,6 @@
     "nix-homebrew": {
       "inputs": {
         "brew-src": "brew-src",
-        "flake-utils": "flake-utils_2",
         "nix-darwin": [
           "nix-darwin"
         ],
@@ -660,11 +641,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1732145543,
-        "narHash": "sha256-VRQh/lvCSko9YV7haXyPt7DSp+EkgjjBv/9U4cY9c50=",
+        "lastModified": 1736041957,
+        "narHash": "sha256-Kk/cVtkxwfHNoB6nINUarMLTtyAEvH+ohzxKBptMzzg=",
         "owner": "zhaofengli-wip",
         "repo": "nix-homebrew",
-        "rev": "ac3945ee614f69ab89c6935b3f0567028de5f012",
+        "rev": "a6d99cc7436fc18c097b3536d9c45c0548c694c8",
         "type": "github"
       },
       "original": {
@@ -823,7 +804,7 @@
         "nur": "nur",
         "pre-commit-hooks": "pre-commit-hooks",
         "rust-overlay": "rust-overlay",
-        "systems": "systems_2",
+        "systems": "systems",
         "systems-linux": "systems-linux",
         "treefmt-nix": "treefmt-nix",
         "waybar": "waybar",
@@ -902,21 +883,6 @@
       }
     },
     "systems_2": {
-      "locked": {
-        "lastModified": 1681028828,
-        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
-        "owner": "nix-systems",
-        "repo": "default",
-        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-systems",
-        "repo": "default",
-        "type": "github"
-      }
-    },
-    "systems_3": {
       "locked": {
         "lastModified": 1681028828,
         "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
@@ -1018,7 +984,7 @@
     "zjstatus": {
       "inputs": {
         "crane": "crane",
-        "flake-utils": "flake-utils_3",
+        "flake-utils": "flake-utils_2",
         "nixpkgs": "nixpkgs_2",
         "rust-overlay": "rust-overlay_2"
       },
