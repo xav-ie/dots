@@ -30,6 +30,7 @@
         "ghostty"
         "little-snitch"
         "loom"
+        "lunar"
         "microsoft-edge"
         "openvpn-connect"
         "protonvpn"
