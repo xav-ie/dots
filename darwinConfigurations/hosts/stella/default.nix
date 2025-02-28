@@ -4,6 +4,9 @@
   user,
   ...
 }:
+let
+  writeNuApplication = import ../../../lib/writeNuApplication { inherit lib pkgs; };
+in
 {
   config = {
     homebrew = {
@@ -36,7 +39,6 @@
         "protonvpn"
         "raycast"
         "sf-symbols"
-        "zoom"
       ];
       brews = [ "mas" ];
     };
@@ -148,16 +150,42 @@
             applications = [
               "Ghostty"
               "Firefox"
-              "zoom.us"
+              "Zoom"
               "Finder"
               "Messages"
               "Chromium"
               "Safari"
             ];
+            focus-application = lib.getExe (writeNuApplication {
+              name = "focus-application";
+              runtimeInputs = with pkgs; [
+                yabai
+                pkgs-mine.notify
+              ];
+              text = # nu
+                ''
+                  def main [appName: string] {
+                    try {
+                      let appId = (yabai -m query --windows
+                                  | from json
+                                  | where app == $"($appName)"
+                                  | first
+                                  | get id)
+                      yabai -m window --focus $appId
+                    } catch {
+                      notify $"Could not focus on '($appName)'"
+                    }
+                  }
+                '';
+              # TODO: add launching support and add window switching support (i.e. more than one window open of app should switch windows on re-invoke)
+              # ''
+              #   cmd - ${builtins.toString index}: osascript -e 'tell application "${elem}" to activate'
+              # '')
+            });
             commands = lib.lists.imap1 (
               index: elem: # sh
               ''
-                cmd - ${builtins.toString index}: osascript -e 'tell application "${elem}" to activate'
+                cmd - ${builtins.toString index}: ${focus-application} ${elem}
               '') applications;
             commandString = builtins.concatStringsSep "\n" commands;
             move-pip = lib.getExe pkgs.pkgs-mine.move-pip;
