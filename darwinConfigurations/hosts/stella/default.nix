@@ -156,8 +156,8 @@ in
               "Chromium"
               "Safari"
             ];
-            focus-application = lib.getExe (writeNuApplication {
-              name = "focus-application";
+            focus-or-open-application = lib.getExe (writeNuApplication {
+              name = "focus-or-open-application";
               runtimeInputs = with pkgs; [
                 yabai
                 pkgs-mine.notify
@@ -166,26 +166,28 @@ in
                 ''
                   def main [appName: string] {
                     try {
-                      let appId = (yabai -m query --windows
-                                  | from json
-                                  | where app == $"($appName)"
-                                  | first
-                                  | get id)
-                      yabai -m window --focus $appId
+                      ^open (mdfind kMDItemContentTypeTree=com.apple.application-bundle
+                            | grep $'/($appName).app$')
+                      # TODO: add add window switching support (i.e. more than
+                      # one window open of app should switch windows on
+                      # re-invoke)
+                      # Also, make sure PiP windows never get focused on
+                      # let appId = (yabai -m query --windows
+                      #             | from json
+                      #             | where app == $"($appName)"
+                      #             | first
+                      #             | get id)
+                      # yabai -m window --focus $appId
                     } catch {
-                      notify $"Could not focus on '($appName)'"
+                      notify $"Could not focus or open '($appName)'"
                     }
                   }
                 '';
-              # TODO: add launching support and add window switching support (i.e. more than one window open of app should switch windows on re-invoke)
-              # ''
-              #   cmd - ${builtins.toString index}: osascript -e 'tell application "${elem}" to activate'
-              # '')
             });
             commands = lib.lists.imap1 (
               index: elem: # sh
               ''
-                cmd - ${builtins.toString index}: ${focus-application} ${elem}
+                cmd - ${builtins.toString index}: ${focus-or-open-application} ${elem}
               '') applications;
             commandString = builtins.concatStringsSep "\n" commands;
             move-pip = lib.getExe pkgs.pkgs-mine.move-pip;
