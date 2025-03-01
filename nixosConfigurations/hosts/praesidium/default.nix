@@ -390,6 +390,63 @@ in
       blueman.enable = true;
       flatpak.enable = true;
       geoclue2.enable = true;
+      home-assistant = {
+        enable = true;
+        config = {
+          default_config = { };
+
+          homeassistant = {
+            # not currently working :/
+            # media_dirs = {
+            #   media = "/media";
+            # };
+            # allowlist_external_dirs = [
+            #   "/tmp"
+            #   "/home/x/Media"
+            # ];
+          };
+        };
+
+        extraComponents =
+          # default config
+          [
+            "assist_pipeline"
+            "backup"
+            "bluetooth"
+            "cloud"
+            "config"
+            "conversation"
+            "dhcp"
+            "energy"
+            "go2rtc"
+            "history"
+            "homeassistant_alerts"
+            "image_upload"
+            "logbook"
+            "media_source"
+            "mobile_app"
+            "my"
+            "ssdp"
+            "stream"
+            "sun"
+            "usb"
+            "webhook"
+            "zeroconf"
+          ]
+          # my additions
+          ++ [
+            "apple_tv"
+            "govee_light_local"
+            "homekit"
+            "homekit_controller"
+            "matter"
+            "met"
+            "thread"
+            "xiaomi_aqara"
+            "zha"
+          ];
+      };
+
       gnome.gnome-keyring.enable = true;
       openssh = {
         enable = true;
