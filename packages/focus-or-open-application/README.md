@@ -14,6 +14,8 @@ This will search all normal locations of .app files and then either focus the ap
 
 It depends on yabai for the focus functionality.
 
+If the app has multiple windows, it will choose the last window in the list of windows to enable window switching functionality. This is most helpful to say, break a meeting tab into its own window and ensure it never gets lost amongst the rest of your tabs.
+
 ## Installation
 
 I recommend adding this to your NixOS flake if you want to use this long
