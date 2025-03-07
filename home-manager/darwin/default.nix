@@ -14,6 +14,7 @@
         ])
         ++ (with pkgs.pkgs-mine; [
           fix-yabai
+          focus-or-open-application
           move-pip
         ]);
     };
