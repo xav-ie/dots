@@ -27,16 +27,18 @@ classDiagram
     class overlays["<a href='https://github.com/xav-ie/dots/tree/main/overlays'>./overlays</a>"]
     class packages["<a href='https://github.com/xav-ie/dots/tree/main/packages'>./packages</a>"]
 
-    lib: overlay setup, nix settings, utilities
+    lib: overlay setup,
+    lib:  nix settings,
+    lib:  utilities
     darwinConfigurations: • stella
-    home-manager: hm modules and setup for linux and mac
+    home-manager: hm modules and setup
+    home-manager: for linux and mac
     nixosConfigurations: • praesidium
     overlays: package overrides
     packages: • cache-command
     packages: • jira-list
     packages: • record
     packages: • record-section
-    packages: • zellij-tab-name-update
     packages: • ...
 
     lib ..> overlays
