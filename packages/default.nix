@@ -4,6 +4,7 @@
 let
   optionalAttrs = bool: attrSet: if bool then attrSet else { };
   writeNuApplication = import ../lib/writeNuApplication { inherit lib pkgs; };
+  notify = pkgs.callPackage ./notify { };
 in
 rec {
   default = pkgs.callPackage ./cache-command { };
@@ -16,8 +17,8 @@ rec {
   j = pkgs.callPackage ./j { };
   jira-task-list = pkgs.callPackage ./jira-task-list { inherit cache-command; };
   jira-list = pkgs.callPackage ./jira-list { inherit cache-command; };
-  notify = pkgs.callPackage ./notify { };
   nvim = pkgs.callPackage ./nvim { };
+  inherit notify;
   is-sshed = pkgs.callPackage ./is-sshed { };
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
   tmux-tab-name-update = pkgs.callPackage ./tmux-tab-name-update { };
@@ -26,6 +27,9 @@ rec {
 }
 // (optionalAttrs pkgs.stdenv.isDarwin {
   fix-yabai = pkgs.callPackage ./fix-yabai { };
+  focus-or-open-application = pkgs.callPackage ./focus-or-open-application {
+    inherit writeNuApplication notify;
+  };
   move-pip = pkgs.callPackage ./move-pip { inherit writeNuApplication; };
 })
 // (optionalAttrs pkgs.stdenv.isLinux {
