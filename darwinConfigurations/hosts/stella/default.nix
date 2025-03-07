@@ -4,9 +4,6 @@
   user,
   ...
 }:
-let
-  writeNuApplication = import ../../../lib/writeNuApplication { inherit lib pkgs; };
-in
 {
   config = {
     homebrew = {
@@ -156,34 +153,7 @@ in
               "Chromium"
               "Safari"
             ];
-            focus-or-open-application = lib.getExe (writeNuApplication {
-              name = "focus-or-open-application";
-              runtimeInputs = with pkgs; [
-                yabai
-                pkgs-mine.notify
-              ];
-              text = # nu
-                ''
-                  def main [appName: string] {
-                    try {
-                      ^open (mdfind kMDItemContentTypeTree=com.apple.application-bundle
-                            | grep $'/($appName).app$')
-                      # TODO: add add window switching support (i.e. more than
-                      # one window open of app should switch windows on
-                      # re-invoke)
-                      # Also, make sure PiP windows never get focused on
-                      # let appId = (yabai -m query --windows
-                      #             | from json
-                      #             | where app == $"($appName)"
-                      #             | first
-                      #             | get id)
-                      # yabai -m window --focus $appId
-                    } catch {
-                      notify $"Could not focus or open '($appName)'"
-                    }
-                  }
-                '';
-            });
+            focus-or-open-application = lib.getExe pkgs.pkgs-mine.focus-or-open-application;
             commands = lib.lists.imap1 (
               index: elem: # sh
               ''
