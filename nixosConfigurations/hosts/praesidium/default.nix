@@ -15,6 +15,7 @@ in
     inputs.hardware.nixosModules.common-cpu-intel-cpu-only
     inputs.hardware.nixosModules.common-gpu-nvidia-nonprime
     inputs.hardware.nixosModules.common-pc-ssd
+    ./systemd.nix
     ./hardware-configuration.nix
   ];
 
@@ -393,6 +394,16 @@ in
       home-assistant = {
         enable = true;
         config = {
+          # You first need to make sure there is at least empty
+          # automations.yaml in /var/lib/hass or this will not work. Same goes
+          # for scripts.yaml, scenes.yaml and groups.yaml
+          # Please see ./systemd.nix
+          automation = "!include automations.yaml";
+          scene = "!include scenes.yaml";
+          script = # yaml
+            "!include scripts.yaml";
+          group = "!include groups.yaml";
+
           default_config = { };
 
           homeassistant = {
@@ -539,21 +550,6 @@ in
       };
     };
 
-    systemd = {
-      user.services.polkit-gnome-authentication-agent-1 = {
-        description = "polkit-gnome-authentication-agent-1";
-        wantedBy = [ "default.target" ];
-        after = [ "default.target" ];
-        serviceConfig = {
-          Type = "simple";
-          ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
-          Restart = "on-failure";
-          RestartSec = 1;
-          TimeoutStopSec = 10;
-        };
-      };
-    };
-
     virtualisation.docker.enable = true;
 
     # Just don't change this. There is never a good reason to change this as all updates still
@@ -564,22 +560,6 @@ in
       gc = {
         persistent = true; # nixos only
         dates = "weekly"; # nixos only
-      };
-    };
-
-    systemd = {
-      # must be system service due to journalctl needing elevated permissions
-      services.clear-log = {
-        description = "Clear >1 month-old logs every week";
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = "${pkgs.systemd}/bin/journalctl --vacuum-time=21d";
-        };
-      };
-      timers.clear-log = {
-        wantedBy = [ "timers.target" ];
-        partOf = [ "clear-log.service" ];
-        timerConfig.OnCalendar = "weekly UTC";
       };
     };
 
