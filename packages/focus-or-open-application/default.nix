@@ -13,10 +13,10 @@ writeNuApplication {
     ''
       def main [appName: string] {
         try {
-          # TODO: make sure PiP windows never get focused on
           let appId = (yabai -m query --windows
                       | from json
-                      | where app == $"($appName)"
+                      | where app   == $"($appName)" and
+                              title != "Picture-in-Picture"
                       | last
                       | get id)
           yabai -m window --focus $appId
