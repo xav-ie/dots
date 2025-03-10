@@ -55,7 +55,7 @@ classDiagram
 ## Usage
 
 I don't think you should try and directly use my dotfiles; it probably
-would not work. You should intead check out my [packages](./packages) and
+would not work. You should instead check out my [packages](./packages) and
 other bits of config.
 
 ## Things I am working on
@@ -66,10 +66,10 @@ I want to configure secrets the "right way".
 
 - [ ] Use `pass` or `age` to just store all my ENV variables, but
       then it is another master password to remember, so I think I would
-      rather figure something out with the bitwarden cli, my manager of
+      rather figure something out with the Bitwarden CLI, my manager of
       choice. Honestly, I don't really know the best course of action,
       because what if I want to change my manager?? I might also want to
-      just completely forgo bitwarden and just use good old encryption...
+      just completely forgo Bitwarden and just use good old encryption...
       There has to be someone else who thought of this
 - [ ] Look into these secret solutions others have worked on:
 
@@ -77,7 +77,7 @@ I want to configure secrets the "right way".
   - [NixOS Secrets Management by Emergent Mind](https://youtube.com/watch?v=G5f6GC7SnhU)
   - [Encrypted Secrets with NixOS](https://xeiaso.net/blog/nixos-encrypted-secrets-2021-01-20/)
   - [A Modern and Secure Desktop Setup](https://discourse.nixos.org/t/a-modern-and-secure-desktop-setup/41154)
-  - [We should manage secrets the systemd way!](https://youtube.com/watch?v=YFXwV0ZO9NE)
+  - [We should manage secrets the SystemD way!](https://youtube.com/watch?v=YFXwV0ZO9NE)
   - [Alternative way to handle secrets](https://discourse.nixos.org/t/alternative-way-to-handle-secrets/35511)
   - [Introducing Secrix](https://journal.platonic.systems/introducing-secrix)
   - [Handling Secrets in NixOS: An Overview](https://discourse.nixos.org/t/handling-secrets-in-nixos-an-overview-git-crypt-agenix-sops-and-when-to-use-them/35462)
@@ -91,11 +91,11 @@ I have some things in my house that I want control with my computer.
   need to set up more profiles.
 - Govee light is controlled via an API. I think I just have to build a
   simple script to do so.
-- Apple Home / TP-Link Switches.. I have no idea how to connect to
+- Apple Home / TP-Link Switches... I have no idea how to connect to
 these yet, but I do know it is annoying to open my phone to turn on
-my lights... I probably need to buy a homepod mini to also make them
-"always connected" bc my phone takes like 10-20 seconds to connect
-to them when I get home, which is really annoying bc it also
+my lights. I probably need to buy a home pod mini to also make them
+"always connected" because my phone takes like 10-20 seconds to connect
+to them when I get home, which is really annoying because it also
 sometimes does not connect.
 </details>
 
@@ -108,17 +108,17 @@ Vimjoyer made a video on AGS: https://youtube.com/watch?v=GvpTUKaXqNk
 I think this is a good idea to learn because it seems extremely
 extensible to make future applications.
 
-This should also mean I get keyboad access!
+This should also mean I get keyboard access!
 
 </details>
 
 <details>
 <summary>Firefox Sync</summary>
 
-- [ ] I need to just make my firefox configured more through Nix. A
+- [ ] I need to just make my Firefox configured more through Nix. A
       lot of my plugins and settings are not 100% synced properly.
-- [ ] I also need to find a RSS reader that can read/sync with a file
-    system. I am currently using FeedBro, but it does not sync between
+- [ ] I also need to find an RSS reader that can read/sync with a filesystem. I
+  am currently using FeedBro, but it does not sync between
     my desktop and laptop.
 </details>
 
@@ -130,7 +130,7 @@ and then update from the other. This often leads to build time errors
 that only occurs on the other system due to new options/drivers/etc.
 
 There is a person who has a twitter thread (I can't remember who >:[)
-who explain how they set up automated Github CI to test their config.
+who explain how they set up automated GitHub CI to test their config.
 
 This would be **amazing** and I want to set this up, too.
 
@@ -156,24 +156,24 @@ screenshot of it open and maybe even do some actions.
       have multiple different types of Shimejii. Right now, there is just
       this really ugly one. I also want to fix the divide by zero errors
       that keep making it crash.
-- [ ] Email - just set up himalaya email client in vim.
-- [ ] Reminders - I want my gcal to appear in my system and I want to
+- [ ] Email - just set up Himalaya email client in vim.
+- [ ] Reminders - I want my GCal to appear in my system and I want to
       be able to easily manage past and future reminders, a calendar. So I
       just have to set up a good and pretty system calendar
 - [ ] Pomodoro - Set up system pomodoro
-- [ ] Screensharing - I would prefer somebindings and a bit more
+- [ ] Screen sharing - I would prefer some bindings and a bit more
       chrome/indicators in my bar to show that I am sharing screen. I
-      dislike that I could be screensharing and not really be aware that I
+      dislike that I could be screen sharing and not really be aware that I
       am.
 - [ ] Do Not Disturb - I would like to trigger DND when I am
-      scrensharing. I really dislike that notifications come through on
-      screenshare. Maybe I can still allow notifications, but hide them
-      from screenshare entirely??? That would be really cool.
-- [ ] use nix-colors repo for theming everything This is interesting:
+      screen sharing. I really dislike that notifications come through on
+      screen share. Maybe I can still allow notifications, but hide them
+      from screen share entirely??? That would be really cool.
+- [ ] Use nix-colors repo for coloring everything This is interesting:
       [colemickens/nixcfg/mixins/\_preferences.nix](https://github.com/colemickens/nixcfg/blob/3705032fd67f231fe83fd3bc25d4021b80394b1c/mixins/_preferences.nix)
-- [ ] create a zellij key overlay plugin
+- [ ] Create a zellij key overlay plugin
   - [ ] [awesome-zellij](https://github.com/zellij-org/awesome-zellij)
-  - [ ] [zellij plugin system walkthrough](https://github.com/Kangaxx-0/first-zellij-plugin)
+  - [ ] [zellij plugin system walk through](https://github.com/Kangaxx-0/first-zellij-plugin)
   - [ ] [Learning from Developing a Zellij Plugin](https://blog.nerd.rocks/posts/profiling-zellij-plugins/)
   - [ ] [Common Snippets for Developing Zellij Plugins](https://blog.nerd.rocks/posts/common-snippets-for-zellij-development/)
 - [ ] Try out and get good at Jujutsu
@@ -191,4 +191,4 @@ I used these configs to help build mine:
 - [clemak27/linux_setup](https://github.com/clemak27/linux_setup/blob/4970745992be98b0d00fdae336b4b9ee63f3c1af)
 - [CosmicHalo/AndromedaNixos](https://github.com/CosmicHalo/AndromedaNixos/blob/665668415fa72e850d322adbdacb81c1251301c0)
 
-I definitely used a lot more, utilising mostly github search.
+I definitely used a lot more, utilizing mostly GitHub search.
