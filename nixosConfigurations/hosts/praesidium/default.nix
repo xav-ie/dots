@@ -19,6 +19,15 @@ in
     ./hardware-configuration.nix
   ];
 
+  options = {
+    services.home-assistant.mediaDir = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      description = "The directory where media is stored";
+      example = "/media";
+      default = null;
+    };
+  };
+
   config = {
     boot = {
       # binfmt.emulatedSystems = [
@@ -393,6 +402,8 @@ in
       geoclue2.enable = true;
       home-assistant = {
         enable = true;
+        mediaDir = "/media";
+
         config = {
           # You first need to make sure there is at least empty
           # automations.yaml in /var/lib/hass or this will not work. Same goes
@@ -406,14 +417,16 @@ in
 
           default_config = { };
 
-          homeassistant = {
-            temperature_unit = "F";
-            allowlist_external_dirs = [
-              "/tmp"
-              # not currently working for home directories :/
-              # "/home/x/Media"
-            ];
-          };
+          homeassistant =
+            let
+              mediaDir = config.services.home-assistant.mediaDir;
+              isDefined = x: x != null;
+            in
+            {
+              temperature_unit = "F";
+              media_dirs = lib.attrsets.optionalAttrs (isDefined mediaDir) { media = mediaDir; };
+              allowlist_external_dirs = lib.lists.optional (isDefined mediaDir) mediaDir;
+            };
         };
 
         extraComponents =
