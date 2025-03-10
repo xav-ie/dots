@@ -407,14 +407,12 @@ in
           default_config = { };
 
           homeassistant = {
-            # not currently working :/
-            # media_dirs = {
-            #   media = "/media";
-            # };
-            # allowlist_external_dirs = [
-            #   "/tmp"
-            #   "/home/x/Media"
-            # ];
+            temperature_unit = "F";
+            allowlist_external_dirs = [
+              "/tmp"
+              # not currently working for home directories :/
+              # "/home/x/Media"
+            ];
           };
         };
 
