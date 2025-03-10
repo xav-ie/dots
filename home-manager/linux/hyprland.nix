@@ -39,6 +39,7 @@ in
 
     home.packages = with pkgs; [
       grimblast # screenshot tool
+      hyprshade
       # TODO: necessary?
       libnotify
       libva
@@ -51,6 +52,18 @@ in
       waypipe
       wl-clipboard
     ];
+
+    home.file.".config/hypr/shaders/red.glsl".text = # glsl
+      ''
+        precision highp float;
+        varying vec2 v_texcoord;
+        uniform sampler2D tex;
+
+        void main() {
+            vec4 c = texture2D(tex, v_texcoord);
+            gl_FragColor = vec4(c.r, 0.0, 0.0, c.a);
+        }
+      '';
 
     wayland.windowManager.hyprland =
       let
