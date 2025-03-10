@@ -1,6 +1,4 @@
 {
-  config,
-  lib,
   pkgs,
   ...
 }:
@@ -19,22 +17,6 @@
           TimeoutStopSec = 10;
         };
       };
-
-      # fix bug in ha not creating these files...
-      tmpfiles.rules =
-        let
-          hassDir = config.services.home-assistant.configDir;
-          mediaDir = config.services.home-assistant.mediaDir;
-          isDefined = x: x != null;
-        in
-        lib.lists.optionals config.services.home-assistant.enable [
-          "f ${hassDir}/automations.yaml 0755 hass hass"
-          "f ${hassDir}/scenes.yaml      0755 hass hass"
-          "f ${hassDir}/scripts.yaml     0755 hass hass"
-          # "d /var/lib/hass/backups 0750 hass hass"
-        ]
-        # blegh... I guess this is how we must configure media dir
-        ++ lib.lists.optional (isDefined mediaDir) "d ${mediaDir} 0777 hass hass";
 
       # must be system service due to journalctl needing elevated permissions
       # TODO: ^ is this true?
