@@ -5,6 +5,7 @@
   nushell,
 }:
 # TODO: use https://github.com/shanyouli/nur-packages/blob/4365127bfdb0b97919c71d6763d9b9ea2c4d178f/nix/plib/nuenv.nix#L64
+
 writeShellApplication {
   name = "fix-yabai";
   runtimeInputs = [
@@ -25,7 +26,7 @@ writeShellApplication {
     # sh
     ''
       # TODO: remove this, only here to pass shellcheck
-      line=""
+      let line = ""
       nu -c "${nuScript}"
     '';
 }
