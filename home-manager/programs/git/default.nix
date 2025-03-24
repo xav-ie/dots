@@ -175,7 +175,7 @@ in
         "includeIf \"gitdir:~/\"" = {
           path = "~/.config/git/config.default";
         };
-        "includeIf \"gitdir:~/Outsmartly/\"" = {
+        "includeIf \"gitdir:~/Work/\"" = {
           path = "~/.config/git/config.work";
         };
         init = {
