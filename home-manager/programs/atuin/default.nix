@@ -1,8 +1,10 @@
-_: {
+{ pkgs, ... }:
+{
   config = {
     programs.atuin = {
       enable = true;
-      daemon.enable = true;
+      # super buggy on macos
+      daemon.enable = pkgs.stdenv.isLinux;
       enableZshIntegration = false;
       # https://docs.atuin.sh/configuration/config
       settings = {
