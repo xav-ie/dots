@@ -63,7 +63,7 @@ keybindings:
   issues: []
   prs: []
 repoPaths:
-  outsmartly/*: ~/Outsmartly/*
+  outsmartly/*: ~/Work/*
   default: ~/Projects/*
 theme:
   ui:
