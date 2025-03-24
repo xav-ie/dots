@@ -26,7 +26,7 @@ rec {
   zellij-tab-name-update = pkgs.callPackage ./zellij-tab-name-update { };
 }
 // (optionalAttrs pkgs.stdenv.isDarwin {
-  fix-yabai = pkgs.callPackage ./fix-yabai { };
+  fix-yabai = pkgs.callPackage ./fix-yabai { inherit writeNuApplication; };
   focus-or-open-application = pkgs.callPackage ./focus-or-open-application {
     inherit writeNuApplication notify;
   };
