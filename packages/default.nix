@@ -11,6 +11,7 @@ rec {
 
   # Personal scripts
   apple-emoji-linux = pkgs.callPackage ./apple-emoji-linux { };
+  better-branch = pkgs.callPackage ./better-branch { inherit writeNuApplication; };
   cache-command = pkgs.callPackage ./cache-command { };
   ff = pkgs.callPackage ./ff { };
   # g = pkgs.callPackage ./g { };

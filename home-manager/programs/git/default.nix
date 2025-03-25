@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 let
   gitIniFmt = pkgs.formats.gitIni { };
 in
@@ -26,8 +26,8 @@ in
         in
         {
           # aliases are case-insensitive
-          b = "checkout -B";
-          bb = "!${./betterbranch.sh}";
+          B = "checkout -B";
+          bb = "!${lib.getExe pkgs.pkgs-mine.better-branch}";
           blame-better = "blame -w -C -C -C";
           cam = "commit -am";
           c = "commit";
