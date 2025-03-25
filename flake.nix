@@ -93,7 +93,12 @@
       ];
 
       perSystem =
-        { lib, pkgs, ... }:
+        {
+          lib,
+          pkgs,
+          system,
+          ...
+        }:
         {
           # uncomment if you need overlays at the top level for some reason...
           # _module.args.pkgs = import inputs.nixpkgs {
@@ -101,7 +106,10 @@
           #   overlays = builtins.attrValues self.overlays;
           # };
 
-          packages = import ./packages { inherit lib pkgs; };
+          packages = import ./packages {
+            inherit lib;
+            pkgs = inputs.nixpkgs-bleeding.legacyPackages.${system};
+          };
 
           treefmt = {
             programs = {
