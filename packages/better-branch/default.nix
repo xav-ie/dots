@@ -9,6 +9,15 @@ writeNuApplication {
   ];
   text = # nu
     ''
+      def spinner [] {
+        ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+        | each { |x|
+          print -n $"(ansi green)($x)(ansi reset) Fetching remote data...\r"
+          sleep 35ms
+        }
+        return
+      }
+
       def main [] {
         # Get branches with commit dates in unix timestamp for accurate sorting
         let branches = (git for-each-ref --count=10 --sort=-committerdate
@@ -22,8 +31,10 @@ writeNuApplication {
             timestamp: ($cols | get 3 | into int)
           }})
 
-        # TODO: do in background and print status after nushell update to 0.103.0
-        git fetch --quiet --all
+        let fetch_job_id = job spawn { git fetch --quiet --all }
+        while (job list | where id == $fetch_job_id | length) == 1 {
+          spinner
+        }
 
         let branch_data = $branches | par-each { |it|
           let counts = if ($it.upstream | is-empty) {
