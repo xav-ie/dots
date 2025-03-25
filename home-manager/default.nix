@@ -81,6 +81,7 @@
         # custom packages
         ++ (with pkgs.pkgs-mine; [
           apple-emoji-linux
+          better-branch
           cache-command
           ff
           # generate-kaomoji
