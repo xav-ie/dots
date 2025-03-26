@@ -1,8 +1,14 @@
 {
   config,
   lib,
+  pkgs,
+  system,
+  inputs,
   ...
 }:
+let
+  pkgs-bleeding = inputs.nixpkgs-bleeding.legacyPackages.${system};
+in
 {
   options = {
     services.home-assistant.mediaDir = lib.mkOption {
@@ -17,6 +23,22 @@
     services = {
       home-assistant = {
         enable = true;
+        # Fix govee-local-api not setting the lights all the time
+        # pkgs-bleeding needing because poetry-core>=2.0.0 is not on stable
+        # and I don't feel like overriding *another* sub-dependency
+        package = pkgs-bleeding.home-assistant.override {
+          packageOverrides = self: super: {
+            govee-local-api = pkgs-bleeding.python313Packages.govee-local-api.overridePythonAttrs (oldAttrs: {
+              version = "2.0.2";
+              src = pkgs.fetchFromGitHub {
+                owner = "akash329d";
+                repo = "govee-local-api";
+                rev = "develop";
+                hash = "sha256-ChI/rIZwT/YMXFD83N1/cIIYkio318S3p1IgVu+P1sY=";
+              };
+            });
+          };
+        };
         mediaDir = "/media";
 
         config = {
