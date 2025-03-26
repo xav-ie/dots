@@ -23,12 +23,11 @@
           # You first need to make sure there is at least empty
           # automations.yaml in /var/lib/hass or this will not work. Same goes
           # for scripts.yaml, scenes.yaml and groups.yaml
-          # Please see ./systemd.nix
-          automation = "!include automations.yaml";
-          scene = "!include scenes.yaml";
-          script = # yaml
-            "!include scripts.yaml";
-          group = "!include groups.yaml";
+          # Please see ../systemd.nix
+          "automation ui" = "!include automations.yaml";
+          "scene ui" = "!include scenes.yaml";
+          "script ui" = "!include scripts.yaml";
+          "group ui" = "!include groups.yaml";
 
           default_config = { };
 
@@ -38,7 +37,7 @@
               isDefined = x: x != null;
             in
             {
-              temperature_unit = "F";
+              temperature_unit = "C";
               media_dirs = lib.attrsets.optionalAttrs (isDefined mediaDir) { media = mediaDir; };
               allowlist_external_dirs = lib.lists.optional (isDefined mediaDir) mediaDir;
             };
