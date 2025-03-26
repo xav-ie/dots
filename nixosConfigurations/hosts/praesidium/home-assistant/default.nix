@@ -76,6 +76,9 @@
             "govee_light_local"
             "homekit"
             "homekit_controller"
+            # Recommended for fast zlib compression
+            # https://www.home-assistant.io/integrations/isal
+            "isal"
             "matter"
             "met"
             "thread"
