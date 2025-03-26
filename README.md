@@ -89,14 +89,6 @@ I have some things in my house that I want control with my computer.
 
 - Computer lights are semi-controllable through `open-rgb -p`, but I
   need to set up more profiles.
-- Govee light is controlled via an API. I think I just have to build a
-  simple script to do so.
-- Apple Home / TP-Link Switches... I have no idea how to connect to
-these yet, but I do know it is annoying to open my phone to turn on
-my lights. I probably need to buy a home pod mini to also make them
-"always connected" because my phone takes like 10-20 seconds to connect
-to them when I get home, which is really annoying because it also
-sometimes does not connect.
 </details>
 
 <details>
