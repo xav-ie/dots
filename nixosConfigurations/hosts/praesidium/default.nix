@@ -17,7 +17,7 @@ in
     inputs.hardware.nixosModules.common-pc-ssd
     ./hardware-configuration.nix
     ./systemd.nix
-    ./home-assistant.nix
+    ./home-assistant
   ];
 
   config = {
