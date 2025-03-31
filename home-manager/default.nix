@@ -89,6 +89,7 @@
           j
           jira-list
           jira-task-list
+          localip
           notify
           nvim
           searcher
@@ -123,7 +124,6 @@
           set keymap vi
           set editing-mode vi-insert
         '';
-    home.file.".config/scripts/localip".source = ./dotfiles/localip.sh;
     # There has got to be a better way to do this :(
     home.file.".config/scripts/timeUtils.sh".source = ./dotfiles/timeUtils.sh;
     home.file.".config/scripts/colorUtils.sh".source = ./dotfiles/colorUtils.sh;
