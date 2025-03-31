@@ -1,10 +1,14 @@
 # Based on:
 # https://github.com/Misterio77/nix-config/blob/e360a9ecf6de7158bea813fc075f3f6228fc8fc0/pkgs/default.nix
-{ lib, pkgs }:
+{
+  lib,
+  pkgs,
+  generate-kaomoji,
+}:
 let
   optionalAttrs = bool: attrSet: if bool then attrSet else { };
   writeNuApplication = import ../lib/writeNuApplication { inherit lib pkgs; };
-  notify = pkgs.callPackage ./notify { };
+  notify = pkgs.callPackage ./notify { inherit generate-kaomoji; };
 in
 rec {
   default = pkgs.callPackage ./cache-command { };
