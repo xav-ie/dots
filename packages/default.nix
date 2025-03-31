@@ -8,7 +8,7 @@
 let
   optionalAttrs = bool: attrSet: if bool then attrSet else { };
   writeNuApplication = import ../lib/writeNuApplication { inherit lib pkgs; };
-  notify = pkgs.callPackage ./notify { inherit generate-kaomoji; };
+  notify = pkgs.callPackage ./notify { inherit generate-kaomoji writeNuApplication; };
 in
 rec {
   default = pkgs.callPackage ./cache-command { };
