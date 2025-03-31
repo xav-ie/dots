@@ -56,6 +56,7 @@
           pkgs-bleeding.devenv # idk... I think I like plain flake approach
           fd
           ffmpeg
+          generate-kaomoji
           gh
           gnumake
           go-jira
@@ -84,7 +85,6 @@
           better-branch
           cache-command
           ff
-          # generate-kaomoji
           is-sshed
           j
           jira-list
