@@ -65,6 +65,9 @@
           playerctl # play, pause, next
           pulseaudio # provides pactl for volume control
           # qutebrowser
+        ])
+        ++ (with pkgs.pkgs-bleeding; [
+          # needs latest security releases
           signal-desktop
         ])
         ++ (with pkgs.pkgs-mine; [
