@@ -125,9 +125,6 @@
           set editing-mode vi-insert
         '';
     # There has got to be a better way to do this :(
-    home.file.".config/scripts/timeUtils.sh".source = ./dotfiles/timeUtils.sh;
-    home.file.".config/scripts/colorUtils.sh".source = ./dotfiles/colorUtils.sh;
-    home.file.".config/scripts/generate_tokens.sh".source = ./dotfiles/generate_tokens.sh;
     home.file.".config/scripts/remove_video_silence.py".source = ./dotfiles/remove_video_silence.py;
     home.file.".config/gh-dash/config.yml".source = ./dotfiles/gh-dash/config.yml;
     home.file.".config/uair/uair.toml".source = ./dotfiles/uair.toml;
