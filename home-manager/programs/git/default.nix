@@ -36,6 +36,7 @@ in
           d = "diff ${diffTweaks}";
           dc = "diff --cached ${diffTweaks}";
           ds = "!git d && git s";
+          delete-tag = ''!f() { git tag -d "$1" && git push origin :refs/tags/"$1"; }; f'';
           graph =
             let
               columns = builtins.concatStringsSep " " [
