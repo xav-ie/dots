@@ -39,6 +39,7 @@ in
           gake = "git pull && make";
           gp = "gh pr view";
           gpw = "gh pr view -w";
+          grw = "gh repo view -w";
           info = "env info --vi-keys";
           l = "ls -lah";
           # I could not get man to respect pager width
