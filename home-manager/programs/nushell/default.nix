@@ -35,6 +35,7 @@
         gits = "git s";
         gp = "gh pr view";
         gpw = "gh pr view -w";
+        grw = "gh repo view -w";
         gust = "do { git pull; just }";
         info = "info --vi-keys";
         jsut = "just";
