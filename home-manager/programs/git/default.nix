@@ -65,7 +65,7 @@ in
           s = "status";
           sd = "!git s && git d";
           sh = "show --patch-with-stat";
-          shove = "git push --force-with-lease";
+          shove = "push --force-with-lease";
           stash-all = "stash --all";
           unstage = "restore --staged .";
           # git log -L :functionName:/path/to/file
