@@ -33,6 +33,7 @@ in
           c = "commit";
           chekcout = "checkout";
           cm = "commit -m";
+          co = "checkout";
           d = "diff ${diffTweaks}";
           dc = "diff --cached ${diffTweaks}";
           ds = "!git d && git s";
