@@ -12,6 +12,7 @@
     ./programs/eza
     # ./programs/firefox
     ./programs/git
+    ./programs/gpg
     # ./programs/kitty
     # ./programs/lf
     ./programs/pueue
