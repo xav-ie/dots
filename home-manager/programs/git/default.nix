@@ -174,6 +174,7 @@ in
         #   line-numbers = true;
         #   true-color = "always";
         # };
+        gpg.ssh.allowedSignersFile = "~/.ssh/allowed_signers";
         "includeIf \"gitdir:~/\"" = {
           path = "~/.config/git/config.default";
         };
@@ -213,6 +214,10 @@ in
         remote.origin.fetch = "+refs/pull/*/head:refs/remotes/origin/pr/*";
         rerere.enabled = true;
       };
+      signing = {
+        key = "DFC4CE8CB93873AE";
+        signByDefault = true;
+      };
     };
 
     home.file.".config/git/config.default".source = gitIniFmt.generate "config.default" {
@@ -222,5 +227,15 @@ in
     home.file.".config/git/config.work".source = gitIniFmt.generate "config.work" {
       user.email = "xavier@outsmartly.com";
     };
+
+    # TODO: encrypt this. Public info, but kind of weird to have public.
+    # every user needs to be allow-listed to sign their commits
+    # TODO: make a simple command to grab these
+    home.file.".ssh/allowed_signers".text = ''
+      # https://github.com/xav-ie.keys
+      * ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMW+HCZNdLZO3RVs9XCCw9iOeBprmfEfjTVsiuB81LOr
+      # https://github.com/ajzbc.keys
+      andrew@jazbec.io ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMqBzepmbyWNXW545lvcvPTiX4vZvsZdrLth+/YN9atO
+    '';
   };
 }
