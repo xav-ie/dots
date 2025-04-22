@@ -214,18 +214,26 @@ in
         remote.origin.fetch = "+refs/pull/*/head:refs/remotes/origin/pr/*";
         rerere.enabled = true;
       };
+
       signing = {
-        key = "DFC4CE8CB93873AE";
+        # Set key by email below. This ensures signing key email matches git commit email.
+        key = null;
         signByDefault = true;
       };
     };
 
     home.file.".config/git/config.default".source = gitIniFmt.generate "config.default" {
-      user.email = "github@xav.ie";
+      user = {
+        email = "github@xav.ie";
+        signingKey = "5B9134A9E7E7F965";
+      };
     };
 
     home.file.".config/git/config.work".source = gitIniFmt.generate "config.work" {
-      user.email = "xavier@outsmartly.com";
+      user = {
+        email = "xavier@outsmartly.com";
+        signingKey = "22420DD6C13E3EB7";
+      };
     };
 
     # TODO: encrypt this. Public info, but kind of weird to have public.
