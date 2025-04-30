@@ -62,6 +62,7 @@ in
                 | awk '{print $1}' \
                 | xargs -r gh pr checkout)
             '';
+          review = "!${lib.getExe pkgs.pkgs-mine.review}";
           rmc = "rm --cached";
           s = "status";
           sd = "!git s && git d";
