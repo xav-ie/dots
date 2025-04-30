@@ -26,6 +26,7 @@ rec {
   nvim = pkgs.callPackage ./nvim { };
   inherit notify;
   is-sshed = pkgs.callPackage ./is-sshed { };
+  review = pkgs.callPackage ./review { inherit writeNuApplication; };
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
   tmux-tab-name-update = pkgs.callPackage ./tmux-tab-name-update { };
   uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
