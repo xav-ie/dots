@@ -93,6 +93,7 @@
           localip
           notify
           nvim
+          review
           searcher
           uair-toggle-and-notify
           tmux-tab-name-update
