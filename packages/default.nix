@@ -19,13 +19,14 @@ rec {
   cache-command = pkgs.callPackage ./cache-command { };
   ff = pkgs.callPackage ./ff { };
   # g = pkgs.callPackage ./g { };
+  is-sshed = pkgs.callPackage ./is-sshed { };
   j = pkgs.callPackage ./j { };
   jira-task-list = pkgs.callPackage ./jira-task-list { inherit cache-command; };
   jira-list = pkgs.callPackage ./jira-list { inherit cache-command; };
   localip = pkgs.callPackage ./localip { inherit writeNuApplication; };
   nvim = pkgs.callPackage ./nvim { };
   inherit notify;
-  is-sshed = pkgs.callPackage ./is-sshed { };
+  prs = pkgs.callPackage ./prs { inherit writeNuApplication; };
   review = pkgs.callPackage ./review { inherit writeNuApplication; };
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
   tmux-tab-name-update = pkgs.callPackage ./tmux-tab-name-update { };

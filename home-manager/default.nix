@@ -93,6 +93,7 @@
           localip
           notify
           nvim
+          prs
           review
           searcher
           uair-toggle-and-notify
