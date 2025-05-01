@@ -51,7 +51,8 @@ writeNuApplication {
         }
 
         # 3. Reset to base branch but keep all changes as uncommitted
-        git reset $baseRefName
+        let commit_count = git rev-list --count $"($baseRefName)..HEAD"
+        git reset $"HEAD~($commit_count)"
 
         # 4. Intend to add all files so they show up in (n)vim
         git add -N .
