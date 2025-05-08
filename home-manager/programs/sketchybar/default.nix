@@ -25,7 +25,7 @@ in
 {
   config = {
     home = {
-      packages = [ pkgs.sketchybar ];
+      packages = [ pkgs.pkgs-bleeding.sketchybar ];
 
       file = {
         ".config/sketchybar/sketchybarrc".source = mkSketchybarScript "sketchybarrc" ./sketchybarrc.sh;
