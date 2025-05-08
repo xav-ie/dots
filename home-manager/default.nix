@@ -96,8 +96,9 @@
           prs
           review
           searcher
-          uair-toggle-and-notify
           tmux-tab-name-update
+          uair-toggle-and-notify
+          update-package-lock
           zellij-tab-name-update
         ]);
 
