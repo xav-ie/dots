@@ -12,8 +12,6 @@ let
 in
 rec {
   default = pkgs.callPackage ./cache-command { };
-
-  # Personal scripts
   apple-emoji-linux = pkgs.callPackage ./apple-emoji-linux { };
   better-branch = pkgs.callPackage ./better-branch { inherit writeNuApplication; };
   cache-command = pkgs.callPackage ./cache-command { };
@@ -21,16 +19,17 @@ rec {
   # g = pkgs.callPackage ./g { };
   is-sshed = pkgs.callPackage ./is-sshed { };
   j = pkgs.callPackage ./j { };
-  jira-task-list = pkgs.callPackage ./jira-task-list { inherit cache-command; };
   jira-list = pkgs.callPackage ./jira-list { inherit cache-command; };
+  jira-task-list = pkgs.callPackage ./jira-task-list { inherit cache-command; };
   localip = pkgs.callPackage ./localip { inherit writeNuApplication; };
-  nvim = pkgs.callPackage ./nvim { };
   inherit notify;
+  nvim = pkgs.callPackage ./nvim { };
   prs = pkgs.callPackage ./prs { inherit writeNuApplication; };
   review = pkgs.callPackage ./review { inherit writeNuApplication; };
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
   tmux-tab-name-update = pkgs.callPackage ./tmux-tab-name-update { };
   uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
+  update-package-lock = pkgs.callPackage ./update-package-lock { inherit writeNuApplication; };
   zellij-tab-name-update = pkgs.callPackage ./zellij-tab-name-update { };
 }
 // (optionalAttrs pkgs.stdenv.isDarwin {
