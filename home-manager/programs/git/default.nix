@@ -29,15 +29,15 @@ in
           B = "checkout -B";
           bb = "!${lib.getExe pkgs.pkgs-mine.better-branch}";
           blame-better = "blame -w -C -C -C";
-          cam = "commit -am";
           c = "commit";
+          cam = "commit -am";
           chekcout = "checkout";
           cm = "commit -m";
           co = "checkout";
           d = "diff ${diffTweaks}";
           dc = "diff --cached ${diffTweaks}";
-          ds = "!git d && git s";
           delete-tag = ''!f() { git tag -d "$1" && git push origin :refs/tags/"$1"; }; f'';
+          ds = "!git d && git s";
           graph =
             let
               columns = builtins.concatStringsSep " " [
@@ -51,10 +51,10 @@ in
             "log --graph --pretty=tformat:'${columns}' --abbrev-commit --decorate";
           main = # sh
             "!(git fetch && git fetch --tags && git checkout -B main origin/main)";
-          patch = "show --patch";
-          pull-force = "!git fetch && git reset --hard origin/$(git branch --show-current)";
           p = "push";
+          patch = "show --patch";
           prs = "!${lib.getExe pkgs.pkgs-mine.prs}";
+          pull-force = "!git fetch && git reset --hard origin/$(git branch --show-current)";
           review = "!${lib.getExe pkgs.pkgs-mine.review}";
           rmc = "rm --cached";
           s = "status";
@@ -63,6 +63,7 @@ in
           shove = "push --force-with-lease";
           stash-all = "stash --all";
           unstage = "restore --staged .";
+          update-package-lock = "!${lib.getExe pkgs.pkgs-mine.update-package-lock}";
           # git log -L :functionName:/path/to/file
           # git blame -L :functionName:/path/to/file
           # git log -S your_regex -p
