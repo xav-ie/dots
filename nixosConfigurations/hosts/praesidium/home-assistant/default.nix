@@ -39,7 +39,7 @@ in
             });
           };
         };
-        mediaDir = "/media";
+        mediaDir = "/media/hass";
 
         config = {
           # You first need to make sure there is at least empty
