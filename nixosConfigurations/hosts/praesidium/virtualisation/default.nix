@@ -2,6 +2,7 @@
 {
   imports = [
     ./spdf.nix
+    ./portainer.nix
   ];
 
   config = {
