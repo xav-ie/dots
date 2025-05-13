@@ -18,6 +18,7 @@ in
     ./hardware-configuration.nix
     ./systemd.nix
     ./home-assistant
+    ./virtualisation
   ];
 
   config = {
@@ -386,6 +387,7 @@ in
         nvidiaSettings = true;
         package = config.boot.kernelPackages.nvidiaPackages.production;
       };
+      nvidia-container-toolkit.enable = true;
     };
 
     services = {
@@ -484,8 +486,6 @@ in
         capabilities = "cap_sys_resource+ep";
       };
     };
-
-    virtualisation.docker.enable = true;
 
     # Just don't change this. There is never a good reason to change this as all updates still
     # apply and changing this just messes things up. It is a state tracker
