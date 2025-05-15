@@ -3,6 +3,7 @@
   imports = [
     ./spdf.nix
     ./portainer.nix
+    ./traefik.nix
   ];
 
   config = {
