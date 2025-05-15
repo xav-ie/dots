@@ -1,33 +1,39 @@
-{ ... }:
+{ config, ... }:
 let
   portainerDir = "/media/portainer";
+  baseDomain = config.services.local-networking.baseDomain;
+  subdomain = "portainer";
+  fullHostName = "${subdomain}.${baseDomain}";
 in
 {
-  virtualisation.oci-containers.containers.portainer = {
-    image = "portainer/portainer-ce:latest";
-    ports = [
-      "8000:8000"
-      "9443:9443"
-    ];
-    volumes = [
-      "/var/run/docker.sock:/var/run/docker.sock"
-      "${portainerDir}/portainer_data:/data"
-    ];
-    # labels = {
-    #   "traefik.enable" = "true";
-    #   "traefik.http.routers.portainer.rule" = "(Host(`portainer.bogen-psv.de`))";
-    #   "traefik.http.routers.portainer.entrypoints" = "websecure";
-    #   "traefik.http.routers.portainer.tls" = "true";
-    #   "traefik.http.routers.portainer.tls.certresolver" = "myresolver";
-    #   "traefik.http.services.portainer.loadbalancer.server.port" = "9000";
-    # };
-    # extraOptions = [
-    #   "--network=traefik_proxy"
-    # ];
-  };
+  config = {
+    services.local-networking.subdomains = [ subdomain ];
 
-  systemd.tmpfiles.rules = [
-    "d ${portainerDir} 0755 100 1000 -"
-    "d ${portainerDir}/portainer_data 0755 100 1000 -"
-  ];
+    virtualisation.oci-containers.containers.${subdomain} = {
+      image = "portainer/portainer-ce:latest";
+      # You must access through traefik
+      # ports = [ "9000:9000" "9443:9443" ];
+      volumes = [
+        "/var/run/docker.sock:/var/run/docker.sock"
+        "${portainerDir}/portainer_data:/data"
+      ];
+      labels = {
+        # expose the container to traefik
+        "traefik.enable" = "true";
+        # --- Router for HTTPS ---
+        "traefik.http.routers.${subdomain}-secure.entrypoints" = "websecure";
+        "traefik.http.routers.${subdomain}-secure.rule" = "Host(`${fullHostName}`)";
+        "traefik.http.routers.${subdomain}-secure.tls" = "true";
+        "traefik.http.routers.${subdomain}-secure.service" = "${subdomain}-svc";
+        # --- Service Definition ---
+        "traefik.http.services.${subdomain}-svc.loadbalancer.server.port" = "9443";
+        "traefik.http.services.${subdomain}-svc.loadbalancer.server.scheme" = "https";
+      };
+    };
+
+    systemd.tmpfiles.rules = [
+      "d ${portainerDir} 0755 100 1000 -"
+      "d ${portainerDir}/portainer_data 0755 100 1000 -"
+    ];
+  };
 }
