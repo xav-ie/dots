@@ -132,6 +132,8 @@
             yabai -m rule --add app=".*" sub-layer=normal
             # Fix PiP not always floating
             yabai -m rule --add title="^Picture-in-Picture$" sticky=on manage=off sub-layer=above
+            # Do not resize Safari "Web Inspector.*" windows
+            yabai -m rule --add title="^Web Inspector.*" manage=off
             # sketchybar spacing, ensure windows do not overlap on monitors
             # without foreheads
             yabai -m config external_bar all:32:0
