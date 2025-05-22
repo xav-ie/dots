@@ -1,4 +1,9 @@
-{ lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   gitIniFmt = pkgs.formats.gitIni { };
 in
@@ -6,8 +11,8 @@ in
   config = {
     programs.git = {
       enable = true;
-      userName = "xav-ie";
-      # userEmail = "github@xav.ie";
+      userName = "Xavier Ruiz";
+      # userEmail = defined below...
       aliases =
         let
           diffTweaks = builtins.concatStringsSep " " [
@@ -219,6 +224,7 @@ in
 
     home.file.".config/git/config.default".source = gitIniFmt.generate "config.default" {
       user = {
+        name = config.programs.git.userName;
         email = "github@xav.ie";
         signingKey = "5B9134A9E7E7F965";
       };
@@ -226,6 +232,7 @@ in
 
     home.file.".config/git/config.work".source = gitIniFmt.generate "config.work" {
       user = {
+        name = config.programs.git.userName;
         email = "xavier@outsmartly.com";
         signingKey = "22420DD6C13E3EB7";
       };
