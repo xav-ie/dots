@@ -1,11 +1,12 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 let
+  writeNuApplication = import ../../../lib/writeNuApplication { inherit lib pkgs; };
   mkSketchybarScript =
     name: path:
-    pkgs.writeShellApplication {
+    writeNuApplication {
       inherit name;
       runtimeInputs = [ pkgs.sketchybar ];
-      text = path;
+      text = builtins.readFile path;
     }
     + "/bin/${name}";
 
@@ -20,7 +21,6 @@ let
   #   # SDKROOT="$(xcrun --show-sdk-path)"
   #   swift ${./sketchybarReload.swift}
   # '';
-
 in
 {
   config = {
@@ -28,13 +28,13 @@ in
       packages = [ pkgs.pkgs-bleeding.sketchybar ];
 
       file = {
-        ".config/sketchybar/sketchybarrc".source = mkSketchybarScript "sketchybarrc" ./sketchybarrc.sh;
-        ".config/sketchybar/plugins/battery.sh".source = mkSketchybarScript "battery" ./plugins/battery.sh;
-        ".config/sketchybar/plugins/clock.sh".source = mkSketchybarScript "clock" ./plugins/clock.sh;
-        ".config/sketchybar/plugins/front_app.sh".source =
-          mkSketchybarScript "front_app" ./plugins/front_app.sh;
-        ".config/sketchybar/plugins/space.sh".source = mkSketchybarScript "space" ./plugins/space.sh;
-        ".config/sketchybar/plugins/volume.sh".source = mkSketchybarScript "volume" ./plugins/volume.sh;
+        ".config/sketchybar/sketchybarrc".source = mkSketchybarScript "sketchybarrc" ./sketchybarrc.nu;
+        ".config/sketchybar/plugins/battery.nu".source = mkSketchybarScript "battery" ./plugins/battery.nu;
+        ".config/sketchybar/plugins/clock.nu".source = mkSketchybarScript "clock" ./plugins/clock.nu;
+        ".config/sketchybar/plugins/front_app.nu".source =
+          mkSketchybarScript "front_app" ./plugins/front_app.nu;
+        ".config/sketchybar/plugins/space.nu".source = mkSketchybarScript "space" ./plugins/space.nu;
+        ".config/sketchybar/plugins/volume.nu".source = mkSketchybarScript "volume" ./plugins/volume.nu;
       };
     };
 
