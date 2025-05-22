@@ -59,8 +59,8 @@
     # unfortunately, this must be done in nix-darwin
     fonts.packages =
       (with pkgs; [
-        maple-mono
-        maple-mono-NF
+        maple-mono.truetype-autohint
+        maple-mono.NF
         # These two are not packaged at all:
         # "MonoLisa" # idk why this is not included yet in nerdfonts
         # "Twilio Sans Mono" # <== may change very soon, open pr to add it.
@@ -90,13 +90,15 @@
         # https://github.com/ryanoasis/nerd-fonts/pull/1465
       ]);
     security.pam = {
-      # fix mac os touch id in screen/tmux
-      enablePamReattach = true;
-      # allow sudo to use touch id
-      enableSudoTouchIdAuth = true;
+      services.sudo_local = {
+        enable = true;
+        # fix mac os touch id in screen/tmux
+        reattach = true;
+        # allow sudo to use touch id
+        touchIdAuth = true;
+      };
     };
     services = {
-      nix-daemon.enable = true;
       # a lot of this is taken from https://github.com/shaunsingh/nix-darwin-dotfiles/commit/a457a0b2d0e68d810e3503f84217db8698dd9533
       yabai = {
         enable = true;
@@ -290,6 +292,8 @@
 
         };
       };
+
+      primaryUser = user;
 
       keyboard = {
         enableKeyMapping = true;

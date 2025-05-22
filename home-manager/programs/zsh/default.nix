@@ -49,7 +49,7 @@ in
           w = "watson";
           zj = "zellij attach || zellij";
         };
-        initExtra = # sh
+        initContent = # sh
           ''
             ${fzfTabInitExtra}
             # comment this if you face weird direnv issues

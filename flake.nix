@@ -21,6 +21,8 @@
     hardware.url = "github:nixos/nixos-hardware";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.url = "github:nix-community/home-manager";
+    # because firefox has strange rendering bug
+    firefox-nixpkgs.url = "github:nixos/nixpkgs/88195a94f390381c6afcdaa933c2f6ff93959cb4";
     hyprland-contrib.inputs.nixpkgs.follows = "nixpkgs";
     hyprland-contrib.url = "github:hyprwm/contrib";
     hyprland.inputs.nixpkgs.follows = "nixpkgs";
@@ -35,7 +37,7 @@
     nix-homebrew.inputs.nixpkgs.follows = "nixpkgs";
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
     nixpkgs-bleeding.url = "github:nixos/nixpkgs/master";
-    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-24.05";
+    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.05";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nur.inputs.flake-parts.follows = "flake-parts";
     nur.inputs.nixpkgs.follows = "nixpkgs";
