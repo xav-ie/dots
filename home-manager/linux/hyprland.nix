@@ -175,7 +175,7 @@ in
             "ghostty"
             "${pkgs.networkmanagerapplet}/bin/nm-applet"
             "${pkgs.blueman}/bin/blueman-applet"
-            "${pkgs.swayidle}/bin/swayidle timeout 300 '${pkgs.grimblast}/bin/grimblast save screen - | ${pkgs.imagemagick}/bin/magick png:- -scale 10% -blur 0x2.5 -resize 1000% ~/Pictures/out.png && ${pkgs.swaylock}/bin/swaylock -i ~/Pictures/out.png' timeout 600 'hyprctl dispatch dpms off' resume 'hyprctl dispatch dpms on'"
+            "${lib.getExe pkgs.swayidle} timeout 300 '${lib.getExe pkgs.grimblast} save screen - | ${pkgs.imagemagick}/bin/magick png:- -scale 10% -blur 0x2.5 -resize 1000% ~/Pictures/out.png && ${lib.getExe pkgs.swaylock} -i ~/Pictures/out.png' timeout 600 'hyprctl dispatch dpms off' resume 'hyprctl dispatch dpms on'"
           ];
 
           animations = {
