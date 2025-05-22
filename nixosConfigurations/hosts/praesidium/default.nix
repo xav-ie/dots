@@ -52,7 +52,7 @@ in
       initrd = {
         preDeviceCommands = ''
           message="Hello, this is Praesidium."
-          printf "$message" | ${pkgs.cowsay}/bin/cowsay -n
+          printf "$message" | ${lib.getExe pkgs.cowsay} -n
         '';
       };
     };
@@ -482,7 +482,7 @@ in
       wrappers.noisetorch = {
         owner = "root";
         group = "root";
-        source = "${pkgs.noisetorch}/bin/noisetorch";
+        source = lib.getExe pkgs.noisetorch;
         capabilities = "cap_sys_resource+ep";
       };
     };

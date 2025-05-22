@@ -3,17 +3,19 @@ let
   writeNuApplication = import ../../../lib/writeNuApplication { inherit lib pkgs; };
   mkSketchybarScript =
     name: path:
-    writeNuApplication {
-      inherit name;
-      runtimeInputs = [ pkgs.sketchybar ];
-      text = builtins.readFile path;
-    }
-    + "/bin/${name}";
+    let
+      sketchybarApp = writeNuApplication {
+        inherit name;
+        runtimeInputs = [ pkgs.sketchybar ];
+        text = builtins.readFile path;
+      };
+    in
+    lib.getExe sketchybarApp;
 
   # so that I don't have to hard-code $HOME
   sketchybarWrapper = pkgs.writeShellScript "sketchybar-wrapper" ''
     pgrep sketchybar || \
-    exec ${pkgs.sketchybar}/bin/sketchybar --config "$HOME/.config/sketchybar/sketchybarrc" "$@"
+    exec ${lib.getExe pkgs.sketchybar} --config "$HOME/.config/sketchybar/sketchybarrc" "$@"
   '';
 
   # TODO: get this to work

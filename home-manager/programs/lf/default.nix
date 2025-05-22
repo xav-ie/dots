@@ -1,11 +1,11 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 {
   config = {
     # heavily borrowed from https://www.youtube.com/watch?v=z8y_qRUYEWU
     programs.lf = {
       enable = true;
       commands = {
-        dragon-out = ''%${pkgs.xdragon}/bin/xdragon -a -x "$fx"'';
+        dragon-out = ''%${lib.getExe pkgs.xdragon} -a -x "$fx"'';
         editor-open = "$$EDITOR $f";
         mkdir = # sh
           ''
@@ -29,7 +29,7 @@
         gh = "cd";
         "g/" = "/";
         ee = "editor-open";
-        V = ''''$${pkgs.bat}/bin/bat --paging always "$f"'';
+        V = ''''$${lib.getExe pkgs.bat} --paging always "$f"'';
       };
       settings = {
         autochafa = true;
@@ -41,7 +41,7 @@
         icons = true;
         ignorecase = true;
 
-        previewer = "${pkgs.ctpv}/bin/ctpv";
+        previewer = lib.getExe pkgs.ctpv;
         cleaner = "${pkgs.ctpv}/bin/ctpvclear";
       };
     };
