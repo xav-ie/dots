@@ -31,13 +31,14 @@ in
 
             /* #################################### */
           '';
-        extensions = with pkgs.nur.repos.rycee.firefox-addons; [
-          bitwarden
-          ublock-origin
-          vimium-c
-          newtab-adapter
-          videospeed
-        ];
+        # TODO: move to declarative set-up
+        # extensions = with pkgs.nur.repos.rycee.firefox-addons; [
+        #   bitwarden
+        #   ublock-origin
+        #   vimium-c
+        #   newtab-adapter
+        #   videospeed
+        # ];
       };
     };
     home.sessionVariables = {
