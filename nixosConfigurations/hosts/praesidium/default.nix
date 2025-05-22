@@ -158,8 +158,8 @@ in
         [
           inter
           libertinus
-          maple-mono
-          maple-mono-NF
+          maple-mono.truetype-autohint
+          maple-mono.NF
           noto-fonts-color-emoji
           pkgs-mine.apple-emoji-linux
         ]
@@ -511,13 +511,12 @@ in
     # implemenation has expected support
     xdg.portal =
       let
-        inherit (inputs.hyprland.packages.${pkgs.system}) hyprland;
-        xdph = pkgs.xdg-desktop-portal-hyprland.override { inherit hyprland; };
+        inherit (inputs.hyprland.packages.${pkgs.system}) hyprland xdg-desktop-portal-hyprland;
       in
       {
         enable = true;
         extraPortals = [
-          xdph
+          xdg-desktop-portal-hyprland
           pkgs.xdg-desktop-portal-gnome
         ];
         config =

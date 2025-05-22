@@ -1,4 +1,9 @@
-{ lib, pkgs, ... }:
+{
+  inputs,
+  lib,
+  pkgs,
+  ...
+}:
 let
   merge = lib.foldr (a: b: a // b) { };
 in
@@ -6,6 +11,7 @@ in
   config = {
     programs.firefox = {
       enable = true;
+      package = inputs.firefox-nixpkgs.legacyPackages.${pkgs.system}.firefox;
       profiles.x = {
         id = 0;
         isDefault = true;
