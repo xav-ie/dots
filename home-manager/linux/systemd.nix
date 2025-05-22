@@ -16,7 +16,7 @@ in
           WantedBy = [ "default.target" ];
         };
         Service = {
-          ExecStart = "${pkgs.ollama}/bin/ollama serve";
+          ExecStart = "${lib.getExe pkgs.ollama} serve";
         };
       };
 
