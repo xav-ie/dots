@@ -1,4 +1,12 @@
 _: {
+  imports = [
+    ./portainer.nix
+    # ./postiz.nix
+    ./quadlet.nix
+    ./spdf.nix
+    ./traefik.nix
+  ];
+
   config = {
     virtualisation = {
       podman = {

@@ -52,6 +52,9 @@
     pre-commit-hooks.inputs.flake-compat.follows = "flake-compat";
     pre-commit-hooks.inputs.nixpkgs.follows = "nixpkgs";
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
+    # this branch fixes the options issues...
+    # TODO: make a PR to fix this for everyone
+    quadlet-nix.url = "github:xav-ie/quadlet-nix/options";
     rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
     rust-overlay.url = "github:oxalica/rust-overlay";
     sops-nix.url = "github:Mic92/sops-nix";

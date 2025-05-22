@@ -14,6 +14,8 @@ let
           inherit inputs system toplevel;
         };
         modules = [
+          inputs.quadlet-nix.nixosModules.quadlet
+          ../lib/common
           ./hosts/praesidium
         ];
       };

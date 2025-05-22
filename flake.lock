@@ -1101,6 +1101,22 @@
         "type": "github"
       }
     },
+    "quadlet-nix": {
+      "locked": {
+        "lastModified": 1747836886,
+        "narHash": "sha256-BI+vsSzK4nSIkcb5szGYXoQ0Y70HKFaS1J+FsTRoB+o=",
+        "owner": "xav-ie",
+        "repo": "quadlet-nix",
+        "rev": "470d8651b75071e2f37706cc6ad5de2ea78b5def",
+        "type": "github"
+      },
+      "original": {
+        "owner": "xav-ie",
+        "ref": "options",
+        "repo": "quadlet-nix",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "alacritty-theme": "alacritty-theme",
@@ -1129,6 +1145,7 @@
         "nixpkgs-stable": "nixpkgs-stable",
         "nur": "nur",
         "pre-commit-hooks": "pre-commit-hooks",
+        "quadlet-nix": "quadlet-nix",
         "rust-overlay": "rust-overlay",
         "sops-nix": "sops-nix",
         "systems": "systems",
