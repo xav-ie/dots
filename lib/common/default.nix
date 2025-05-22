@@ -11,6 +11,7 @@
 {
   config = {
     nix = {
+      enable = true;
       # https://nixos.wiki/wiki/Storage_optimization
       gc = {
         automatic = true;

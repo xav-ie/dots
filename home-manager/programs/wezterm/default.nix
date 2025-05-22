@@ -127,7 +127,7 @@ _: {
               {
                 family = 'Maple Mono',
                 harfbuzz_features = {
-                  'cv01=1', 'cv02=1', 'cv04=1', 'ss01=1', 'ss02=1', 'ss03=1', 'ss04=1', 'ss05=1'
+                  'cv01=1', 'cv02=1', 'ss01=1', 'ss02=1', 'ss03=1', 'ss04=1', 'ss05=1'
                 },
               },
               'CaskaydiaCove Nerd Font',
@@ -137,7 +137,7 @@ _: {
               -- these fonts did not install properly from the package.
               -- I will have to investigate why, later. For now, I looked up
               -- their store path and installed manually from there
-              -- 'Maple', 'Martian Mono', 
+              -- 'Maple', 'Martian Mono',
               -- This one is just not packaged at all:
               -- 'Twilio Sans Mono'
 
