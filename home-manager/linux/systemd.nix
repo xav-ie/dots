@@ -30,13 +30,14 @@ in
           ExecStart = lib.getExe (writeNuApplication {
             name = "kill-spyware";
             runtimeInputs = with pkgs; [
-              libnotify
+              pkgs-mine.notify
+              pkgs-mine.openrgb-appimage
               hyprland
               zenity
             ];
             text = # nu
               ''
-                notify-send "Work is done. Time to log off..."
+                notify "Work is done. Time to log off..."
                 let zoom_window_client = (hyprctl clients -j
                                           | from json
                                           | filter {|| $in.title == "Zoom" })
@@ -44,9 +45,10 @@ in
                   try {
                     zenity --question --text="Close Zoom?"; kill ($zoom_window_client | first | get pid)
                   } catch {
-                    notify-send "No (or more than one) zoom windows found."
+                    notify "No (or more than one) Zoom windows found."
                   }
                 }
+                openrgb -p off
               '';
           });
         };
@@ -71,17 +73,18 @@ in
         };
         Service = {
           Type = "oneshot";
-          ExecStart = lib.getExe (
-            pkgs.writeShellApplication {
-              name = "start-work";
-              runtimeInputs = with pkgs; [
-                libnotify
-              ];
-              text = ''
-                notify-send "Good morning, time to start work!"
+          ExecStart = lib.getExe (writeNuApplication {
+            name = "start-work";
+            runtimeInputs = with pkgs.pkgs-mine; [
+              notify
+              openrgb-appimage
+            ];
+            text = # nu
+              ''
+                notify "Good morning, time to start work!"
+                openrgb -p purple
               '';
-            }
-          );
+          });
         };
       };
       timers.start-work = {
