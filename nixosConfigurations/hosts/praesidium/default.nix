@@ -180,7 +180,6 @@ in
                 <edit name="fontfeatures" mode="append">
                   <string>cv01 on</string>
                   <string>cv02 on</string>
-                  <string>cv04 on</string>
                   <string>ss01 on</string>
                   <string>ss02 on</string>
                   <string>ss03 on</string>
