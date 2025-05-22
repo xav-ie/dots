@@ -21,11 +21,11 @@ inputs = {
 # ...
 ```
 
-Then, in your zsh's `initExtra` code:
+Then, in your zsh's `initContent` code:
 
 ```nix
 zsh = {
-  initExtra = #zsh
+  initContent = #zsh
   ''
     precmd() {
       ${inputs.xav-ie.packages.${pkgs.system}.zellij-tab-name-update}/bin/zellij-tab-name-update
@@ -38,7 +38,7 @@ For bash, you will have you set `PROMPT_COMMAND` instead:
 
 ```nix
 bash = {
-  initExtra = #bash
+  initContent = #bash
   ''
     PROMPT_COMMAND="${inputs.xav-ie.packages.${pkgs.system}.zellij-tab-name-update}/bin/zellij-tab-name-update; command2; ...;"
   '';
