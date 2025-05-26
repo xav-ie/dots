@@ -1,6 +1,5 @@
 {
   inputs,
-  user,
   config,
   toplevel,
   ...
@@ -18,7 +17,7 @@
     };
     useGlobalPkgs = true;
     useUserPackages = true;
-    users."${user}".imports = [
+    users."${config.defaultUser}".imports = [
       ../home-manager
       ../home-manager/linux
     ];
