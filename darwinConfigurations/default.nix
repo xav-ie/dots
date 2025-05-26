@@ -1,6 +1,5 @@
 { inputs, ... }@toplevel:
 let
-  user = "x";
   system = "aarch64-darwin";
   inherit (inputs.nix-darwin.lib) darwinSystem;
 in
@@ -9,7 +8,7 @@ in
   stella = darwinSystem {
     inherit system;
     specialArgs = {
-      inherit inputs user toplevel;
+      inherit inputs toplevel;
     };
     modules = [
       ../lib/common
