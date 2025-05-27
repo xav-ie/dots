@@ -65,6 +65,13 @@ in
   */
   derivationArgs ? { },
   nushell ? pkgs.nushell,
+  /*
+    Extra arguments to pass into nushell invoker
+    Defaults to allowing stdin with "--stdin".
+
+    Type: [String]
+  */
+  nushellArgs ? [ "--stdin" ],
 }:
 pkgs.writeTextFile {
   inherit name meta derivationArgs;
@@ -74,7 +81,7 @@ pkgs.writeTextFile {
   preferLocalBuild = false;
   text =
     ''
-      #!${nushell}/bin/nu
+      #!/usr/bin/env -S ${lib.concatStringsSep " " ([ (lib.getExe nushell) ] ++ nushellArgs)}
     ''
     + lib.optionalString (runtimeEnv != null) ''
 
