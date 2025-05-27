@@ -21,7 +21,7 @@ let
             # TODO: enable on a per-package basis
             config.nixpkgs.config.allowUnfree = true;
           }
-          inputs.sops-nix.nixosModules.sops
+          ./sops.nix
         ];
       };
     };

@@ -404,6 +404,10 @@ in
       geoclue2.enable = true;
 
       gnome.gnome-keyring.enable = true;
+      hardware.openrgb = {
+        enable = true;
+        package = pkgs.pkgs-mine.openrgb-appimage;
+      };
       openssh = {
         enable = true;
         # since I use zellij, I don't mind disconnecting often and just
@@ -443,10 +447,6 @@ in
       };
       # TODO: ???
       # thermald.enable = true;
-      hardware.openrgb = {
-        enable = true;
-        package = pkgs.pkgs-mine.openrgb-appimage;
-      };
       # udev = {
       #   # TODO: for `ns-usbloader`
       #   extraRules = # python
