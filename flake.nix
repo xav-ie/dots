@@ -48,6 +48,8 @@
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
     rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
     rust-overlay.url = "github:oxalica/rust-overlay";
+    sops-nix.url = "github:Mic92/sops-nix";
+    sops-nix.inputs.nixpkgs.follows = "nixpkgs";
     systems-linux.url = "github:nix-systems/default-linux";
     systems.url = "github:nix-systems/default";
     # kind of breaks `nix flake check` but idk for sure
