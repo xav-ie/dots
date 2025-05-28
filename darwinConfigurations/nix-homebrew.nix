@@ -1,6 +1,5 @@
 {
   inputs,
-  user,
   config,
   ...
 }:
@@ -19,7 +18,7 @@
     # Apple Silicon Only: Also install Homebrew under the default Intel prefix for Rosetta 2
     enableRosetta = true;
     # User owning the Homebrew prefix
-    inherit user;
+    user = config.defaultUser;
     # Optional: Declarative tap management
     taps = {
       "homebrew/homebrew-core" = inputs.homebrew-core;
