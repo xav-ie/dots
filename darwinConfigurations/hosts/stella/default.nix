@@ -1,7 +1,7 @@
 {
   lib,
   pkgs,
-  user,
+  config,
   ...
 }:
 {
@@ -53,7 +53,7 @@
       # disable using /nix/var/nix/profiles/default and ~/.nixprofile
       profiles = lib.mkForce [
         "/run/current-system/sw"
-        "/etc/profiles/per-user/${user}"
+        "/etc/profiles/per-user/${config.defaultUser}"
       ];
     };
     # unfortunately, this must be done in nix-darwin
@@ -200,7 +200,7 @@
 
     # BECAUSE YA HAVE TO :/
     # https://github.com/nix-community/home-manager/issues/4026
-    users.users."${user}".home = "/Users/${user}";
+    users.users."${config.defaultUser}".home = "/Users/${config.defaultUser}";
 
     system = {
       defaults = {
@@ -293,7 +293,7 @@
         };
       };
 
-      primaryUser = user;
+      primaryUser = config.defaultUser;
 
       keyboard = {
         enableKeyMapping = true;
