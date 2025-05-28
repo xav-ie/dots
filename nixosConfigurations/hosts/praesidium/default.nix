@@ -3,7 +3,6 @@
   inputs,
   lib,
   pkgs,
-  user,
   ...
 }:
 let
@@ -127,9 +126,9 @@ in
     # Define a user account. Don't forget to set a password with ‘passwd’.
     users = {
       defaultUserShell = pkgs.zsh;
-      users."${user}" = {
+      users."${config.defaultUser}" = {
         isNormalUser = true;
-        description = user;
+        description = config.defaultUser;
         extraGroups = [
           "docker"
           "input"

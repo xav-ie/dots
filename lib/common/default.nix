@@ -9,7 +9,17 @@
   ...
 }:
 {
+  options = {
+    defaultUser = lib.mkOption {
+      type = lib.types.str;
+      example = "x";
+      description = "The default username for various system configurations and services.";
+    };
+  };
+
   config = {
+    defaultUser = "x";
+
     nix = {
       enable = true;
       # https://nixos.wiki/wiki/Storage_optimization
@@ -48,7 +58,7 @@
           "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
           "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
         ];
-        trusted-users = [ "x" ];
+        trusted-users = [ config.defaultUser ];
         fallback = true; # allow building from src
         # use max cores/threads when `enableParallelBuilding` is set for package
         cores = 0;
