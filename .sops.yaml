@@ -1,0 +1,13 @@
+# https://github.com/Mic92/sops-nix
+keys:
+  - &users:
+    - &admin_x age17muvhm5l3khzd2n5m64rge329n672sg20jad0u58rugvtwswhp6s6dfmd3
+  # TODO: add my hosts
+  # - &hosts:
+  #   - &praesidium:
+  #   - &stella:
+creation_rules:
+  - path_regex: secrets/[^/]+\.(yaml|json|env|ini)$
+    key_groups:
+      - age:
+          - *admin_x
