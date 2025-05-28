@@ -4,6 +4,9 @@
     ./spdf.nix
     ./portainer.nix
     ./traefik.nix
+    # not currently routing correctly...
+    # ./twingate.nix
+    ./tailscale.nix
   ];
 
   config = {

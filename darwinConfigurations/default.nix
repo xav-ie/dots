@@ -16,6 +16,7 @@ in
       ./hosts/stella
       ./nix-homebrew.nix
       ./modules/pam-reattach.nix
+      ./modules/sops.nix
       # {
       #   nix.settings.trusted-users = [ user ];
       #   nix.linux-builder.enable = true;
