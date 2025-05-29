@@ -18,6 +18,7 @@
       };
       masApps = {
         Klack = 6446206067;
+        Tailscale = 1475387142;
         Twingate = 1501592214;
         XCode = 497799835;
       };
