@@ -4,7 +4,7 @@
   nodejs,
 }:
 writeNuApplication {
-  name = "update-pacakge-lock";
+  name = "update-package-lock";
   runtimeInputs = [
     git
     nodejs
