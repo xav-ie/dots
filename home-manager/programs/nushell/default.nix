@@ -40,6 +40,8 @@
         info = "info --vi-keys";
         jsut = "just";
         l = "ls -la";
+        s = "sudo -E";
+        ss = "sudo -E !!";
         tm = "try { tmux attach } catch { tmux }";
         w = "watson";
         zj = "try { zellij attach } catch { zellij }";
