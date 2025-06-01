@@ -6,6 +6,12 @@
 }:
 {
   config = {
+    # https://github.com/nix-darwin/nix-darwin/issues/1035
+    # seems to be waiting on
+    # https://github.com/nix-darwin/nix-darwin/pull/1205
+    # networking.hosts = { };
+    # For now, we must manually edit :/
+
     homebrew = {
       enable = true;
       # do not prompt for updates
@@ -100,51 +106,6 @@
       };
     };
     services = {
-      # a lot of this is taken from https://github.com/shaunsingh/nix-darwin-dotfiles/commit/a457a0b2d0e68d810e3503f84217db8698dd9533
-      yabai = {
-        enable = true;
-        enableScriptingAddition = true;
-        config =
-          let
-            spacing = 0;
-          in
-          {
-            focus_follows_mouse = "autoraise";
-            mouse_follows_focus = "off";
-            mouse_drop_action = "stack";
-            window_placement = "second_child";
-            window_opacity = "off";
-            window_topmost = "on";
-            window_shadow = "off";
-            active_window_opacity = "1.0";
-            normal_window_opacity = "1.0";
-            split_ratio = "0.50";
-            auto_balance = "on";
-            mouse_modifier = "fn";
-            mouse_action1 = "move";
-            mouse_action2 = "resize";
-            layout = "stack";
-            top_padding = spacing;
-            bottom_padding = spacing;
-            left_padding = spacing;
-            right_padding = spacing;
-            window_gap = spacing;
-          };
-        extraConfig = # sh
-          ''
-            yabai -m rule --add app=".*" sub-layer=normal
-            # Fix PiP not always floating
-            yabai -m rule --add title="^Picture-in-Picture$" sticky=on manage=off sub-layer=above
-            # Do not resize Safari "Web Inspector.*" windows
-            yabai -m rule --add title="^Web Inspector.*" manage=off
-            # sketchybar spacing, ensure windows do not overlap on monitors
-            # without foreheads
-            yabai -m config external_bar all:32:0
-            # fix sketchybar bar not showing up on wake
-            # https://github.com/FelixKratz/SketchyBar/issues/512#issuecomment-2409228441
-            yabai -m signal --add event=system_woke action="sh -c 'sleep 1; sketchybar --reload'"
-          '';
-      };
       skhd = {
         enable = true;
         skhdConfig =
@@ -195,6 +156,51 @@
             ctrl + alt - s : yabai -m window --toggle sticky;\
               yabai -m window --toggle topmost;\
               yabai -m window --toggle pip
+          '';
+      };
+      # a lot of this is taken from https://github.com/shaunsingh/nix-darwin-dotfiles/commit/a457a0b2d0e68d810e3503f84217db8698dd9533
+      yabai = {
+        enable = true;
+        enableScriptingAddition = true;
+        config =
+          let
+            spacing = 0;
+          in
+          {
+            focus_follows_mouse = "autoraise";
+            mouse_follows_focus = "off";
+            mouse_drop_action = "stack";
+            window_placement = "second_child";
+            window_opacity = "off";
+            window_topmost = "on";
+            window_shadow = "off";
+            active_window_opacity = "1.0";
+            normal_window_opacity = "1.0";
+            split_ratio = "0.50";
+            auto_balance = "on";
+            mouse_modifier = "fn";
+            mouse_action1 = "move";
+            mouse_action2 = "resize";
+            layout = "stack";
+            top_padding = spacing;
+            bottom_padding = spacing;
+            left_padding = spacing;
+            right_padding = spacing;
+            window_gap = spacing;
+          };
+        extraConfig = # sh
+          ''
+            yabai -m rule --add app=".*" sub-layer=normal
+            # Fix PiP not always floating
+            yabai -m rule --add title="^Picture-in-Picture$" sticky=on manage=off sub-layer=above
+            # Do not resize Safari "Web Inspector.*" windows
+            yabai -m rule --add title="^Web Inspector.*" manage=off
+            # sketchybar spacing, ensure windows do not overlap on monitors
+            # without foreheads
+            yabai -m config external_bar all:32:0
+            # fix sketchybar bar not showing up on wake
+            # https://github.com/FelixKratz/SketchyBar/issues/512#issuecomment-2409228441
+            yabai -m signal --add event=system_woke action="sh -c 'sleep 1; sketchybar --reload'"
           '';
       };
     };
