@@ -212,8 +212,8 @@ in
         # to temporarily turn off, --no-update-refs
         rebase.updateRefs = true;
         remote.origin.fetch = [
-          # Normal branches
-          "+refs/heads/*:refs/remotes/origin/*"
+          # Normal branches - set up by default
+          # "+refs/heads/*:refs/remotes/origin/*"
           # PR head commits
           "+refs/pull/*/head:refs/remotes/origin/pr/*"
           # Merge PR commits, disabled because noisy, but might be useful in future
