@@ -1,49 +1,36 @@
 default:
     @just system
 
+# TODO: refactor into a devshell
 # allows extremely fast shell commands with fallbacks to nix
-invoke function *args:
+get command:
     #!/usr/bin/env nu
-    def shell_command [cmd: list<string>, cmd_backup: list<string>, args: list<string> = []] {
-      # the exernal `which` seems to resolve better...
-      let cmd_path = try { (^which ($cmd | first)) | lines | first } catch { "" }
-      if ($cmd_path | str length) > 0 {
-        sh -c ($args | prepend $cmd | str join " ")
-      } else {
-        print $"💡 Consider installing (ansi green)($cmd | first)(ansi reset) into your PATH"
-        print $"   It will enable faster invocations"
-        sh -c ($args | prepend $cmd_backup | str join " ")
-      }
+    let cmds_and_backups = {
+      "darwin-rebuild": "nix-darwin"
+      "morlana": "github:ryanccn/morlana"
+      "nixos-rebuild": "nixpkgs#nixos-rebuild"
+      "nom": "nixpkgs#nix-output-monitor"
+      "nvd": "nixpkgs#nvd"
+      "zenity": "nixpkgs#zenity"
     }
 
-    def darwin_rebuild [args: list<string> = []] {
-      shell_command [darwin-rebuild] [nix shell nix-darwin --command darwin-rebuild] $args
-    }
-    def morlana [args: list<string> = []] {
-      shell_command [morlana] [nix shell "github:ryanccn/morlana" --command morlana] $args
-    }
-    def nixos_rebuild [args: list<string> = []] {
-      shell_command [nixos-rebuild] [nix shell "nixpkgs#nixos-rebuild" --command nixos-rebuild] $args
-    }
-    def nom [args: list<string> = []] {
-      shell_command [nom] [nix shell "nixpkgs#nix-output-monitor" --command nom] $args
+    let cmd = "{{ command }}"
+    if $cmd not-in $cmds_and_backups {
+      error make {msg: $"Unknown function: ($cmd)"}
     }
 
-    match "{{ function }}" {
-      "darwin-rebuild" => { darwin_rebuild [{{ args }}] }
-      "morlana" => { morlana [{{ args }}] }
-      "nixos-rebuild" => { nixos_rebuild [{{ args }}] }
-      "nom" => { nom [{{ args }}] }
-      _ => { error make {msg: "Unknown function: {{ function }}"} }
+    let cmd_path = try { ^which $cmd err> /dev/null } catch { "" }
+    if ($cmd_path | str length) > 0 {
+      $cmd_path
+    } else {
+      print -e $"💡 Consider installing (ansi green)($cmd)(ansi reset) into your PATH"
+      print -e $"   It will enable faster invocations"
+      ^nix shell ($cmds_and_backups | get $cmd) --command sh -c $"which ($cmd)"
     }
 
+# apply current system config
 system:
     #!/usr/bin/env nu
-    def launchctl_list [] {
-      launchctl list | split row -r '\n'
-      | skip 1
-      | split column --regex '\s+' PID Status Label
-    }
     def pipefail [] {
       let results = complete
       match $results {
@@ -51,13 +38,16 @@ system:
         _ => (error make { msg: $results.stdout })
       }
     }
-
     match (uname | get kernel-name) {
       "Darwin" => {
-        # just invoke darwin-rebuild switch --flake . --show-trace out+err>| tee { just invoke nom } | pipefail
-        just invoke morlana switch --flake . --no-confirm -- --show-trace
-        # TODO: relaunch hm services?
-        launchctl_list | where Label =~ "^org.nixos" | each {|e|
+        # (^(just get darwin-rebuild) switch --flake . --show-trace out+err>|
+        #   tee { ^(just get nom) } | pipefail)
+        ^(just get morlana) switch --flake . --no-confirm -- --show-trace
+
+        launchctl list | split row -r '\n'
+        | skip 1
+        | split column --regex '\s+' PID Status Label
+        | where Label =~ "^org.nixos" | each {|e|
           print $"🍃 Relaunching ($e.Label)"
           let agentPath = $"~/Library/LaunchAgents/($e.Label).plist"
           let launchGroup = $"gui/(id -u)"
@@ -67,26 +57,31 @@ system:
         null
       }
       "Linux" => {
-        just invoke nixos-rebuild build --flake . --show-trace out+err>| tee { just invoke nom } | pipefail
+        # # 1. build ./result for diffing
+        (^(just get nixos-rebuild) build --flake . --show-trace
+          out+err>| tee { ^(just get nom )} | pipefail)
 
-        # TODO: make `invoke`
-        def get_pass [] {
-          try { sudo -n true } catch {
-            # TODO: add to invoke
-            nix run nixpkgs#zenity -- --password | sudo -S true
+        # # 2. diff it with current system
+        ^(just get nvd) diff /run/current-system ./result
+
+        # 3. ask for password after seeing diff
+        try { sudo -nv err> /dev/null } catch {
+          try {
+            ^(just get zenity) --password | sudo -Sv err> /dev/null
+          } catch {
+            print -e $"(ansi yellow_underline)Failed to get a password through UI(ansi reset)"
           }
         }
-        try { get_pass } catch {
-        try { get_pass } catch {
-        try { get_pass } catch {
-          error make {msg: "Failed to get password"}
-        }}}
-        sudo -n nixos-rebuild switch --flake . --show-trace
+
+        # 4. apply switch, does need nom since it is using ./result
+        sudo (just get nixos-rebuild) switch --flake . --show-trace --fast
+
+        # 5. post-switch checks
         let bad_settings = (systemctl --user list-unit-files --legend=false
                             | lines
                             | split column -r '\s+' unit state preset
                             | where unit !~ "@\\."
-                            | each {|row|
+                            | each { |row|
                               let unit = $row.unit
                               let has_bad_setting = systemctl --user status $unit
                                                     | str contains 'bad-setting'
@@ -105,21 +100,20 @@ system:
       }
     }
 
-init:
-    nix run home-manager/master -- init --switch
+# init:
+#     nix run home-manager/master -- init --switch
 
+# update nixpkgs-bleeding
 bleed:
     nix flake lock --update-input nixpkgs-bleeding
 
+# pretty-print outputs
 show:
     nix run github:DeterminateSystems/nix-src/flake-schemas -- flake show .
 
+# update all inputs
 update:
     nix flake update
-
-diff:
-    #!/usr/bin/env nu
-    just invoke nix run nixpkgs#nvd -- diff /run/booted-system /run/current-system
 
 # `nix flake check` only works on nixos because of
 # https://github.com/NixOS/nix/issues/4265
@@ -132,8 +126,8 @@ diff:
 #     · devShells.system.name
 #     · nixosConfigurations.name.config.system.build.toplevel
 #     · packages.system.name
-
 # It would be cool to disable nixosConfigurations, but oh well. Maybe one day :).
+# flake check current system
 check:
     #!/usr/bin/env nu
     def pipefail [] {
@@ -146,10 +140,11 @@ check:
     match (uname | get kernel-name) {
       "Darwin" => {
         # This is the only way I know how to skip nixosConfigurations on darwin :/
-        nix flake check --override-input systems github:nix-systems/aarch64-darwin out+err>| tee { just invoke nom } | pipefail
+        (nix flake check --override-input systems github:nix-systems/aarch64-darwin
+          out+err>| tee { ^(just get nom ) } | pipefail)
       }
       "Linux" => {
-        nix flake check out+err>| tee { just invoke nom } | pipefail
+        nix flake check out+err>| tee { ^(just get nom )} | pipefail
       }
       _ => {
         print "Unknown OS"
@@ -158,5 +153,6 @@ check:
     # TODO: use treefmt instead
     nix run nixpkgs#deadnix -- -f # check for dead code, fails if any
 
+# flake check all systems
 check-all:
     NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nix flake check --impure --all-systems
