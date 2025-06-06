@@ -1,3 +1,5 @@
 result*
 .ignore
 .pijul
+.devenv
+.direnv

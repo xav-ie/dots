@@ -7,6 +7,9 @@
     ctpv.inputs.flake-utils.follows = "flake-utils";
     ctpv.inputs.nixpkgs.follows = "nixpkgs";
     ctpv.url = "github:xav-ie/ctpv-nix";
+    devenv.url = "github:cachix/devenv";
+    devenv-root.flake = false;
+    devenv-root.url = "file+file:///dev/null";
     flake-compat.url = "github:edolstra/flake-compat";
     flake-parts.url = "github:hercules-ci/flake-parts";
     flake-utils.inputs.systems.follows = "systems";
@@ -29,6 +32,7 @@
     hyprland.inputs.pre-commit-hooks.follows = "pre-commit-hooks";
     hyprland.inputs.systems.follows = "systems-linux";
     hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
+    mk-shell-bin.url = "github:rrbutani/nix-mk-shell-bin";
     morlana.url = "github:ryanccn/morlana";
     morlana.inputs.nixpkgs.follows = "nixpkgs";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
@@ -36,6 +40,8 @@
     nix-homebrew.inputs.nix-darwin.follows = "nix-darwin";
     nix-homebrew.inputs.nixpkgs.follows = "nixpkgs";
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
+    nix2container.url = "github:nlewo/nix2container";
+    nix2container.inputs.nixpkgs.follows = "nixpkgs";
     nixpkgs-bleeding.url = "github:nixos/nixpkgs/master";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.05";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -92,6 +98,7 @@
       systems = import inputs.systems;
 
       imports = [
+        inputs.devenv.flakeModule
         # inputs.git-hooks.flakeModule
         inputs.treefmt-nix.flakeModule
       ];
@@ -109,6 +116,33 @@
           #   inherit system;
           #   overlays = builtins.attrValues self.overlays;
           # };
+
+          devenv.shells.default = {
+            packages =
+              (with pkgs; [
+                just
+                nix-diff
+                nix-output-monitor
+                nushell
+              ])
+              ++ lib.optionals pkgs.stdenv.isLinux (
+                with pkgs;
+                [
+                  expect # provides `unbuffer`
+                  nixos-rebuild
+                  nvd
+                  zenity
+                ]
+              )
+              ++ lib.optionals pkgs.stdenv.isDarwin [
+                inputs.morlana.packages.${system}.default
+                inputs.nix-darwin.packages.${system}.default
+              ];
+
+            enterShell = ''
+              printf "🐢 Use \e[32;40mjust\e[0m to build the system.\n"
+            '';
+          };
 
           packages = import ./packages {
             inherit lib;
@@ -144,7 +178,13 @@
               "*.toml"
               # TODO: add ini formatter
               ".git-blame-ignore-revs"
+              "secrets/*.yaml"
             ];
+            # `prettier` does not come with a node version on purpose, so we
+            # must make a wrapper
+            settings.formatter.prettier.command = pkgs.writeShellScriptBin "prettier-wrapped" ''
+              exec ${lib.getExe pkgs.nodejs-slim} ${lib.getExe pkgs.nodePackages.prettier} "$@"
+            '';
           };
 
         };
