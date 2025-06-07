@@ -88,7 +88,7 @@ I want to configure secrets the "right way".
 I have some things in my house that I want control with my computer.
 
 - Computer lights are semi-controllable through `open-rgb -p`, but I
-  need to set up more profiles.
+need to set up more profiles.
 </details>
 
 <details>
@@ -110,7 +110,7 @@ This should also mean I get keyboard access!
 - [ ] I need to just make my Firefox configured more through Nix. A
       lot of my plugins and settings are not 100% synced properly.
 - [ ] I also need to find an RSS reader that can read/sync with a filesystem. I
-  am currently using FeedBro, but it does not sync between
+    am currently using FeedBro, but it does not sync between
     my desktop and laptop.
 </details>
 

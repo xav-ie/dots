@@ -6,7 +6,7 @@
 }:
 let
   domain = "lalala.casa";
-  subdomains = config.services.local-networking.subdomains;
+  inherit (config.services.local-networking) subdomains;
   allDomains = [
     domain
   ] ++ map (subdomain: "${subdomain}.${domain}") subdomains;

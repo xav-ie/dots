@@ -18,7 +18,7 @@ in
   #   ) inputs;
   # };
 
-  modifications = final: prev: {
+  modifications = final: _prev: {
     pkgs-bleeding = inputs.nixpkgs-bleeding.legacyPackages.${final.system};
     pkgs-mine = toplevel.self.packages.${final.system};
 
