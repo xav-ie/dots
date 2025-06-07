@@ -1,7 +1,7 @@
 { config, ... }:
 let
   spdfFolder = "/media/spdf";
-  baseDomain = config.services.local-networking.baseDomain;
+  inherit (config.services.local-networking) baseDomain;
   subdomain = "spdf";
   fullHostName = "${subdomain}.${baseDomain}";
 in

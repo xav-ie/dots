@@ -1,7 +1,7 @@
 { config, ... }:
 let
   portainerDir = "/media/portainer";
-  baseDomain = config.services.local-networking.baseDomain;
+  inherit (config.services.local-networking) baseDomain;
   subdomain = "portainer";
   fullHostName = "${subdomain}.${baseDomain}";
 in
