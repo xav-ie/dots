@@ -27,8 +27,8 @@ in
         # pkgs-bleeding needing because poetry-core>=2.0.0 is not on stable
         # and I don't feel like overriding *another* sub-dependency
         package = pkgs-bleeding.home-assistant.override {
-          packageOverrides = self: super: {
-            govee-local-api = pkgs-bleeding.python313Packages.govee-local-api.overridePythonAttrs (oldAttrs: {
+          packageOverrides = _: _: {
+            govee-local-api = pkgs-bleeding.python313Packages.govee-local-api.overridePythonAttrs (_: {
               version = "2.0.2";
               src = pkgs.fetchFromGitHub {
                 owner = "akash329d";
@@ -55,7 +55,7 @@ in
 
           homeassistant =
             let
-              mediaDir = config.services.home-assistant.mediaDir;
+              inherit (config.services.home-assistant) mediaDir;
               isDefined = x: x != null;
             in
             {
@@ -114,7 +114,7 @@ in
       tmpfiles.rules =
         let
           hassDir = config.services.home-assistant.configDir;
-          mediaDir = config.services.home-assistant.mediaDir;
+          inherit (config.services.home-assistant) mediaDir;
           isDefined = x: x != null;
         in
         lib.lists.optionals config.services.home-assistant.enable [
