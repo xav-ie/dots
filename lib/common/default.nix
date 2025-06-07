@@ -33,7 +33,11 @@
 
       # This will add each flake input as a registry
       # To make nix3 commands consistent with your flake
-      registry = lib.mapAttrs (_: value: { flake = value; }) inputs;
+      registry = lib.mapAttrs (_: value: { flake = value; }) (
+        # very important, would otherwise cause full eval of git repo after
+        # *any* change
+        lib.filterAttrs (name: _: name != "self") inputs
+      );
 
       # This will additionally add your inputs to the system's legacy channels
       # Making legacy nix commands consistent as well, awesome!
