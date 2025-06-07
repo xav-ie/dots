@@ -56,11 +56,12 @@ in
       };
     };
 
-    documentation = {
-      dev.enable = true;
-      man.generateCaches = true;
-      nixos.includeAllModules = true;
-    };
+    # TODO: investigate why slow
+    # documentation = {
+    #   dev.enable = true;
+    #   man.generateCaches = true;
+    #   nixos.includeAllModules = true;
+    # };
 
     networking = {
       hostName = "praesidium"; # Define your hostname.
