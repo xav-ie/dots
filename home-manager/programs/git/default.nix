@@ -190,7 +190,8 @@ in
           # diffFilter = "delta";
         };
         merge = {
-          conflictstyle = "diff3";
+          # https://becca.ooo/blog/why-diff3-is-confusing/
+          conflictstyle = "zdiff3";
         };
         # This is needed so programs like Fugitive will use delta
         # Set by ov
