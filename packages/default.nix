@@ -23,6 +23,7 @@ rec {
   jira-task-list = pkgs.callPackage ./jira-task-list { inherit cache-command; };
   localip = pkgs.callPackage ./localip { inherit writeNuApplication; };
   inherit notify;
+  nix-repl = pkgs.callPackage ./nix-repl { inherit writeNuApplication; };
   nvim = pkgs.callPackage ./nvim { };
   prs = pkgs.callPackage ./prs { inherit writeNuApplication; };
   review = pkgs.callPackage ./review { inherit writeNuApplication; };
