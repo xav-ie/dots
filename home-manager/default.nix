@@ -92,6 +92,7 @@
           jira-task-list
           localip
           notify
+          nix-repl
           nvim
           prs
           review
