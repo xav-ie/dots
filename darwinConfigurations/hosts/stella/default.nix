@@ -105,6 +105,12 @@
         touchIdAuth = true;
       };
     };
+
+    launchd.user.agents.yabai.serviceConfig = {
+      StandardOutPath = "/tmp/yabai_${config.defaultUser}.out.log";
+      StandardErrorPath = "/tmp/yabai_${config.defaultUser}.err.log";
+    };
+
     services = {
       skhd = {
         enable = true;
