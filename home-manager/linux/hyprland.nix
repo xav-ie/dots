@@ -46,8 +46,6 @@ in
       libva-utils # hardware video acceleration
       polkit_gnome # just a GUI askpass
       rofi-wayland
-      swayidle
-      swaylock
       swww
       waypipe
       wl-clipboard
@@ -166,16 +164,37 @@ in
           # Execute your favorite apps at launch
           exec-once = [
             ''swww init && swww img "~/Downloads/ether.gif"''
-            "waybar"
-            "swaync"
-            "noisetorch -i # load suppressor for input"
+            (lib.getExe pkgs.waybar)
+            (lib.getExe pkgs.swaynotificationcenter)
+            "${lib.getExe pkgs.noisetorch} -i"
             "wl-paste --type text --watch cliphist store"
             "wl-paste --type image --watch cliphist store"
             "firefox"
             "ghostty"
-            "${pkgs.networkmanagerapplet}/bin/nm-applet"
+            (lib.getExe pkgs.networkmanagerapplet)
             "${pkgs.blueman}/bin/blueman-applet"
-            "${lib.getExe pkgs.swayidle} timeout 300 '${lib.getExe pkgs.grimblast} save screen - | ${pkgs.imagemagick}/bin/magick png:- -scale 10% -blur 0x2.5 -resize 1000% ~/Pictures/out.png && ${lib.getExe pkgs.swaylock} -i ~/Pictures/out.png' timeout 600 'hyprctl dispatch dpms off' resume 'hyprctl dispatch dpms on'"
+            (lib.getExe (
+              pkgs.writeNuApplication {
+                name = "screen-idle-lock";
+                runtimeInputs = with pkgs; [
+                  swayidle
+                  grimblast
+                  imagemagick
+                  swaylock
+                  hyprland
+                ];
+                text = # nu
+                  ''
+                    (swayidle
+                      timeout 300 'grimblast save screen - \
+                                   | magick png:- -scale 10% -blur 0x2.5 -resize 1000% ~/Pictures/out.png \
+                                   && feh -F ~/Pictures/out.png'
+                      timeout 400 'pkill feh; swaylock -i ~/Pictures/out.png'
+                      timeout 600 'hyprctl dispatch dpms off'
+                      resume 'hyprctl dispatch dpms on')
+                  '';
+              }
+            ))
           ];
 
           animations = {
