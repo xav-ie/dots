@@ -23,6 +23,7 @@
         cleanup = "zap";
       };
       masApps = {
+        Bitwarden = 1352778147;
         Klack = 6446206067;
         Tailscale = 1475387142;
         Twingate = 1501592214;
@@ -30,7 +31,6 @@
       };
       casks = [
         "android-studio"
-        "bitwarden"
         "chromium"
         "ente"
         "firefox"
