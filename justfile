@@ -18,8 +18,6 @@ system:
 
         # 2. diff it with current system
         nvd diff /run/current-system ./result
-        # TODO: contribute a better diff output... quite ugly
-        # nix-diff /run/current-system ./result
 
         # 3. ask for password after seeing diff
         try { sudo -nv err> /dev/null } catch {
@@ -34,31 +32,8 @@ system:
           }
         }
 
-        # 4. apply switch, does need nom since it is using ./result
+        # 4. apply switch
         sudo ./result/bin/switch-to-configuration switch
-
-        # 5. post-switch checks
-        let bad_settings = (systemctl --user list-unit-files --legend=false
-                           | lines
-                           | split column -r '\s+' unit state preset
-                           | where unit !~ "@\\."
-                           | get unit
-                           | par-each { |unit|
-                             {
-                               unit: $unit,
-                               bad_setting: (
-                                 systemctl --user status $unit
-                                 | str contains 'bad-setting'
-                               )
-                             }
-                           }
-                           | where bad_setting == true)
-
-        if ($bad_settings | length) > 0 {
-          error make {msg: $"Bad settings found: ($bad_settings)"}
-        } else {
-          print "No bad units found!"
-        }
       }
       _ => {
         error make { msg: "Unknown OS" }
