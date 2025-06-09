@@ -12,23 +12,8 @@ system:
       "Darwin" => {
         morlana switch --flake . --no-confirm -- --show-trace
 
-        launchctl list | split row -r '\n'
-        | skip 1
-        | split column --regex '\s+' PID Status Label
-        | where Label =~ "^org.nixos" | each {|e|
-          print $"🍃 Relaunching ($e.Label)"
-          let agentPath = $"($env.HOME)/Library/LaunchAgents/($e.Label).plist"
-          let launchGroup = $"gui/(id -u)"
-
-          try { launchctl bootout $launchGroup $agentPath }
-          try {
-            launchctl bootstrap $launchGroup $agentPath
-          } catch {
-            launchctl kickstart $"($launchGroup)/($e.Label)"
-          }
-        }
         # https://github.com/koekeishiya/yabai/issues/2199#issuecomment-2031852290
-        sleep 1sec; yabai -m rule --apply
+        yabai -m rule --apply
         null
       }
       "Linux" => {
