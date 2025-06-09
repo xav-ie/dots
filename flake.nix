@@ -128,7 +128,6 @@
               ++ lib.optionals pkgs.stdenv.isLinux (
                 with pkgs;
                 [
-                  expect # provides `unbuffer`
                   nixos-rebuild
                   nvd
                   zenity
