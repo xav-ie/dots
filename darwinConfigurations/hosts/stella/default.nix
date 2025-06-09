@@ -4,6 +4,9 @@
   config,
   ...
 }:
+let
+  writeNuApplication = import ../../../lib/writeNuApplication { inherit lib pkgs; };
+in
 {
   config = {
     # https://github.com/nix-darwin/nix-darwin/issues/1035
@@ -194,19 +197,120 @@
             right_padding = spacing;
             window_gap = spacing;
           };
-        extraConfig = # sh
+        extraConfig =
+          let
+            oneShotName = "window_focused_firefox_oneshot";
+            get_window = # nu
+              ''
+                def get_window [] {
+                  (yabai -m query --windows
+                    --window $env.YABAI_WINDOW_ID | complete | get stdout
+                    | from json)
+                }
+              '';
+            firefoxWindowFocused = writeNuApplication {
+              name = "firefoxWindowFocused";
+              runtimeInputs = [
+                pkgs.skhd
+                pkgs.yabai
+              ];
+              text = # nu
+                ''
+                  ${get_window}
+                  def main [] {
+                    let current_window = (get_window)
+                    if ($current_window.title | str starts-with "Extension:") {
+                      return;
+                    }
+                    try {
+                      yabai -m signal --remove ${oneShotName}
+                      skhd -k "cmd + shift - y"
+                    }
+
+                  }
+                '';
+            };
+            # re-opens the bitwarden extension app on firefox
+            firefoxExtensionWindowCreated = writeNuApplication {
+              name = "firefoxExtensionWindowCreated";
+              runtimeInputs = [ pkgs.yabai ];
+              text = # nu
+                ''
+                  def main [] {
+                    (yabai -m signal --add event=window_focused
+                      app="^Firefox$"
+                      action="${lib.getExe firefoxWindowFocused}"
+                      label="${oneShotName}")
+                  }
+                '';
+            };
+            logWindowPretty = writeNuApplication {
+              name = "logWindowPretty";
+              runtimeInputs = [
+                pkgs.yabai
+              ];
+              text = # nu
+                ''
+                  ${get_window}
+                  def main [] {
+                    let current_window = (get_window)
+                    if (not $current_window.is-floating) {
+                      if ($current_window.title | str starts-with "Extension:") {
+                        print (date now)
+                        print $current_window.title
+                        (yabai -m window $env.YABAI_WINDOW_ID
+                          --toggle float)
+                        (yabai -m window $env.YABAI_WINDOW_ID
+                          --grid 5:4:3:1:1:3)
+                        ^${lib.getExe firefoxExtensionWindowCreated}
+                      }
+                    }
+                  }
+                '';
+            };
+          in
+          # sh
           ''
-            yabai -m rule --add app=".*" sub-layer=normal
-            # Fix PiP not always floating
-            yabai -m rule --add title="^Picture-in-Picture$" sticky=on manage=off sub-layer=above
-            # Do not resize Safari "Web Inspector.*" windows
-            yabai -m rule --add title="^Web Inspector.*" manage=off
+            yabai -m rule --add app=".*" \
+              sub-layer=normal
+
             # sketchybar spacing, ensure windows do not overlap on monitors
             # without foreheads
             yabai -m config external_bar all:32:0
             # fix sketchybar bar not showing up on wake
             # https://github.com/FelixKratz/SketchyBar/issues/512#issuecomment-2409228441
-            yabai -m signal --add event=system_woke action="sh -c 'sleep 1; sketchybar --reload'"
+            yabai -m signal --add event=system_woke \
+              action="sh -c 'sleep 1; sketchybar --reload'"
+
+            # Signal should not ever be full-width
+            yabai -m rule --add app="^Signal$" \
+              manage=off grid=1:3:2:0:1:1
+
+            # Fix PiP not always floating
+            yabai -m rule --add title="^Picture-in-Picture$" \
+              sticky=on manage=off sub-layer=above
+
+            # Do not resize Safari "Web Inspector.*" windows
+            yabai -m rule --add title="^Web Inspector.*" \
+              manage=off
+            # Do not resize Firefox Browser Toolbox windows
+            yabai -m rule --add app="^Firefox$" title=".*Browser Toolbox$" \
+              manage=off
+
+            # Do not manage Firefox extension popups newly created and spawn in
+            # good place
+            yabai -m rule --add \
+              app="^Firefox$" title="^(Firefox -.*|Extension:.*|.*Bitwarden)$" \
+              manage=off sticky=on sub-layer=above grid=5:4:3:1:1:3
+            # Auto re-open the Firefox window
+            yabai -m signal --add event=window_created \
+              app="^Firefox$" title="^(Firefox -.*|Extension:.*|.*Bitwarden)$" \
+              action='${lib.getExe firefoxExtensionWindowCreated}'
+            # sometimes, does not work... this seems to make up for it
+            # TODO: test some more... probably not 100% there
+            yabai -m signal --add event=window_title_changed \
+              app="^Firefox$" title="^(Firefox -.*|Extension:.*|.*Bitwarden)$" \
+              action='${lib.getExe logWindowPretty}'
           '';
       };
     };
