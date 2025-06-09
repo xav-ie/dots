@@ -1,13 +1,12 @@
 # Based on:
 # https://github.com/Misterio77/nix-config/blob/e360a9ecf6de7158bea813fc075f3f6228fc8fc0/pkgs/default.nix
 {
-  lib,
-  pkgs,
+  pkgs ? import <nixpkgs>,
   generate-kaomoji,
 }:
 let
   optionalAttrs = bool: attrSet: if bool then attrSet else { };
-  writeNuApplication = import ../lib/writeNuApplication { inherit lib pkgs; };
+  writeNuApplication = pkgs.callPackage ../lib/writeNuApplication { };
   notify = pkgs.callPackage ./notify { inherit generate-kaomoji writeNuApplication; };
 in
 rec {

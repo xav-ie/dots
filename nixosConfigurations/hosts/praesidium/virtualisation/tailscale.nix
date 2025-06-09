@@ -6,9 +6,6 @@
   pkgs,
   ...
 }:
-let
-  writeNuApplication = import ../../../../lib/writeNuApplication { inherit lib pkgs; };
-in
 {
   config = {
     environment.systemPackages = [ pkgs.tailscale ];
@@ -42,23 +39,25 @@ in
 
       serviceConfig.Type = "oneshot";
 
-      script = lib.getExe (writeNuApplication {
-        name = "tailscale-login";
-        runtimeInputs = with pkgs; [
-          tailscale
-        ];
-        text =
-          # nu
-          ''
-            # wait for tailscaled to settle
-            sleep 2sec
+      script = lib.getExe (
+        pkgs.writeNuApplication {
+          name = "tailscale-login";
+          runtimeInputs = with pkgs; [
+            tailscale
+          ];
+          text =
+            # nu
+            ''
+              # wait for tailscaled to settle
+              sleep 2sec
 
-            let status = (tailscale status -json | from json | get BackendState)
-            if ($status == "NeedsLogin") {
-              tailscale up -authkey (open ${config.sops.secrets."tailscale/token".path})
-            }
-          '';
-      });
+              let status = (tailscale status -json | from json | get BackendState)
+              if ($status == "NeedsLogin") {
+                tailscale up -authkey (open ${config.sops.secrets."tailscale/token".path})
+              }
+            '';
+        }
+      );
     };
   };
 }
