@@ -144,7 +144,6 @@
           };
 
           packages = import ./packages {
-            inherit lib;
             generate-kaomoji = inputs.generate-kaomoji.packages.${system}.default;
             pkgs = inputs.nixpkgs-bleeding.legacyPackages.${system};
           };

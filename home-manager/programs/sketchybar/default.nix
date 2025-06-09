@@ -1,10 +1,9 @@
 { lib, pkgs, ... }:
 let
-  writeNuApplication = import ../../../lib/writeNuApplication { inherit lib pkgs; };
   mkSketchybarScript =
     name: path:
     let
-      sketchybarApp = writeNuApplication {
+      sketchybarApp = pkgs.writeNuApplication {
         inherit name;
         runtimeInputs = [ pkgs.sketchybar ];
         text = builtins.readFile path;
