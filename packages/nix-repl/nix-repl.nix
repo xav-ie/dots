@@ -5,6 +5,6 @@ let
 in
 flake
 // {
-  lib = flake.inputs.nixpkgs.lib;
+  inherit (flake.inputs.nixpkgs) lib;
   pkgs = flake.inputs.nixpkgs.legacyPackages.${system};
 }

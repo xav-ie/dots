@@ -4,9 +4,6 @@
   config,
   ...
 }:
-let
-  writeNuApplication = import ../../../lib/writeNuApplication { inherit lib pkgs; };
-in
 {
   config = {
     # https://github.com/nix-darwin/nix-darwin/issues/1035
@@ -208,7 +205,7 @@ in
                     | from json)
                 }
               '';
-            firefoxWindowFocused = writeNuApplication {
+            firefoxWindowFocused = pkgs.writeNuApplication {
               name = "firefoxWindowFocused";
               runtimeInputs = [
                 pkgs.skhd
@@ -231,7 +228,7 @@ in
                 '';
             };
             # re-opens the bitwarden extension app on firefox
-            firefoxExtensionWindowCreated = writeNuApplication {
+            firefoxExtensionWindowCreated = pkgs.writeNuApplication {
               name = "firefoxExtensionWindowCreated";
               runtimeInputs = [ pkgs.yabai ];
               text = # nu
@@ -244,7 +241,7 @@ in
                   }
                 '';
             };
-            logWindowPretty = writeNuApplication {
+            logWindowPretty = pkgs.writeNuApplication {
               name = "logWindowPretty";
               runtimeInputs = [
                 pkgs.yabai

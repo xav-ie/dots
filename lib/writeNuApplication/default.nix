@@ -1,7 +1,8 @@
 # see https://github.com/shanyouli/dotfiles/blob/9667d4779116236ab5f68010c3600aa90947faa2/nix/my/nuenv.nix
 {
   lib,
-  pkgs,
+  nushell,
+  writeTextFile,
 }:
 let
   makeBinPathArray =
@@ -64,7 +65,7 @@ in
     Type: AttrSet
   */
   derivationArgs ? { },
-  nushell ? pkgs.nushell,
+  nushellPackage ? nushell,
   /*
     Extra arguments to pass into nushell invoker
     Defaults to allowing stdin with "--stdin".
@@ -73,7 +74,7 @@ in
   */
   nushellArgs ? [ "--stdin" ],
 }:
-pkgs.writeTextFile {
+writeTextFile {
   inherit name meta derivationArgs;
   executable = true;
   destination = "/bin/${name}";
@@ -81,7 +82,7 @@ pkgs.writeTextFile {
   preferLocalBuild = false;
   text =
     ''
-      #!/usr/bin/env -S ${lib.concatStringsSep " " ([ (lib.getExe nushell) ] ++ nushellArgs)}
+      #!/usr/bin/env -S ${lib.concatStringsSep " " ([ (lib.getExe nushellPackage) ] ++ nushellArgs)}
     ''
     + lib.optionalString (runtimeEnv != null) ''
 
@@ -98,7 +99,7 @@ pkgs.writeTextFile {
     if checkPhase == null then
       ''
         runHook preCheck
-        ${nushell}/bin/nu --commands "nu-check '$target'"
+        ${nushellPackage}/bin/nu --commands "nu-check '$target'"
         runHook postCheck
       ''
     else
