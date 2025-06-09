@@ -27,6 +27,8 @@ system:
             launchctl kickstart $"($launchGroup)/($e.Label)"
           }
         }
+        # https://github.com/koekeishiya/yabai/issues/2199#issuecomment-2031852290
+        sleep 1sec; yabai -m rule --apply
         null
       }
       "Linux" => {
