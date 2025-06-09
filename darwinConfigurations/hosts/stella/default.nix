@@ -173,12 +173,12 @@
             spacing = 0;
           in
           {
+            # debug_output = "on";
             focus_follows_mouse = "autoraise";
             mouse_follows_focus = "off";
             mouse_drop_action = "stack";
             window_placement = "second_child";
             window_opacity = "off";
-            window_topmost = "on";
             window_shadow = "off";
             active_window_opacity = "1.0";
             normal_window_opacity = "1.0";
