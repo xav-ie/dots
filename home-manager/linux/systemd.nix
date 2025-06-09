@@ -8,6 +8,50 @@ in
       # Nicely reload system units when changing configs
       startServices = "sd-switch";
 
+      # Check for bad systemd user unit settings after application
+      services.check-systemd-units = {
+        Unit = {
+          Description = "Check systemd user units for bad settings";
+          After = [ "default.target" ];
+        };
+        Service = {
+          Type = "oneshot";
+          ExecStart = lib.getExe (writeNuApplication {
+            name = "check-systemd-units";
+            runtimeInputs = with pkgs.pkgs-mine; [ notify ];
+            text = # nu
+              ''
+                let bad_units = (systemctl --user list-unit-files --legend=false
+                                 | lines
+                                 | split column -r '\s+' unit state preset
+                                 | where unit !~ "@\\."
+                                 | get unit
+                                 | par-each { |unit|
+                                   {
+                                     unit: $unit,
+                                     bad_setting: (
+                                       systemctl --user status $unit
+                                       | str contains 'bad-setting'
+                                     )
+                                   }
+                                 }
+                                 | where bad_setting == true)
+
+                if ($bad_units | length) > 0 {
+                  let bad_units_str = $bad_units | get unit | str join ', '
+                  notify $"Bad systemd units found: ($bad_units_str)"
+                  error make { msg: $"Bad settings found: ($bad_units)" }
+                } else {
+                  print "✓ No bad systemd user units found!"
+                }
+              '';
+          });
+        };
+        Install = {
+          WantedBy = [ "default.target" ];
+        };
+      };
+
       services.ollama-server = {
         Unit = {
           Description = "Run ollama server";
