@@ -11,9 +11,6 @@ system:
     match (uname | get kernel-name) {
       "Darwin" => {
         morlana switch --flake . --no-confirm -- --show-trace
-
-        # https://github.com/koekeishiya/yabai/issues/2199#issuecomment-2031852290
-        yabai -m rule --apply
         null
       }
       "Linux" => {
