@@ -17,10 +17,15 @@ system:
         | split column --regex '\s+' PID Status Label
         | where Label =~ "^org.nixos" | each {|e|
           print $"🍃 Relaunching ($e.Label)"
-          let agentPath = $"~/Library/LaunchAgents/($e.Label).plist"
+          let agentPath = $"($env.HOME)/Library/LaunchAgents/($e.Label).plist"
           let launchGroup = $"gui/(id -u)"
-          try { launchtl bootout $launchGroup $agentPath }
-          try { launchtl bootstrap $launchGroup $agentPath }
+
+          try { launchctl bootout $launchGroup $agentPath }
+          try {
+            launchctl bootstrap $launchGroup $agentPath
+          } catch {
+            launchctl kickstart $"($launchGroup)/($e.Label)"
+          }
         }
         null
       }
