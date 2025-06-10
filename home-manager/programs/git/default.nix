@@ -127,6 +127,7 @@ in
         };
       };
       extraConfig = {
+        advice.detachedHead = false;
         core = {
           # configured by delta.enable=true and
           # ov.enable=true
