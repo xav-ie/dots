@@ -16,15 +16,7 @@ in
           blur = true;
           #option_as_alt = "Both";
         };
-        general.import =
-          if pkgs.stdenv.isLinux then
-            with pkgs.alacritty-theme;
-            [
-              monokai_charcoal
-              # xterm
-            ]
-          else
-            [ ];
+        general.import = lib.optional pkgs.stdenv.isLinux pkgs.alacritty-theme.monokai_charcoal;
         keyboard.bindings = [
           {
             key = "Tab";
