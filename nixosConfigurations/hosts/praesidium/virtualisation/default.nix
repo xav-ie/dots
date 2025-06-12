@@ -2,6 +2,7 @@
 {
   imports = [
     ./dnsmasq.nix
+    ./nginx.nix
     ./portainer.nix
     ./spdf.nix
     ./tailscale.nix

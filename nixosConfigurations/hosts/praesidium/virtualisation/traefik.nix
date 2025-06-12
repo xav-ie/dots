@@ -5,26 +5,56 @@
   ...
 }:
 let
-  domain = "lalala.casa";
-  inherit (config.services.local-networking) subdomains;
+  inherit (config.services.local-networking) baseDomain subdomains;
+
   allDomains = [
-    domain
-  ] ++ map (subdomain: "${subdomain}.${domain}") subdomains;
-  sanString = lib.concatStringsSep "," (map (d: "DNS:${d}") allDomains);
+    baseDomain
+  ] ++ (map (subdomain: "${subdomain}.${baseDomain}") subdomains);
   hostEntries = lib.concatStringsSep "\n" (
     map (d: ''
       127.0.0.1 ${d}
       ::1       ${d}
     '') allDomains
   );
+  # TODO: simplify... this works for now
+  mkcertCAHelper = pkgs.writeNuApplication {
+    name = "mkcert-ca-helper";
+    runtimeInputs = with pkgs; [
+      mkcert
+      nssTools
+    ];
+    text = # nu
+      ''
+        def main [out: string] {
+          $env.CAROOT = $out
+          mkdir $out
+          mkcert -install out+err>| ignore
+          mkcert -CAROOT
+        }
+      '';
+  };
+  mkcertCA =
+    pkgs.runCommand "mkcertCA"
+      {
+        buildInputs = [
+          mkcertCAHelper
+          pkgs.coreutils
+        ];
+      }
+      ''
+        cp -r ${mkcertCAHelper} $out
+        chmod -R +w $out
+        patchShebangs $out/bin/
+        $out/bin/mkcert-ca-helper $out
+      '';
 in
 {
   options = {
     services.local-networking = {
       baseDomain = lib.mkOption {
         type = lib.types.str;
-        default = domain;
-        example = "myhome.network";
+        default = "lalala.casa";
+        example = ''"myhome.network"'';
         description = "The base domain name for services exposed via Traefik (for now).";
       };
       subdomains = lib.mkOption {
@@ -34,14 +64,45 @@ in
         description = "A list of subdomains to configure under the base domain for services and certificates.";
       };
     };
-
   };
 
   config = {
+    environment.variables = {
+      NODE_EXTRA_CA_CERTS = "${mkcertCA}/rootCA.pem";
+    };
+
+    # Install CA in system trust store
+    security.pki.certificates = [
+      (builtins.readFile "${mkcertCA}/rootCA.pem")
+    ];
+
     networking.firewall.allowedTCPPorts = [
       80
       443
     ];
+
+    systemd.services.generate-certs = {
+      before = [ "traefik.service" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      script = ''
+        PROXY_DOMAIN=$(cat ${config.sops.secrets."reverse-proxy/reverse-hostname".path})
+        mkdir -p /var/lib/traefik/certs
+
+        export CAROOT=${mkcertCA}
+        ${lib.getExe pkgs.mkcert} -cert-file /var/lib/traefik/certs/cert.pem \
+          -key-file /var/lib/traefik/certs/key.pem \
+          ${baseDomain} ${lib.concatStringsSep " " (map (s: "${s}.${baseDomain}") subdomains)} \
+          "$PROXY_DOMAIN"
+
+        chown traefik:${config.services.traefik.group} /var/lib/traefik/certs/*.pem
+        chmod 644 /var/lib/traefik/certs/cert.pem
+        chmod 600 /var/lib/traefik/certs/key.pem
+      '';
+    };
 
     services.traefik = {
       enable = true;
@@ -56,6 +117,10 @@ in
           checkNewVersion = false;
           sendAnonymousUsage = false;
         };
+
+        # TODO: figure out how to use
+        # metrics.prometheus = { };
+        # tracing = { };
 
         entryPoints = {
           web = {
@@ -93,35 +158,14 @@ in
             # Only expose containers with traefik.enable=true label
             exposedByDefault = false;
           };
+          file.watch = true;
         };
 
         api.dashboard = true;
+        # api.insecure = true;
       };
 
-      dynamicConfigOptions = {
-        # https://doc.traefik.io/traefik/https/tls/
-        tls.certificates =
-          let
-            certDir = pkgs.runCommand "selfSignedCerts" { buildInputs = [ pkgs.openssl ]; } ''
-              openssl req -x509 \
-              -newkey rsa:4096 \
-              -keyout key.pem \
-              -out cert.pem \
-              -nodes \
-              -days 3650 \
-              -subj "/C=US/ST=Massachusetts/L=Boston/O=Xorlop/OU=Primary/CN=${domain}" \
-              -addext "subjectAltName = ${sanString}"
-              mkdir -p $out
-              cp key.pem cert.pem $out
-            '';
-          in
-          [
-            {
-              certFile = "${certDir}/cert.pem";
-              keyFile = "${certDir}/key.pem";
-            }
-          ];
-      };
+      dynamicConfigFile = "/etc/traefik/my-traefik-config.yaml";
     };
 
     networking.extraHosts = ''
