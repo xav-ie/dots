@@ -9,17 +9,9 @@
   ...
 }:
 {
-  options = {
-    defaultUser = lib.mkOption {
-      type = lib.types.str;
-      example = "x";
-      description = "The default username for various system configurations and services.";
-    };
-  };
+  imports = [ ./user.nix ];
 
   config = {
-    defaultUser = "x";
-
     nix = {
       enable = true;
       # https://nixos.wiki/wiki/Storage_optimization
