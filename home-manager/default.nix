@@ -4,6 +4,7 @@
 }:
 {
   imports = [
+    ../lib/common/user.nix
     ./dotfiles
     ./programs/alacritty
     ./programs/atuin
