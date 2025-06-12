@@ -108,6 +108,7 @@
       # The state version is required and should stay at the version you
       # originally installed.
       stateVersion = "23.11";
+      # TODO: how to re-source this in zsh?
       sessionVariables = {
         EDITOR = "$HOME/Projects/xnixvim/result/bin/nvim";
         # get more colors
