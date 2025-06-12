@@ -19,7 +19,8 @@
       ];
       shell = lib.getExe pkgs.pkgs-bleeding.nushell;
       shortcut = "Space";
-      terminal = "xterm-256color";
+      # inherit from previous shell
+      terminal = "$TERM";
       extraConfig = # tmux
         ''
           bind -n M-H previous-window

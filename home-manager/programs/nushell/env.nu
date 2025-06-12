@@ -4,7 +4,6 @@
 
 $env.STARSHIP_SHELL = "nu"
 $env.SHELL = "nu"
-$env.TERM = "xterm-256color"
 
 def get_time []: nothing -> string {
   # date now | format date '%m/%d %I:%M%p'
