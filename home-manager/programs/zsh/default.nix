@@ -1,9 +1,4 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
+{ lib, pkgs, ... }:
 let
   tmux-tab-name-update = lib.getExe pkgs.pkgs-mine.is-sshed;
 in
@@ -54,7 +49,9 @@ in
           ''
             # get system environment variables for each new shell, skipping
             # needing to re-login. Not sure why this is not the default...
-            source /etc/set-environment
+            unset __NIX_DARWIN_SET_ENVIRONMENT_DONE
+            unset __NIXOS_SET_ENVIRONMENT_DONE
+            source /etc/zshenv
             unset __HM_SESS_VARS_SOURCED
             source $HOME/.zshenv
 
