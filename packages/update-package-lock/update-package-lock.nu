@@ -16,7 +16,7 @@ def main [] {
     exit 0
   }
 
-  print $"📦 $(ansi blue)package.json changed - regenerating package-lock.json...(ansi reset)"
+  print $"📦 (ansi blue)package.json changed - regenerating package-lock.json...(ansi reset)"
   git checkout HEAD~ -- package-lock.json  # Reset lockfile to parent
   npm install
   git add package-lock.json
