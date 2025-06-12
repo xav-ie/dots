@@ -90,7 +90,8 @@
   "network.http.speculative-parallel-limit" = 0;
   "network.predictor.enabled" = false;
   "network.prefetch-next" = false;
-  "network.trr.mode" = 2;
+  # use system dns, please
+  "network.trr.mode" = 5;
   "network.trr.uri" = "https://mozilla.cloudflare-dns.com/dns-query";
   "pdfjs.enabledCache.state" = true;
   "pdfjs.migrationVersion" = 2;
