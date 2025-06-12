@@ -68,6 +68,7 @@
           })
           jless # best JSON and YAML viewer
           just # better make
+          lsof
           magic-wormhole-rs # send files easily
           neovide
           nix-output-monitor # better nix build
