@@ -1,12 +1,13 @@
 { ... }:
 {
   imports = [
-    ./spdf.nix
+    ./dnsmasq.nix
     ./portainer.nix
+    ./spdf.nix
+    ./tailscale.nix
     ./traefik.nix
     # not currently routing correctly...
     # ./twingate.nix
-    ./tailscale.nix
   ];
 
   config = {

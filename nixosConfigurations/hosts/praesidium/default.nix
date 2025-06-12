@@ -67,17 +67,19 @@ in
       hostName = "praesidium"; # Define your hostname.
       # Enables wireless support via wpa_supplicant.
       # wireless.enable = true;
-      nameservers =
-        let
-          ips = [
-            "1.1.1.1"
-            "1.0.0.1"
-            "2606:4700:4700::1111"
-            "2606:4700:4700::1001"
-          ];
-          sni = "one.one.one.one";
-        in
-        map (ip: "${ip}#${sni}") ips;
+      # use services.dnsmasq
+      nameservers = [ "127.0.0.1" ];
+      # nameservers =
+      #   let
+      #     ips = [
+      #       "1.1.1.1"
+      #       "1.0.0.1"
+      #       "2606:4700:4700::1111"
+      #       "2606:4700:4700::1001"
+      #     ];
+      #     sni = "one.one.one.one";
+      #   in
+      #   map (ip: "${ip}#${sni}") ips;
 
       # dhcpcd.extraConfig = "nohook resolv.conf";
 
@@ -88,8 +90,8 @@ in
       # Enable networking
       networkmanager = {
         enable = true;
-        # Please, use the resolved service for DNS.
-        dns = "systemd-resolved";
+        # rely on dnsmasq service
+        dns = "none";
       };
 
       # Open ports in the firewall.
@@ -431,22 +433,25 @@ in
       # TODO: set up
       redshift.enable = true;
       resolved = {
-        enable = true;
-        dnssec = "true";
-        dnsovertls = "true";
-        domains = [ "~." ];
-        # dns => defaults to config.networking.nameservers
-        fallbackDns =
-          let
-            ips = [
-              "9.9.9.9"
-              "149.112.112.112"
-              "2620:fe::fe"
-              "2620:fe::9"
-            ];
-            sni = "dns.quad9.net";
-          in
-          map (ip: "${ip}#${sni}") ips;
+        enable = false;
+        # dnssec = "true";
+        # dnsovertls = "true";
+        # domains = [ "~." ];
+        # # dns => defaults to config.networking.nameservers
+        # fallbackDns =
+        #   let
+        #     ips = [
+        #       "9.9.9.9"
+        #       "149.112.112.112"
+        #       "2620:fe::fe"
+        #       "2620:fe::9"
+        #     ];
+        #     sni = "dns.quad9.net";
+        #   in
+        #   map (ip: "${ip}#${sni}") ips;
+        extraConfig = ''
+          DNSStubListener=no
+        '';
       };
       # TODO: ???
       # thermald.enable = true;
