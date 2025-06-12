@@ -111,16 +111,18 @@ in
         defaultLocale = language;
         extraLocaleSettings = {
           LANG = language;
-          LC_ALL = language;
           LC_ADDRESS = language;
           LC_IDENTIFICATION = language;
           LC_MEASUREMENT = language;
           LC_MONETARY = language;
           LC_NAME = language;
-          LC_NUMERIC = language;
           LC_PAPER = language;
           LC_TELEPHONE = language;
-          LC_TIME = language;
+          # DNE
+          # LC_ALL = language;
+          # LC_NUMERIC = language;
+          # LC_TIME = language;
+          # TODO: better way to do this?
         };
       };
 
