@@ -156,26 +156,20 @@
               clang-format.includes = [ "*.glsl" ];
               deadnix.enable = true;
               just.enable = true;
+              kdlfmt.enable = true;
               nixfmt.enable = true;
               prettier.enable = true;
               ruff.enable = true;
               shfmt.enable = true;
               statix.enable = true;
               swift-format.enable = true;
-              # makes `nix flake check` fail...
-              taplo.enable = false;
+              taplo.enable = true;
             };
             settings.global.excludes = [
-              # TODO: fix formatter
+              # formatter is borked
               "*.nu"
-              # TODO: find formatter
-              "*.conf"
-              # TODO: add formatter
-              "*.kdl"
-              # TODO: taplo is broken
-              "*.toml"
-              # TODO: add ini formatter
               ".git-blame-ignore-revs"
+              # sops has its own formatter
               "secrets/*.yaml"
             ];
             # `prettier` does not come with a node version on purpose, so we
