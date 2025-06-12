@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   ...
@@ -51,6 +52,12 @@ in
         };
         initContent = # sh
           ''
+            # get system environment variables for each new shell, skipping
+            # needing to re-login. Not sure why this is not the default...
+            source /etc/set-environment
+            unset __HM_SESS_VARS_SOURCED
+            source $HOME/.zshenv
+
             ${fzfTabInitExtra}
             # comment this if you face weird direnv issues
             export DIRENV_LOG_FORMAT=""
