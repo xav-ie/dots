@@ -14,7 +14,6 @@
     ./programs/git
     ./programs/gpg
     # ./programs/kitty
-    # ./programs/lf
     ./programs/pueue
     ./programs/moar
     ./programs/mpv
