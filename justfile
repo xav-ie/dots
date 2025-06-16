@@ -11,16 +11,10 @@ system:
         null
       }
       "Linux" => {
-        # 1. build ./result for diffing
-        (nixos-rebuild build --flake . --fast
-          --show-trace --log-format internal-json
-          out+err>| nom --json)
-
-        # 2. diff it with current system
-        nvd diff /run/current-system ./result
-
-        # 4. apply switch
-        sudo -A ./result/bin/switch-to-configuration switch
+        nh os build .
+        # get password through askpass program
+        try { sudo -A true }
+        nh os switch .
       }
       _ => {
         error make { msg: "Unknown OS" }

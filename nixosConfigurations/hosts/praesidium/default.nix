@@ -235,6 +235,12 @@ in
     # };
 
     programs = {
+      nh = {
+        enable = true;
+        clean.enable = true;
+        clean.extraArgs = "--keep-since 7d --keep 20";
+        flake = "/home/${config.defaultUser}/Projects/dots";
+      };
       nix-ld = {
         enable = true;
         package = pkgs.nix-ld-rs;
