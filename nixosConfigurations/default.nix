@@ -14,14 +14,7 @@ let
           inherit inputs system toplevel;
         };
         modules = [
-          ../lib/common
           ./hosts/praesidium
-          ./linux-home-manager.nix
-          {
-            # TODO: enable on a per-package basis
-            config.nixpkgs.config.allowUnfree = true;
-          }
-          ./sops.nix
         ];
       };
     };

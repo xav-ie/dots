@@ -11,16 +11,7 @@ in
       inherit inputs toplevel;
     };
     modules = [
-      ../lib/common
-      ./darwin-home-manager.nix
       ./hosts/stella
-      ./nix-homebrew.nix
-      ./modules/pam-reattach.nix
-      ./modules/sops.nix
-      # {
-      #   nix.settings.trusted-users = [ user ];
-      #   nix.linux-builder.enable = true;
-      # }
     ];
   };
 }
