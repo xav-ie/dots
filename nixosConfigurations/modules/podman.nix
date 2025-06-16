@@ -1,16 +1,4 @@
-{ ... }:
-{
-  imports = [
-    ./dnsmasq.nix
-    ./nginx.nix
-    ./portainer.nix
-    ./spdf.nix
-    ./tailscale.nix
-    ./traefik.nix
-    # not currently routing correctly...
-    # ./twingate.nix
-  ];
-
+_: {
   config = {
     virtualisation = {
       podman = {
