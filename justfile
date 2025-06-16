@@ -19,21 +19,8 @@ system:
         # 2. diff it with current system
         nvd diff /run/current-system ./result
 
-        # 3. ask for password after seeing diff
-        try { sudo -nv err> /dev/null } catch {
-          try {
-            zenity --password | sudo -Sv err> /dev/null
-          } catch {
-            print -e ...[
-              (ansi yellow_underline)
-              "Failed to get a password through UI"
-              (ansi reset)
-            ]
-          }
-        }
-
         # 4. apply switch
-        sudo ./result/bin/switch-to-configuration switch
+        sudo -A ./result/bin/switch-to-configuration switch
       }
       _ => {
         error make { msg: "Unknown OS" }
