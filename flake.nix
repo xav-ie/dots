@@ -122,15 +122,13 @@
               (with pkgs; [
                 just
                 nix-diff
-                nix-output-monitor
                 nushell
               ])
               ++ lib.optionals pkgs.stdenv.isLinux (
                 with pkgs;
                 [
+                  nh
                   nixos-rebuild
-                  nvd
-                  zenity
                 ]
               )
               ++ lib.optionals pkgs.stdenv.isDarwin [

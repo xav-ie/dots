@@ -20,7 +20,7 @@
         # these two options do not have an effect on macos... >:(
         # persistent = true;
         # dates = "weekly";
-        options = "--delete-older-than 30d";
+        # options = "--delete-older-than 30d";
       };
 
       # This will add each flake input as a registry
