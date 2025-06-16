@@ -5,6 +5,10 @@
   ...
 }:
 {
+  imports = [
+    ../../modules
+  ];
+
   config = {
     # https://github.com/nix-darwin/nix-darwin/issues/1035
     # seems to be waiting on
