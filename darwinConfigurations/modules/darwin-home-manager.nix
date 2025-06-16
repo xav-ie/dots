@@ -16,8 +16,8 @@
     useGlobalPkgs = true;
     useUserPackages = true;
     users."${config.defaultUser}".imports = [
-      ../home-manager
-      ../home-manager/darwin
+      ../../home-manager
+      ../../home-manager/darwin
     ];
   };
 }

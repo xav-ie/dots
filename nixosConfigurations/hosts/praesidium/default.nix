@@ -14,10 +14,7 @@ in
     inputs.hardware.nixosModules.common-cpu-intel-cpu-only
     inputs.hardware.nixosModules.common-gpu-nvidia-nonprime
     inputs.hardware.nixosModules.common-pc-ssd
-    ./hardware-configuration.nix
-    ./systemd.nix
-    ./home-assistant
-    ./virtualisation
+    ../../modules
   ];
 
   config = {

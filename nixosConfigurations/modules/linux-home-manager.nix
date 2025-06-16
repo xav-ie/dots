@@ -18,8 +18,8 @@
     useGlobalPkgs = true;
     useUserPackages = true;
     users."${config.defaultUser}".imports = [
-      ../home-manager
-      ../home-manager/linux
+      ../../home-manager
+      ../../home-manager/linux
     ];
   };
 }
