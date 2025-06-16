@@ -347,6 +347,7 @@ in
           })
         ];
       };
+      seahorse.enable = true;
       # installs a special kernel module to enable tracing
       sysdig.enable = true;
       # must be enabled system-wide in order to be a default shell
