@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 {
   imports = [
     ../programs/firefox
@@ -73,6 +73,7 @@
           move-active
           record
           record-section
+          zenity-askpass
         ]);
 
       # The state version is required and should stay at the version you
@@ -80,12 +81,13 @@
       stateVersion = "23.11";
       sessionVariables = {
         # va-api driver to use 'nvidia', '', ...
-        LIBVA_DRIVER_NAME = "nvidia";
         GBM_BACKEND = "nvidia-drm";
-        __GLX_VENDOR_LIBRARY_NAME = "nvidia";
-        XDG_CONFIG_HOME = "/home/x/.config";
+        LIBVA_DRIVER_NAME = "nvidia";
         NIXOS_OZONE_WL = "1";
+        SUDO_ASKPASS = lib.getExe pkgs.pkgs-mine.zenity-askpass;
         WLR_NO_HARDWARE_CURSORS = "1";
+        XDG_CONFIG_HOME = "/home/x/.config";
+        __GLX_VENDOR_LIBRARY_NAME = "nvidia";
       };
     };
     programs = {

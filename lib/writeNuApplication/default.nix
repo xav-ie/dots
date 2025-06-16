@@ -90,7 +90,7 @@ writeTextFile {
     ''
     + lib.optionalString (runtimeInputs != [ ]) ''
 
-      $env.PATH = ${toNu (makeBinPathArray runtimeInputs)} ++ $env.PATH
+      $env.PATH = ${toNu (makeBinPathArray runtimeInputs)} ++ ($env.PATH? | default [])
     ''
     + ''
       ${text}
