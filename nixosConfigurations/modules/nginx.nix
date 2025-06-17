@@ -258,6 +258,7 @@ in
             "~ ^/pages/outsmartly" = goToShopify;
             "~ ^/cdn/" = goToShopify;
             "~ ^/products/*\.js$" = goToShopify;
+            "~ ^/contact" = goToShopify;
 
             # Main proxy with optimizations
             "/" = {
