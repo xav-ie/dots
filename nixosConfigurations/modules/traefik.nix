@@ -72,8 +72,8 @@ in
     };
 
     # Install CA in system trust store
-    security.pki.certificates = [
-      (builtins.readFile "${mkcertCA}/rootCA.pem")
+    security.pki.certificateFiles = [
+      "${mkcertCA}/rootCA.pem"
     ];
 
     networking.firewall.allowedTCPPorts = [
