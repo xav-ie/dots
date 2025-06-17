@@ -52,6 +52,9 @@ in
             unset __NIX_DARWIN_SET_ENVIRONMENT_DONE
             unset __NIXOS_SET_ENVIRONMENT_DONE
             source /etc/zshenv
+            if [ -f /etc/set-environment ]; then
+              source /etc/set-environment
+            fi
             unset __HM_SESS_VARS_SOURCED
             source $HOME/.zshenv
 
