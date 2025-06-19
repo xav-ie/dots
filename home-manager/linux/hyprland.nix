@@ -51,6 +51,94 @@ in
       wl-clipboard
     ];
 
+    programs = {
+      hyprlock = {
+        enable = true;
+        settings = {
+          "$font" = "Monospace";
+
+          general = {
+            hide_cursor = true;
+            grace = 10;
+          };
+
+          animations = {
+            enabled = true;
+            bezier = "linear, 1, 1, 0, 0";
+            animation = [
+              "fadeIn, 1, 5, linear"
+              "fadeOut, 1, 5, linear"
+              "inputFieldDots, 1, 2, linear"
+            ];
+          };
+
+          background = {
+            monitor = "";
+            path = "screenshot";
+            blur_passes = 3;
+          };
+
+          input-field = {
+            # monitor =
+            size = "20%, 5%";
+            outline_thickness = 3;
+            inner_color = "rgba(0, 0, 0, 0.0)"; # no fill
+
+            outer_color = "rgba(33ccffee) rgba(00ff99ee) 45deg";
+            check_color = "rgba(00ff99ee) rgba(ff6633ee) 120deg";
+            fail_color = "rgba(ff6633ee) rgba(ff0066ee) 40deg";
+
+            font_color = "rgb(143, 143, 143)";
+            fade_on_empty = false;
+            rounding = 15;
+
+            font_family = "$font";
+            placeholder_text = "Input password...";
+            fail_text = "$PAMFAIL";
+
+            # uncomment to use a letter instead of a dot to indicate the typed password
+            # dots_text_format = *
+            # dots_size = 0.4
+            dots_spacing = 0.3;
+
+            # uncomment to use an input indicator that does not show the password length (similar to swaylock's input indicator)
+            # hide_input = true
+
+            position = "0, -20";
+            halign = "center";
+            valign = "center";
+          };
+
+          label = [
+            # TIME
+            {
+              monitor = "";
+              text = "$TIME"; # ref. https://wiki.hyprland.org/Hypr-Ecosystem/hyprlock/#variable-substitution
+              font_size = 90;
+              font_family = "$font";
+
+              position = "-30, 0";
+              halign = "right";
+              valign = "top";
+            }
+
+            # DATE
+            {
+              monitor = "";
+              text = ''cmd[update:60000] date +"%A, %d %B %Y"''; # update every 60 seconds
+              font_size = 25;
+              font_family = "$font";
+
+              position = "-30, -150";
+              halign = "right";
+              valign = "top";
+            }
+          ];
+
+        };
+      };
+    };
+
     home.file.".config/hypr/shaders/red.glsl".text = # glsl
       ''
         precision highp float;
@@ -62,6 +150,34 @@ in
             gl_FragColor = vec4(c.r, 0.0, 0.0, c.a);
         }
       '';
+
+    services = {
+      hypridle = {
+        enable = true;
+        settings = {
+          general = {
+            # also lock before systemd suspend
+            before_sleep_cmd = "loginctl lock-session";
+            # prevent having to press key twice
+            after_sleep_cmd = "hyprctl dispatch dpms on";
+            lock_cmd = "${lib.getExe config.programs.hyprlock.package} || true";
+          };
+
+          listener = [
+            {
+              timeout = 900;
+              on-timeout = "loginctl lock-session";
+            }
+            {
+              timeout = 1200;
+              on-timeout = "hyprctl dispatch dpms off";
+              on-resume = "hyprctl dispatch dpms on";
+            }
+          ];
+        };
+      };
+
+    };
 
     wayland.windowManager.hyprland =
       let
@@ -163,38 +279,13 @@ in
 
           # Execute your favorite apps at launch
           exec-once = [
-            ''swww init && swww img "~/Downloads/ether.gif"''
-            (lib.getExe pkgs.waybar)
-            (lib.getExe pkgs.swaynotificationcenter)
+            (lib.optionalString config.services.swww.enable "${lib.getExe pkgs.swww} ~/Downloads/ether.gif")
             "${lib.getExe pkgs.noisetorch} -i"
-            "wl-paste --type text --watch cliphist store"
-            "wl-paste --type image --watch cliphist store"
-            "firefox"
-            "ghostty"
-            (lib.getExe pkgs.networkmanagerapplet)
-            "${pkgs.blueman}/bin/blueman-applet"
-            (lib.getExe (
-              pkgs.writeNuApplication {
-                name = "screen-idle-lock";
-                runtimeInputs = with pkgs; [
-                  swayidle
-                  grimblast
-                  imagemagick
-                  swaylock
-                  hyprland
-                ];
-                text = # nu
-                  ''
-                    (swayidle
-                      timeout 300 'grimblast save screen - \
-                                   | magick png:- -scale 10% -blur 0x2.5 -resize 1000% ~/Pictures/out.png \
-                                   && feh -F ~/Pictures/out.png'
-                      timeout 400 'pkill feh; swaylock -i ~/Pictures/out.png'
-                      timeout 600 'hyprctl dispatch dpms off'
-                      resume 'hyprctl dispatch dpms on')
-                  '';
-              }
-            ))
+            # TODO: move into service
+            "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type text --watch cliphist store"
+            "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type image --watch cliphist store"
+            (lib.getExe pkgs.firefox)
+            (lib.getExe pkgs.ghostty)
           ];
 
           animations = {
