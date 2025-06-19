@@ -56,11 +56,8 @@
           bitwarden
           chromium
           # discord
-          # TODO: move into hm services
-          networkmanagerapplet
           noisetorch # noise filter
           pavucontrol # audio mixer
-          # TODO: move into hm services
           playerctl # play, pause, next
           pulseaudio # provides pactl for volume control
           # qutebrowser
@@ -97,11 +94,14 @@
     };
 
     services = {
+      blueman-applet.enable = true;
       gpg-agent = {
         enable = true;
         pinentry.package = pkgs.pinentry-gnome3;
         enableSshSupport = true;
       };
+      network-manager-applet.enable = true;
+      swww.enable = true; # wallpaper
     };
 
     dconf.settings = {
