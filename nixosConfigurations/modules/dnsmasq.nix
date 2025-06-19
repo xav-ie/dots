@@ -14,6 +14,8 @@
       conf-dir = "/etc/dnsmasq.d/,*.conf";
       # go to our DOH resolver
       # server = [ "127.0.0.1#5053" ];
+      # allow more concurrent DNS requests
+      dns-forward-max = 1000;
       server = [
         "1.1.1.1"
         "1.0.0.1"
