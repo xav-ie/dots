@@ -113,6 +113,7 @@ in
           '';
           path = "/etc/dnsmasq.d/reverse-proxy.conf";
           mode = "0444";
+          restartUnits = [ "dnsmasq.service" ];
         };
       };
     };
