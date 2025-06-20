@@ -7,8 +7,8 @@ _: {
         dockerCompat = true;
         # Create a "docker" socket that just points to podman
         dockerSocket.enable = true;
-        # Required for containers under podman-compose to be able to talk to each other.
-        defaultNetwork.settings.dns_enabled = true;
+        # # Required for containers under podman-compose to be able to talk to each other.
+        # defaultNetwork.settings.dns_enabled = true;
       };
     };
     # generally good to have this set up
