@@ -37,6 +37,15 @@ in
       __GLX_VENDOR_LIBRARY_NAME = "nvidia";
     };
 
+    home.pointerCursor = {
+      name = "phinger-cursors-dark";
+      package = pkgs.phinger-cursors;
+      size = 36;
+      gtk.enable = true;
+      hyprcursor.enable = true;
+      hyprcursor.size = 36;
+    };
+
     home.packages = with pkgs; [
       grimblast # screenshot tool
       hyprshade
@@ -201,6 +210,13 @@ in
         systemd.enable = true;
         xwayland.enable = true;
         settings = {
+          env = [
+            "XCURSOR_THEME,${config.home.pointerCursor.name}"
+            "XCURSOR_SIZE,${builtins.toString config.home.pointerCursor.size}"
+            "HYPRCURSOR_THEME,${config.home.pointerCursor.name}"
+            "HYPRCURSOR_SIZE,${builtins.toString config.home.pointerCursor.size}"
+          ];
+
           # For all categories, see https://wiki.hyprland.org/Configuring/Variables/
           input = {
             kb_layout = "us";
