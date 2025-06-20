@@ -284,7 +284,7 @@ in
             # TODO: move into service
             "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type text --watch cliphist store"
             "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type image --watch cliphist store"
-            (lib.getExe pkgs.firefox)
+            (lib.getExe config.programs.firefox.package)
             (lib.getExe pkgs.ghostty)
           ];
 
