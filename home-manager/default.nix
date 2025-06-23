@@ -14,6 +14,7 @@
     # ./programs/firefox
     ./programs/git
     ./programs/gpg
+    ./programs/jujutsu
     # ./programs/kitty
     ./programs/pueue
     ./programs/moar
