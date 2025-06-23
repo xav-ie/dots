@@ -12,6 +12,16 @@ in
     };
     modules = [
       ./hosts/stella
+      ./modules
+      ./modules/certs.nix
+      ./modules/darwin-home-manager.nix
+      ./modules/dnsmasq.nix
+      # ./modules/linux-builder.nix
+      ./modules/nix-homebrew.nix
+      ./modules/pam-reattach.nix
+      ./modules/reverse-proxy.nix
+      ./modules/settings.nix
+      ./modules/sops.nix
     ];
   };
 }
