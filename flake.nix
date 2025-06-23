@@ -32,6 +32,10 @@
     hyprland.inputs.pre-commit-hooks.follows = "pre-commit-hooks";
     hyprland.inputs.systems.follows = "systems-linux";
     hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
+    jj.url = "github:martinvonz/jj";
+    jj.inputs."flake-utils".follows = "flake-utils";
+    jj.inputs."nixpkgs".follows = "nixpkgs-bleeding";
+    jj.inputs.rust-overlay.follows = "rust-overlay";
     mk-shell-bin.url = "github:rrbutani/nix-mk-shell-bin";
     morlana.url = "github:ryanccn/morlana";
     morlana.inputs.nixpkgs.follows = "nixpkgs";

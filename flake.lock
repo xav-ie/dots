@@ -776,6 +776,32 @@
         "type": "github"
       }
     },
+    "jj": {
+      "inputs": {
+        "flake-utils": [
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs-bleeding"
+        ],
+        "rust-overlay": [
+          "rust-overlay"
+        ]
+      },
+      "locked": {
+        "lastModified": 1750678966,
+        "narHash": "sha256-2nlQAt1NL/KfvKNiZ1SzZMZMJc81DY8VizMylDdWqkU=",
+        "owner": "martinvonz",
+        "repo": "jj",
+        "rev": "754ef3481853df30a106f916fab11646086263bc",
+        "type": "github"
+      },
+      "original": {
+        "owner": "martinvonz",
+        "repo": "jj",
+        "type": "github"
+      }
+    },
     "libgit2": {
       "flake": false,
       "locked": {
@@ -1119,6 +1145,7 @@
         "homebrew-core": "homebrew-core",
         "hyprland": "hyprland",
         "hyprland-contrib": "hyprland-contrib",
+        "jj": "jj",
         "mk-shell-bin": "mk-shell-bin",
         "morlana": "morlana",
         "nix-darwin": "nix-darwin",
