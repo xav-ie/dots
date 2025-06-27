@@ -8,11 +8,12 @@ let
   optionalAttrs = bool: attrSet: if bool then attrSet else { };
   writeNuApplication = pkgs.callPackage ../lib/writeNuApplication { };
   notify = pkgs.callPackage ./notify { inherit generate-kaomoji writeNuApplication; };
+  base-ref = pkgs.callPackage ./base-ref { inherit writeNuApplication; };
 in
 rec {
+  inherit base-ref notify;
   default = pkgs.callPackage ./cache-command { };
   apple-emoji-linux = pkgs.callPackage ./apple-emoji-linux { };
-  base-ref = pkgs.callPackage ./base-ref { inherit writeNuApplication; };
   better-branch = pkgs.callPackage ./better-branch { inherit writeNuApplication; };
   cache-command = pkgs.callPackage ./cache-command { };
   ff = pkgs.callPackage ./ff { };
@@ -22,10 +23,10 @@ rec {
   jira-list = pkgs.callPackage ./jira-list { inherit cache-command; };
   jira-task-list = pkgs.callPackage ./jira-task-list { inherit cache-command; };
   localip = pkgs.callPackage ./localip { inherit writeNuApplication; };
-  inherit notify;
   nix-repl = pkgs.callPackage ./nix-repl { inherit writeNuApplication; };
   nvim = pkgs.callPackage ./nvim { };
   prs = pkgs.callPackage ./prs { inherit writeNuApplication; };
+  pr-summary = pkgs.callPackage ./pr-summary { inherit base-ref writeNuApplication; };
   review = pkgs.callPackage ./review { inherit writeNuApplication; };
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
   tmux-tab-name-update = pkgs.callPackage ./tmux-tab-name-update { };
