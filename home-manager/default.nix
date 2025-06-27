@@ -105,6 +105,7 @@
           tmux-tab-name-update
           uair-toggle-and-notify
           update-package-lock
+          update-pr
           zellij-tab-name-update
         ]);
 
