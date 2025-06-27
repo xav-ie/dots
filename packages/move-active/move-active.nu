@@ -1,40 +1,53 @@
 const waybar_height = 34
 
-export def windowDimensions [] {
-  hyprctl activewindow -j
-  | jq '{
-    width: .size[0],
-    height: .size[1],
-    x: .at[0],
-    y: .at[1],
-  }'
-  | from json
+def floatingWindowOrActive [use_active?: bool] {
+  # first, try and get active window if it is floating
+  let active_window = hyprctl activewindow -j | from json
+  if ($active_window.floating == true or ($use_active | default false)) {
+    $active_window
+  } else {
+    # now, try and find the first floating window on the current workspace
+    let active_workspace = hyprctl activeworkspace -j | from json
+    let floating_workspace_windows = (hyprctl clients -j
+                                      | from json
+                                      | where $it.workspace.id == $active_workspace.id
+                                        and floating == true)
+    # TODO: consider using focusHistoryId instead of first window
+    let chosen_floating = $floating_workspace_windows | first
+    $chosen_floating
+  }
 }
 
-export def windowInfo [
-  window_dimensions_override?:
-    record<width: number, height: number, x: number, y: number>
+def windowDimensions [use_active?: bool] {
+ let window = floatingWindowOrActive ($use_active | default false)
+ {
+   width: $window.size.0
+   height: $window.size.1
+   x: $window.at.0
+   y: $window.at.1
+   address: $window.address
+ }
+}
+
+def windowInfo [
+  window_dimensions:
+    record<width: number, height: number, x: number, y: number, address: string>,
 ] {
   let border_size = (hyprctl getoption general:border_size -j
-                     | jq .int) | from json
+                     | from json | get int)
   let gaps = (hyprctl getoption general:gaps_out -j
-              | jq '.custom | split (" ") | map(tonumber)')
-              | from json
+              | from json | get custom | split words
+              | each {|| $in | into int })
   let gap_top = $gaps.0
   let gap_right = $gaps.1
   let gap_bottom = $gaps.2
   let gap_left = $gaps.3
 
   let screen_dimensions = (hyprctl monitors -j
-                           | jq 'map(select(.focused == true))
-                                  | .[]
-                                  | {
-                                      width: .width,
-                                      height: .height,
-                                      x: .x,
-                                      y: .y,
-                                    }')
                            | from json
+                           | where focused == true
+                           | first
+                           | select width height x y)
   let screen_height = $screen_dimensions.height
   let screen_width = $screen_dimensions.width
   let screen_center = {
@@ -42,7 +55,6 @@ export def windowInfo [
     y: ($screen_dimensions.y + $screen_dimensions.height / 2),
   }
 
-  let window_dimensions = $window_dimensions_override | default (windowDimensions)
   let window_height = $window_dimensions.height
   let window_width = $window_dimensions.width
   let window_center = {
@@ -66,65 +78,68 @@ export def windowInfo [
     window_top: $window_top,
     window_dimensions: $window_dimensions,
     window_quadrant: $window_quadrant,
+    address: $window_dimensions.address,
   }
 }
 
-export def reset [] {
+def reset_position [] {
   hyprctl dispatch moveactive exact 0 0
 }
 
-export def move_position [
+def move_position [
   position: record<top: bool, left: bool>,
   window_dimensions_override?:
-    record<width: number, height: number, x: number, y: number>
+    record<width: number, height: number, x: number, y: number, address: string>,
+  use_active?: bool
 ] {
   let window_info = windowInfo ($window_dimensions_override
-                                | default (windowDimensions))
-  # rounding bad?
+                                | default (windowDimensions ($use_active | default false)))
   let top = $window_info.window_top | math round
   let bottom = $window_info.window_bottom | math round
   let left = $window_info.window_left | math round
   let right = $window_info.window_right | math round
 
-  match $position {
-    { top: true, left: true } =>
-      { $"moveactive exact ($left) ($top)" }
-    { top: true, left: false } =>
-      { $"moveactive exact ($right) ($top)" }
-    { top: false, left: false } =>
-      { $"moveactive exact ($right) ($bottom)" }
-    { top: false, left: true } =>
-      { $"moveactive exact ($left) ($bottom)" }
+  let resize_params = match $position {
+    { top: true, left: true } => $"exact ($left) ($top)"
+    { top: true, left: false } => $"exact ($right) ($top)"
+    { top: false, left: false } => $"exact ($right) ($bottom)"
+    { top: false, left: true } => $"exact ($left) ($bottom)"
   }
+  let command = if ($use_active | default false) {
+    $"moveactive ($resize_params)"
+  } else {
+    $"movewindowpixel ($resize_params),address:($window_info.address)"
+  }
+  $command
 }
 
-export def move_position_test [] {
-  move_position {top: true, left: true}
-}
-
-export def move [position: record<top: bool, left: bool>] {
+def move_window [position: record<top: bool, left: bool>] {
   hyprctl dispatch (move_position $position)
 }
 
-export def topLeft [] {
-  move { top: true, left: true }
+# Move window to top left
+export def "main topLeft" [] {
+  move_window { top: true, left: true }
 }
 
-export def topRight [] {
-  move { top: true, left: false }
+# Move window to top right
+export def "main topRight" [] {
+  move_window { top: true, left: false }
 }
 
-export def bottomRight [] {
-  move { top: false, left: false }
+# Move window to bottom right
+export def "main bottomRight" [] {
+  move_window { top: false, left: false }
 }
 
-export def bottomLeft [] {
-  move { top: false, left: true }
+# Move window to bottom left
+export def "main bottomLeft" [] {
+  move_window { top: false, left: true }
 }
 
 # Smartly resize a window respecting its current corner.
-export def resize [percentage: number] {
-  let window_info = windowInfo (windowDimensions)
+def resize [percentage: number] {
+  let window_info = windowInfo (windowDimensions true)
   let resized_width = ($window_info.window_dimensions.width
                        * (1 + $percentage) | math round)
   let resized_height = ($window_info.window_dimensions.height
@@ -135,18 +150,26 @@ export def resize [percentage: number] {
     height: $resized_height,
     x: $window_info.window_dimensions.x,
     y: $window_info.window_dimensions.y,
+    address: $window_info.address,
   }
 
+  let move_command = (move_position $window_info.window_quadrant $window_dimensions_override true)
   # Does not work properly, maybe in the next release. Or, pre-calculate the moved coordinates.
   hyprctl --batch $"dispatch resizeactive exact ($resized_width) ($resized_height) ;
-                    dispatch (move_position
-                              $window_info.window_quadrant $window_dimensions_override)"
+                    dispatch ($move_command)"
 }
 
-export def shrink [] {
+# Shrink active window by 10%
+export def "main shrink" [] {
   resize -0.1
 }
 
-export def grow [] {
+# Grow active window by 10%
+export def "main grow" [] {
   resize 0.1
+}
+
+# Get floating window info
+export def main [] {
+  floatingWindowOrActive true
 }
