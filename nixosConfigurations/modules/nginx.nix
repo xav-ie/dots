@@ -108,9 +108,10 @@ in
         };
 
         "reverse-proxy/dnsmasq-conf" = {
-          content = ''
-            host-record=${cfgSecret."reverse-proxy/reverse-hostname"},127.0.0.1,::1
-          '';
+          content = "";
+          # content = ''
+          #   host-record=${cfgSecret."reverse-proxy/reverse-hostname"},127.0.0.1,::1
+          # '';
           path = "/etc/dnsmasq.d/reverse-proxy.conf";
           mode = "0444";
           restartUnits = [ "dnsmasq.service" ];
