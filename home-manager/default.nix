@@ -99,6 +99,7 @@
           nix-repl
           nvim
           prs
+          pr-summary
           review
           searcher
           tmux-tab-name-update
