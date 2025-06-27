@@ -86,6 +86,7 @@
         # custom packages
         ++ (with pkgs.pkgs-mine; [
           apple-emoji-linux
+          base-ref
           better-branch
           cache-command
           ff
