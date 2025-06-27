@@ -12,6 +12,7 @@ in
 rec {
   default = pkgs.callPackage ./cache-command { };
   apple-emoji-linux = pkgs.callPackage ./apple-emoji-linux { };
+  base-ref = pkgs.callPackage ./base-ref { inherit writeNuApplication; };
   better-branch = pkgs.callPackage ./better-branch { inherit writeNuApplication; };
   cache-command = pkgs.callPackage ./cache-command { };
   ff = pkgs.callPackage ./ff { };
