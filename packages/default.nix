@@ -40,7 +40,7 @@ rec {
   move-pip = pkgs.callPackage ./move-pip { inherit writeNuApplication; };
 })
 // (optionalAttrs pkgs.stdenv.isLinux {
-  move-active = pkgs.callPackage ./move-active { };
+  move-active = pkgs.callPackage ./move-active { inherit writeNuApplication; };
   openrgb-appimage = pkgs.callPackage ./openrgb-appimage { };
   record = pkgs.callPackage ./record { };
   record-section = pkgs.callPackage ./record-section { };
