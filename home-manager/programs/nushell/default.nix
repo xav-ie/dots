@@ -17,18 +17,9 @@
       # environment variables (and other configuration) using config.nu and the
       # autoload directories below.
       shellAliases = {
-        # done =
-        #   let
-        #     terminal-notifier = lib.getExe' pkgs.terminal-notifier "terminal-notifier";
-        #   in
-        #   # nu
-        #   ''
-        #     do {
-        #       ${terminal-notifier} -message Done;
-        #       say -v Organ "Done";
-        #       ${terminal-notifier} -remove ALL
-        #     }
-        #   '';
+        # https://github.com/nvbn/thefuck/wiki/Shell-aliases#nushell
+        # Idk why the default alias is wrong
+        fuck = ''do { let cmd = (thefuck (history | last 1 | get command.0)); nu -c $cmd }'';
         g = "nvim `+Git | only`";
         gake = "do { git pull; make }";
         gitd = "git d";
