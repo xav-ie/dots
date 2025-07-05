@@ -102,6 +102,7 @@
       };
       network-manager-applet.enable = true;
       swww.enable = true; # wallpaper
+      udiskie.enable = true;
     };
 
     dconf.settings = {
