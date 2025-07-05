@@ -467,6 +467,7 @@ in
       #       SUBSYSTEM=="usb", ATTRS{idVendor}=="0955", ATTRS{idProduct}=="7321", MODE="0666"
       #     '';
       # };
+      udisks2.enable = true;
       # Configure keymap in X11
       xserver = {
         xkb.layout = "us";
