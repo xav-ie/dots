@@ -9,7 +9,7 @@
       enable = true;
       package =
         inputs.jj.outputs.packages.${pkgs.stdenv.hostPlatform.system}.jujutsu.overrideAttrs
-          (old: {
+          (_old: {
             sandboxProfile = "";
             # __sandboxProfile = null;
             doCheck = false;
