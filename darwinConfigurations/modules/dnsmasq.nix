@@ -20,7 +20,7 @@ let
 in
 {
   services.dnsmasq = {
-    enable = true;
+    enable = false;
     package = pkgs.dnsmasq;
     bind = "127.0.0.1";
     port = 53;
