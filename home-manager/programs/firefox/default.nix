@@ -34,6 +34,9 @@ in
             	display: none !important;
             }
             /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+            * {
+              font-family: Inter, "Apple Color Emoji" !important;
+            }
 
             /* #################################### */
           '';
