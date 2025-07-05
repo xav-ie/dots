@@ -2,6 +2,7 @@
 {
   imports = [
     ../programs/firefox
+    ../programs/nemo
     ../programs/obs
     ../programs/sioyek
     ../programs/swaynotificationcenter
