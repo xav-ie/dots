@@ -1,7 +1,7 @@
 { ... }:
 {
   config = {
-    services.mkcert-ca.enable = true;
-    services.reverse-proxy.enable = true;
+    services.mkcert-ca.enable = false;
+    services.reverse-proxy.enable = false;
   };
 }
