@@ -5,7 +5,9 @@
     alwaysKeepRunning = true;
     resolveLocalQueries = true;
     settings = {
-      dnssec = true;
+      # too slow :(
+      # TODO: use a different dns server
+      dnssec = false;
       # set trust anchors?
       conf-file = "${pkgs.dnsmasq.outPath}/share/dnsmasq/trust-anchors.conf";
       # Never forward plain names (without a dot or domain part)
@@ -15,9 +17,20 @@
       # go to our DOH resolver
       # server = [ "127.0.0.1#5053" ];
       # allow more concurrent DNS requests
-      dns-forward-max = 1000;
+      dns-forward-max = 2000;
+      all-servers = true; # Query all servers, use fastest response
+      no-poll = true; # Don't poll for upstream changes
+
+      cache-size = 50000;
+      min-cache-ttl = 300;
+      max-cache-ttl = 3600;
+
+      dnssec-check-unsigned = false;
+
       server = [
+        "2606:4700:4700::1111"
         "1.1.1.1"
+        "2606:4700:4700::1001"
         "1.0.0.1"
       ];
     };
