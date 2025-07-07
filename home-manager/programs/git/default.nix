@@ -215,9 +215,9 @@ in
         rebase.updateRefs = true;
         remote.origin.fetch = [
           # Normal branches - set up by default
-          # "+refs/heads/*:refs/remotes/origin/*"
+          "+refs/heads/*:refs/remotes/origin/*"
           # PR head commits
-          "+refs/pull/*/head:refs/remotes/origin/pr/*"
+          "+refs/pull/*/head:refs/remotes/origin/pull/*"
           # Merge PR commits, disabled because noisy, but might be useful in future
           # "+refs/pull/*/head:refs/remotes/origin/pr/*"
         ];
