@@ -24,7 +24,7 @@
         gake = "do { git pull; make }";
         gitd = "git d";
         gits = "git s";
-        gp = "gh pr view";
+        gp = ''gh pr create --body ""'';
         gpw = "gh pr view -w";
         grw = "gh repo view -w";
         gust = "do { git pull; just }";
