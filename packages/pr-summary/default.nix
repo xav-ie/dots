@@ -14,7 +14,7 @@ writeNuApplication {
       # List the commits in PR, including notes indented
       def main [base_ref_input?: string] {
         let base_ref = if ($base_ref_input | is-empty) { base-ref } else { $base_ref_input }
-        git rev-list $"($base_ref)..HEAD" | lines | each { |hash|
+        git rev-list --reverse $"($base_ref)..HEAD" | lines | each { |hash|
           let commit_lines = (git log --pretty=format:"- %B" -n 1 $hash | lines)
           let commit = if ($commit_lines | length) > 1 {
             let first_line = ($commit_lines | first)
@@ -33,7 +33,7 @@ writeNuApplication {
             ""
           }
 
-          if ($notes | str trim | is-empty) { $commit } else { $"($commit)\n  <!--notes-->\n($notes)" }
+          if ($notes | str trim | is-empty) { $commit } else { $"($commit)\n\n  <!--notes-->\n($notes)" }
         } | str join "\n\n"
       }
     '';
