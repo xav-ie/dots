@@ -12,7 +12,7 @@ def main [...args: string] {
   let selected = (
     nix search $repository ...$args
     | lines
-    | filter {|| $in | str starts-with '*'}
+    | where {|| $in | str starts-with '*'}
     | str substring $len..
     | str join "\n"
     | fzf --ansi --preview="echo {1} | xargs -I {} nix eval --json nixpkgs#{}.meta | jq -C . " -d " "
