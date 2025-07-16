@@ -39,6 +39,7 @@
       # excellent completions that are fast
       # https://carapace-sh.github.io/carapace-bin/
       carapace.enable = true;
+      carapace.package = pkgs.pkgs-bleeding.carapace;
       fzf.enable = true;
       jq.enable = true;
       jujutsu.enable = true;

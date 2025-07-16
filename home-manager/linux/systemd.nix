@@ -84,7 +84,7 @@
                   notify "Work is done. Time to log off..."
                   let zoom_window_client = (hyprctl clients -j
                                             | from json
-                                            | filter {|| $in.title == "Zoom" })
+                                            | where {|| $in.title == "Zoom" })
                   if ($zoom_window_client | length) == 1 {
                     try {
                       zenity --question --text="Close Zoom?"; kill ($zoom_window_client | first | get pid)
