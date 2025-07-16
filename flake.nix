@@ -53,6 +53,9 @@
     nur.inputs.nixpkgs.follows = "nixpkgs";
     nur.inputs.treefmt-nix.follows = "treefmt-nix";
     nur.url = "github:nix-community/NUR";
+    nuenv.url = "github:xav-ie/nuenv";
+    nuenv.inputs.nixpkgs.follows = "nixpkgs";
+    nuenv.inputs.systems.follows = "systems";
     pre-commit-hooks.inputs.flake-compat.follows = "flake-compat";
     pre-commit-hooks.inputs.nixpkgs.follows = "nixpkgs";
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
@@ -148,6 +151,7 @@
           packages = import ./packages {
             generate-kaomoji = inputs.generate-kaomoji.packages.${system}.default;
             pkgs = inputs.nixpkgs-bleeding.legacyPackages.${system};
+            nuenv = inputs.nuenv.lib;
           };
 
           treefmt = {
