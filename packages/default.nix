@@ -3,10 +3,11 @@
 {
   pkgs ? import <nixpkgs>,
   generate-kaomoji,
+  nuenv,
 }:
 let
   optionalAttrs = bool: attrSet: if bool then attrSet else { };
-  writeNuApplication = pkgs.callPackage ../lib/writeNuApplication { };
+  writeNuApplication = nuenv.mkNushellScriptApplication pkgs.nushell pkgs.writeTextFile pkgs.lib;
   notify = pkgs.callPackage ./notify { inherit generate-kaomoji writeNuApplication; };
   base-ref = pkgs.callPackage ./base-ref { inherit writeNuApplication; };
 in

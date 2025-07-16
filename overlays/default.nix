@@ -4,6 +4,7 @@ let
 in
 {
   nur = inputs.nur.overlays.default;
+  nuenv = inputs.nuenv.overlays.default;
 
   modifications = final: _prev: {
     alacritty-theme =
@@ -12,7 +13,7 @@ in
     generate-kaomoji = inputs.generate-kaomoji.packages.${final.system}.default;
     pkgs-bleeding = inputs.nixpkgs-bleeding.legacyPackages.${final.system};
     pkgs-mine = toplevel.self.packages.${final.system};
-    writeNuApplication = final.callPackage ../lib/writeNuApplication { };
+    writeNuApplication = final.nuenv.writeShellApplication;
     zjstatus = inputs.zjstatus.packages.${final.system}.default;
   };
 }

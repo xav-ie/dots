@@ -1077,6 +1077,29 @@
         "type": "github"
       }
     },
+    "nuenv": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "systems": [
+          "systems"
+        ]
+      },
+      "locked": {
+        "lastModified": 1752707024,
+        "narHash": "sha256-DAn1+h8TV66v0P1eGkZh1tAttj0L+fFh2N1QjIxEgxM=",
+        "owner": "xav-ie",
+        "repo": "nuenv",
+        "rev": "d860f88cfb9b2ded365554698488defa7e5e070c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "xav-ie",
+        "repo": "nuenv",
+        "type": "github"
+      }
+    },
     "nur": {
       "inputs": {
         "flake-parts": [
@@ -1154,6 +1177,7 @@
         "nixpkgs": "nixpkgs_4",
         "nixpkgs-bleeding": "nixpkgs-bleeding",
         "nixpkgs-stable": "nixpkgs-stable",
+        "nuenv": "nuenv",
         "nur": "nur",
         "pre-commit-hooks": "pre-commit-hooks",
         "rust-overlay": "rust-overlay",
