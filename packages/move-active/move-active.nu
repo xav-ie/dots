@@ -1,9 +1,9 @@
 const waybar_height = 34
 
-def floatingWindowOrActive [use_active?: bool] {
+def floatingWindowOrActive [use_active = false] {
   # first, try and get active window if it is floating
   let active_window = hyprctl activewindow -j | from json
-  if ($active_window.floating == true or ($use_active | default false)) {
+  if ($active_window.floating == true or $use_active) {
     $active_window
   } else {
     # now, try and find the first floating window on the current workspace
@@ -18,15 +18,42 @@ def floatingWindowOrActive [use_active?: bool] {
   }
 }
 
-def windowDimensions [use_active?: bool] {
- let window = floatingWindowOrActive ($use_active | default false)
- {
-   width: $window.size.0
-   height: $window.size.1
-   x: $window.at.0
-   y: $window.at.1
-   address: $window.address
- }
+def getWindowBySelector [selector: string] {
+  let clients = hyprctl clients -j | from json
+
+  # Parse different selector types
+  if ($selector | str starts-with "title:") {
+    let title_pattern = ($selector | str replace "title:" "")
+    $clients | where title =~ $title_pattern | first
+  } else if ($selector | str starts-with "class:") {
+    let class_pattern = ($selector | str replace "class:" "")
+    $clients | where class =~ $class_pattern | first
+  } else if ($selector | str starts-with "address:") {
+    let address = ($selector | str replace "address:" "")
+    $clients | where address == $address | first
+  } else {
+    # Default to class if no prefix
+    $clients | where class =~ $selector | first
+  }
+}
+
+def windowDimensions [use_active = false, selector = ""] {
+  let window = if ($selector | is-not-empty) {
+    try { getWindowBySelector $selector } catch {
+      print -e "Could not find window to act on"
+      exit 0
+    }
+  } else {
+    floatingWindowOrActive $use_active
+  }
+
+  {
+    width: $window.size.0
+    height: $window.size.1
+    x: $window.at.0
+    y: $window.at.1
+    address: $window.address
+  }
 }
 
 def windowInfo [
@@ -88,12 +115,13 @@ def reset_position [] {
 
 def move_position [
   position: record<top: bool, left: bool>,
+  use_active = false,
+  selector = "",
   window_dimensions_override?:
     record<width: number, height: number, x: number, y: number, address: string>,
-  use_active?: bool
 ] {
   let window_info = windowInfo ($window_dimensions_override
-                                | default (windowDimensions ($use_active | default false)))
+                                | default (windowDimensions $use_active $selector))
   let top = $window_info.window_top | math round
   let bottom = $window_info.window_bottom | math round
   let left = $window_info.window_left | math round
@@ -105,41 +133,44 @@ def move_position [
     { top: false, left: false } => $"exact ($right) ($bottom)"
     { top: false, left: true } => $"exact ($left) ($bottom)"
   }
-  let command = if ($use_active | default false) {
+
+  let command = if $use_active {
     $"moveactive ($resize_params)"
+  } else if ($selector != "") {
+    $"movewindowpixel ($resize_params),($selector)"
   } else {
     $"movewindowpixel ($resize_params),address:($window_info.address)"
   }
   $command
 }
 
-def move_window [position: record<top: bool, left: bool>] {
-  hyprctl dispatch (move_position $position)
+def move_window [position: record<top: bool, left: bool>, selector = ""] {
+  hyprctl dispatch (move_position $position false $selector)
 }
 
 # Move window to top left
-export def "main topLeft" [] {
-  move_window { top: true, left: true }
+export def "main topLeft" [selector = ""] {
+  move_window { top: true, left: true } $selector
 }
 
 # Move window to top right
-export def "main topRight" [] {
-  move_window { top: true, left: false }
+export def "main topRight" [selector = ""] {
+  move_window { top: true, left: false } $selector
 }
 
 # Move window to bottom right
-export def "main bottomRight" [] {
-  move_window { top: false, left: false }
+export def "main bottomRight" [selector = ""] {
+  move_window { top: false, left: false } $selector
 }
 
 # Move window to bottom left
-export def "main bottomLeft" [] {
-  move_window { top: false, left: true }
+export def "main bottomLeft" [selector = ""] {
+  move_window { top: false, left: true } $selector
 }
 
 # Smartly resize a window respecting its current corner.
 def resize [percentage: number] {
-  let window_info = windowInfo (windowDimensions true)
+  let window_info = windowInfo (windowDimensions true "")
   let resized_width = ($window_info.window_dimensions.width
                        * (1 + $percentage) | math round)
   let resized_height = ($window_info.window_dimensions.height
@@ -153,8 +184,7 @@ def resize [percentage: number] {
     address: $window_info.address,
   }
 
-  let move_command = (move_position $window_info.window_quadrant $window_dimensions_override true)
-  # Does not work properly, maybe in the next release. Or, pre-calculate the moved coordinates.
+  let move_command = (move_position $window_info.window_quadrant true "" $window_dimensions_override)
   hyprctl --batch $"dispatch resizeactive exact ($resized_width) ($resized_height) ;
                     dispatch ($move_command)"
 }
