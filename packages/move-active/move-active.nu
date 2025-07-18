@@ -169,9 +169,20 @@ export def "main bottomLeft" [selector = ""] {
   move_window { top: false, left: true } $selector
 }
 
+# If the active window cannot be grown or shrunk, then don't use it!
+# Use the most recent floating window instead.
+def should_use_active [] {
+  (hyprctl clients -j | from json
+  | where { ||
+     $in.workspace.id == 1 and not $in.floating
+   }
+  | length) > 1
+}
+
 # Smartly resize a window respecting its current corner.
 def resize [percentage: number] {
-  let window_info = windowInfo (windowDimensions true "")
+  let window_info = windowInfo (windowDimensions (should_use_active) "")
+
   let resized_width = ($window_info.window_dimensions.width
                        * (1 + $percentage) | math round)
   let resized_height = ($window_info.window_dimensions.height
@@ -185,11 +196,14 @@ def resize [percentage: number] {
     address: $window_info.address,
   }
 
-  let move_command = (move_position $window_info.window_quadrant true ""
+  let move_command = (move_position $window_info.window_quadrant (should_use_active) ""
                       $window_dimensions_override)
-  (hyprctl --batch
-    $"dispatch resizeactive exact ($resized_width) ($resized_height) ;
-      dispatch ($move_command)")
+  let batchCommand = [
+    $"dispatch resizewindowpixel exact ($resized_width) ($resized_height),address:($window_info.address)"
+    $"dispatch ($move_command)"
+  ]
+  print $"batchCommand ($batchCommand); \ndispactch ($move_command)"
+  (hyprctl --batch ($batchCommand | str join ";\n"))
 }
 
 # Shrink active window by 10%
