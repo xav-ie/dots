@@ -12,8 +12,8 @@ def floatingWindowOrActive [use_active = false] {
                                       | from json
                                       | where
                                         $it.workspace.id == $active_workspace.id
-                                        and floating == true)
-    # TODO: consider using focusHistoryId instead of first window
+                                        and floating == true
+                                      | sort-by focusHistoryID)
     let chosen_floating = $floating_workspace_windows | first
     $chosen_floating
   }
