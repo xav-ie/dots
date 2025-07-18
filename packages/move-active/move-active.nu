@@ -10,7 +10,8 @@ def floatingWindowOrActive [use_active = false] {
     let active_workspace = hyprctl activeworkspace -j | from json
     let floating_workspace_windows = (hyprctl clients -j
                                       | from json
-                                      | where $it.workspace.id == $active_workspace.id
+                                      | where
+                                        $it.workspace.id == $active_workspace.id
                                         and floating == true)
     # TODO: consider using focusHistoryId instead of first window
     let chosen_floating = $floating_workspace_windows | first
@@ -120,8 +121,8 @@ def move_position [
   window_dimensions_override?:
     record<width: number, height: number, x: number, y: number, address: string>,
 ] {
-  let window_info = windowInfo ($window_dimensions_override
-                                | default (windowDimensions $use_active $selector))
+  let window_info = windowInfo ($window_dimensions_override | default
+                                (windowDimensions $use_active $selector))
   let top = $window_info.window_top | math round
   let bottom = $window_info.window_bottom | math round
   let left = $window_info.window_left | math round
@@ -184,9 +185,11 @@ def resize [percentage: number] {
     address: $window_info.address,
   }
 
-  let move_command = (move_position $window_info.window_quadrant true "" $window_dimensions_override)
-  hyprctl --batch $"dispatch resizeactive exact ($resized_width) ($resized_height) ;
-                    dispatch ($move_command)"
+  let move_command = (move_position $window_info.window_quadrant true ""
+                      $window_dimensions_override)
+  (hyprctl --batch
+    $"dispatch resizeactive exact ($resized_width) ($resized_height) ;
+      dispatch ($move_command)")
 }
 
 # Shrink active window by 10%
