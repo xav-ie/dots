@@ -60,6 +60,7 @@
     pre-commit-hooks.inputs.flake-compat.follows = "flake-compat";
     pre-commit-hooks.inputs.nixpkgs.follows = "nixpkgs";
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
+    quadlet-nix.url = "github:SEIAROTg/quadlet-nix";
     rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
     rust-overlay.url = "github:oxalica/rust-overlay";
     sops-nix.url = "github:Mic92/sops-nix";
