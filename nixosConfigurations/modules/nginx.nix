@@ -32,7 +32,7 @@ in
     };
   };
 
-  config = {
+  config = lib.mkIf cfg.enable {
     environment.etc."traefik/my-traefik-config.yaml".source =
       config.sops.templates."reverse-proxy/my-traefik-config.yaml".path;
 

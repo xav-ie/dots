@@ -18,4 +18,8 @@
     # not currently routing correctly...
     # ./twingate.nix
   ];
+
+  config = {
+    services.reverse-proxy.enable = false;
+  };
 }
