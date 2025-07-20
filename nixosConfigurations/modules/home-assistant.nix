@@ -38,6 +38,13 @@ in
               };
             });
           };
+          # home-assistant freaks out if these are not added
+          extraPackages =
+            ps: with ps; [
+              getmac
+              spotifyaio
+              govee-ble
+            ];
         };
         mediaDir = "/media/hass";
 
