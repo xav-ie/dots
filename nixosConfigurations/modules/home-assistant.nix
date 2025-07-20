@@ -27,7 +27,7 @@ in
         # pkgs-homeassistant needing because poetry-core>=2.0.0 is not on stable
         # and I don't feel like overriding *another* sub-dependency
         package = pkgs-homeassistant.home-assistant.override {
-          packageOverrides = _: _: {
+          packageOverrides = self: _: {
             govee-local-api = pkgs-homeassistant.python313Packages.govee-local-api.overridePythonAttrs (_: {
               version = "2.0.2";
               src = pkgs.fetchFromGitHub {
@@ -37,6 +37,27 @@ in
                 hash = "sha256-ChI/rIZwT/YMXFD83N1/cIIYkio318S3p1IgVu+P1sY=";
               };
             });
+            protobuf = pkgs-homeassistant.python313Packages.protobuf.overridePythonAttrs (old: {
+              version = "6.31.1";
+              src = pkgs.fetchPypi {
+                pname = "protobuf";
+                version = "6.31.1";
+                hash = "sha256-2MrEyYLwuVek3HOoDi6iT6sI5nnA3p3rg19KEtaaypo=";
+              };
+            });
+            pyatv =
+              (pkgs-homeassistant.python313Packages.pyatv.override {
+                protobuf = self.protobuf;
+              }).overridePythonAttrs
+                (old: {
+                  version = "0.16.1";
+                  src = pkgs.fetchFromGitHub {
+                    owner = "postlund";
+                    repo = "pyatv";
+                    rev = "v0.16.1";
+                    hash = "sha256-b5u9u5CD/1W422rCxHvoyBqT5CuBAh68/EUBzNDcXoE=";
+                  };
+                });
           };
           # home-assistant freaks out if these are not added
           extraPackages =
