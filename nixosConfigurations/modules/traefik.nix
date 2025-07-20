@@ -89,14 +89,19 @@ in
         RemainAfterExit = true;
       };
       script = ''
-        PROXY_DOMAIN=$(cat ${config.sops.secrets."reverse-proxy/reverse-hostname".path})
+        ${lib.optionalString config.services.reverse-proxy.enable # sh
+          ''
+            PROXY_DOMAIN=$(cat ${config.sops.secrets."reverse-proxy/reverse-hostname".path})
+          ''
+        }
         mkdir -p /var/lib/traefik/certs
 
         export CAROOT=${mkcertCA}
         ${lib.getExe pkgs.mkcert} -cert-file /var/lib/traefik/certs/cert.pem \
           -key-file /var/lib/traefik/certs/key.pem \
-          ${baseDomain} ${lib.concatStringsSep " " (map (s: "${s}.${baseDomain}") subdomains)} \
-          "$PROXY_DOMAIN"
+          ${baseDomain} ${
+            lib.concatStringsSep " " (map (s: "${s}.${baseDomain}") subdomains)
+          } ${lib.optionalString config.services.reverse-proxy.enable "$PROXY_DOMAIN"}
 
         chown traefik:${config.services.traefik.group} /var/lib/traefik/certs/*.pem
         chmod 644 /var/lib/traefik/certs/cert.pem
