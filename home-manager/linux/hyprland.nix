@@ -202,6 +202,11 @@ in
         windowLeft = toString windowLeftNumeric;
         windowTop = toString windowTopNumeric;
         windowRight = "100%-w-${windowLeft}";
+
+        pipHeight = 324;
+        # There seems to be a bug with using `h`, so we work around this by
+        # using the static height
+        windowBottom = "100%-${toString (pipHeight + gapAndBorderNumeric)}";
         move-active = lib.getExe pkgs.pkgs-mine.move-active;
       in
       {
@@ -327,10 +332,10 @@ in
             # firefox pip (hacky workaround)
             # https://github.com/hyprwm/Hyprland/issues/2942#issuecomment-1923813933
             "float, title:^(Picture-in-Picture)$"
-            "move ${windowRight} ${windowTop}, title:(Picture-in-Picture)"
+            "move ${windowRight} ${windowBottom}, title:(Picture-in-Picture)"
             "noinitialfocus, title:^(Picture-in-Picture)$"
             "pin, title:^(Picture-in-Picture)$"
-            "size 640 360, title:(Picture-in-Picture)"
+            "size 576 ${toString pipHeight}, title:(Picture-in-Picture)"
 
             # shimeji desktop pets
             "float, title:^(com-group_finity-mascot-Main)$"
