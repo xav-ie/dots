@@ -7,7 +7,7 @@
   ...
 }:
 let
-  pkgs-bleeding = inputs.nixpkgs-bleeding.legacyPackages.${system};
+  pkgs-homeassistant = inputs.nixpkgs-homeassistant.legacyPackages.${system};
 in
 {
   options = {
@@ -24,11 +24,11 @@ in
       home-assistant = {
         enable = true;
         # Fix govee-local-api not setting the lights all the time
-        # pkgs-bleeding needing because poetry-core>=2.0.0 is not on stable
+        # pkgs-homeassistant needing because poetry-core>=2.0.0 is not on stable
         # and I don't feel like overriding *another* sub-dependency
-        package = pkgs-bleeding.home-assistant.override {
+        package = pkgs-homeassistant.home-assistant.override {
           packageOverrides = _: _: {
-            govee-local-api = pkgs-bleeding.python313Packages.govee-local-api.overridePythonAttrs (_: {
+            govee-local-api = pkgs-homeassistant.python313Packages.govee-local-api.overridePythonAttrs (_: {
               version = "2.0.2";
               src = pkgs.fetchFromGitHub {
                 owner = "akash329d";
