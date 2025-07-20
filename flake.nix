@@ -47,6 +47,7 @@
     nix2container.url = "github:nlewo/nix2container";
     nix2container.inputs.nixpkgs.follows = "nixpkgs";
     nixpkgs-bleeding.url = "github:nixos/nixpkgs/master";
+    nixpkgs-homeassistant.url = "github:nixos/nixpkgs/master";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.05";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nur.inputs.flake-parts.follows = "flake-parts";
