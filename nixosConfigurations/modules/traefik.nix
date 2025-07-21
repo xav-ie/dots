@@ -170,7 +170,7 @@ in
         # api.insecure = true;
       };
 
-      dynamicConfigFile = "/etc/traefik/my-traefik-config.yaml";
+      dynamicConfigFile = "/etc/traefik/traefik-config.yaml";
     };
 
     networking.extraHosts = ''
