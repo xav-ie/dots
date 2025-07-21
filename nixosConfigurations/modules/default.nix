@@ -10,6 +10,7 @@
     ./nix-config.nix
     ./podman.nix
     ./portainer.nix
+    ./postiz.nix
     ./quadlet.nix
     ./sops.nix
     ./spdf.nix
