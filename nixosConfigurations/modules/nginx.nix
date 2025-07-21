@@ -32,16 +32,16 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    environment.etc."traefik/my-traefik-config.yaml".source =
-      config.sops.templates."reverse-proxy/my-traefik-config.yaml".path;
+  config = {
+    environment.etc."traefik/traefik-config.yaml".source =
+      config.sops.templates."traefik-config.yaml".path;
 
     sops = {
       secrets =
         let
           secretConfig.restartUnits = lib.optional cfg.enable "nginx.service";
         in
-        {
+        lib.mkIf cfg.enable {
           "reverse-proxy/dev-hostname" = secretConfig;
           "reverse-proxy/shopify-hostname" = secretConfig;
           "reverse-proxy/reverse-hostname" = secretConfig;
@@ -49,7 +49,7 @@ in
         };
 
       templates = {
-        "reverse-proxy/my-traefik-config.yaml" = {
+        "traefik-config.yaml" = {
           content = lib.generators.toYAML { } {
             tls = {
               certificates = [
@@ -59,33 +59,43 @@ in
                 }
               ];
             };
-            http = {
-              routers = {
-                ${cfg.name} = {
-                  rule = "Host(`${cfgSecret."reverse-proxy/reverse-hostname"}`)";
-                  service = "${cfg.name}-service";
-                  tls = true;
-                };
-                dashboard = {
-                  rule = "Host(`${baseDomain}`)";
-                  service = "api@internal";
-                  tls = true;
+            http =
+              {
+                routers =
+                  {
+                    dashboard = {
+                      rule = "Host(`${baseDomain}`)";
+                      service = "api@internal";
+                      tls = true;
+                    };
+                  }
+                  // lib.optionalAttrs cfg.enable {
+                    ${cfg.name} = {
+                      rule = "Host(`${cfgSecret."reverse-proxy/reverse-hostname"}`)";
+                      service = "${cfg.name}-service";
+                      tls = true;
+                    };
+                  };
+              }
+              // lib.optionalAttrs cfg.enable {
+                services = lib.optionalAttrs cfg.enable {
+                  ${cfg.name + "-service"} = {
+                    loadBalancer = {
+                      servers = [
+                        { url = "http://127.0.0.1:8081"; }
+                      ];
+                    };
+                  };
                 };
               };
-              services.${cfg.name + "-service"} = {
-                loadBalancer = {
-                  servers = [
-                    { url = "http://127.0.0.1:8081"; }
-                  ];
-                };
-              };
-            };
           };
           mode = "0444";
+          restartUnits = [ "traefik.service" ];
         };
 
-        "reverse-proxy/cookie-domain-rewrite" = {
-          content = # nginx
+        "reverse-proxy/cookie-domain-rewrite" = lib.mkIf cfg.enable {
+          content =
+            # nginx
             ''
               proxy_cookie_domain ${cfgSecret."reverse-proxy/dev-hostname"} ${
                 cfgSecret."reverse-proxy/reverse-hostname"
@@ -95,9 +105,10 @@ in
               };
             '';
           mode = "0444";
+          restartUnits = [ "nginx.service" ];
         };
 
-        "reverse-proxy/domain-variables" = {
+        "reverse-proxy/domain-variables" = lib.mkIf cfg.enable {
           content = # nginx
             ''
               set $dev_hostname "${cfgSecret."reverse-proxy/dev-hostname"}";
@@ -105,13 +116,13 @@ in
               set $reverse_hostname "${cfgSecret."reverse-proxy/reverse-hostname"}";
             '';
           mode = "0444";
+          restartUnits = [ "nginx.service" ];
         };
 
-        "reverse-proxy/dnsmasq-conf" = {
-          content = "";
-          # content = ''
-          #   host-record=${cfgSecret."reverse-proxy/reverse-hostname"},127.0.0.1,::1
-          # '';
+        "reverse-proxy/dnsmasq-conf" = lib.mkIf cfg.enable {
+          content = ''
+            host-record=${cfgSecret."reverse-proxy/reverse-hostname"},127.0.0.1,::1
+          '';
           path = "/etc/dnsmasq.d/reverse-proxy.conf";
           mode = "0444";
           restartUnits = [ "dnsmasq.service" ];
@@ -119,7 +130,7 @@ in
       };
     };
 
-    services.nginx = {
+    services.nginx = lib.mkIf cfg.enable {
       inherit (cfg) enable;
 
       # Worker configuration
