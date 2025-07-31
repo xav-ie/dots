@@ -15,20 +15,16 @@ writeNuApplication {
       # where the base branch has moved forward since branching, giving you the
       # effective base for diffs and commit ranges.
       def main [base_ref_name?: string] {
-        if ($base_ref_name | is-empty) {
-          # auto resolves base ref name using gh cli...
-          let pr_base = (gh pr view --json baseRefOid -q .baseRefOid
-                         | complete
-                         | get stdout
-                         | str trim)
-
-          if ($pr_base | is-empty) {
-            "@{push}"
-          } else {
-            $pr_base
-          }
-          # TODO: add more clis
+        let pr_data = if ($base_ref_name | is-empty) {
+          gh pr view --json baseRefOid | complete
         } else {
+          gh pr view $base_ref_name --json baseRefOid | complete
+        }
+
+        if $pr_data.exit_code == 0 {
+          ($pr_data.stdout | from json | get baseRefOid)
+        } else {
+          let base_ref_name = $base_ref_name | default "@{push}"
           git rev-list --reverse $"(git merge-base HEAD ($base_ref_name))..HEAD"
           | lines
           | each { |commit|
