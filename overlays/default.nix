@@ -13,6 +13,11 @@ in
     generate-kaomoji = inputs.generate-kaomoji.packages.${final.system}.default;
     pkgs-bleeding = inputs.nixpkgs-bleeding.legacyPackages.${final.system};
     pkgs-mine = toplevel.self.packages.${final.system};
+    notification-cleaner =
+      if final.stdenv.isDarwin then
+        inputs.notification-cleaner.packages.${final.system}.default
+      else
+        null;
     writeNuApplication = final.nuenv.writeShellApplication;
     zjstatus = inputs.zjstatus.packages.${final.system}.default;
   };
