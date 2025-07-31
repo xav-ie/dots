@@ -37,7 +37,7 @@ in
                 hash = "sha256-ChI/rIZwT/YMXFD83N1/cIIYkio318S3p1IgVu+P1sY=";
               };
             });
-            protobuf = pkgs-homeassistant.python313Packages.protobuf.overridePythonAttrs (old: {
+            protobuf = pkgs-homeassistant.python313Packages.protobuf.overridePythonAttrs (_old: {
               version = "6.31.1";
               src = pkgs.fetchPypi {
                 pname = "protobuf";
@@ -47,9 +47,9 @@ in
             });
             pyatv =
               (pkgs-homeassistant.python313Packages.pyatv.override {
-                protobuf = self.protobuf;
+                inherit (self) protobuf;
               }).overridePythonAttrs
-                (old: {
+                (_old: {
                   version = "0.16.1";
                   src = pkgs.fetchFromGitHub {
                     owner = "postlund";
