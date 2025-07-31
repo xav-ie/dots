@@ -50,6 +50,13 @@
     nixpkgs-homeassistant.url = "github:nixos/nixpkgs/master";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.05";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    notification-cleaner.url = "github:xav-ie/notification-cleaner";
+    notification-cleaner.inputs.devenv.follows = "devenv";
+    notification-cleaner.inputs.devenv-root.follows = "devenv-root";
+    notification-cleaner.inputs.flake-parts.follows = "flake-parts";
+    notification-cleaner.inputs.mk-shell-bin.follows = "mk-shell-bin";
+    notification-cleaner.inputs.nixpkgs.follows = "nixpkgs";
+    notification-cleaner.inputs.nix2container.follows = "nix2container";
     nur.inputs.flake-parts.follows = "flake-parts";
     nur.inputs.nixpkgs.follows = "nixpkgs";
     nur.inputs.treefmt-nix.follows = "treefmt-nix";
