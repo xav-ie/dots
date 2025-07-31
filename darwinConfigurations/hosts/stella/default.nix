@@ -166,6 +166,8 @@
             ctrl + alt - s : yabai -m window --toggle sticky;\
               yabai -m window --toggle topmost;\
               yabai -m window --toggle pip
+
+            ctrl + alt - n : ${lib.getExe pkgs.notification-cleaner}
           '';
       };
       # a lot of this is taken from https://github.com/shaunsingh/nix-darwin-dotfiles/commit/a457a0b2d0e68d810e3503f84217db8698dd9533
