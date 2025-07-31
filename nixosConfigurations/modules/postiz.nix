@@ -2,7 +2,7 @@
 
 let
   subdomain = "postiz";
-  baseDomain = config.services.local-networking.baseDomain;
+  inherit (config.services.local-networking) baseDomain;
   fullHostName = "${subdomain}.${baseDomain}";
 
   postizDataDir = "/var/lib/postiz";
