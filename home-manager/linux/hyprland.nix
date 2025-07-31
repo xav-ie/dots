@@ -47,7 +47,7 @@ in
     };
 
     home.packages = with pkgs; [
-      grimblast # screenshot tool
+      hyprshot
       hyprshade
       # TODO: necessary?
       libnotify
@@ -424,8 +424,8 @@ in
             # "$mainMod, T, togglesplit, # dwindle"
             "$mainMod, V, exec, cliphist list | rofi -dmenu | cliphist decode | wl-copy"
             "$mainMod SHIFT, V, exec, rofi-rbw"
-            "$mainMod, S, exec, grimblast copy area"
-            "$mainMod SHIFT, S, exec, grimblast save area"
+            "$mainMod, S, exec, hyprshot -m region -z --clipboard-only"
+            "$mainMod SHIFT, S, exec, hyprshot -m region -z -o ~/Pictures"
             "$mainMod, N, exec, swaync-client -t"
             "$mainMod, C, exec, mpv av://v4l2:/dev/video1"
             "$mainMod SHIFT, M, exit,"
