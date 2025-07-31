@@ -398,13 +398,10 @@ in
             ", XF86AudioPrev, exec, playerctl previous"
             ", XF86AudioRaiseVolume, exec, pactl set-sink-volume @DEFAULT_SINK@ +5%"
             ", XF86AudioLowerVolume, exec, pactl set-sink-volume @DEFAULT_SINK@ -5%"
-            # ", XF86AudioRaiseVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+"
-            # ", XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
           ];
 
           bindl = [
             ", XF86AudioMute, exec, pactl set-sink-mute @DEFAULT_SINK@ toggle"
-            # ", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
           ];
 
           # See https://wiki.hyprland.org/Configuring/Keywords/ for more
@@ -431,15 +428,6 @@ in
             "$mainMod SHIFT, S, exec, grimblast save area"
             "$mainMod, N, exec, swaync-client -t"
             "$mainMod, C, exec, mpv av://v4l2:/dev/video1"
-            # "$mainMod SHIFT, F6, exec, playerctl previous"
-            # "$mainMod SHIFT, F7, exec, playerctl play-pause"
-            # "$mainMod, F7, exec, playerctl play-pause"
-            # ", F7, exec, playerctl play-pause"
-            # "$mainMod SHIFT, F8, exec, playerctl next"
-
-            # "$mainMod, F6, exec, pactl set-sink-volume @DEFAULT_SINK@ -5%"
-            # "$mainMod, F7, exec, pactl set-sink-mute @DEFAULT_SINK@ toggle"
-            # "$mainMod, F8, exec, pactl set-sink-volume @DEFAULT_SINK@ +5%"
             "$mainMod SHIFT, M, exit,"
             # TODO: make real program
             "$mainMod, U, exec, uair-toggle-and-notify"
@@ -448,7 +436,8 @@ in
             "$mainMod, L, movefocus, r"
             "$mainMod, J, movefocus, u"
             "$mainMod, K, movefocus, d"
-            "$mainMod, Tab, cyclenext,           # change focus to another window"
+            # change focus to another window
+            "$mainMod, Tab, cyclenext"
 
             # Switch workspaces with mainMod + [0-9]
             "$mainMod, 1, workspace, 1"
