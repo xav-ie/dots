@@ -64,6 +64,7 @@
           gh
           gnumake
           go-jira
+          hyperfine # perfomance tester
           (jira-cli-go.overrideAttrs {
             postInstall = ''
               mv $out/bin/jira $out/bin/jira-unfree
