@@ -63,7 +63,8 @@ def main [] {
   let $enter_action = if ($git_status | str trim | str length) > 0 {
     'enter:become(gh pr view {1}; print "Clean your git directory in order to checkout.")'
   } else {
-    'enter:become(gh pr checkout {1})'
+    # `gh pr checkout {1}` is flaky and unreliable :(
+    'enter:become(git fetch origin ; git checkout -B (gh pr view {1} --json headRefName -q .headRefName) $"origin/(gh pr view {1} --json headRefName -q .headRefName)")'
   }
 
   let preview_action = 'GH_FORCE_TTY=100% gh pr view {1}'
