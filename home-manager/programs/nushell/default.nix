@@ -31,7 +31,7 @@
         info = "info --vi-keys";
         jsut = "just";
         l = "ls -la";
-        n = ''nu -e "$env.PATH = ($env.PATH | prepend '${pkgs.nodejs}/bin')"'';
+        n = ''nu -e "$env.PATH = ($env.PATH | prepend '${pkgs.nodejs}/bin' | prepend '${pkgs.pnpm}/bin' | prepend '${pkgs.yarn}/bin')"'';
         s = "sudo -E";
         ss = "sudo -E !!";
         tm = "try { tmux attach } catch { tmux }";
