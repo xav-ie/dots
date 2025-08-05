@@ -21,12 +21,13 @@
       all-servers = true; # Query all servers, use fastest response
       no-poll = true; # Don't poll for upstream changes
 
+      bind-dynamic = true;
+      # bind-interfaces = true;
       interface = [
         "lo"
         "wlp4s0"
         "tailscale0"
       ];
-      bind-interfaces = true;
 
       cache-size = 50000;
       min-cache-ttl = 300;
