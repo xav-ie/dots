@@ -76,7 +76,6 @@
           magic-wormhole-rs # send files easily
           neovide
           nix-output-monitor # better nix build
-          ollama
           tldr
           tree
           uair # pomodoro manager
@@ -149,6 +148,20 @@
       gpg-agent = {
         enable = true;
         enableSshSupport = true;
+      };
+      ollama = {
+        enable = true;
+        package = pkgs.ollama.overrideAttrs (_oldAttrs: {
+          version = "0.11.3";
+          src = pkgs.fetchFromGitHub {
+            owner = "ollama";
+            repo = "ollama";
+            tag = "v0.11.3";
+            hash = "sha256-FghgCtVQIxc9qB5vZZlblugk6HLnxoT8xanZK+N8qEc=";
+            fetchSubmodules = true;
+          };
+          vendorHash = "sha256-SlaDsu001TUW+t9WRp7LqxUSQSGDF1Lqu9M1bgILoX4=";
+        });
       };
     };
   };
