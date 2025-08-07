@@ -80,7 +80,9 @@
           tldr
           tree
           uair # pomodoro manager
-          ueberzugpp
+          (ueberzugpp.override {
+            enableOpencv = false;
+          })
           unzip
           wget
           zip

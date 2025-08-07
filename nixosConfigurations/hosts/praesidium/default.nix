@@ -18,6 +18,12 @@ in
   ];
 
   config = {
+    nixpkgs.config = {
+      cudaSupport = true;
+      cudaCapabilities = [ "8.6" ];
+      cudaForwardCompat = true;
+    };
+
     boot = {
       # binfmt.emulatedSystems = [
       #   "aarch64-linux"
