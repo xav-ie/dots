@@ -51,18 +51,6 @@
         };
       };
 
-      services.ollama-server = {
-        Unit = {
-          Description = "Run ollama server";
-        };
-        Install = {
-          WantedBy = [ "default.target" ];
-        };
-        Service = {
-          ExecStart = "${lib.getExe pkgs.ollama} serve";
-        };
-      };
-
       # Zoom loves to "helpfully" stay open even when I kill through UI
       services.kill-spyware = {
         Unit = {
