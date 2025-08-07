@@ -15,7 +15,11 @@ in
         input-overlay # overlays mouse/keyboard inputs
         # looking-glass-obs # native looking glass capture
         obs-3d-effect # 3d effects on sources
-        obs-backgroundremoval # remove background
+        (obs-backgroundremoval.overrideAttrs (oldAttrs: {
+          cmakeFlags = oldAttrs.cmakeFlags ++ [
+            "-DCUDA_TOOLKIT_ROOT_DIR=${pkgs.cudaPackages.cudatoolkit}"
+          ];
+        })) # remove background
         obs-composite-blur # blur a source
         # obs-fbc # capture screen with nvidia fbc? not sure if useful
         obs-gradient-source # gradient background color sources
