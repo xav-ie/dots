@@ -9,6 +9,12 @@ let
   postgresUser = "${subdomain}-user";
   postgresDB = "${subdomain}-db-local";
 
+  # UID/GID of postgres user inside postgres:17-alpine container
+  # To verify/update: podman run --rm postgres:17-alpine id postgres
+  # Alpine Linux uses UID 70 as the standard for the postgres system user
+  postgresUID = "70";
+  postgresGID = "70";
+
   cfgSecret = config.sops.placeholder;
 in
 {
@@ -168,7 +174,7 @@ in
 
     systemd.tmpfiles.rules = [
       "d ${postizDataDir} 0755 root root -"
-      "d ${postizDataDir}/postgres 0700 root root -"
+      "d ${postizDataDir}/postgres 0700 ${postgresUID} ${postgresGID} -"
       "d ${postizDataDir}/redis 0700 root root -"
       "d ${postizDataDir}/config 0755 root root -"
       "d ${postizDataDir}/uploads 0755 root root -"
