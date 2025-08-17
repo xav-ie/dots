@@ -9,14 +9,9 @@ export def with-timeout [timeout: duration, task: closure] {
     try {
         job recv --tag $task_id --timeout $timeout
     } catch {
-        job kill $task_id
-        error make {
-            msg: "Task timed out."
-            label: {
-                text: "timed out"
-                span: (metadata $task).span
-            }
-        }
+        # be sure to try killing the zenity window if running
+        try { job kill $task_id }
+        error make -u { msg: "Password GUI ask timed out." }
     }
 }
 
