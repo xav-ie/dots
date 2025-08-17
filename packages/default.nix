@@ -19,7 +19,7 @@ rec {
   cache-command = pkgs.callPackage ./cache-command { };
   ff = pkgs.callPackage ./ff { };
   # g = pkgs.callPackage ./g { };
-  is-sshed = pkgs.callPackage ./is-sshed { };
+  is-sshed = pkgs.callPackage ./is-sshed { inherit writeNuApplication; };
   j = pkgs.callPackage ./j { };
   jira-list = pkgs.callPackage ./jira-list { inherit cache-command; };
   jira-task-list = pkgs.callPackage ./jira-task-list { inherit cache-command; };

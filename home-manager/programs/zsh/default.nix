@@ -1,7 +1,4 @@
-{ lib, pkgs, ... }:
-let
-  tmux-tab-name-update = lib.getExe pkgs.pkgs-mine.is-sshed;
-in
+{ pkgs, ... }:
 {
   config = {
     programs.zsh =
@@ -77,10 +74,6 @@ in
             }
 
             source $HOME/.env
-
-            precmd() {
-              ${tmux-tab-name-update}
-            }
 
             download_nixpkgs_cache_index () {
               filename="index-$(uname -m | sed 's/^arm64$/aarch64/')-$(uname | tr A-Z a-z)"
