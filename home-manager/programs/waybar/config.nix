@@ -19,7 +19,7 @@ let
         pkgs.pkgs-mine.is-sshed
       ];
       text = ''
-        is-sshed || uairctl fetch '{state} {time}' 2>/dev/null
+        [[ "$(is-sshed)" == "false" ]] && uairctl fetch '{state} {time}' 2>/dev/null
       '';
     }
   );
