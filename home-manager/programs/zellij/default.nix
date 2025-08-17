@@ -32,12 +32,12 @@ let
                 tab_normal              "#[fg=#6C7086] {name}"
                 tab_active              "#[fg=magenta,bold,italic] {name}"
 
-                command_pomo_command    "bash -c \"${is-sshed} && ${lib.getExe' pkgs.uair "uairctl"} fetch '{state} {time}'\""
+                command_pomo_command    "bash -c \"[[ \$(${is-sshed}) == 'true' ]] && ${lib.getExe' pkgs.uair "uairctl"} fetch '{state} {time}'\""
                 command_pomo_format     "#[fg=blue] {stdout}"
                 command_pomo_interval   "1"
                 command_pomo_rendermode "static"
 
-                command_time_command    "bash -c \"${is-sshed} && date '+%a %m/%d %I:%M'\""
+                command_time_command    "bash -c \"[[ \$(${is-sshed}) == 'true' ]] && date '+%a %m/%d %I:%M'\""
                 command_time_format     "#[fg=cyan,bold] {stdout}"
                 command_time_interval   "1"
                 command_time_rendermode "static"
