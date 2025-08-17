@@ -13,6 +13,54 @@ in
     generate-kaomoji = inputs.generate-kaomoji.packages.${final.system}.default;
     pkgs-bleeding = inputs.nixpkgs-bleeding.legacyPackages.${final.system};
     pkgs-mine = toplevel.self.packages.${final.system};
+    # Fix govee-local-api not setting the lights all the time
+    # pkgs-homeassistant needing because poetry-core>=2.0.0 is not on stable
+    # and I don't feel like overriding *another* sub-dependency
+    home-assistant =
+      let
+        pkgs-homeassistant = inputs.nixpkgs-homeassistant.legacyPackages.${final.system};
+      in
+      pkgs-homeassistant.home-assistant.override {
+        packageOverrides = self: _: {
+          govee-local-api = pkgs-homeassistant.python313Packages.govee-local-api.overridePythonAttrs (_: {
+            version = "2.0.2";
+            src = final.fetchFromGitHub {
+              owner = "akash329d";
+              repo = "govee-local-api";
+              rev = "develop";
+              hash = "sha256-ChI/rIZwT/YMXFD83N1/cIIYkio318S3p1IgVu+P1sY=";
+            };
+          });
+          protobuf = pkgs-homeassistant.python313Packages.protobuf.overridePythonAttrs (_old: {
+            version = "6.31.1";
+            src = final.fetchPypi {
+              pname = "protobuf";
+              version = "6.31.1";
+              hash = "sha256-2MrEyYLwuVek3HOoDi6iT6sI5nnA3p3rg19KEtaaypo=";
+            };
+          });
+          pyatv =
+            (pkgs-homeassistant.python313Packages.pyatv.override {
+              inherit (self) protobuf;
+            }).overridePythonAttrs
+              (_old: {
+                version = "0.16.1";
+                src = final.fetchFromGitHub {
+                  owner = "postlund";
+                  repo = "pyatv";
+                  rev = "v0.16.1";
+                  hash = "sha256-b5u9u5CD/1W422rCxHvoyBqT5CuBAh68/EUBzNDcXoE=";
+                };
+              });
+        };
+        # home-assistant freaks out if these are not added
+        extraPackages =
+          ps: with ps; [
+            getmac
+            spotifyaio
+            govee-ble
+          ];
+      };
     notification-cleaner =
       if final.stdenv.isDarwin then
         inputs.notification-cleaner.packages.${final.system}.default
