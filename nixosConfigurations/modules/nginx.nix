@@ -68,6 +68,11 @@ in
                       service = "api@internal";
                       tls = true;
                     };
+                    home-assistant = {
+                      rule = "Host(`${config.services.home-assistant.subdomain}.${baseDomain}`)";
+                      service = "home-assistant-service";
+                      tls = true;
+                    };
                   }
                   // lib.optionalAttrs cfg.enable {
                     ${cfg.name} = {
@@ -76,6 +81,15 @@ in
                       tls = true;
                     };
                   };
+                services = {
+                  home-assistant-service = {
+                    loadBalancer = {
+                      servers = [
+                        { url = "http://127.0.0.1:8123"; }
+                      ];
+                    };
+                  };
+                };
               }
               // lib.optionalAttrs cfg.enable {
                 services = lib.optionalAttrs cfg.enable {

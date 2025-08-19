@@ -12,9 +12,17 @@
       example = "/media";
       default = null;
     };
+    services.home-assistant.subdomain = lib.mkOption {
+      type = lib.types.str;
+      description = "The subdomain for Home Assistant";
+      example = "hass";
+      default = "hass";
+    };
   };
 
   config = {
+    services.local-networking.subdomains = [ config.services.home-assistant.subdomain ];
+
     services = {
       home-assistant = {
         enable = true;
@@ -32,6 +40,14 @@
           "group ui" = "!include groups.yaml";
 
           default_config = { };
+
+          http = {
+            use_x_forwarded_for = true;
+            trusted_proxies = [
+              "127.0.0.1"
+              "::1"
+            ];
+          };
 
           homeassistant =
             let
