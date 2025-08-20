@@ -121,9 +121,16 @@
           };
         };
 
-        style = # css
+        style = # scss
           ''
             /* vim: ft=less */
+            * {
+              color: white;
+              border-radius: 0;
+              margin: 0;
+              padding: 0;
+              box-shadow: none;
+            }
 
             @define-color cc-bg rgba(19,6,10,0.65);
             @define-color default-border #631f33;
@@ -234,8 +241,8 @@
               margin-right: 10px;
               box-shadow: none;
               border: none;
-              min-width: 24px;
-              min-height: 24px;
+              min-width: 32px;
+              min-height: 32px;
             }
 
             .close-button:hover {
@@ -284,10 +291,15 @@
               border-right: none;
             }
 
-            .image {
-              /* border: 3px solid green; */
+            .notification-content .image {
+              border-radius: 12px;
               padding: 0;
-              margin: 0;
+              margin-right: 10px;
+            }
+
+            /* Add spacing by pushing the text away from the image area */
+            .app-icon {
+              margin-right: 10px;
             }
 
             .body-image {
@@ -413,26 +425,29 @@
             /* Mpris widget */
             .widget-mpris {
               /* The parent to all players */
-              border: 4px solid @default-border;
               margin: 20px;
               margin-bottom: 0;
-              border-radius: 12px;
-              padding: 15px;
-              padding-top: 35px;
+              padding: 0;
             }
             .widget-mpris-player {
-              padding: 0;
-              margin: 0;
+              /* border: 4px solid @default-border; */
+              border-radius: 12px;
               background-color: @mpris-album-art-overlay;
               background-color: transparent;
               box-shadow: none;
+              padding: 0;
+              margin: 0;
             }
             .widget-mpris-album-art {
+              padding: 20px;
               border-radius: 12px;
               box-shadow: none;
             }
+             /* The media player buttons (play, pause, next, etc...) */
+            .widget-mpris-player button {
+              margin-bottom: 20px;
+            }
             .widget-mpris-player button:hover {
-              /* The media player buttons (play, pause, next, etc...) */
               background: transparent;
             }
             .widget-mpris > box > button {
@@ -480,23 +495,6 @@
               background: red;
             }
 
-            /* .AnyName { Name defined in config after #
-             *   background-color: @noti-bg;
-             *   padding: 8px;
-             *   margin: 8px;
-             *   border-radius: 12px;
-             * }
-             *
-             * .AnyName>button {
-             *   background: transparent;
-             *   border: none;
-             * }
-             *
-             * .AnyName>button:hover {
-             *   background-color: @noti-bg-hover;
-             * }
-             */
-
             .topbar-buttons>button { /* Name defined in config after # */
               border: none;
               background: transparent;
@@ -533,13 +531,39 @@
               /* background: @noti-bg-hover; */
               background: transparent;
             }
-            * {
-              color: white;
-              border-radius: 0;
-              margin: 0;
-              padding: 0;
-              box-shadow: none;
+
+            /* Notification group headers (title) */
+            .notification-group-headers {
+              margin: 20px 20px;
+              margin-bottom: 0;
             }
+
+            /* Notification group buttons container */
+            .notification-group-buttons {
+              margin: 20px 20px;
+              margin-bottom: 0;
+            }
+
+            /* Notification group buttons (clear all and collapse/expand) */
+            .notification-group-close-all-button.circular,
+            .notification-group-collapse-button.circular {
+              min-width: 36px;
+              min-height: 36px;
+              border: 4px solid @default-border;
+              border-radius: 12px;
+              margin: 0;
+              background: transparent;
+            }
+            .notification-group-close-all-button.circular:hover,
+            .notification-group-collapse-button.circular:hover {
+              background: transparent;
+            }
+
+            /* Add spacing only between the buttons */
+            .notification-group-collapse-button.circular {
+              margin-right: 4px;
+            }
+
           '';
       };
   };
