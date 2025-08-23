@@ -26,17 +26,46 @@ writeNuApplication {
         }
 
         let next_prs = if $next_prs_result.exit_code == 0 and not ($next_prs_result.stdout | str trim | is-empty) {
-          $next_prs_result.stdout | from json | each { |pr| $"[#($pr.number)]\(($pr.url)\)" }
+          $next_prs_result.stdout | from json | each { |pr| $"#($pr.number)" }
         } else {
           []
         }
 
-        let prev_link = if $prev_pr != null { $"previous pr: [#($prev_pr.number)]\(($prev_pr.url)\)" } else { "" }
-        let next_link = if ($next_prs | length) > 0 { $"next pr\(s\): ($next_prs | str join ', ')" } else { "" }
+        let spacing_img = "<img align=\"right\" width=\"1000\" height=\"1\" alt=\"\" src=\"data:,\"  />"
 
-        let all_links = [$prev_link $next_link] | where $it != "" | str join "\n"
+        let pr_data = {
+          prev: (if $prev_pr != null { { number: $prev_pr.number, url: $prev_pr.url } } else { null }),
+          next: (if ($next_prs | length) > 0 { $next_prs } else { [] })
+        }
 
-        if ($all_links | is-empty) { "" } else { $"\n\n---\n\n($all_links)" }
+        let has_prev = ($pr_data.prev != null)
+        let has_next = (($pr_data.next | length) > 0)
+
+        if (not $has_prev and not $has_next) {
+          ""
+        } else {
+          # Build table columns based on what PRs exist
+          mut columns = []
+          mut separators = []
+
+          if $has_prev {
+            let prev_link = $"#($pr_data.prev.number)"
+            $columns = ($columns | append $"prev pr: ($prev_link) ($spacing_img)")
+            $separators = ($separators | append ":-")
+          }
+
+          if $has_next {
+            let next_links = ($pr_data.next | str join ", ")
+            $columns = ($columns | append $"next pr\(s): ($next_links) ($spacing_img)")
+            $separators = ($separators | append "-:")
+          }
+
+          let table_header = $"| ($columns | str join ' | ') |"
+          let table_separator = $"|($separators | str join '|')|"
+          let table = [$table_header $table_separator] | str join "\n"
+
+          $"\n\n($table)"
+        }
       }
 
       def get-pr-commits [] {
