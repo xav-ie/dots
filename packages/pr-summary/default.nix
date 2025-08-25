@@ -88,7 +88,7 @@ writeNuApplication {
             ""
           }
 
-          if ($notes | str trim | is-empty) { $commit } else { $"($commit)\n\n  <!--notes-->\n($notes)" }
+          if ($notes | str trim | is-empty) { $commit } else { $"($commit)\n\n  <!--notes-->\n  ※ Note:\n($notes)" }
         } | str join "\n\n"
       }
 
