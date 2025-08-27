@@ -25,6 +25,7 @@ rec {
   localip = pkgs.callPackage ./localip { inherit writeNuApplication; };
   nix-repl = pkgs.callPackage ./nix-repl { inherit writeNuApplication; };
   nvim = pkgs.callPackage ./nvim { };
+  pgpod = pkgs.callPackage ./pgpod { inherit writeNuApplication; };
   prs = pkgs.callPackage ./prs { inherit writeNuApplication; };
   pr-summary = pkgs.callPackage ./pr-summary { inherit base-ref writeNuApplication; };
   review = pkgs.callPackage ./review { inherit writeNuApplication; };
