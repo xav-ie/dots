@@ -99,6 +99,7 @@
           jira-list
           jira-task-list
           localip
+          pgpod
           notify
           nix-repl
           nvim
