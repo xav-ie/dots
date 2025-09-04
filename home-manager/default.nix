@@ -53,6 +53,7 @@
     home = {
       packages =
         (with pkgs; [
+          pstree
           curl
           deadnix # dead code linter
           delta
