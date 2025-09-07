@@ -65,7 +65,6 @@
           gh
           gnumake
           go-jira
-          home-assistant
           hyperfine # perfomance tester
           (jira-cli-go.overrideAttrs {
             postInstall = ''

@@ -25,6 +25,7 @@
           cliphist
           clipboard-jh # a really awesome clipboard
           ghostty
+          home-assistant
           manix
           # nodePackages."webtorrent-cli"
           xidel # like jq but for html and much more advanced.
