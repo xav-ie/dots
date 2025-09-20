@@ -76,6 +76,7 @@
           lsof
           magic-wormhole-rs # send files easily
           neovide
+          nodejs
           nix-output-monitor # better nix build
           tldr
           tree
@@ -126,7 +127,7 @@
         HISTCONTROL = "ignoreboth";
         # increase history file size (default is 500)
         HISTFILESIZE = 100000;
-        PATH = "$HOME/.config/scripts/:$PATH";
+        PATH = "$HOME/.config/scripts:$HOME/.npm/bin:$PATH";
       };
     };
     home.file.".inputrc".source =
