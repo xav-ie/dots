@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.services.reverse-proxy;
-  inherit (config.services.local-networking) baseDomain;
+  inherit (config.services.local-networking) baseDomain subdomains;
   cfgSecret = config.sops.placeholder;
 in
 {
@@ -51,14 +51,6 @@ in
       templates = {
         "traefik-config.yaml" = {
           content = lib.generators.toYAML { } {
-            tls = {
-              certificates = [
-                {
-                  certFile = "/var/lib/traefik/certs/cert.pem";
-                  keyFile = "/var/lib/traefik/certs/key.pem";
-                }
-              ];
-            };
             http =
               {
                 routers =
@@ -66,19 +58,19 @@ in
                     dashboard = {
                       rule = "Host(`${baseDomain}`)";
                       service = "api@internal";
-                      tls = true;
+                      tls.certResolver = "cloudflare";
                     };
                     home-assistant = {
                       rule = "Host(`${config.services.home-assistant.subdomain}.${baseDomain}`)";
                       service = "home-assistant-service";
-                      tls = true;
+                      tls.certResolver = "cloudflare";
                     };
                   }
                   // lib.optionalAttrs cfg.enable {
                     ${cfg.name} = {
                       rule = "Host(`${cfgSecret."reverse-proxy/reverse-hostname"}`)";
                       service = "${cfg.name}-service";
-                      tls = true;
+                      tls.certResolver = "cloudflare";
                     };
                   };
                 services = {

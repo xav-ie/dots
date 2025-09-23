@@ -81,7 +81,22 @@ in
       443
     ];
 
-    systemd.services.generate-certs = {
+    # SOPS secret for Cloudflare API token
+    sops.secrets."cloudflare/main/lalala_casa/api_token" = {
+      restartUnits = [ "traefik.service" ];
+    };
+
+    sops.templates."traefik-cloudflare-env" = {
+      content = ''
+        CF_DNS_API_TOKEN=${config.sops.placeholder."cloudflare/main/lalala_casa/api_token"}
+      '';
+      mode = "0400";
+      owner = "traefik";
+      group = config.services.traefik.group;
+    };
+
+    # Ensure traefik data directory and ACME storage exist
+    systemd.services.traefik-init = {
       before = [ "traefik.service" ];
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
@@ -89,23 +104,10 @@ in
         RemainAfterExit = true;
       };
       script = ''
-        ${lib.optionalString config.services.reverse-proxy.enable # sh
-          ''
-            PROXY_DOMAIN=$(cat ${config.sops.secrets."reverse-proxy/reverse-hostname".path})
-          ''
-        }
-        mkdir -p /var/lib/traefik/certs
-
-        export CAROOT=${mkcertCA}
-        ${lib.getExe pkgs.mkcert} -cert-file /var/lib/traefik/certs/cert.pem \
-          -key-file /var/lib/traefik/certs/key.pem \
-          ${baseDomain} ${
-            lib.concatStringsSep " " (map (s: "${s}.${baseDomain}") subdomains)
-          } ${lib.optionalString config.services.reverse-proxy.enable "$PROXY_DOMAIN"}
-
-        chown traefik:${config.services.traefik.group} /var/lib/traefik/certs/*.pem
-        chmod 644 /var/lib/traefik/certs/cert.pem
-        chmod 600 /var/lib/traefik/certs/key.pem
+        mkdir -p ${config.services.traefik.dataDir}
+        touch ${config.services.traefik.dataDir}/acme.json
+        chmod 600 ${config.services.traefik.dataDir}/acme.json
+        chown traefik:${config.services.traefik.group} ${config.services.traefik.dataDir}/acme.json
       '';
     };
 
@@ -113,6 +115,10 @@ in
       enable = true;
       # make `traefik` user's group "podman" in order access the socket
       group = "podman";
+
+      environmentFiles = [
+        config.sops.templates."traefik-cloudflare-env".path
+      ];
 
       staticConfigOptions = {
         # Allow backend services to have self-signed certs
@@ -140,10 +146,7 @@ in
           websecure = {
             address = ":443";
             asDefault = true;
-            http.tls = {
-              # TODO: replace with cloudflare dns-01
-              # using local ca for now
-            };
+            http.tls.certResolver = "cloudflare";
           };
         };
 
@@ -164,6 +167,20 @@ in
             exposedByDefault = false;
           };
           file.watch = true;
+        };
+
+        certificatesResolvers.cloudflare = {
+          acme = {
+            email = "admin@${baseDomain}";
+            storage = "${config.services.traefik.dataDir}/acme.json";
+            dnsChallenge = {
+              provider = "cloudflare";
+              resolvers = [
+                "1.1.1.1:53"
+                "1.0.0.1:53"
+              ];
+            };
+          };
         };
 
         api.dashboard = true;
