@@ -129,6 +129,7 @@ in
           ${subdomain} = {
             containerConfig = {
               image = "ghcr.io/gitroomhq/postiz-app:latest";
+              autoUpdate = "registry";
               pod = pods."${subdomain}-pod".ref;
               volumes = [
                 "${postizDataDir}/config:/config/"
