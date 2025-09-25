@@ -84,7 +84,11 @@ in
       {
         networks."${subdomain}-network".networkConfig = { };
 
-        pods."${subdomain}-pod" = { };
+        pods."${subdomain}-pod" = {
+          podConfig = {
+            addHosts = [ "${fullHostName}:192.168.1.158" ];
+          };
+        };
 
         containers = {
           "${subdomain}-postgres" = {
