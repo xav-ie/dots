@@ -72,7 +72,6 @@ I want to configure secrets the "right way".
       just completely forgo Bitwarden and just use good old encryption...
       There has to be someone else who thought of this
 - [ ] Look into these secret solutions others have worked on:
-
   - [Secrets Management with SOPS-NIX by Vimjoyer](https://youtube.com/watch?v=G5f6GC7SnhU)
   - [NixOS Secrets Management by Emergent Mind](https://youtube.com/watch?v=G5f6GC7SnhU)
   - [Encrypted Secrets with NixOS](https://xeiaso.net/blog/nixos-encrypted-secrets-2021-01-20/)
