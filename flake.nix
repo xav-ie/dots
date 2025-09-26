@@ -24,8 +24,6 @@
     hardware.url = "github:nixos/nixos-hardware";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.url = "github:nix-community/home-manager";
-    # because firefox has strange rendering bug
-    firefox-nixpkgs.url = "github:nixos/nixpkgs/88195a94f390381c6afcdaa933c2f6ff93959cb4";
     hyprland-contrib.inputs.nixpkgs.follows = "nixpkgs";
     hyprland-contrib.url = "github:hyprwm/contrib";
     hyprland.inputs.nixpkgs.follows = "nixpkgs";
