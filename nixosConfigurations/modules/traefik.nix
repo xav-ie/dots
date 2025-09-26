@@ -9,7 +9,8 @@ let
 
   allDomains = [
     baseDomain
-  ] ++ (map (subdomain: "${subdomain}.${baseDomain}") subdomains);
+  ]
+  ++ (map (subdomain: "${subdomain}.${baseDomain}") subdomains);
   hostEntries = lib.concatStringsSep "\n" (
     map (d: ''
       127.0.0.1 ${d}
@@ -92,7 +93,7 @@ in
       '';
       mode = "0400";
       owner = "traefik";
-      group = config.services.traefik.group;
+      inherit (config.services.traefik) group;
     };
 
     # Ensure traefik data directory and ACME storage exist

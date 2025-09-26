@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.services.reverse-proxy;
-  inherit (config.services.local-networking) baseDomain subdomains;
+  inherit (config.services.local-networking) baseDomain;
   cfgSecret = config.sops.placeholder;
 in
 {
@@ -51,49 +51,47 @@ in
       templates = {
         "traefik-config.yaml" = {
           content = lib.generators.toYAML { } {
-            http =
-              {
-                routers =
-                  {
-                    dashboard = {
-                      rule = "Host(`${baseDomain}`)";
-                      service = "api@internal";
-                      tls.certResolver = "cloudflare";
-                    };
-                    home-assistant = {
-                      rule = "Host(`${config.services.home-assistant.subdomain}.${baseDomain}`)";
-                      service = "home-assistant-service";
-                      tls.certResolver = "cloudflare";
-                    };
-                  }
-                  // lib.optionalAttrs cfg.enable {
-                    ${cfg.name} = {
-                      rule = "Host(`${cfgSecret."reverse-proxy/reverse-hostname"}`)";
-                      service = "${cfg.name}-service";
-                      tls.certResolver = "cloudflare";
-                    };
-                  };
-                services = {
-                  home-assistant-service = {
-                    loadBalancer = {
-                      servers = [
-                        { url = "http://127.0.0.1:8123"; }
-                      ];
-                    };
-                  };
+            http = {
+              routers = {
+                dashboard = {
+                  rule = "Host(`${baseDomain}`)";
+                  service = "api@internal";
+                  tls.certResolver = "cloudflare";
+                };
+                home-assistant = {
+                  rule = "Host(`${config.services.home-assistant.subdomain}.${baseDomain}`)";
+                  service = "home-assistant-service";
+                  tls.certResolver = "cloudflare";
                 };
               }
               // lib.optionalAttrs cfg.enable {
-                services = lib.optionalAttrs cfg.enable {
-                  ${cfg.name + "-service"} = {
-                    loadBalancer = {
-                      servers = [
-                        { url = "http://127.0.0.1:8081"; }
-                      ];
-                    };
+                ${cfg.name} = {
+                  rule = "Host(`${cfgSecret."reverse-proxy/reverse-hostname"}`)";
+                  service = "${cfg.name}-service";
+                  tls.certResolver = "cloudflare";
+                };
+              };
+              services = {
+                home-assistant-service = {
+                  loadBalancer = {
+                    servers = [
+                      { url = "http://127.0.0.1:8123"; }
+                    ];
                   };
                 };
               };
+            }
+            // lib.optionalAttrs cfg.enable {
+              services = lib.optionalAttrs cfg.enable {
+                ${cfg.name + "-service"} = {
+                  loadBalancer = {
+                    servers = [
+                      { url = "http://127.0.0.1:8081"; }
+                    ];
+                  };
+                };
+              };
+            };
           };
           mode = "0444";
           restartUnits = [ "traefik.service" ];
