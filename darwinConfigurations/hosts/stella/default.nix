@@ -38,7 +38,6 @@
         "chromium"
         "ente"
         "firefox"
-        "flux"
         "ghostty"
         "little-snitch"
         "loom"

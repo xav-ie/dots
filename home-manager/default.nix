@@ -43,8 +43,8 @@
       fzf.enable = true;
       jq.enable = true;
       jujutsu.enable = true;
+      pay-respects.enable = true;
       ripgrep.enable = true;
-      thefuck.enable = true;
       watson.enable = true;
       zoxide.enable = true;
       zoxide.package = pkgs.pkgs-bleeding.zoxide;

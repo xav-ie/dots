@@ -400,14 +400,7 @@ in
         nvidiaSettings = true;
         # package = config.boot.kernelPackages.nvidiaPackages.production;
         # package = config.boot.kernelPackages.nvidiaPackages.beta;
-        package = config.boot.kernelPackages.nvidiaPackages.mkDriver {
-          version = "550.142";
-          sha256_64bit = "sha256-bdVJivBLQtlSU7Zre9oVCeAbAk0s10WYPU3Sn+sXkqE=";
-          sha256_aarch64 = lib.fakeSha256;
-          openSha256 = lib.fakeSha256;
-          settingsSha256 = "sha256-Wk6IlVvs23cB4s0aMeZzSvbOQqB1RnxGMv3HkKBoIgY=";
-          persistencedSha256 = lib.fakeSha256;
-        };
+        package = config.boot.kernelPackages.nvidiaPackages.production;
         # forceFullCompositionPipeline = true;
       };
       nvidia-container-toolkit.enable = true;

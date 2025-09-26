@@ -57,7 +57,6 @@
     notification-cleaner.inputs.nix2container.follows = "nix2container";
     nur.inputs.flake-parts.follows = "flake-parts";
     nur.inputs.nixpkgs.follows = "nixpkgs";
-    nur.inputs.treefmt-nix.follows = "treefmt-nix";
     nur.url = "github:nix-community/NUR";
     nuenv.url = "github:xav-ie/nuenv";
     nuenv.inputs.nixpkgs.follows = "nixpkgs";
