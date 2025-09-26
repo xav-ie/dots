@@ -1,0 +1,17 @@
+diff --git a/libraries/nestjs-libraries/src/database/prisma/integrations/integration.service.ts b/libraries/nestjs-libraries/src/database/prisma/integrations/integration.service.ts
+index a54758e6..4043a99d 100644
+--- a/libraries/nestjs-libraries/src/database/prisma/integrations/integration.service.ts
++++ b/libraries/nestjs-libraries/src/database/prisma/integrations/integration.service.ts
+@@ -106,7 +106,11 @@ export class IntegrationService {
+     const uploadedPicture = picture
+       ? picture?.indexOf('imagedelivery.net') > -1
+         ? picture
+-        : await this.storage.uploadSimple(picture)
++        : await this.storage.uploadSimple(picture).catch((err) => {
++            console.error("Uploading the integrations image failed.");
++            console.error(err);
++            return undefined;
++          })
+       : undefined;
+
+     return this._integrationRepository.createOrUpdateIntegration(
