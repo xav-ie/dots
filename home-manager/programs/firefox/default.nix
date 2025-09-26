@@ -12,7 +12,6 @@ in
     home.packages = [ pkgs.firefoxpwa ];
     programs.firefox = {
       enable = true;
-      package = inputs.firefox-nixpkgs.legacyPackages.${pkgs.system}.firefox;
       nativeMessagingHosts = [ pkgs.firefoxpwa ];
       profiles.x = {
         id = 0;
