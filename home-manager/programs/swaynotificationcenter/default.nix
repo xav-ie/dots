@@ -4,7 +4,33 @@
   pkgs,
   ...
 }:
+let
+  cfg = config.services.swaync;
+in
 {
+  options.services.swaync = {
+    notificationHeight = lib.mkOption {
+      default = 85;
+      type = lib.types.ints.positive;
+      description = "Height of a single notification in pixels";
+    };
+    notificationWidth = lib.mkOption {
+      default = 680;
+      type = lib.types.ints.positive;
+      description = "Width of notification windows in pixels";
+    };
+    controlCenterWidth = lib.mkOption {
+      default = 900;
+      type = lib.types.ints.positive;
+      description = "Width of the control center in pixels";
+    };
+    controlCenterHeight = lib.mkOption {
+      default = 1200;
+      type = lib.types.ints.positive;
+      description = "Height of the control center in pixels";
+    };
+  };
+
   config = {
     home.packages = [ config.services.swaync.package ];
 
@@ -24,7 +50,7 @@
           "$schema" = "${pkgs.swaynotificationcenter.outPath}/etc/xdg/swaync/configSchema.json";
           inherit timeout timeout-critical timeout-low;
           control-center-exclusive-zone = true;
-          control-center-height = 1200;
+          control-center-height = cfg.controlCenterHeight;
           control-center-layer = "overlay";
           control-center-margin-bottom = 0;
           control-center-margin-left = 0;
@@ -32,7 +58,7 @@
           control-center-margin-top = 0;
           control-center-positionX = "none";
           control-center-positionY = "none";
-          control-center-width = 900;
+          control-center-width = cfg.controlCenterWidth;
           cssPriority = "user";
           fit-to-screen = false;
           hide-on-action = true;
@@ -46,7 +72,10 @@
           notification-body-image-width = 200;
           notification-icon-size = 64;
           notification-inline-replies = true;
-          notification-window-width = 680;
+          notification-window-width = cfg.notificationWidth;
+          notification-window-height = cfg.notificationHeight;
+          # TODO: re-enable? I think I don't like the grouping...
+          notification-grouping = false;
           positionX = "right";
           positionY = "top";
           relative-timestamps = true;
@@ -56,9 +85,35 @@
               exec = lib.getExe (
                 pkgs.writeNuApplication {
                   name = "fix-notification-position";
-                  runtimeInputs = [ pkgs.pkgs-mine.move-active ];
+                  runtimeInputs = [
+                    pkgs.pkgs-mine.move-active
+                    config.services.swaync.package
+                    pkgs.hyprland
+                  ];
                   text = # nu
                     ''
+                      # Count file to track visible notifications
+                      let count_file = "/tmp/swaync-visible-count"
+
+                      # Initialize count file if it doesn't exist
+                      if not ($count_file | path exists) {
+                        "0" | save $count_file
+                      }
+
+                      # Increment the count for new notification
+                      let current_count = (open $count_file | into int)
+                      let new_count = $current_count + 1
+                      ($new_count | into string) | save -f $count_file
+
+                      # Calculate and set initial height
+                      let notification_height = ${toString cfg.notificationHeight}
+                      let calculated_height = ($new_count * $notification_height)
+                      let height = if $calculated_height < $notification_height { $notification_height } else if $calculated_height > 600 { 600 } else { $calculated_height }
+
+                      # Resize the swaync window
+                      hyprctl dispatch resizewindowpixel $"exact ${toString cfg.notificationWidth} ($height),class:^swaync$"
+
+                      # Then reposition as before
                       def currentPrimaryJob [id: number] {
                         let relevantJobs = (job list
                                             | where tag == "spamMoveNotification"
@@ -71,13 +126,35 @@
                         $firstRunningJobId == $id
                       }
                       job spawn { move-active topRight "title:swaync" | complete }
-                      # wait until is is maybe gone
+
+                      # For normal notifications, wait the full timeout then decrement
+                      # We spawn this immediately to track the actual timeout
+                      job spawn --tag notificationTimeout { ||
+                        # Wait for the actual notification timeout (10 seconds for normal)
+                        sleep ${toString timeout-low}sec
+
+                        # After timeout, decrement the count
+                        let count_file = "/tmp/swaync-visible-count"
+                        let current_count = (open $count_file | into int)
+                        let new_count = if $current_count > 0 { $current_count - 1 } else { 0 }
+                        ($new_count | into string) | save -f $count_file
+
+                        # Calculate new height after decrement
+                        let notification_height = ${toString cfg.notificationHeight}
+                        let calculated_height = ($new_count * $notification_height)
+                        let final_height = if $calculated_height < $notification_height { $notification_height } else if $calculated_height > 600 { 600 } else { $calculated_height }
+
+                        # Resize to new height
+                        hyprctl dispatch resizewindowpixel $"exact ${toString cfg.notificationWidth} ($final_height),class:^swaync$"
+                      }
+
+                      # Keep repositioning for a bit after min timeout
                       sleep ("${toString min-timeout}sec" | into duration)
                       job spawn --tag spamMoveNotification { ||
-                        # spam until it is most likely gone
+                        # spam repositioning for a bit
                         let currentId = (job id)
-                        mut timeLeft = ${toString (lib.max 0 (max-timeout - min-timeout))} + 1.0;
-                        while $timeLeft >= 0 {
+                        mut timeLeft = ${toString (lib.max 0 (max-timeout - min-timeout))} | into float
+                        while $timeLeft >= 0.0 {
                           let chunk = 0.25
                           sleep ($"($chunk)sec" | into duration)
                           $timeLeft = $timeLeft - $chunk
@@ -86,6 +163,8 @@
                             move-active topRight "title:swaync"
                           }
                         }
+
+                        # This job is just for repositioning now
                       }
                       # ensure job spawn completion
                       sleep ${toString max-timeout}sec
@@ -131,37 +210,28 @@
               padding: 0;
               box-shadow: none;
             }
+            *:hover {
+              box-shadow: none;
+            }
 
             @define-color cc-bg rgba(19,6,10,0.65);
             @define-color default-border #631f33;
 
             @define-color noti-border-color rgba(0, 0, 0, 0.0);
             @define-color noti-bg rgba(19,6,10,0.65);
-            @define-color noti-bg-hover rgba(65, 65, 65, 0.8);
-            @define-color noti-bg-focus rgba(68, 68, 68, 0.6);
+            @define-color noti-hover-bg rgba(255, 255, 255, 0.1);
             @define-color noti-close-bg rgba(255, 255, 255, 0.1);
             @define-color noti-close-bg-hover rgba(255, 255, 255, 0.15);
 
-            @define-color mpris-album-art-overlay rgba(255, 0, 0, 0.95);
-            @define-color mpris-button-hover rgba(0, 255, 0, 0.50);
-
-            @define-color bg-selected rgb(100, 0, 0);
-
+            @define-color bg-selected rgb(19,6,10,1);
 
             .notification-row {
-              /* transition: all 200ms ease; */
               outline: none;
-              /*margin-bottom: 4px;*/
-              border-radius: 12px;
-            }
-            .notification-row:hover {
-              background: red;
             }
 
             .control-center .notification-row:focus,
             .control-center .notification-row:hover {
               opacity: 1;
-              background: blue;
             }
 
             .notification-row:focus .notification,
@@ -171,22 +241,19 @@
 
             .control-center .notification {
               box-shadow: none;
-              margin: 20px 20px;
-              margin-bottom: 0;
+              margin: 15px 20px;
               border: 4px solid @default-border;
               border-radius: 12px;
             }
 
-            /*.control-center .notification-row {
-              opacity: 0.5;
-            }*/
-
             .notification {
-              /* transition: all 200ms ease; */
               margin: 0;
-              /* padding: 10px; */
               background: transparent;
               border-radius: 0;
+              min-height: ${toString cfg.notificationHeight}px;
+            }
+            .notification:hover {
+              background: @noti-hover-bg;
             }
 
             /* Uncomment to enable specific urgency colors
@@ -224,9 +291,7 @@
               margin: 0;
             }
 
-            /* TODO: how do I get rid of this! */
             .notification-content .horizontal .vertical {
-              /* border: 3px solid cyan; */
               padding: 0;
               margin: 0;
             }
@@ -247,7 +312,6 @@
 
             .close-button:hover {
               box-shadow: none;
-              /* transition: all 0.15s ease-in-out; */
             }
 
             .notification-default-action,
@@ -259,7 +323,6 @@
               border: none;
               color: white;
               border-radius: 0;
-              /* transition: all 200ms ease; */
               border-radius: 0;
             }
 
@@ -303,7 +366,6 @@
             }
 
             .body-image {
-              /*margin-top: 6px;*/
               background-color: white;
               border-radius: 12px;
               border: 3px solid pink;
@@ -342,7 +404,10 @@
             }
 
             .control-center-list {
-              background: red;
+              background: transparent;
+            }
+            .control-center-list:hover {
+              background: transparent;
             }
 
             .control-center-list-placeholder {
@@ -358,27 +423,21 @@
               background: transparent;
             }
 
-
             /*** Widgets ***/
 
             /* Title widget */
             .widget-title {
-              /*margin: 8px;*/
               font-size: 1.5rem;
             }
             .widget-title > button {
               font-size: initial;
               color: white;
               text-shadow: none;
-              /* background: @noti-bg; */
               background: blue;
-              /* background-color: transparent; */
-              /* border: 1px solid @noti-border-color; */
               box-shadow: none;
               border-radius: 12px;
             }
             .widget-title > button:hover {
-              /* background: @noti-bg-hover; */
               background-color: transparent;
             }
 
@@ -400,12 +459,10 @@
               background: @bg-selected;
             }
             .widget-dnd > switch:checked slider {
-              /* background: @bg-selected; */
               margin-right: -1px;
               margin-left: 0;
             }
             .widget-dnd > switch slider {
-              /* background: @noti-bg-hover; */
               background-color: transparent;
               border-radius: 100px;
               border: 5px solid @default-border;
@@ -415,9 +472,6 @@
             }
 
             /* Label widget */
-            .widget-label {
-              /*margin: 8px;*/
-            }
             .widget-label > label {
               font-size: 1.1rem;
             }
@@ -432,7 +486,7 @@
             .widget-mpris-player {
               /* border: 4px solid @default-border; */
               border-radius: 12px;
-              background-color: @mpris-album-art-overlay;
+              background-color: red;
               background-color: transparent;
               box-shadow: none;
               padding: 0;
@@ -443,7 +497,7 @@
               border-radius: 12px;
               box-shadow: none;
             }
-             /* The media player buttons (play, pause, next, etc...) */
+            /* The media player buttons (play, pause, next, etc...) */
             .widget-mpris-player button {
               margin-bottom: 20px;
             }
@@ -470,32 +524,28 @@
             }
             /* Buttons widget */
             .widget-buttons-grid {
-              /*padding: 8px;*/
-              /*margin: 8px;*/
               border-radius: 12px;
-              /* background-color: @noti-bg; */
               background: transparent;
             }
 
-            .widget-buttons-grid>flowbox>flowboxchild>button{
-              /* background: @noti-bg; */
+            .widget-buttons-grid > flowbox > flowboxchild > button {
               background: transparent;
               border-radius: 12px;
             }
 
-            .widget-buttons-grid>flowbox>flowboxchild>button:hover {
-              /* background: @noti-bg-hover; */
+            .widget-buttons-grid > flowbox > flowboxchild > button:hover {
               background: transparent;
             }
 
             /* Menubar widget */
-            .widget-menubar>box>.menu-button-bar>button {
+            .widget-menubar > box > .menu-button-bar > button {
               border: none;
               background: transparent;
               background: red;
             }
 
-            .topbar-buttons>button { /* Name defined in config after # */
+            .topbar-buttons > button {
+              /* Name defined in config after # */
               border: none;
               background: transparent;
               background: blue;
@@ -505,7 +555,6 @@
 
             .widget-backlight,
             .widget-volume {
-              /* background-color: @noti-bg; */
               background: transparent;
               padding: 0;
               margin: 0;
@@ -514,21 +563,25 @@
 
             /* Title widget */
             .widget-inhibitors {
-              /*margin: 8px;*/
               font-size: 1.5rem;
             }
             .widget-inhibitors > button {
               font-size: initial;
               color: red;
               text-shadow: none;
-              /* background: @noti-bg; */
               background: transparent;
               border: 1px solid @noti-border-color;
               box-shadow: none;
               border-radius: 12px;
             }
             .widget-inhibitors > button:hover {
-              /* background: @noti-bg-hover; */
+              background: transparent;
+            }
+
+            .notification-group {
+              background: transparent;
+            }
+            .notification-group:hover {
               background: transparent;
             }
 
@@ -556,14 +609,13 @@
             }
             .notification-group-close-all-button.circular:hover,
             .notification-group-collapse-button.circular:hover {
-              background: transparent;
+              background: @noti-hover-bg;
             }
 
             /* Add spacing only between the buttons */
             .notification-group-collapse-button.circular {
               margin-right: 4px;
             }
-
           '';
       };
   };

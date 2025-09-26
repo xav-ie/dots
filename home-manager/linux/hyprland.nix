@@ -8,6 +8,7 @@
 let
   cfg = config.programs.hyprland;
   waybarCfg = config.programs.waybar;
+  swayncCfg = config.services.swaync;
 in
 {
   options.programs.hyprland = {
@@ -54,7 +55,7 @@ in
       libva
       libva-utils # hardware video acceleration
       polkit_gnome # just a GUI askpass
-      rofi-wayland
+      rofi
       swww
       waypipe
       wl-clipboard
@@ -203,6 +204,16 @@ in
         windowTop = toString windowTopNumeric;
         windowRight = "100%-w-${windowLeft}";
 
+        # Specific positioning for swaync (using swaync config values)
+        swayncNotificationWidth = swayncCfg.notificationWidth;
+        swayncControlWidth = swayncCfg.controlCenterWidth;
+        swayncControlHeight = swayncCfg.controlCenterHeight;
+        swayncNotificationHeight = swayncCfg.notificationHeight;
+        # Position from right edge (not center point)
+        swayncRightOffset = gapsNumeric + borderSizeNumeric;
+        # Use the same top offset as other windows for consistency
+        swayncTopOffset = windowTopNumeric;
+
         pipHeight = 324;
         # There seems to be a bug with using `h`, so we work around this by
         # using the static height
@@ -282,7 +293,7 @@ in
 
           gestures = {
             # See https://wiki.hyprland.org/Configuring/Variables/ for more
-            workspace_swipe = "on";
+            # workspace_swipe = "on";
             workspace_swipe_distance = 300;
             workspace_swipe_min_speed_to_force = 0;
             workspace_swipe_cancel_ratio = 0;
@@ -300,7 +311,7 @@ in
 
           # Execute your favorite apps at launch
           exec-once = [
-            (lib.optionalString config.services.swww.enable "${lib.getExe pkgs.swww} ~/Downloads/ether.gif")
+            (lib.optionalString config.services.swww.enable "${lib.getExe pkgs.swww} img ~/Pictures/desktop.gif")
             "${lib.getExe pkgs.noisetorch} -i"
             # TODO: move into service
             "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type text --watch cliphist store"
@@ -356,9 +367,25 @@ in
             "size 25% 100%, title:^()$"
 
             # sway notifications
-            "move ${windowRight} ${windowTop}, title:^(swaync)$"
-            "noinitialfocus, title:^(swaync)$"
-            "pin, title:^(swaync)$"
+            # Match notification popups by class
+            "float, class:^(swaync)$"
+            "move 100%-${
+              toString (swayncNotificationWidth + swayncRightOffset)
+            } ${toString swayncTopOffset}, class:^(swaync)$"
+            "noinitialfocus, class:^(swaync)$"
+            "pin, class:^(swaync)$"
+            "size ${toString swayncNotificationWidth} ${toString swayncNotificationHeight}, class:^(swaync)$"
+            "animation slide, class:^(swaync)$"
+
+            # Control center specific rules (different class name)
+            "float, class:^(org.erikreider.swaync)$"
+            "move 100%-${
+              toString (swayncControlWidth + swayncRightOffset)
+            } ${toString swayncTopOffset}, class:^(org.erikreider.swaync)$"
+            "noinitialfocus, class:^(org.erikreider.swaync)$"
+            "pin, class:^(org.erikreider.swaync)$"
+            "size ${toString swayncControlWidth} ${toString swayncControlHeight}, class:^(org.erikreider.swaync)$"
+            "animation slide, class:^(org.erikreider.swaync)$"
 
             # improve animation on ueberzugpp windows
             "animation slide right, title:^(ueberzugpp.*)"
