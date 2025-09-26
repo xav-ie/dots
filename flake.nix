@@ -182,11 +182,6 @@
               # sops has its own formatter
               "secrets/*.yaml"
             ];
-            # `prettier` does not come with a node version on purpose, so we
-            # must make a wrapper
-            settings.formatter.prettier.command = pkgs.writeShellScriptBin "prettier-wrapped" ''
-              exec ${lib.getExe pkgs.nodejs-slim} ${lib.getExe pkgs.nodePackages.prettier} "$@"
-            '';
           };
 
         };
