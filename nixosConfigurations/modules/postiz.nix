@@ -1,4 +1,9 @@
-{ config, inputs, ... }:
+{
+  config,
+  inputs,
+  pkgs,
+  ...
+}:
 
 let
   subdomain = "postiz";
@@ -21,11 +26,50 @@ let
   redisGID = "999";
 
   cfgSecret = config.sops.placeholder;
+
+  # Fetch and patch the Postiz source
+  postizSrc = pkgs.stdenv.mkDerivation {
+    name = "postiz-src-patched";
+    src = pkgs.fetchFromGitHub {
+      owner = "gitroomhq";
+      repo = "postiz-app";
+      rev = "v2.7.0";
+      sha256 = "sha256-6Xjmui5Y+wPVgQAIcHLMyG4mikujQSk2bqRrDI7uz2E=";
+    };
+    patches = [ ./postiz-integration-fix.patch ];
+    phases = [
+      "unpackPhase"
+      "patchPhase"
+      "installPhase"
+    ];
+    installPhase = ''
+      mkdir -p $out
+      cp -r . $out/
+    '';
+  };
 in
 {
   imports = [ inputs.quadlet-nix.nixosModules.quadlet ];
 
   config = {
+    # Systemd service to build the Docker image from patched source
+    systemd.services."build-${subdomain}-image" = {
+      description = "Build patched Docker image";
+      wantedBy = [ "multi-user.target" ];
+      before = [ "${subdomain}.service" ];
+      path = with pkgs; [ podman ];
+
+      script = ''
+        # Build the Docker image using the patched source and Dockerfile.dev
+        podman build -f ${postizSrc}/Dockerfile.dev -t localhost/postiz-app-patched:latest ${postizSrc}
+      '';
+
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+    };
+
     sops = {
       secrets = {
         # internal
@@ -137,8 +181,10 @@ in
 
           ${subdomain} = {
             containerConfig = {
-              image = "ghcr.io/gitroomhq/postiz-app:latest";
-              autoUpdate = "registry";
+              image = "localhost/postiz-app-patched:latest";
+              # Disabled since we build locally for now
+              # image = "ghcr.io/gitroomhq/postiz-app:latest";
+              # autoUpdate = "registry";
               pod = pods."${subdomain}-pod".ref;
               volumes = [
                 "${postizDataDir}/config:/config/"
