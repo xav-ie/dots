@@ -15,6 +15,11 @@ let
   postgresUID = "70";
   postgresGID = "70";
 
+  # UID/GID of redis user inside redis:7.2 container
+  # To verify/update: podman run --rm redis:7.2 id redis
+  redisUID = "999";
+  redisGID = "999";
+
   cfgSecret = config.sops.placeholder;
 in
 {
@@ -180,7 +185,7 @@ in
     systemd.tmpfiles.rules = [
       "d ${postizDataDir} 0755 root root -"
       "d ${postizDataDir}/postgres 0700 ${postgresUID} ${postgresGID} -"
-      "d ${postizDataDir}/redis 0700 root root -"
+      "d ${postizDataDir}/redis 0755 ${redisUID} ${redisGID} -"
       "d ${postizDataDir}/config 0755 root root -"
       "d ${postizDataDir}/uploads 0755 root root -"
     ];
