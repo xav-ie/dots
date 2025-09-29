@@ -11,7 +11,6 @@ let
 in
 {
   imports = [
-    # TODO: investigate what these actually do
     inputs.hardware.nixosModules.common-cpu-intel-cpu-only
     inputs.hardware.nixosModules.common-gpu-nvidia-nonprime
     inputs.hardware.nixosModules.common-pc-ssd
@@ -33,15 +32,17 @@ in
       loader.systemd-boot.enable = true;
       loader.efi.canTouchEfiVariables = true;
       supportedFilesystems = [ "ntfs" ];
-      # TODO: what does this do?
-      kernelParams = [ "nvidia-drm.fbdev=1" ];
+      # https://wiki.archlinux.org/title/NVIDIA
+      kernelParams = [
+        # creates nvidia framebuffer device at boot; it takes over simpledrm at
+        # boot
+        "nvidia-drm.fbdev=1"
+      ];
       kernelModules = [
         # Virtual Camera
         "v4l2loopback"
         # Virtual Microphone, built-in
         "snd-aloop"
-        # TODO: ???
-        # "coretemp"
       ];
       # kernelPackages = pkgs.linuxPackages_latest;
       kernelPackages = pkgs.linuxPackages_6_12;
@@ -420,8 +421,6 @@ in
         pulse.enable = true;
         jack.enable = true;
       };
-      # TODO: set up
-      redshift.enable = true;
       resolved = {
         enable = false;
         # dnssec = "true";
@@ -443,8 +442,6 @@ in
           DNSStubListener=no
         '';
       };
-      # TODO: ???
-      # thermald.enable = true;
       # udev = {
       #   # TODO: for `ns-usbloader`
       #   extraRules = # python

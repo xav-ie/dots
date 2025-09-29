@@ -130,10 +130,6 @@ in
           sendAnonymousUsage = false;
         };
 
-        # TODO: figure out how to use
-        # metrics.prometheus = { };
-        # tracing = { };
-
         entryPoints = {
           web = {
             address = ":80";

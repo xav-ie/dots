@@ -11,6 +11,10 @@ let
   swayncCfg = config.services.swaync;
 in
 {
+  imports = [
+    ../programs/hyprshade
+  ];
+
   options.programs.hyprland = {
     gapsNumeric = lib.mkOption {
       default = 10;
@@ -49,8 +53,6 @@ in
 
     home.packages = with pkgs; [
       hyprshot
-      hyprshade
-      # TODO: necessary?
       libnotify
       libva
       libva-utils # hardware video acceleration
@@ -148,18 +150,6 @@ in
         };
       };
     };
-
-    home.file.".config/hypr/shaders/red.glsl".text = # glsl
-      ''
-        precision highp float;
-        varying vec2 v_texcoord;
-        uniform sampler2D tex;
-
-        void main() {
-            vec4 c = texture2D(tex, v_texcoord);
-            gl_FragColor = vec4(c.r, 0.0, 0.0, c.a);
-        }
-      '';
 
     services = {
       hypridle = {
@@ -313,7 +303,6 @@ in
           exec-once = [
             (lib.optionalString config.services.swww.enable "${lib.getExe pkgs.swww} img ~/Pictures/desktop.gif")
             "${lib.getExe pkgs.noisetorch} -i"
-            # TODO: move into service
             "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type text --watch cliphist store"
             "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type image --watch cliphist store"
             (lib.getExe config.programs.firefox.package)
@@ -417,7 +406,6 @@ in
             "$mainMod SHIFT, minus, exec,${move-active} grow"
           ];
 
-          # TODO: add more from:
           # https://github.com/sulmone/X11/blob/master/include/X11/XF86keysym.h
           bindel = [
             ", XF86AudioPlay, exec, playerctl play-pause"
@@ -456,7 +444,6 @@ in
             "$mainMod, N, exec, swaync-client -t"
             "$mainMod, C, exec, mpv av://v4l2:/dev/video1"
             "$mainMod SHIFT, M, exit,"
-            # TODO: make real program
             "$mainMod, U, exec, uair-toggle-and-notify"
             # Move focus with mainMod + arrow keys
             "$mainMod, H, movefocus, l"
@@ -500,7 +487,6 @@ in
 
         };
 
-        # TODO: make proper options
         extraConfig = # hyprlang
           ''
             # will start a submap called "resize"

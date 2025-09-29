@@ -122,11 +122,6 @@ in
 
 
             enable_tab_bar = false,
-            -- TODO: investigate these threads to see if I can enable again
-            -- wez/wezterm#5103
-            -- wez/wezterm#3121
-            -- wez/wezterm#484
-            -- wez/wezterm#1701
             front_end = "WebGpu",
             enable_wayland = false,
             font = wezterm.font_with_fallback {

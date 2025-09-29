@@ -74,7 +74,6 @@ in
           notification-inline-replies = true;
           notification-window-width = cfg.notificationWidth;
           notification-window-height = cfg.notificationHeight;
-          # TODO: re-enable? I think I don't like the grouping...
           notification-grouping = false;
           positionX = "right";
           positionY = "top";
