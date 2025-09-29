@@ -2,7 +2,7 @@
 {
   config = {
     environment = {
-      # TODO: add nu shell env reloading...
+      # Changing this does not immediately update all shells.
       variables.SOPS_AGE_KEY_FILE = config.sops.age.keyFile;
       systemPackages = [ pkgs.sops ];
     };

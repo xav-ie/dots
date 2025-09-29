@@ -49,7 +49,6 @@ $env.TRANSIENT_PROMPT_MULTILINE_INDICATOR = ""
 # - converted from a value back to a string when running external commands
 #   (to_string)
 # Note: The conversions happen *after* config.nu is loaded
-# TODO: should I even be path expanding?
 def from_string_simple [s] {
   $s | split row (char esep) | path expand --no-symlink
 }
