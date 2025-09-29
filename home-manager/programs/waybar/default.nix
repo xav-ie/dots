@@ -6,6 +6,8 @@
   ...
 }:
 let
+  inherit ((import ../../../lib/fonts.nix { inherit lib pkgs; })) fonts;
+
   cfg = config.programs.waybar;
   hyprCfg = config.programs.hyprland;
   bars = builtins.attrValues cfg.settings;
@@ -55,8 +57,8 @@ in
           /* GENERAL SETTINGS */
           * {
             border: none;
-            font-family: "FiraCode Nerd Font Ret";
-            font-size: 18px;
+            font-family: "${fonts.configs.waybar.font-family}";
+            font-size: ${toString fonts.configs.waybar.font-size}px;
             box-shadow: none;
           }
 

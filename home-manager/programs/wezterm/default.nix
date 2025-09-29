@@ -1,4 +1,10 @@
-_: {
+{ lib, pkgs, ... }:
+let
+  inherit ((import ../../../lib/fonts.nix { inherit lib pkgs; })) fonts;
+  harfbuzzFeatures = lib.concatMapStringsSep ", " (thing: "'${thing}=1'") (fonts.features "mono");
+in
+{
+
   config = {
     programs.wezterm = {
       enable = true;
@@ -125,22 +131,11 @@ _: {
             enable_wayland = false,
             font = wezterm.font_with_fallback {
               {
-                family = 'Maple Mono',
+                family = '${fonts.name "mono"}',
                 harfbuzz_features = {
-                  'cv01=1', 'cv02=1', 'ss01=1', 'ss02=1', 'ss03=1', 'ss04=1', 'ss05=1'
+                  ${harfbuzzFeatures}
                 },
               },
-              'CaskaydiaCove Nerd Font',
-              'MonaspiceNe Nerd Font',
-              'Fira Code Nerd Font',
-              -- 'Martian Mono', -- too decorated for my taste
-              -- these fonts did not install properly from the package.
-              -- I will have to investigate why, later. For now, I looked up
-              -- their store path and installed manually from there
-              -- 'Maple', 'Martian Mono',
-              -- This one is just not packaged at all:
-              -- 'Twilio Sans Mono'
-
             },
             font_size = 13.0,
             macos_window_background_blur = 15,

@@ -24,8 +24,8 @@ sketchybar --bar "position=top" "height=32" "blur_radius=30" "color=0x90000000"
 let default_props = [
   "padding_left=-10",
   "padding_right=-10",
-  "icon.font=Maple Mono NF:Normal:24.0",
-  "label.font=Maple Mono NF:Normal:14.0",
+  $"icon.font=($env.SKETCHYBAR_ICON_FONT)",
+  $"label.font=($env.SKETCHYBAR_LABEL_FONT)",
   "icon.color=0xffffffff",
   "label.color=0xffffffff",
   "icon.padding_left=24",
