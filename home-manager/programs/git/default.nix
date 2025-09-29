@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  osConfig,
   pkgs,
   ...
 }:
@@ -175,7 +176,7 @@ in
         #   line-numbers = true;
         #   true-color = "always";
         # };
-        gpg.ssh.allowedSignersFile = "~/.ssh/allowed_signers";
+        gpg.ssh.allowedSignersFile = osConfig.sops.secrets."git/allowed_signers".path;
         "includeIf \"gitdir:~/\"" = {
           path = "~/.config/git/config.default";
         };
@@ -246,15 +247,5 @@ in
         signingKey = "22420DD6C13E3EB7";
       };
     };
-
-    # TODO: encrypt this. Public info, but kind of weird to have public.
-    # every user needs to be allow-listed to sign their commits
-    # TODO: make a simple command to grab these
-    home.file.".ssh/allowed_signers".text = ''
-      # https://github.com/xav-ie.keys
-      * ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMW+HCZNdLZO3RVs9XCCw9iOeBprmfEfjTVsiuB81LOr
-      # https://github.com/ajzbc.keys
-      andrew@jazbec.io ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMqBzepmbyWNXW545lvcvPTiX4vZvsZdrLth+/YN9atO
-    '';
   };
 }

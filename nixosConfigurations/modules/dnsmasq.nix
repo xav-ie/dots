@@ -1,12 +1,12 @@
 { pkgs, ... }:
 {
+  # too slow :(
+  # TODO: use a different dns server
   services.dnsmasq = {
     enable = true;
     alwaysKeepRunning = true;
     resolveLocalQueries = true;
     settings = {
-      # too slow :(
-      # TODO: use a different dns server
       dnssec = false;
       # set trust anchors?
       conf-file = "${pkgs.dnsmasq.outPath}/share/dnsmasq/trust-anchors.conf";
