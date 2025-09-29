@@ -1,6 +1,7 @@
 { lib, pkgs, ... }:
 {
   imports = [
+    ../programs/dconf
     ../programs/firefox
     ../programs/nemo
     ../programs/obs
@@ -15,8 +16,6 @@
     home = {
       packages =
         (with pkgs; [
-          # TODO: remove
-          dconf
           ################################
           # in triage - try to minimize this list
           ################################
@@ -105,13 +104,6 @@
       network-manager-applet.enable = true;
       swww.enable = true; # wallpaper
       udiskie.enable = true;
-    };
-
-    dconf.settings = {
-      # tell gtk applications to prefer dark mode, please!
-      "org/gnome/desktop/interface" = {
-        color-scheme = "prefer-dark";
-      };
     };
 
     gtk = {
