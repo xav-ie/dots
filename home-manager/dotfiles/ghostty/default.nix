@@ -1,7 +1,14 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 let
+  inherit ((import ../../../lib/fonts.nix { inherit lib pkgs; })) fonts;
+
   ghostty-dir = ".config/ghostty/";
   causticOpacity = if pkgs.stdenv.isDarwin then "0.075" else "0.01";
+
+  # Generate font-feature lines from the features list
+  fontFeatureLines = lib.concatMapStringsSep "\n" (
+    feature: "font-feature = ${feature}"
+  ) fonts.configs.ghostty.font-features;
 
   watersubtleShader =
     pkgs.writeText "watersubtle.glsl" # glsl
@@ -94,16 +101,10 @@ in
           # theme = Monokai Remastered
           theme = ${./theme.sh}
 
-          font-family = "Maple Mono NF"
-          font-family = "Apple Color Emoji"
-          font-size = 15
-          font-feature = cv01
-          font-feature = cv02
-          font-feature = ss01
-          font-feature = ss02
-          font-feature = ss03
-          font-feature = ss04
-          font-feature = ss05
+          font-family = "${fonts.configs.ghostty.font-family-1}"
+          font-family = "${fonts.configs.ghostty.font-family-2}"
+          font-size = ${toString fonts.configs.ghostty.font-size}
+          ${fontFeatureLines}
 
           # I use zellij for maximum portability, so I don't want to depend on
           # Ghostty window management primitives.
