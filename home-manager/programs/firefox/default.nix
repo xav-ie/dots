@@ -5,6 +5,7 @@
 }:
 let
   merge = lib.foldr (a: b: a // b) { };
+  inherit ((import ../../../lib/fonts.nix { inherit lib pkgs; })) fonts;
 in
 {
   config = {
@@ -17,7 +18,7 @@ in
         isDefault = true;
         settings = merge [
           (import ./annoyances.nix)
-          (import ./settings.nix)
+          (import ./settings.nix { inherit fonts; })
         ];
         userChrome = # css
           ''
@@ -35,7 +36,7 @@ in
             }
             /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
             * {
-              font-family: Inter, "Apple Color Emoji" !important;
+              font-family: ${fonts.name "sans"}, ${fonts.name "emoji"} !important;
             }
 
             /* #################################### */
