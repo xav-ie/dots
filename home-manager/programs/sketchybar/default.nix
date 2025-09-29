@@ -1,5 +1,6 @@
 { lib, pkgs, ... }:
 let
+  inherit ((import ../../../lib/fonts.nix { inherit lib pkgs; })) fonts;
   mkSketchybarScript =
     name: path:
     let
@@ -7,6 +8,10 @@ let
         inherit name;
         runtimeInputs = [ pkgs.sketchybar ];
         text = builtins.readFile path;
+        runtimeEnv = {
+          SKETCHYBAR_ICON_FONT = fonts.configs.sketchybar.icon-font;
+          SKETCHYBAR_LABEL_FONT = fonts.configs.sketchybar.label-font;
+        };
       };
     in
     lib.getExe sketchybarApp;

@@ -7,6 +7,7 @@
 }:
 let
   fontCfg = config.fonts.fontconfig;
+  inherit ((import ../../../lib/fonts.nix { inherit lib pkgs; })) fonts;
 in
 {
   imports = [
@@ -160,17 +161,7 @@ in
     environment.sessionVariables = { };
 
     fonts = {
-      packages =
-        with pkgs;
-        [
-          inter
-          libertinus
-          maple-mono.truetype-autohint
-          maple-mono.NF
-          noto-fonts-color-emoji
-          pkgs-mine.apple-emoji-linux
-        ]
-        ++ builtins.filter lib.attrsets.isDerivation (builtins.attrValues pkgs.nerd-fonts);
+      inherit (fonts) packages;
       fontconfig = {
         enable = true;
 
@@ -182,16 +173,12 @@ in
               <match target="font">
                 <description>Enable some typographic features of Maple Mono NF font, for all applications.</description>
                 <test name="family" compare="eq" ignore-blanks="true">
-                  <string>Maple Mono NF</string>
+                  <string>${fonts.name "mono"}</string>
                 </test>
                 <edit name="fontfeatures" mode="append">
-                  <string>cv01 on</string>
-                  <string>cv02 on</string>
-                  <string>ss01 on</string>
-                  <string>ss02 on</string>
-                  <string>ss03 on</string>
-                  <string>ss04 on</string>
-                  <string>ss05 on</string>
+                ${lib.concatStringsSep "\n    " (
+                  map (feature: "  <string>${feature} on</string>") (fonts.features "mono")
+                )}
                 </edit>
               </match>
               <alias>
@@ -217,17 +204,17 @@ in
 
         defaultFonts = {
           serif = [
-            "Libertinus Serif"
-            "Apple Color Emoji"
+            (fonts.name "serif")
+            (fonts.name "emoji")
           ];
           sansSerif = [
-            "Inter"
-            "Apple Color Emoji"
+            (fonts.name "sans")
+            (fonts.name "emoji")
           ];
           monospace = [
-            "Maple Mono NF"
+            (fonts.name "mono")
           ];
-          emoji = [ "Apple Color Emoji" ];
+          emoji = [ (fonts.name "emoji") ];
         };
       };
     };

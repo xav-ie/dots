@@ -1,4 +1,7 @@
 { lib, pkgs, ... }:
+let
+  inherit ((import ../../lib/fonts.nix { inherit lib pkgs; })) fonts;
+in
 {
   imports = [
     ../programs/dconf
@@ -108,11 +111,7 @@
 
     gtk = {
       enable = true;
-      font = {
-        name = "Inter";
-        package = pkgs.inter;
-        size = 14;
-      };
+      font = fonts.configs.gtk;
       iconTheme = {
         name = "Adwaita";
         package = pkgs.adwaita-icon-theme;

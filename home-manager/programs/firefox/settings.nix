@@ -1,4 +1,5 @@
 # I cannot find where I took this from :/
+{ fonts }:
 {
   "accessibility.typeaheadfind.flashBar" = 0;
   "app.normandy.first_run" = false;
@@ -56,10 +57,10 @@
   "extensions.webcompat.perform_injections" = true;
   "extensions.webcompat.perform_ua_overrides" = true;
   "fission.experiment.max-origins.qualified" = true;
-  # TODO: factor out
-  "font.name.monospace.x-western" = "Maple Mono NF";
-  "font.name.sans-serif.x-western" = "Inter";
-  "font.name.serif.x-western" = "Libertinus Serif";
+  # Fonts from central configuration
+  "font.name.monospace.x-western" = fonts.name "mono";
+  "font.name.sans-serif.x-western" = fonts.name "sans";
+  "font.name.serif.x-western" = fonts.name "serif";
   "gecko.handlerService.defaultHandlersVersion" = 1;
   "gfx.canvas.accelerated" = true;
   "gfx.font_rendering.ahem_antialias_none" = true;

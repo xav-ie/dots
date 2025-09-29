@@ -1,4 +1,9 @@
-_: {
+{ lib, pkgs, ... }:
+let
+  inherit ((import ../../../lib/fonts.nix { inherit lib pkgs; })) fonts;
+in
+{
+
   config = {
     programs.kitty = {
       enable = true;
@@ -15,7 +20,7 @@ _: {
         clipboard_control = "write-clipboard write-primary read-clipboard read-primary";
         copy_on_select = "yes";
         cursor = "#ff0000";
-        font_family = "Maple Mono";
+        font_family = fonts.name "mono";
         font_size = "13.0";
         hide_window_decorations = "yes";
         macos_quit_when_last_window_closed = "yes";
@@ -24,15 +29,16 @@ _: {
       # kitty +list-fonts --psnames | grep Maple
       extraConfig =
         let
-          mapleFontFeatures = "+cv01 +cv02 +ss01 +ss02 +ss03 +ss04 +ss05";
+          fontName = lib.replaceChars [ " " ] [ "" ] (fonts.name "mono");
+          mapleFontFeatures = lib.concatMapStringsSep " " (thing: "+" + thing) (fonts.features "mono");
         in
         ''
-          font_features MapleMono-Bold ${mapleFontFeatures}
-          font_features MapleMono-BoldItalic ${mapleFontFeatures}
-          font_features MapleMono-Italic ${mapleFontFeatures}
-          font_features MapleMono-Light ${mapleFontFeatures}
-          font_features MapleMono-LightItalic ${mapleFontFeatures}
-          font_features MapleMono-Regular ${mapleFontFeatures}
+          font_features ${fontName}-Bold ${mapleFontFeatures}
+          font_features ${fontName}-BoldItalic ${mapleFontFeatures}
+          font_features ${fontName}-Italic ${mapleFontFeatures}
+          font_features ${fontName}-Light ${mapleFontFeatures}
+          font_features ${fontName}-LightItalic ${mapleFontFeatures}
+          font_features ${fontName}-Regular ${mapleFontFeatures}
         '';
     };
     home.sessionVariables = {
