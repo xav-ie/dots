@@ -30,7 +30,7 @@
           # this is for commands that do not properly adjust their output to given width
           c4 = "COLUMNS=$COLUMNS-4";
           gake = "git pull && make";
-          gp = "gh pr view";
+          gp = ''gh pr create --body "" && update-pr'';
           gpw = "gh pr view -w";
           grw = "gh repo view -w";
           info = "env info --vi-keys";
