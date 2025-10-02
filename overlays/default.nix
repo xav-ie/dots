@@ -6,7 +6,7 @@ in
   nur = inputs.nur.overlays.default;
   nuenv = inputs.nuenv.overlays.default;
 
-  modifications = final: _prev: {
+  modifications = final: prev: {
     alacritty-theme =
       if final.stdenv.isLinux then inputs.alacritty-theme.packages.${final.system} else null;
     ctpv = inputs.ctpv.packages.${final.system}.default;
@@ -69,6 +69,15 @@ in
         inputs.notification-cleaner.packages.${final.system}.default
       else
         null;
+    orca = prev.orca.overrideAttrs (old: {
+      propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [
+        final.python3.pkgs.wrapPython
+      ];
+      postFixup = (old.postFixup or "") + ''
+        wrapProgram $out/bin/.orca-wrapped \
+          --prefix PYTHONPATH : "${final.speechd}/lib/${final.python3.libPrefix}/site-packages"
+      '';
+    });
     writeNuApplication = final.nuenv.writeShellApplication;
     zjstatus = inputs.zjstatus.packages.${final.system}.default;
   };

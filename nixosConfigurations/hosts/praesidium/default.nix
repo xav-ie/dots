@@ -395,6 +395,7 @@ in
     };
 
     services = {
+      orca.enable = true;
       blueman.enable = true;
       flatpak.enable = true;
       geoclue2.enable = true;
