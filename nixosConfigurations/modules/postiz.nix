@@ -87,6 +87,11 @@ in
         # x
         "postiz/x/api_key" = { };
         "postiz/x/api_key_secret" = { };
+
+        # discord
+        "postiz/discord/client_id" = { };
+        "postiz/discord/client_secret" = { };
+        "postiz/discord/bot_token" = { };
       };
       templates."postiz.env" = {
         mode = "0440";
@@ -111,6 +116,11 @@ in
             # x
             X_API_KEY=${cfgSecret."postiz/x/api_key"}
             X_API_SECRET=${cfgSecret."postiz/x/api_key_secret"}
+
+            # discord
+            DISCORD_CLIENT_ID=${cfgSecret."postiz/discord/client_id"}
+            DISCORD_CLIENT_SECRET=${cfgSecret."postiz/discord/client_secret"}
+            DISCORD_BOT_TOKEN_ID=${cfgSecret."postiz/discord/bot_token"}
           '';
         restartUnits = [ "${subdomain}.service" ];
       };
