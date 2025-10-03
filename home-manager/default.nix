@@ -95,6 +95,7 @@
           better-branch
           cache-command
           ff
+          gp
           is-sshed
           j
           jira-list
