@@ -49,6 +49,7 @@ in
         "protonvpn"
         "raycast"
         "sf-symbols"
+        "transmission"
       ];
       brews = [ "mas" ];
     };
