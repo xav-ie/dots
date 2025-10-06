@@ -59,6 +59,8 @@
     nuenv.url = "github:xav-ie/nuenv";
     nuenv.inputs.nixpkgs.follows = "nixpkgs";
     nuenv.inputs.systems.follows = "systems";
+    plover-flake.url = "github:openstenoproject/plover-flake";
+    plover-flake.inputs.nixpkgs.follows = "nixpkgs";
     pre-commit-hooks.inputs.flake-compat.follows = "flake-compat";
     pre-commit-hooks.inputs.nixpkgs.follows = "nixpkgs";
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
