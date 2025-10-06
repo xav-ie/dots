@@ -8,6 +8,7 @@
     ./linux-home-manager.nix
     ./nginx.nix
     ./nix-config.nix
+    ./plover.nix
     ./podman.nix
     ./portainer.nix
     ./postiz.nix

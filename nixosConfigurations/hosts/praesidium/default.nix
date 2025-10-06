@@ -399,6 +399,7 @@ in
       blueman.enable = true;
       flatpak.enable = true;
       geoclue2.enable = true;
+      plover.enable = true;
 
       gnome.gnome-keyring.enable = true;
       hardware.openrgb = {

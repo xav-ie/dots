@@ -24,6 +24,7 @@
     ./programs/nushell
     ./programs/nvim
     ./programs/ov
+    ./programs/plover
     ./programs/starship
     # ./programs/swaynotificationcenter
     # ./programs/transmission
