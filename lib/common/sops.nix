@@ -20,6 +20,11 @@
         generateKey = false;
         keyFile = "/etc/age/keys.txt";
       };
+
+      secrets."git/allowed_signers" = {
+        owner = config.defaultUser;
+        mode = "0444";
+      };
     };
 
     # Ensure that no one may read my key file
