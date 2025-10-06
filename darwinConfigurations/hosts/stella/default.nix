@@ -50,6 +50,7 @@ in
         "raycast"
         "sf-symbols"
         "transmission"
+        "vlc"
       ];
       brews = [ "mas" ];
     };
