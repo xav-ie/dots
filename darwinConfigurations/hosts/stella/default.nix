@@ -51,6 +51,7 @@ in
         "sf-symbols"
         "transmission"
         "vlc"
+        "zoom"
       ];
       brews = [ "mas" ];
     };
