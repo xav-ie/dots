@@ -92,6 +92,10 @@ in
         "postiz/discord/client_id" = { };
         "postiz/discord/client_secret" = { };
         "postiz/discord/bot_token" = { };
+
+        # slack
+        "postiz/slack/client_id" = { };
+        "postiz/slack/client_secret" = { };
       };
       templates."postiz.env" = {
         mode = "0440";
@@ -121,6 +125,10 @@ in
             DISCORD_CLIENT_ID=${cfgSecret."postiz/discord/client_id"}
             DISCORD_CLIENT_SECRET=${cfgSecret."postiz/discord/client_secret"}
             DISCORD_BOT_TOKEN_ID=${cfgSecret."postiz/discord/bot_token"}
+
+            # slack
+            SLACK_ID=${cfgSecret."postiz/slack/client_id"}
+            SLACK_SECRET=${cfgSecret."postiz/slack/client_secret"}
           '';
         restartUnits = [ "${subdomain}.service" ];
       };
