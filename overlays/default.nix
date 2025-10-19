@@ -11,7 +11,9 @@ in
       if final.stdenv.isLinux then inputs.alacritty-theme.packages.${final.system} else null;
     ctpv = inputs.ctpv.packages.${final.system}.default;
     generate-kaomoji = inputs.generate-kaomoji.packages.${final.system}.default;
-    pkgs-bleeding = inputs.nixpkgs-bleeding.legacyPackages.${final.system};
+    pkgs-bleeding = import inputs.nixpkgs-bleeding {
+      inherit (final) system config;
+    };
     pkgs-mine = toplevel.self.packages.${final.system};
     # Fix govee-local-api not setting the lights all the time
     # pkgs-homeassistant needing because poetry-core>=2.0.0 is not on stable
@@ -19,7 +21,9 @@ in
     home-assistant =
       if final.stdenv.isLinux then
         let
-          pkgs-homeassistant = inputs.nixpkgs-homeassistant.legacyPackages.${final.system};
+          pkgs-homeassistant = import inputs.nixpkgs-homeassistant {
+            inherit (final) system config;
+          };
         in
         pkgs-homeassistant.home-assistant.override {
           packageOverrides = self: _: {
