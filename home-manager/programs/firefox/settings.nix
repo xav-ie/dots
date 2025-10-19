@@ -64,27 +64,36 @@
   "gecko.handlerService.defaultHandlersVersion" = 1;
   "gfx.canvas.accelerated" = true;
   "gfx.font_rendering.ahem_antialias_none" = true;
-  "gfx.webgpu.force-enabled" = true;
+
+  # ========================================
+  # GPU acceleration for NVIDIA + Wayland
+  # Reference: https://alephnull.net/software/firefox_gpu_acceleration.shtml
+  # ========================================
+  # WebRender (GPU-based 2D rendering)
   "gfx.webrender.all" = true;
-  "gfx.webrender.compositor" = true;
-  "gfx.webrender.compositor.force-enabled" = true;
-  "gfx.webrender.enabled" = true;
-  "gfx.webrender.quality.force-subpixel-aa-where-possible" = true;
-  "gfx.x11-egl.force-enabled" = true;
-  "layers.acceleration.force-enabled" = true;
-  "layers.force-active" = true;
-  "layers.offmainthreadcomposition.enabled" = true;
-  "layers.offmainthreadcomposition.frame-rate" = "165.003998";
-  "layout.frame_rate" = "165.003998";
+  # CRITICAL: WebRender compositor must be disabled on NVIDIA + Wayland
+  # Causes rendering corruption: https://bugzilla.mozilla.org/show_bug.cgi?id=1898476
+  "gfx.webrender.compositor" = false;
+  "gfx.webrender.compositor.force-enabled" = false;
+
   "layout.css.osx-font-smoothing.enabled" = true;
   "layout.css.prefers-color-scheme.content-override" = 0;
   "layout.spellcheckDefault" = 0;
   "media.av1.enabled" = true;
   "media.eme.enabled" = true;
+
+  # ========================================
+  # VA-API hardware video decoding (NVIDIA NVDEC)
+  # Requires: nvidia-vaapi-driver + MOZ_DISABLE_RDD_SANDBOX=1 env var
+  # GPU process doesn't work on Wayland: https://bugzilla.mozilla.org/show_bug.cgi?id=1481405
+  # ========================================
   "media.ffmpeg.vaapi.enabled" = true;
+  # CRITICAL: Bypass Firefox's NVIDIA blocklist for hardware video decoding
+  "media.hardware-video-decoding.force-enabled" = true;
+  "media.rdd-ffmpeg.enabled" = true;
+
   "media.gmp.storage.version.observed" = 1;
   "media.peerconnection.ice.no_host" = false;
-  "media.rdd-ffmpeg.enabled" = true;
   "media.videocontrols.picture-in-picture.video-toggle.has-used" = true;
   "middlemouse.paste" = false;
   "network.dns.disablePrefetch" = true;
@@ -120,8 +129,12 @@
   "toolkit.telemetry.updatePing.enabled" = false;
   "webgl.dxgl.enabled" = true;
   "webgl.disabled" = false;
-  "webgl.force-enabled" = true;
-  "widget.dmabuf.force-enabled" = true; # required in recent firefoxes?
+
+  # ========================================
+  # Wayland + dmabuf support
+  # Required for VA-API and proper Wayland integration
+  # ========================================
+  "widget.dmabuf.force-enabled" = true;
   "widget.wayland-dmabuf-webgl.enabled" = true;
   "widget.wayland-dmabuf-textures.enabled" = true;
   "widget.dmabuf-textures.enabled" = true;
