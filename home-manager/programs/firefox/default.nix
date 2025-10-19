@@ -12,6 +12,7 @@ in
     home.packages = [ pkgs.firefoxpwa ];
     programs.firefox = {
       enable = true;
+      package = pkgs.pkgs-bleeding.firefox;
       nativeMessagingHosts = [ pkgs.firefoxpwa ];
       profiles.x = {
         id = 0;
