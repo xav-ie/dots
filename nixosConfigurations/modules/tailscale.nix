@@ -22,42 +22,5 @@
         "tailscale-autoconnect.service"
       ];
     };
-
-    systemd.services.tailscale-autoconnect = {
-      description = "Automatic connection to Tailscale";
-
-      # make sure tailscale is running before trying to connect to tailscale
-      after = [
-        "network-pre.target"
-        "tailscale.service"
-      ];
-      wants = [
-        "network-pre.target"
-        "tailscale.service"
-      ];
-      wantedBy = [ "multi-user.target" ];
-
-      serviceConfig.Type = "oneshot";
-
-      script = lib.getExe (
-        pkgs.writeNuApplication {
-          name = "tailscale-login";
-          runtimeInputs = with pkgs; [
-            tailscale
-          ];
-          text =
-            # nu
-            ''
-              # wait for tailscaled to settle
-              sleep 2sec
-
-              let status = (tailscale status -json | from json | get BackendState)
-              if ($status == "NeedsLogin") {
-                tailscale up -authkey (open ${config.sops.secrets."tailscale/token".path})
-              }
-            '';
-        }
-      );
-    };
   };
 }
