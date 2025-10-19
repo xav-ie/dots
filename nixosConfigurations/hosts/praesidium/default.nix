@@ -44,8 +44,7 @@ in
         # Virtual Microphone, built-in
         "snd-aloop"
       ];
-      # kernelPackages = pkgs.linuxPackages_latest;
-      kernelPackages = pkgs.linuxPackages_6_12;
+      kernelPackages = pkgs.pkgs-bleeding.linuxPackages_latest;
       extraModulePackages = with config.boot.kernelPackages; [ v4l2loopback.out ];
       extraModprobeConfig = ''
         # exclusive_caps: Skype, Zoom, Teams etc. will only show device when actually streaming
@@ -386,8 +385,8 @@ in
         # };
         open = false;
         nvidiaSettings = true;
-        # package = config.boot.kernelPackages.nvidiaPackages.production;
-        # package = config.boot.kernelPackages.nvidiaPackages.beta;
+        # beta, production, stable (=production), or latest (=MAX(production,
+        # some version))
         package = config.boot.kernelPackages.nvidiaPackages.production;
         # forceFullCompositionPipeline = true;
       };
