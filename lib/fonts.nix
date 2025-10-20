@@ -33,6 +33,11 @@ let
       package = pkgs.pkgs-mine.apple-emoji-linux;
       features = [ ];
     };
+    cjk = {
+      name = "Noto Sans CJK JP";
+      package = pkgs.noto-fonts-cjk-sans;
+      features = [ ];
+    };
   };
 
   fontName = fontKey: fontDefs.${fontKey}.name;
@@ -88,7 +93,8 @@ in
       };
       ghostty = {
         font-family-1 = fontName "mono";
-        font-family-2 = fontName "emoji";
+        font-family-2 = fontName "cjk";
+        font-family-3 = fontName "emoji";
         font-size = 15;
         font-features = fontFeatures "mono";
       };
