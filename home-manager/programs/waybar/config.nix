@@ -73,8 +73,7 @@ in
   "custom/arch" = {
     "format" = "";
     "tooltip" = false;
-    # TODO: use direct path after integrating rofi
-    "on-click" = "sh $HOME/.config/rofi/powermenu/type-4/powermenu.sh";
+    "on-click" = lib.getExe pkgs.pkgs-mine.rofi-powermenu;
   };
   "hyprland/workspaces" = {
     "format" = "{icon}";
