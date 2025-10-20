@@ -49,5 +49,6 @@ rec {
   openrgb-appimage = pkgs.callPackage ./openrgb-appimage { };
   record = pkgs.callPackage ./record { };
   record-section = pkgs.callPackage ./record-section { };
+  rofi-powermenu = pkgs.callPackage ./rofi-powermenu { inherit writeNuApplication; };
   zenity-askpass = pkgs.callPackage ./zenity-askpass { inherit writeNuApplication; };
 })
