@@ -205,14 +205,18 @@ in
         defaultFonts = {
           serif = [
             (fonts.name "serif")
+            (fonts.name "cjk")
             (fonts.name "emoji")
           ];
           sansSerif = [
             (fonts.name "sans")
+            (fonts.name "cjk")
             (fonts.name "emoji")
           ];
           monospace = [
             (fonts.name "mono")
+            (fonts.name "cjk")
+            (fonts.name "emoji")
           ];
           emoji = [ (fonts.name "emoji") ];
         };

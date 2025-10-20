@@ -103,6 +103,7 @@ in
 
           font-family = "${fonts.configs.ghostty.font-family-1}"
           font-family = "${fonts.configs.ghostty.font-family-2}"
+          font-family = "${fonts.configs.ghostty.font-family-3}"
           font-size = ${toString fonts.configs.ghostty.font-size}
           ${fontFeatureLines}
 
