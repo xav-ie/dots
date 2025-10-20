@@ -419,6 +419,11 @@ in
             ", XF86AudioMute, exec, pactl set-sink-mute @DEFAULT_SINK@ toggle"
           ];
 
+          # https://wiki.hypr.land/Configuring/Gestures/
+          gesture = [
+            "4, horizontal, workspace"
+          ];
+
           # See https://wiki.hyprland.org/Configuring/Keywords/ for more
           "$mainMod" = "SUPER";
 
