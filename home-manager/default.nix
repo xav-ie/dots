@@ -25,6 +25,7 @@
     ./programs/nvim
     ./programs/ov
     ./programs/plover
+    ./programs/rofi
     ./programs/starship
     # ./programs/swaynotificationcenter
     # ./programs/transmission

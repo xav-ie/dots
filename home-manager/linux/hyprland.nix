@@ -57,7 +57,6 @@ in
       libva
       libva-utils # hardware video acceleration
       polkit_gnome # just a GUI askpass
-      rofi
       swww
       waypipe
       wl-clipboard
@@ -412,15 +411,15 @@ in
 
           # https://github.com/sulmone/X11/blob/master/include/X11/XF86keysym.h
           bindel = [
-            ", XF86AudioPlay, exec, playerctl play-pause"
-            ", XF86AudioNext, exec, playerctl next"
-            ", XF86AudioPrev, exec, playerctl previous"
-            ", XF86AudioRaiseVolume, exec, pactl set-sink-volume @DEFAULT_SINK@ +5%"
-            ", XF86AudioLowerVolume, exec, pactl set-sink-volume @DEFAULT_SINK@ -5%"
+            ", XF86AudioPlay, exec, ${lib.getExe pkgs.playerctl} play-pause"
+            ", XF86AudioNext, exec, ${lib.getExe pkgs.playerctl} next"
+            ", XF86AudioPrev, exec, ${lib.getExe pkgs.playerctl} previous"
+            ", XF86AudioRaiseVolume, exec, ${lib.getExe' pkgs.pulseaudio "pactl"} set-sink-volume @DEFAULT_SINK@ +5%"
+            ", XF86AudioLowerVolume, exec, ${lib.getExe' pkgs.pulseaudio "pactl"} set-sink-volume @DEFAULT_SINK@ -5%"
           ];
 
           bindl = [
-            ", XF86AudioMute, exec, pactl set-sink-mute @DEFAULT_SINK@ toggle"
+            ", XF86AudioMute, exec, ${lib.getExe' pkgs.pulseaudio "pactl"} set-sink-mute @DEFAULT_SINK@ toggle"
           ];
 
           # https://wiki.hypr.land/Configuring/Gestures/
@@ -434,7 +433,7 @@ in
           # Example binds, see https://wiki.hyprland.org/Configuring/Binds/ for more
           bind = [
             "$mainMod, Q, killactive,"
-            "$mainMod, T, exec, ghostty"
+            "$mainMod, T, exec, ${lib.getExe pkgs.ghostty}"
             "$mainMod SHIFT, F, togglefloating,"
             ''$mainMod, F, exec, hyprctl --batch "dispatch togglefloating active; dispatch pin active; dispatch moveactive exact ${windowLeft} ${windowTop}; dispatch resizeactive exact 640 360"''
             "$mainMod ALT,1,exec,${move-active} topLeft"
@@ -442,18 +441,19 @@ in
             "$mainMod ALT,3,exec,${move-active} bottomRight"
             "$mainMod ALT,4,exec,${move-active} bottomLeft"
             "$mainMod, P, pin,"
-            # "$mainMod, E, exec, dolphin"
-            "$mainMod, SPACE, exec, rofi -show drun -show-icons"
+            "$mainMod, Escape, exec, ${lib.getExe pkgs.pkgs-mine.rofi-powermenu}"
+            "$mainMod, B, exec, ${lib.getExe pkgs.rofi-bluetooth} -i"
+            "$mainMod, E, exec, ${lib.getExe pkgs.rofimoji} --use-icons --skin-tone neutral"
+            "$mainMod, SPACE, exec, ${lib.getExe config.programs.rofi.package} -show drun -show-icons"
             # "$mainMod, P, pseudo, # dwindle"
             # "$mainMod, T, togglesplit, # dwindle"
-            "$mainMod, V, exec, cliphist list | rofi -dmenu | cliphist decode | wl-copy"
-            "$mainMod SHIFT, V, exec, rofi-rbw"
-            "$mainMod, S, exec, hyprshot -m region -z --clipboard-only"
-            "$mainMod SHIFT, S, exec, hyprshot -m region -z -o ~/Pictures"
-            "$mainMod, N, exec, swaync-client -t"
-            "$mainMod, C, exec, mpv av://v4l2:/dev/video1"
+            "$mainMod, V, exec, ${lib.getExe config.services.cliphist.package} list | cut -f2- | ${lib.getExe config.programs.rofi.package} -dmenu -i | ${lib.getExe config.services.cliphist.package} decode | ${lib.getExe' pkgs.wl-clipboard "wl-copy"}"
+            "$mainMod, S, exec, ${lib.getExe pkgs.hyprshot} -m region -z --clipboard-only"
+            "$mainMod SHIFT, S, exec, ${lib.getExe pkgs.hyprshot} -m region -z -o ~/Pictures"
+            "$mainMod, N, exec, ${lib.getExe' config.services.swaync.package "swaync-client"} -t"
+            "$mainMod, C, exec, ${lib.getExe config.programs.mpv.package} av://v4l2:/dev/video1"
             "$mainMod SHIFT, M, exit,"
-            "$mainMod, U, exec, uair-toggle-and-notify"
+            "$mainMod, U, exec, ${lib.getExe pkgs.pkgs-mine.uair-toggle-and-notify}"
             # Move focus with mainMod + arrow keys
             "$mainMod, H, movefocus, l"
             "$mainMod, L, movefocus, r"
