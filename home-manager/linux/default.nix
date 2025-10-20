@@ -4,6 +4,7 @@ let
 in
 {
   imports = [
+    ../programs/cliphist
     ../programs/dconf
     ../programs/firefox
     ../programs/nemo
@@ -24,7 +25,6 @@ in
           ################################
           asciinema # record shell sessions and share easily
           age # the new PGP
-          cliphist
           clipboard-jh # a really awesome clipboard
           ghostty
           home-assistant
@@ -35,7 +35,6 @@ in
           pinentry-gnome3
           # prusa-slicer                # does not launch currently
           python312Packages."adblock"
-          rofi-rbw # bitwarden cli wrapper
           xdg-utils # xdg-open, xdg-mime, xdg-email, etc.
           wf-recorder
           # wtype # xdotool for wayland; used as part of rofi-rbw for typing
@@ -74,6 +73,7 @@ in
           move-active
           record
           record-section
+          rofi-powermenu
           zenity-askpass
         ]);
 
