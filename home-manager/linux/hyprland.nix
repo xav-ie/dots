@@ -295,6 +295,10 @@ in
             focus_on_activate = true;
           };
 
+          cursor = {
+            hide_on_key_press = true;
+          };
+
           debug = {
             # damage_tracking = false
           };
