@@ -32,6 +32,7 @@ in
         in
         {
           # aliases are case-insensitive
+          amend = "!${lib.getExe pkgs.pkgs-mine.git-amend}";
           B = "checkout -B";
           bb = "!${lib.getExe pkgs.pkgs-mine.better-branch}";
           blame-better = "blame -w -C -C -C";
