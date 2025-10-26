@@ -448,6 +448,7 @@ in
             # "$mainMod, P, pseudo, # dwindle"
             # "$mainMod, T, togglesplit, # dwindle"
             "$mainMod, V, exec, ${lib.getExe pkgs.pkgs-mine.rofi-cliphist}"
+            "$mainMod SHIFT, V, exec, ${lib.getExe pkgs.pkgs-mine.rofi-cliphist} --images"
             "$mainMod, S, exec, ${lib.getExe pkgs.hyprshot} -m region -z --clipboard-only"
             "$mainMod SHIFT, S, exec, ${lib.getExe pkgs.hyprshot} -m region -z -o ~/Pictures"
             "$mainMod, N, exec, ${lib.getExe' config.services.swaync.package "swaync-client"} -t"
