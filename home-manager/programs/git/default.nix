@@ -55,6 +55,7 @@ in
               ];
             in
             "log --graph --pretty=tformat:'${columns}' --abbrev-commit --decorate";
+          log-pr = "!${lib.getExe pkgs.pkgs-mine.log-pr}";
           main = # sh
             "!(git fetch && git fetch --tags && git checkout -B main origin/main)";
           p = "push";
