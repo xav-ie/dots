@@ -18,6 +18,7 @@ rec {
   better-branch = pkgs.callPackage ./better-branch { inherit writeNuApplication; };
   cache-command = pkgs.callPackage ./cache-command { };
   ff = pkgs.callPackage ./ff { };
+  git-amend = pkgs.callPackage ./git-amend { inherit writeNuApplication; };
   gp = pkgs.callPackage ./gp { inherit update-pr writeNuApplication; };
   is-sshed = pkgs.callPackage ./is-sshed { inherit writeNuApplication; };
   j = pkgs.callPackage ./j { };
