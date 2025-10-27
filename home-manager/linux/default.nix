@@ -31,8 +31,6 @@ in
           manix
           # nodePackages."webtorrent-cli"
           xidel # like jq but for html and much more advanced.
-          # I wish I could figure out pinentry-rofi but it does not work
-          pinentry-gnome3
           # prusa-slicer                # does not launch currently
           python312Packages."adblock"
           xdg-utils # xdg-open, xdg-mime, xdg-email, etc.
@@ -99,11 +97,6 @@ in
 
     services = {
       blueman-applet.enable = true;
-      gpg-agent = {
-        enable = true;
-        pinentry.package = pkgs.pinentry-gnome3;
-        enableSshSupport = true;
-      };
       network-manager-applet.enable = true;
       swww.enable = true; # wallpaper
       udiskie.enable = true;
