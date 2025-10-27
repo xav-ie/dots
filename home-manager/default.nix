@@ -28,7 +28,7 @@
     ./programs/rofi
     ./programs/starship
     # ./programs/swaynotificationcenter
-    # ./programs/transmission
+    ./programs/transmission
     # ./programs/waybar
     # ./programs/wezterm
     ./programs/zellij
