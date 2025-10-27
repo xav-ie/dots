@@ -360,7 +360,6 @@ in
 
     hardware = {
       enableAllFirmware = true;
-      bluetooth.enable = true;
       graphics = {
         enable = true;
         enable32Bit = true;
@@ -399,7 +398,6 @@ in
 
     services = {
       orca.enable = true;
-      blueman.enable = true;
       flatpak.enable = true;
       geoclue2.enable = true;
       plover.enable = true;
@@ -455,7 +453,6 @@ in
       #       SUBSYSTEM=="usb", ATTRS{idVendor}=="0955", ATTRS{idProduct}=="7321", MODE="0666"
       #     '';
       # };
-      udisks2.enable = true;
       # Configure keymap in X11
       xserver = {
         xkb.layout = "us";
@@ -470,30 +467,8 @@ in
     };
 
     security = {
-      pam.services.swaylock.text = # sh
-        ''
-          # Account management.
-          account required pam_unix.so
-
-          # Authentication management.
-          auth sufficient pam_unix.so   likeauth try_first_pass
-          auth required pam_deny.so
-
-          # Password management.
-          password sufficient pam_unix.so nullok sha512
-
-          # Session management.
-          session required pam_env.so conffile=/etc/pam/environment readenv=0
-          session required pam_unix.so
-        '';
       polkit.enable = true;
       rtkit.enable = true;
-      wrappers.noisetorch = {
-        owner = "root";
-        group = "root";
-        source = lib.getExe pkgs.noisetorch;
-        capabilities = "cap_sys_resource+ep";
-      };
     };
 
     # Just don't change this. There is never a good reason to change this as all updates still

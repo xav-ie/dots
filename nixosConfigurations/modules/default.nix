@@ -2,6 +2,7 @@
 {
   imports = [
     ../../lib/common
+    ./bluetooth.nix
     ./dnsmasq.nix
     ./hardware-configuration.nix
     ./home-assistant.nix
@@ -9,6 +10,7 @@
     ./linux-home-manager.nix
     ./nginx.nix
     ./nix-config.nix
+    ./noisetorch.nix
     ./plover.nix
     ./podman.nix
     ./portainer.nix
@@ -19,6 +21,7 @@
     ./systemd.nix
     ./tailscale.nix
     ./traefik.nix
+    ./udisks.nix
     # not currently routing correctly...
     # ./twingate.nix
   ];
