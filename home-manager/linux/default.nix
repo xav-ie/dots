@@ -33,10 +33,10 @@ in
           xidel # like jq but for html and much more advanced.
           # prusa-slicer                # does not launch currently
           python312Packages."adblock"
+          python3Packages.subliminal # for mpv autosub script
           xdg-utils # xdg-open, xdg-mime, xdg-email, etc.
           wf-recorder
           # wtype # xdotool for wayland; used as part of rofi-rbw for typing
-          yt-dlp # better yt-dl
           # https://github.com/marionebl/svg-term-cli
           # allows asciinema recordings to be exported to svg... this could be
           # pretty indespensable if you would like ANSI escape sequences to be
