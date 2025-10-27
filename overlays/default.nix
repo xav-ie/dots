@@ -84,5 +84,72 @@ in
     });
     writeNuApplication = final.nuenv.writeShellApplication;
     zjstatus = inputs.zjstatus.packages.${final.system}.default;
+
+    # Update subliminal to latest version (nixpkgs has 2.3.2, but 2.4.0 is available)
+    # Also fix missing dependencies: defusedxml, knowit, tomlkit
+    python3 = prev.python3.override {
+      packageOverrides = pself: psuper: {
+        # knowit doesn't exist in nixpkgs, so we need to add it
+        knowit = pself.buildPythonPackage rec {
+          pname = "knowit";
+          version = "0.5.11";
+          format = "pyproject";
+
+          src = final.fetchPypi {
+            inherit pname version;
+            hash = "sha256-kEXWZAsb0A/MSfL36BmSzcbHJ5dn2xmdfztj4vUAe1g=";
+          };
+
+          nativeBuildInputs = with pself; [
+            poetry-core
+          ];
+
+          propagatedBuildInputs = with pself; [
+            babelfish
+            enzyme
+            pymediainfo
+            pyyaml
+            trakit
+          ];
+        };
+
+        subliminal = psuper.subliminal.overridePythonAttrs (_old: {
+          version = "2.4.0";
+          src = final.fetchPypi {
+            pname = "subliminal";
+            version = "2.4.0";
+            hash = "sha256-c99tGUAWbvDizetPjWVaSv4QgtSB7AkK0qnmaxoWIfw=";
+          };
+
+          nativeBuildInputs = with pself; [
+            hatchling
+            hatch-vcs
+          ];
+
+          nativeCheckInputs = with pself; [
+            colorama
+          ];
+
+          propagatedBuildInputs = with pself; [
+            babelfish
+            beautifulsoup4
+            chardet
+            click
+            click-option-group
+            defusedxml
+            dogpile-cache
+            guessit
+            knowit
+            platformdirs
+            pysubs2
+            requests
+            srt
+            stevedore
+            tomlkit
+          ];
+        });
+      };
+    };
+    python3Packages = final.python3.pkgs;
   };
 }

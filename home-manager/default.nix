@@ -31,6 +31,7 @@
     ./programs/transmission
     # ./programs/waybar
     # ./programs/wezterm
+    ./programs/yt-dlp
     ./programs/zellij
     ./programs/zsh
   ];
