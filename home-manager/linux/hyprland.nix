@@ -70,7 +70,6 @@ in
 
           general = {
             hide_cursor = true;
-            grace = 10;
           };
 
           animations = {
@@ -159,7 +158,7 @@ in
             before_sleep_cmd = "loginctl lock-session";
             # prevent having to press key twice
             after_sleep_cmd = "hyprctl dispatch dpms on";
-            lock_cmd = "${lib.getExe config.programs.hyprlock.package} || true";
+            lock_cmd = "${lib.getExe config.programs.hyprlock.package} --grace 10 || true";
           };
 
           listener = [
