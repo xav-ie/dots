@@ -152,10 +152,6 @@
     home.file.".config/uair/uair.toml".source = ./dotfiles/uair.toml;
     home.file.".config/pijul/config.toml".source = ./dotfiles/pijul/config.toml;
     services = {
-      gpg-agent = {
-        enable = true;
-        enableSshSupport = true;
-      };
       ollama = {
         enable = true;
         package =
