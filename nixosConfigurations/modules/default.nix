@@ -5,6 +5,7 @@
     ./dnsmasq.nix
     ./hardware-configuration.nix
     ./home-assistant.nix
+    ./hyprland.nix
     ./linux-home-manager.nix
     ./nginx.nix
     ./nix-config.nix
