@@ -6,6 +6,7 @@
 }:
 let
   cfg = config.programs.mpv;
+  modernzPkg = pkgs.mpvScripts.modernz;
 in
 {
   options.programs.mpv = {
@@ -106,6 +107,10 @@ in
       // {
         "mpv/script-opts/modernz.conf".source = ./modernz.conf;
         "mpv/script-opts/thumbfast.conf".source = ./thumbfast.conf;
+        # Copy the fonts from the modernz package to mpv/fonts/
+        "mpv/fonts/fluent-system-icons.ttf".source = "${modernzPkg}/share/fonts/fluent-system-icons.ttf";
+        "mpv/fonts/material-design-icons.ttf".source =
+          "${modernzPkg}/share/fonts/material-design-icons.ttf";
       };
 
     xdg.mimeApps.defaultApplications = {
