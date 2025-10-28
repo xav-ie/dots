@@ -9,6 +9,7 @@ in
     ../programs/firefox
     ../programs/nemo
     ../programs/obs
+    ../programs/rofi
     ../programs/sioyek
     ../programs/swaynotificationcenter
     ../programs/waybar
