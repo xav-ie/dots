@@ -4,8 +4,8 @@ _: {
       enable = true;
       settings = {
         "$schema" = "https://starship.rs/config-schema.json";
-        add_newline = false;
-        format = "$all";
+        add_newline = true;
+        format = "$all\n";
         aws.disabled = true;
         gcloud.disabled = true;
         fill.symbol = "-";
@@ -22,8 +22,8 @@ _: {
           # error_symbol = "[](bold red)";
 
           # ...so we print a zero-width space!
-          success_symbol = "​";
-          error_symbol = "​";
+          # success_symbol = "​";
+          # error_symbol = "​";
           # Alternate zero-width characters for testing:
           # Zero Width Non-Joiner (U+200C)
           # success_symbol = "‌";
@@ -34,6 +34,8 @@ _: {
           # Word Joiner (U+2060)
           # success_symbol = "⁠";
           # error_symbol = "⁠";
+          success_symbol = "";
+          error_symbol = "";
 
         };
         nix_shell = {
