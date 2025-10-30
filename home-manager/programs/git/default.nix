@@ -104,7 +104,9 @@ in
         # yourself. There is a lot of set up this one flag does
         enable = true;
         options = {
-          dark = true;
+          # Set syntax-theme via BAT_THEME env var or use --light/--dark flags
+          # Light themes: GitHub, "Monokai Extended Light", OneHalfLight, "Solarized (light)", gruvbox-light
+          # Dark themes: Monokai Extended, base16, Dracula, Nord, etc.
           features = "decorations unobtrusive-line-numbers";
           line-numbers = true;
           navigate = true;
