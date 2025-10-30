@@ -46,7 +46,12 @@ in
               inherit common;
               hyprland = common;
             };
-          configPackages = [ hyprland ];
+          # NOTE: configPackages is NOT set here because Hyprland's built-in
+          # config overrides our explicit config above. Hyprland's config says
+          # "default=hyprland;gtk" which doesn't properly route the Settings
+          # interface to GNOME portal. By omitting configPackages, NixOS uses
+          # our config which properly routes Settings to gnome.
+          # See: GHOSTTY_DARK_MODE_RESEARCH.md
         };
     })
   ];
