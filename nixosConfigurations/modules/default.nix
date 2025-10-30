@@ -2,6 +2,7 @@
 {
   imports = [
     ../../lib/common
+    ./atop
     ./bluetooth.nix
     ./dnsmasq.nix
     ./hardware-configuration.nix
