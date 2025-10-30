@@ -47,12 +47,18 @@
           unbind r
           bind r command-prompt -I "#W" "rename-window '%%'"
 
-          set-option -g status-style bg=default,fg=colour255
+          # Pane borders
+          set-option -g pane-border-style fg=colour8
+          set-option -g pane-active-border-style fg=colour93
+          set-option -g pane-border-indicators both
+          set-option -g pane-border-lines heavy
+
+          set-option -g status-style bg=default,fg=default
           set-option -g status-left " "
           set-option -g status-right "#{?client_prefix, PREFIX ,}#{?pane_in_mode, COPY ,} #[fg=colour255,bg=colour238] #S #[default]"
           set-option -g status-right "#{mode_indicator} #[fg=colour255,bg=colour238] #S #[default]"
           set-option -g window-status-format "#[fg=colour244]#W#[default]"
-          set-option -g window-status-current-format "#[fg=colour255,bold]#W#[default]"
+          set-option -g window-status-current-format "#[bold]#W#[default]"
         '';
     };
   };
