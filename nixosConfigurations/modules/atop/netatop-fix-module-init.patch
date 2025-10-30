@@ -1,0 +1,27 @@
+--- a/netatop.c
++++ b/netatop.c
+@@ -1768,7 +1768,7 @@
+ ** called when module loaded
+ */
+ int
+-init_module()
++netatop_init(void)
+ {
+ 	int i;
+
+@@ -1869,7 +1869,7 @@
+ ** called when module unloaded
+ */
+ void
+-cleanup_module()
++netatop_exit(void)
+ {
+ 	/*
+  	** tell kernel daemon to stop
+@@ -1903,3 +1903,6 @@
+ 	kmem_cache_destroy(ticache);
+ 	kmem_cache_destroy(sicache);
+ }
++
++module_init(netatop_init);
++module_exit(netatop_exit);
