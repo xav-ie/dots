@@ -145,12 +145,7 @@ in
           cursor-style-blink = false
           background-opacity = 0.80
           background-blur-radius = 20
-          background = 000000
-          foreground = ffffff
-          # theme = Abernathy
-          # theme = Argonaut
-          # theme = Monokai Remastered
-          theme = ${./theme.sh}
+          theme = light:${./theme-light.sh},dark:${./theme-dark.sh}
 
           font-family = "${fonts.configs.ghostty.font-family-1}"
           font-family = "${fonts.configs.ghostty.font-family-2}"
@@ -173,7 +168,8 @@ in
       "${ghostty-dir}/watersubtle.glsl".source = watersubtleShader;
       "${ghostty-dir}/watersubtleLinux.glsl".source = watersubtleShaderLinux;
       "${ghostty-dir}/worley.glsl".source = ./worley.glsl;
-      "${ghostty-dir}/themes/Xavier".source = ./theme.sh;
+      "${ghostty-dir}/themes/XLight".source = ./theme-light.sh;
+      "${ghostty-dir}/themes/XDark".source = ./theme-dark.sh;
     };
   };
 }
