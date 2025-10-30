@@ -1,9 +1,7 @@
 { lib, pkgs, ... }:
-let
-  inherit ((import ../../lib/fonts.nix { inherit lib pkgs; })) fonts;
-in
 {
   imports = [
+    ./gtk.nix
     ../programs/cliphist
     ../programs/dconf
     ../programs/firefox
@@ -103,22 +101,20 @@ in
       udiskie.enable = true;
     };
 
-    gtk = {
-      enable = true;
-      font = fonts.configs.gtk;
-      iconTheme = {
-        name = "Adwaita";
-        package = pkgs.adwaita-icon-theme;
-      };
-      theme = {
-        name = "adw-gtk3-dark";
-        package = pkgs.adw-gtk3;
-      };
-    };
-
     # TODO: somehow make mac support this
     xdg.mimeApps.enable = true;
-    # TODO: can global xdg.portal config be moved here?
-    # I need the flatpak option, too, I think
+
+    # Portal configuration for home-manager
+    # When home-manager's Hyprland module (systemd.enable = true) is used,
+    # it sets NIX_XDG_DESKTOP_PORTAL_DIR which overrides system portals.
+    # We must explicitly include all portals we need here.
+    # See: https://github.com/nix-community/home-manager/issues/7124
+    xdg.portal = {
+      extraPortals = with pkgs; [
+        xdg-desktop-portal-gnome
+        # xdg-desktop-portal-hyprland is automatically added by Hyprland module
+      ];
+      # Config is set at NixOS level in nixosConfigurations/modules/hyprland.nix
+    };
   };
 }
