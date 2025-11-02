@@ -140,6 +140,7 @@ in
         branch.sort = "-committerdate";
         column.ui = "auto";
         fetch.writeCommitGraph = true;
+        push.autoSetupRemote = true;
         diff = {
           colorMoved = "default";
           # pair lockfiles to come after their source file
