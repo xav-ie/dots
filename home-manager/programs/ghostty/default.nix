@@ -128,48 +128,58 @@ let
 in
 {
   config = {
-    home.file = {
-      "${ghostty-dir}/config".text = # sh
-        ''
-          # vim: set ft=sh:
-          # Empty values reset the configuration to the default value
-          copy-on-select = true
-          quit-after-last-window-closed = true
-          macos-option-as-alt = true
-          macos-titlebar-style = hidden
-          window-decoration = false
-          title =" "
-          custom-shader = ${if pkgs.stdenv.isDarwin then watersubtleShader else watersubtleShaderLinux}
-          custom-shader-animation = ${if pkgs.stdenv.isDarwin then "true" else "false"}
+    home.file = lib.mkMerge [
+      # Common config for all platforms
+      {
+        "${ghostty-dir}/config".text = # sh
+          ''
+            # vim: set ft=sh:
+            # Empty values reset the configuration to the default value
+            copy-on-select = true
+            quit-after-last-window-closed = true
+            macos-option-as-alt = true
+            macos-titlebar-style = hidden
+            window-decoration = false
+            title =" "
 
-          cursor-style-blink = false
-          background-opacity = 0.80
-          background-blur-radius = 20
-          theme = light:${./theme-light.sh},dark:${./theme-dark.sh}
+            # Automatically install terminfo on remote SSH hosts and preserve TERM in sudo
+            shell-integration-features = ssh-terminfo,sudo
 
-          font-family = "${fonts.configs.ghostty.font-family-1}"
-          font-family = "${fonts.configs.ghostty.font-family-2}"
-          font-family = "${fonts.configs.ghostty.font-family-3}"
-          font-size = ${toString fonts.configs.ghostty.font-size}
-          ${fontFeatureLines}
+            custom-shader = ${if pkgs.stdenv.isDarwin then watersubtleShader else watersubtleShaderLinux}
+            custom-shader-animation = ${if pkgs.stdenv.isDarwin then "true" else "false"}
 
-          # I use zellij for maximum portability, so I don't want to depend on
-          # Ghostty window management primitives.
-          keybind = ctrl+shift+e=unbind
-          keybind = ctrl+shift+n=unbind
-          keybind = ctrl+shift+o=unbind
-          keybind = ctrl+shift+t=unbind
-          keybind = ctrl+comma=unbind
-          keybind = ctrl+plus=increase_font_size:1
-          keybind = ctrl+minus=decrease_font_size:1
-        '';
+            cursor-style-blink = false
+            background-opacity = 0.80
+            background-blur-radius = 20
+            theme = light:${./theme-light.sh},dark:${./theme-dark.sh}
 
-      # Only here in order to make it easier to inspect shaders and theme
-      "${ghostty-dir}/watersubtle.glsl".source = watersubtleShader;
-      "${ghostty-dir}/watersubtleLinux.glsl".source = watersubtleShaderLinux;
-      "${ghostty-dir}/worley.glsl".source = ./worley.glsl;
-      "${ghostty-dir}/themes/XLight".source = ./theme-light.sh;
-      "${ghostty-dir}/themes/XDark".source = ./theme-dark.sh;
-    };
+            font-family = "${fonts.configs.ghostty.font-family-1}"
+            font-family = "${fonts.configs.ghostty.font-family-2}"
+            font-family = "${fonts.configs.ghostty.font-family-3}"
+            font-size = ${toString fonts.configs.ghostty.font-size}
+            ${fontFeatureLines}
+
+            # I use zellij for maximum portability, so I don't want to depend on
+            # Ghostty window management primitives.
+            keybind = ctrl+shift+e=unbind
+            keybind = ctrl+shift+n=unbind
+            keybind = ctrl+shift+o=unbind
+            keybind = ctrl+shift+t=unbind
+            keybind = ctrl+comma=unbind
+            keybind = ctrl+plus=increase_font_size:1
+            keybind = ctrl+minus=decrease_font_size:1
+          '';
+
+        # Only here in order to make it easier to inspect shaders and theme
+        "${ghostty-dir}/watersubtle.glsl".source = watersubtleShader;
+        "${ghostty-dir}/watersubtleLinux.glsl".source = watersubtleShaderLinux;
+        "${ghostty-dir}/worley.glsl".source = ./worley.glsl;
+        "${ghostty-dir}/themes/XLight".source = ./theme-light.sh;
+        "${ghostty-dir}/themes/XDark".source = ./theme-dark.sh;
+      }
+    ];
+
+    # Linux: Install via Nix package (macOS uses Homebrew cask in darwinConfigurations)
+    home.packages = lib.optionals pkgs.stdenv.isLinux [ pkgs.ghostty ];
   };
 }
