@@ -335,9 +335,21 @@ in
     users.users."${config.defaultUser}".home = "/Users/${config.defaultUser}";
 
     system = {
-      activationScripts.postActivation.text = ''
+      activationScripts.postActivation.text = lib.mkAfter ''
         # https://github.com/koekeishiya/yabai/issues/2199#issuecomment-2031852290
         ${lib.getExe pkgs.yabai} -m rule --apply 2>/dev/null || true
+
+        # Power management for remote builder
+        # Battery: aggressive sleep for battery life
+        # AC: longer sleep (3 hours) for remote builds
+        pmset -b sleep 1   # Battery: sleep after 1 min
+        pmset -c sleep 180 # AC: sleep after 3 hours
+
+        # Enable wake for network access (SSH wake via HomePod sleep proxy)
+        # ttyskeepawake: keep system awake when SSH/tty sessions are active
+        # womp: wake on magic packet (wake for network access)
+        pmset -a ttyskeepawake 1
+        pmset -a womp 1
       '';
 
       defaults = {
