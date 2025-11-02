@@ -8,6 +8,7 @@ _: {
       enable = true;
       settings = {
         QuitSmall = true;
+        # TODO: set up light/dark mode switching
         StyleSectionLine = {
           Background = "#200030";
         };
