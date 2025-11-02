@@ -17,6 +17,7 @@
     ./portainer.nix
     ./postiz.nix
     ./quadlet.nix
+    ./remote-builder.nix
     ./sops.nix
     ./spdf.nix
     ./systemd.nix
