@@ -409,13 +409,14 @@ in
       };
       openssh = {
         enable = true;
-        # since I use zellij, I don't mind disconnecting often and just
-        # reconnecting to my session; I want to avoid stale/unresponsive
-        # connections
-        extraConfig = ''
-          ClientAliveInterval 30
-          ClientAliveCountMax 3
-        '';
+        settings = {
+          # Accept environment variables from SSH clients for proper locale and terminal support
+          AcceptEnv = "COLORTERM TERM LANG LC_ALL";
+          # Send connection check every X seconds
+          ClientAliveInterval = 30;
+          # Terminate connection after X failed connection checks
+          ClientAliveCountMax = 3;
+        };
       };
       pipewire = {
         enable = true;
