@@ -64,6 +64,7 @@
         ])
         ++ (with pkgs.pkgs-bleeding; [
           # needs latest security releases
+          google-chrome
           signal-desktop
         ])
         ++ (with pkgs.pkgs-mine; [
