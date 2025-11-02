@@ -36,6 +36,7 @@
       dnssec-check-unsigned = false;
 
       server = [
+        "100.100.100.100" # Tailscale MagicDNS
         "2606:4700:4700::1111"
         "1.1.1.1"
         "2606:4700:4700::1001"

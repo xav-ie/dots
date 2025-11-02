@@ -122,6 +122,12 @@ in
     };
 
     services = {
+      openssh = {
+        enable = true;
+        settings = {
+          AcceptEnv = "COLORTERM TERM LANG LC_ALL TESTING";
+        };
+      };
       skhd = {
         enable = true;
         skhdConfig =
