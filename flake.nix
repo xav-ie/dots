@@ -118,6 +118,7 @@
 
       perSystem =
         {
+          config,
           lib,
           pkgs,
           system,
@@ -147,10 +148,12 @@
               ++ lib.optionals pkgs.stdenv.isDarwin [
                 inputs.morlana.packages.${system}.default
                 inputs.nix-darwin.packages.${system}.default
-              ];
+              ]
+              ++ [ config.treefmt.build.wrapper ];
 
             enterShell = ''
-              printf "🐢 Use \e[32;40mjust\e[0m to build the system.\n"
+              printf "\n🐢 Use \e[32;40mjust\e[0m to build the system."
+              printf "\n💄 Use \e[32;40mtreefmt\e[0m to format the files."
             '';
           };
 
