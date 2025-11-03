@@ -473,6 +473,15 @@ in
       rtkit.enable = true;
     };
 
+    # Ensure proper suspend-to-RAM (keeps RAM powered, fast resume)
+    systemd.sleep.extraConfig = ''
+      AllowSuspend=yes
+      AllowHibernation=no
+      AllowSuspendThenHibernate=no
+      AllowHybridSleep=no
+      SuspendState=mem
+    '';
+
     # Just don't change this. There is never a good reason to change this as all updates still
     # apply and changing this just messes things up. It is a state tracker
     system.stateVersion = "23.05"; # Did you read the comment?

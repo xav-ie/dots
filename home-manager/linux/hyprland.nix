@@ -171,6 +171,12 @@ in
               on-timeout = "hyprctl dispatch dpms off";
               on-resume = "hyprctl dispatch dpms on";
             }
+            {
+              # After 30 minutes idle, enter power save mode
+              timeout = 1800;
+              on-timeout = "${pkgs.systemd}/bin/systemctl start power-save-enter.service";
+              on-resume = "${pkgs.systemd}/bin/systemctl start power-save-exit.service";
+            }
           ];
         };
       };
