@@ -46,92 +46,92 @@ let
     );
 in
 {
-  "height" = cfg.barHeight;
-  "layer" = position;
-  "margin-top" = margin-top;
-  "margin-bottom" = margin-bottom;
-  "margin-left" = marginAmount;
-  "margin-right" = marginAmount;
-  "position" = "top";
-  "modules-left" = [
+  height = cfg.barHeight;
+  layer = position;
+  inherit margin-top;
+  inherit margin-bottom;
+  margin-left = marginAmount;
+  margin-right = marginAmount;
+  position = "top";
+  modules-left = [
     "custom/arch"
     "hyprland/workspaces"
   ];
-  "modules-center" = [
+  modules-center = [
     "custom/pomodoro"
   ];
-  "modules-right" = [
+  modules-right = [
     "custom/privacy-audio"
     "tray"
     "cava"
     "pulseaudio"
-    "bluetooth"
+    "custom/bluetooth"
     "network"
     "custom/notification"
     "clock"
   ];
   "custom/arch" = {
-    "format" = "";
-    "tooltip" = false;
-    "on-click" = lib.getExe pkgs.pkgs-mine.rofi-powermenu;
+    format = "";
+    tooltip = false;
+    on-click = lib.getExe pkgs.pkgs-mine.rofi-powermenu;
   };
   "hyprland/workspaces" = {
-    "format" = "{icon}";
-    "on-click" = "activate";
-    "tooltip" = "";
-    "all-outputs" = true;
-    "format-icons" = {
-      "active" = "";
-      "default" = "";
+    format = "{icon}";
+    on-click = "activate";
+    tooltip = "";
+    all-outputs = true;
+    format-icons = {
+      active = "";
+      default = "";
     };
   };
-  "clock" = {
-    "format" = "{:%a %m/%d %I:%M}";
-    "format-alt" = "{:%H:%M}  ";
-    "tooltip-format" = "<tt><small>{calendar}</small></tt>";
-    "calendar" = {
-      "mode" = "year";
-      "mode-mon-col" = 3;
-      "weeks-pos" = "right";
-      "on-scroll" = 1;
-      "on-click-right" = "mode";
-      "format" = {
-        "months" = "<span color='#ffead3'><b>{}</b></span>";
-        "days" = "<span color='#ecc6d9'><b>{}</b></span>";
-        "weeks" = "<span color='#99ffdd'><b>W{}</b></span>";
-        "weekdays" = "<span color='#ffcc66'><b>{}</b></span>";
-        "today" = "<span color='#ff6699'><b><u>{}</u></b></span>";
+  clock = {
+    format = "{:%a %m/%d %I:%M}";
+    format-alt = "{:%H:%M}  ";
+    tooltip-format = "<tt><small>{calendar}</small></tt>";
+    calendar = {
+      mode = "year";
+      mode-mon-col = 3;
+      weeks-pos = "right";
+      on-scroll = 1;
+      on-click-right = "mode";
+      format = {
+        months = "<span color='#ffead3'><b>{}</b></span>";
+        days = "<span color='#ecc6d9'><b>{}</b></span>";
+        weeks = "<span color='#99ffdd'><b>W{}</b></span>";
+        weekdays = "<span color='#ffcc66'><b>{}</b></span>";
+        today = "<span color='#ff6699'><b><u>{}</u></b></span>";
       };
     };
-    "actions" = {
-      "on-click-right" = "mode";
-      "on-click-forward" = "tz_up";
-      "on-click-backward" = "tz_down";
-      "on-scroll-up" = "shift_up";
-      "on-scroll-down" = "shift_down";
+    actions = {
+      on-click-right = "mode";
+      on-click-forward = "tz_up";
+      on-click-backward = "tz_down";
+      on-scroll-up = "shift_up";
+      on-scroll-down = "shift_down";
     };
   };
-  "tray" = {
-    "icon-size" = 22;
-    "spacing" = 11;
+  tray = {
+    icon-size = 22;
+    spacing = 11;
   };
-  "cava" = {
-    "framerate" = 60;
-    "autosens" = 0;
-    "sensitivity" = 5;
-    "bars" = 12;
-    "lower_cutoff_freq" = 50;
-    "higher_cutoff_freq" = 10000;
-    "method" = "pulse";
-    "source" = "auto";
-    "stereo" = false;
-    "reverse" = false;
-    "bar_delimiter" = 0;
-    "monstercat" = true;
-    "waves" = true;
-    "noise_reduction" = 0.77;
-    "input_delay" = 2;
-    "format-icons" = [
+  cava = {
+    framerate = 60;
+    autosens = 0;
+    sensitivity = 5;
+    bars = 12;
+    lower_cutoff_freq = 50;
+    higher_cutoff_freq = 10000;
+    method = "pulse";
+    source = "auto";
+    stereo = false;
+    reverse = false;
+    bar_delimiter = 0;
+    monstercat = true;
+    waves = true;
+    noise_reduction = 0.77;
+    input_delay = 2;
+    format-icons = [
       "▁"
       "▂"
       "▃"
@@ -141,17 +141,17 @@ in
       "▇"
       "█"
     ];
-    "actions" = {
-      "on-click-right" = "mode";
+    actions = {
+      on-click-right = "mode";
     };
   };
-  "pulseaudio" = {
-    "format" = "<span>{icon}</span> {volume}%";
-    "format-muted" = "";
-    "tooltip" = false;
-    "format-icons" = {
-      "headphone" = "";
-      "default" = [
+  pulseaudio = {
+    format = "<span>{icon}</span> {volume}%";
+    format-muted = "";
+    tooltip = false;
+    format-icons = {
+      headphone = "";
+      default = [
         ""
         ""
         "󰕾"
@@ -162,61 +162,109 @@ in
         ""
       ];
     };
-    "scroll-step" = 0.5;
-    "reverse-scrolling" = true;
-    "on-click" = lib.getExe pkgs.pavucontrol;
+    scroll-step = 0.5;
+    reverse-scrolling = true;
+    on-click = lib.getExe pkgs.pavucontrol;
   };
-  "bluetooth" = {
-    "format" = "<span></span> {status}";
-    "format-disabled" = "";
-    "format-connected" = "<span></span>{num_connections}";
-    "tooltip-format" = "{device_enumerate}";
-    "tooltip-format-enumerate-connected" = "{device_alias}   {device_address}";
-  };
-  "network" = {
-    "interface" = "wlp4s0";
-    "format" = "{ifname}";
-    "format-wifi" = "<span> </span>{essid}";
-    "format-ethernet" = "{ipaddr}/{cidr} ";
-    "format-disconnected" = "<span>󰖪 </span>No Network";
-    "tooltip-format-wifi" = "{essid} ({signalStrength}%) ";
+  # Disabled - causes Bluetooth discovery to turn on via D-Bus polling
+  #   bluetooth = {
+  #     format = "<span></span> {status}";
+  #     format-disabled = "";
+  #     format-connected = "<span></span>{num_connections}";
+  #     tooltip-format = "{device_enumerate}";
+  #     tooltip-format-enumerate-connected = "{device_alias}   {device_address}";
+  #   };
+  network = {
+    interface = "wlp4s0";
+    format = "{ifname}";
+    format-wifi = "<span> </span>{essid}";
+    format-ethernet = "{ipaddr}/{cidr} ";
+    format-disconnected = "<span>󰖪 </span>No Network";
+    tooltip-format-wifi = "{essid} ({signalStrength}%) ";
   };
   "custom/pomodoro" = {
-    "format" = "{}";
-    "tooltip" = false;
-    "on-click" = lib.getExe pkgs.pkgs-mine.uair-toggle-and-notify;
-    "exec" = get-uair-status;
-    "interval" = 1;
+    format = "{}";
+    tooltip = false;
+    on-click = lib.getExe pkgs.pkgs-mine.uair-toggle-and-notify;
+    exec = get-uair-status;
+    interval = 1;
   };
   "custom/notification" = {
-    "format" = "{icon}";
-    "format-icons" = {
-      "dnd-none" = "";
-      "dnd-notification" = "<span foreground='red'><sup></sup></span>";
-      "none" = "";
-      "notification" = "<span foreground='red'><sup></sup></span>";
+    format = "{icon}";
+    format-icons = {
+      dnd-none = "";
+      dnd-notification = "<span foreground='red'><sup></sup></span>";
+      none = "";
+      notification = "<span foreground='red'><sup></sup></span>";
     };
-    "return-type" = "json";
-    "tooltip" = false;
-    "exec" = writeNotificationApplication "get-notification-status" "swaync-client -swb";
-    "on-click" = writeNotificationApplication "toggle-notification-center" "swaync-client -t -sw";
-    "on-click-right" = writeNotificationApplication "toggle-do-not-disturb" "swaync-client -d -sw";
-    "escape" = true;
+    return-type = "json";
+    tooltip = false;
+    exec = writeNotificationApplication "get-notification-status" "swaync-client -swb";
+    on-click = writeNotificationApplication "toggle-notification-center" "swaync-client -t -sw";
+    on-click-right = writeNotificationApplication "toggle-do-not-disturb" "swaync-client -d -sw";
+    escape = true;
   };
   "custom/privacy-audio" = {
-    "format" = "<span></span>{}";
-    "exec" =
+    format = "<span></span>{}";
+    exec =
       writeAudioApplication "get-audio-status" # sh
         ''
           pactl -f json list source-outputs | \
           jq '[.[] | select(.properties."application.name" != "cava")] | length'
         '';
-    "tooltip" =
+    tooltip =
       writeAudioApplication "get-applications-using-audio" # sh
         ''
           pactl -f json list source-outputs | \
           jq -r '.[] | select(.properties."application.name" != "cava") | .properties."application.name"'
         '';
-    "tooltip-format" = "{}";
+    tooltip-format = "{}";
+  };
+  "custom/bluetooth" = {
+    format = "{}";
+    interval = 5;
+    return-type = "json";
+    exec = lib.getExe (
+      pkgs.writeNuApplication {
+        name = "waybar-bluetooth-status";
+        runtimeInputs = with pkgs; [
+          util-linux
+          bluez
+        ];
+        text = # nu
+          ''
+            let blocked = (rfkill list bluetooth | lines | find "Soft blocked" | str trim | split column ": " | get column2.0 | ansi strip)
+
+            if $blocked == "yes" {
+              print '{"text": "<span>󰂲 </span>", "tooltip": "Bluetooth disabled\nClick to enable"}'
+            } else {
+              let connected = (bluetoothctl devices Connected | lines | parse "Device {mac} {name}" | length)
+              let devices = (bluetoothctl devices Connected | lines | parse "Device {mac} {name}" | each { |dev| $"($dev.name)   ($dev.mac)" } | str join "\n")
+
+              if $connected > 0 {
+                let tooltip = if ($devices | is-empty) { "Connected devices" } else { $devices }
+                print $'{"text": "<span> </span>", "tooltip": "($tooltip)\nClick to disable"}'
+              } else {
+                print '{"text": "<span> </span>", "tooltip": "No devices connected\nClick to disable"}'
+              }
+            }
+          '';
+      }
+    );
+    on-click = lib.getExe (
+      pkgs.writeNuApplication {
+        name = "waybar-bluetooth-toggle";
+        runtimeInputs = [ pkgs.util-linux ];
+        text = # nu
+          ''
+            let status = (rfkill list bluetooth | lines | find "Soft blocked" | str trim | split column ": " | get column2.0 | ansi strip)
+            if $status == "no" {
+              rfkill block bluetooth
+            } else {
+              rfkill unblock bluetooth
+            }
+          '';
+      }
+    );
   };
 }
