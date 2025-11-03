@@ -1,4 +1,9 @@
-{ lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   inherit ((import ../../../lib/fonts.nix { inherit lib pkgs; })) fonts;
 
@@ -128,6 +133,8 @@ let
 in
 {
   config = {
+    programs.ghostty.package = pkgs.ghostty;
+
     home.file = lib.mkMerge [
       # Common config for all platforms
       {
@@ -149,8 +156,8 @@ in
             custom-shader-animation = ${if pkgs.stdenv.isDarwin then "true" else "false"}
 
             cursor-style-blink = false
-            background-opacity = 0.80
-            background-blur-radius = 20
+            background-opacity = ${if pkgs.stdenv.isDarwin then "0.80" else "1.0"}
+            background-blur-radius = ${if pkgs.stdenv.isDarwin then "20" else "0"}
             theme = light:${./theme-light.sh},dark:${./theme-dark.sh}
 
             font-family = "${fonts.configs.ghostty.font-family-1}"
@@ -180,6 +187,6 @@ in
     ];
 
     # Linux: Install via Nix package (macOS uses Homebrew cask in darwinConfigurations)
-    home.packages = lib.optionals pkgs.stdenv.isLinux [ pkgs.ghostty ];
+    home.packages = lib.optionals pkgs.stdenv.isLinux [ config.programs.ghostty.package ];
   };
 }
