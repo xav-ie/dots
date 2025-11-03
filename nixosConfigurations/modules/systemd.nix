@@ -4,6 +4,15 @@
 }:
 {
   config = {
+    # Configure systemd journal to reduce disk I/O and prevent log spam
+    services.journald.extraConfig = ''
+      SystemMaxUse=500M
+      RuntimeMaxUse=100M
+      MaxRetentionSec=1week
+      RateLimitIntervalSec=30s
+      RateLimitBurst=10000
+    '';
+
     systemd = {
       user.services.polkit-gnome-authentication-agent-1 = {
         description = "polkit-gnome-authentication-agent-1";
