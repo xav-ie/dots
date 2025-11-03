@@ -314,7 +314,7 @@ in
             "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type text --watch cliphist store"
             "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type image --watch cliphist store"
             (lib.getExe config.programs.firefox.package)
-            (lib.getExe pkgs.ghostty)
+            (lib.getExe config.programs.ghostty.package)
           ];
 
           animations = {
@@ -438,7 +438,7 @@ in
           # Example binds, see https://wiki.hyprland.org/Configuring/Binds/ for more
           bind = [
             "$mainMod, Q, killactive,"
-            "$mainMod, T, exec, ${lib.getExe pkgs.ghostty}"
+            "$mainMod, T, exec, ${lib.getExe config.programs.ghostty.package}"
             "$mainMod SHIFT, F, togglefloating,"
             ''$mainMod, F, exec, hyprctl --batch "dispatch togglefloating active; dispatch pin active; dispatch moveactive exact ${windowLeft} ${windowTop}; dispatch resizeactive exact 640 360"''
             "$mainMod ALT,1,exec,${move-active} topLeft"
