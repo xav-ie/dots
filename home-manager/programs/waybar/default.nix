@@ -74,6 +74,7 @@ in
           #backlight,
           #battery,
           #bluetooth,
+          #custom-bluetooth,
           #cava,
           #clock,
           #custom-arch,
@@ -98,6 +99,7 @@ in
           #custom-pomodoro,
           #network,
           #bluetooth,
+          #custom-bluetooth,
           #pulseaudio,
           #cava,
           #workspaces,
@@ -109,6 +111,7 @@ in
           /* left joined */
           #backlight,
           #bluetooth,
+          #custom-bluetooth,
           #cava {
             border-top-right-radius: 0;
             border-bottom-right-radius: 0;
