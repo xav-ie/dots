@@ -25,7 +25,6 @@
           asciinema # record shell sessions and share easily
           age # the new PGP
           clipboard-jh # a really awesome clipboard
-          ghostty
           home-assistant
           manix
           # nodePackages."webtorrent-cli"
