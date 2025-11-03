@@ -23,6 +23,10 @@
       terminal = "$TERM";
       extraConfig = # tmux
         ''
+          # Allow OSC escape sequences to pass through to terminal
+          # This enables programs like delta and neovim to detect theme changes
+          set-option -g allow-passthrough on
+
           bind -n M-H previous-window
           bind -n M-L next-window
           # open next panes in same directory
