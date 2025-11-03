@@ -131,6 +131,15 @@
   "webgl.disabled" = false;
 
   # ========================================
+  # Reduce disk writes from session store
+  # ========================================
+  # Save session every 1 minute instead of 15 seconds (default)
+  "browser.sessionstore.interval" = 60000; # milliseconds (1 min)
+  # Reduce back/forward history per tab (saves disk writes)
+  # This controls how many pages you can click "back" through per tab
+  "browser.sessionhistory.max_entries" = 25; # default 50
+
+  # ========================================
   # Wayland + dmabuf support
   # Required for VA-API and proper Wayland integration
   # ========================================
