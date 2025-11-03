@@ -16,6 +16,7 @@
     ./podman.nix
     ./portainer.nix
     ./postiz.nix
+    ./power-save
     ./quadlet.nix
     ./remote-builder.nix
     ./sops.nix
