@@ -7,13 +7,22 @@ default:
 # apply current system config
 system:
     #!/usr/bin/env nu
+    let hostname = (hostname)
     match (uname | get kernel-name) {
       "Darwin" => {
         morlana switch --flake . --no-confirm -- --show-trace
+        # Update result-{hostname} to match result
+        if ("result" | path exists) {
+          ln -sfn (readlink result) $"result-($hostname)"
+        }
         null
       }
       "Linux" => {
         nh os build .
+        # Update result-{hostname} to match result
+        if ("result" | path exists) {
+          ln -sfn (readlink result) $"result-($hostname)"
+        }
         # get password through askpass program
         try { sudo -A true }
         nh os switch .
@@ -30,6 +39,20 @@ update:
 # update input nixpkgs-bleeding
 bleed:
     nix flake lock --update-input nixpkgs-bleeding
+
+# build praesidium nixos configuration with gc root (useful for remote builds on stella)
+build-praesidium:
+    nix build .#nixosConfigurations.praesidium.config.system.build.toplevel --out-link result-praesidium
+    @mkdir -p /nix/var/nix/gcroots/per-user/$USER
+    @ln -sfn $(pwd)/result-praesidium /nix/var/nix/gcroots/per-user/$USER/result-praesidium
+    @echo "Built and created GC root: /nix/var/nix/gcroots/per-user/$USER/result-praesidium -> $(pwd)/result-praesidium"
+
+# build stella darwin configuration with gc root (useful for remote builds on praesidium)
+build-stella:
+    nix build .#darwinConfigurations.stella.config.system.build.toplevel --out-link result-stella
+    @mkdir -p /nix/var/nix/gcroots/per-user/$USER
+    @ln -sfn $(pwd)/result-stella /nix/var/nix/gcroots/per-user/$USER/result-stella
+    @echo "Built and created GC root: /nix/var/nix/gcroots/per-user/$USER/result-stella -> $(pwd)/result-stella"
 
 # pretty-print outputs
 show:
