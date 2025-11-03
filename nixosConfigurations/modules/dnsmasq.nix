@@ -35,12 +35,14 @@
 
       dnssec-check-unsigned = false;
 
+      # Send only Tailscale domains to Tailscale MagicDNS
+      # All other queries go directly to Cloudflare (1.1.1.1)
       server = [
-        "100.100.100.100" # Tailscale MagicDNS
-        "2606:4700:4700::1111"
-        "1.1.1.1"
-        "2606:4700:4700::1001"
-        "1.0.0.1"
+        "/ts.net/100.100.100.100" # Only .ts.net domains to Tailscale
+        "2606:4700:4700::1111" # Cloudflare DNS (IPv6)
+        "1.1.1.1" # Cloudflare DNS (IPv4)
+        "2606:4700:4700::1001" # Cloudflare DNS (IPv6 backup)
+        "1.0.0.1" # Cloudflare DNS (IPv4 backup)
       ];
     };
   };
