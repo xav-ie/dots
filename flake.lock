@@ -1117,6 +1117,22 @@
         "type": "github"
       }
     },
+    "obs-backgroundremoval": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1761661616,
+        "narHash": "sha256-TFpp5TNAIv+EAQmqYENnzKu9NIgjb/ogvTvAeqntSQs=",
+        "owner": "royshil",
+        "repo": "obs-backgroundremoval",
+        "rev": "875ffda175fcb066380b31797c63630c8b4a3c71",
+        "type": "github"
+      },
+      "original": {
+        "owner": "royshil",
+        "repo": "obs-backgroundremoval",
+        "type": "github"
+      }
+    },
     "plover": {
       "flake": false,
       "locked": {
@@ -1310,6 +1326,7 @@
         "notification-cleaner": "notification-cleaner",
         "nuenv": "nuenv",
         "nur": "nur",
+        "obs-backgroundremoval": "obs-backgroundremoval",
         "plover-flake": "plover-flake",
         "pre-commit-hooks": "pre-commit-hooks",
         "quadlet-nix": "quadlet-nix",

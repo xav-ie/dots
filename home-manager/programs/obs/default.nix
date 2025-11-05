@@ -1,54 +1,83 @@
-# TODO: is it bad to pass attrs? nixpkgs specifies all attrs
-{ pkgs, ... }@attrs:
+{
+  config,
+  inputs,
+  lib,
+  pkgs,
+  ...
+}:
 let
-  obs-advanced-masks = pkgs.callPackage ./obs-advanced-masks.nix { inherit attrs; };
-  obs-stroke-glow-shadow = pkgs.callPackage ./obs-stroke-glow-shadow.nix { inherit attrs; };
+  obs-advanced-masks = pkgs.callPackage ./obs-advanced-masks.nix { };
+  obs-stroke-glow-shadow = pkgs.callPackage ./obs-stroke-glow-shadow.nix { };
+  obs-backgroundremoval = # remove background
+    (pkgs.obs-studio-plugins.obs-backgroundremoval.override {
+      # Override ONNX Runtime to enable TensorRT execution provider with ccache
+      onnxruntime = pkgs.onnxruntime.overrideAttrs (old: {
+        cmakeFlags = old.cmakeFlags ++ [
+          # Enable ccache via CMAKE_*_COMPILER_LAUNCHER
+          (pkgs.lib.cmakeFeature "CMAKE_C_COMPILER_LAUNCHER" (lib.getExe pkgs.ccache))
+          (pkgs.lib.cmakeFeature "CMAKE_CXX_COMPILER_LAUNCHER" (lib.getExe pkgs.ccache))
+          (pkgs.lib.cmakeFeature "CMAKE_CUDA_COMPILER_LAUNCHER" (lib.getExe pkgs.ccache))
+        ];
+        # Set ccache directory
+        preConfigure =
+          (old.preConfigure or "")
+          # sh
+          + ''
+            export CCACHE_DIR=/var/cache/ccache
+            export CCACHE_SLOPPINESS=random_seed
+            export CCACHE_MAXSIZE=20G
+            export CCACHE_COMPRESS=true
+          '';
+      });
+    }).overrideAttrs
+      (oldAttrs: {
+        src = inputs.obs-backgroundremoval;
+        # Latest source uses ubuntu-x86_64 preset instead of linux-x86_64
+        cmakeFlags = builtins.map (
+          flag: if flag == "--preset linux-x86_64" then "--preset ubuntu-x86_64" else flag
+        ) oldAttrs.cmakeFlags;
+      });
 in
 {
-  # camera magic
-  programs.obs-studio = {
-    enable = true;
-    plugins =
-      with pkgs.obs-studio-plugins;
-      [
-        # droidcam-obs # use phone as camera
-        input-overlay # overlays mouse/keyboard inputs
-        # looking-glass-obs # native looking glass capture
-        obs-3d-effect # 3d effects on sources
-        (obs-backgroundremoval.overrideAttrs (oldAttrs: {
-          cmakeFlags = oldAttrs.cmakeFlags ++ [
-            "-DCUDA_TOOLKIT_ROOT_DIR=${pkgs.cudaPackages.cudatoolkit}"
-          ];
-        })) # remove background
-        obs-composite-blur # blur a source
-        # obs-fbc # capture screen with nvidia fbc? not sure if useful
-        obs-gradient-source # gradient background color sources
-        obs-move-transition # move transitions
-        # obs-ndi # audio/video enc/dec through lan with NDI protocol
-        obs-pipewire-audio-capture # use pipewire audio/video source; desktop capture
-        # see https://github.com/exeldro/obs-shaderfilter/issues/58
-        (obs-shaderfilter.overrideAttrs (
-          _prev: _current: {
-            version = "2.1.3";
-            src = pkgs.fetchFromGitHub {
-              owner = "exeldro";
-              repo = "obs-shaderfilter";
-              rev = "2.1.3";
-              sha256 = "sha256-CTklthfZpQPr4KGBWrlNGTUKdzQWuIvGUyysLEWm9QM=";
-            };
-          }
-        )) # cool source filters, also includes face-tracking
-        obs-source-clone # clone sources for applying effects
-        # obs-websocket # remote control obs... I think this is built-in?
-        wlrobs # make obs work with wayland
-      ]
-      ++ [
-        obs-advanced-masks
-        obs-stroke-glow-shadow
-      ];
-    # TODO: why does not work, but the above `let...in` does?
-    #   ++ [
-    #   pkgs.callPackage ./obs-advanced-masks.nix { inherit attrs; }
-    # ];
+  config = {
+    # camera magic
+    programs.obs-studio = {
+      enable = true;
+      plugins =
+        with pkgs.obs-studio-plugins;
+        [
+          # # use phone as camera
+          # droidcam-obs
+          # # overlays mouse/keyboard inputs
+          # input-overlay
+          # looking-glass-obs # native looking glass capture
+          obs-3d-effect # 3d effects on sources
+          obs-composite-blur # blur a source
+          # gradient background color sources
+          obs-gradient-source
+          # move transitions
+          obs-move-transition
+          # # audio/video enc/dec through lan with NDI protocol
+          # obs-ndi
+          # use pipewire audio/video source; desktop capture
+          obs-pipewire-audio-capture
+          # see https://github.com/exeldro/obs-shaderfilter/issues/58
+          # cool source filters, also includes face-tracking
+          obs-shaderfilter
+          # clone sources for applying effects
+          obs-source-clone
+          # # allow caputre from wlroots-based compositors
+          # wlrobs
+        ]
+        ++ [
+          obs-advanced-masks
+          obs-backgroundremoval
+          obs-stroke-glow-shadow
+        ];
+    };
+
+    # Copy obs-shaderfilter examples to local config directory
+    home.file."${config.xdg.configHome}/obs-studio/shaders/".source =
+      "${pkgs.obs-studio-plugins.obs-shaderfilter}/share/obs/data/obs-plugins/obs-shaderfilter/examples";
   };
 }
