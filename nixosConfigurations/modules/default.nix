@@ -4,6 +4,7 @@
     ../../lib/common
     ./atop
     ./bluetooth.nix
+    ./ccache.nix
     ./dnsmasq.nix
     ./hardware-configuration.nix
     ./home-assistant.nix
