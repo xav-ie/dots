@@ -101,6 +101,8 @@
     homebrew-cask.url = "github:homebrew/homebrew-cask";
     homebrew-core.flake = false;
     homebrew-core.url = "github:homebrew/homebrew-core";
+    obs-backgroundremoval.flake = false;
+    obs-backgroundremoval.url = "github:royshil/obs-backgroundremoval";
   };
 
   outputs =
