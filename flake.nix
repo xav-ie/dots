@@ -161,7 +161,10 @@
 
           packages = import ./packages {
             generate-kaomoji = inputs.generate-kaomoji.packages.${system}.default;
-            pkgs = inputs.nixpkgs-bleeding.legacyPackages.${system};
+            pkgs = import inputs.nixpkgs-bleeding {
+              inherit system;
+              config.allowUnfree = true;
+            };
             nuenv = inputs.nuenv.lib;
           };
 
