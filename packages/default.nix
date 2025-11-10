@@ -17,6 +17,8 @@ rec {
   apple-emoji-linux = pkgs.callPackage ./apple-emoji-linux { };
   better-branch = pkgs.callPackage ./better-branch { inherit writeNuApplication; };
   cache-command = pkgs.callPackage ./cache-command { };
+  claude-code = pkgs.callPackage ./claude-code { };
+  claude-code-update = pkgs.callPackage ./claude-code/update.nix { inherit writeNuApplication; };
   ff = pkgs.callPackage ./ff { };
   git-amend = pkgs.callPackage ./git-amend { inherit writeNuApplication; };
   gp = pkgs.callPackage ./gp { inherit update-pr writeNuApplication; };
