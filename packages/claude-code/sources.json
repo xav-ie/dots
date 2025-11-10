@@ -1,0 +1,22 @@
+{
+  "gcs_bucket": "https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases",
+  "version": "2.0.34",
+  "sources": {
+    "x86_64-linux": {
+      "platform": "linux-x64",
+      "hash": "sha256-XTXKMNlCfGYC4UV9/Jk46qDmUzeSRNkzI5SZCU+u17E="
+    },
+    "aarch64-linux": {
+      "platform": "linux-arm64",
+      "hash": "sha256-/6H2d5CGRr1nYd0aZozMrPuqsOvVQQdPUa1rweOnf2c="
+    },
+    "x86_64-darwin": {
+      "platform": "darwin-x64",
+      "hash": "sha256-Bqw83CCKG0VIoVgifZlrAdyji6UKd0u15KCRmquIqGk="
+    },
+    "aarch64-darwin": {
+      "platform": "darwin-arm64",
+      "hash": "sha256-l//+yFvFRMHDr2WVkvCV8Ah1B+p0fWuT3+8VJZuTKRY="
+    }
+  }
+}

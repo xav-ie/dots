@@ -9,6 +9,7 @@
     ./programs/alacritty
     ./programs/atuin
     ./programs/bat
+    ./programs/claude
     ./programs/direnv
     ./programs/eza
     # ./programs/firefox
