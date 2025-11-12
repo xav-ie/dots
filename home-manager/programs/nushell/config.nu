@@ -50,6 +50,10 @@ $env.config.explore = {
   selected_cell: { bg: light_blue },
 }
 
+$env.config.hooks.pre_execution = [
+  { || $env.TMUX_TAB_UPDATE_PANE = $env.TMUX_PANE }
+]
+
 $env.config.hooks.pre_prompt = [
   { || tmux-tab-name-update }
 ]
