@@ -23,17 +23,6 @@ let
       '';
     }
   );
-  writeAudioApplication =
-    name: text:
-    lib.getExe (
-      pkgs.writeShellApplication {
-        inherit name text;
-        runtimeInputs = with pkgs; [
-          pavucontrol
-          jq
-        ];
-      }
-    );
   writeNotificationApplication =
     name: text:
     lib.getExe (
@@ -61,10 +50,10 @@ in
     "custom/pomodoro"
   ];
   modules-right = [
-    "custom/privacy-audio"
     "tray"
     "cava"
     "pulseaudio"
+    "custom/virtual-headset"
     "custom/bluetooth"
     "network"
     "custom/notification"
@@ -203,22 +192,6 @@ in
     on-click = writeNotificationApplication "toggle-notification-center" "swaync-client -t -sw";
     on-click-right = writeNotificationApplication "toggle-do-not-disturb" "swaync-client -d -sw";
     escape = true;
-  };
-  "custom/privacy-audio" = {
-    format = "<span></span>{}";
-    exec =
-      writeAudioApplication "get-audio-status" # sh
-        ''
-          pactl -f json list source-outputs | \
-          jq '[.[] | select(.properties."application.name" != "cava")] | length'
-        '';
-    tooltip =
-      writeAudioApplication "get-applications-using-audio" # sh
-        ''
-          pactl -f json list source-outputs | \
-          jq -r '.[] | select(.properties."application.name" != "cava") | .properties."application.name"'
-        '';
-    tooltip-format = "{}";
   };
   "custom/bluetooth" = {
     format = "{}";

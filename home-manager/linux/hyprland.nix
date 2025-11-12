@@ -213,6 +213,7 @@ in
         # using the static height
         windowBottom = "100%-${toString (pipHeight + gapAndBorderNumeric)}";
         move-active = lib.getExe pkgs.pkgs-mine.move-active;
+        virtual-headset-ctl = lib.getExe inputs.virtual-headset.packages.${pkgs.system}.virtual-headset-ctl;
       in
       {
         enable = true;
@@ -425,6 +426,12 @@ in
 
           bindl = [
             ", XF86AudioMute, exec, ${lib.getExe' pkgs.pulseaudio "pactl"} set-sink-mute @DEFAULT_SINK@ toggle"
+            "$mainMod, A, exec, ${virtual-headset-ctl} unmute"
+          ];
+
+          # Push-to-talk: trigger on key release
+          bindr = [
+            "$mainMod, A, exec, ${virtual-headset-ctl} mute"
           ];
 
           # https://wiki.hypr.land/Configuring/Gestures/
