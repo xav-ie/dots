@@ -22,6 +22,9 @@ let
   );
 in
 {
+  imports = [
+    inputs.virtual-headset.homeManagerModules.default
+  ];
   options.programs.waybar = {
     barHeight = lib.mkOption {
       # Statically determining the bar height is difficult. So far, the only factor of height
@@ -29,7 +32,7 @@ in
       # > hyprctl layers -j | jq '.. | objects | select(.namespace? == "waybar") | .h'
       # INFO: you can check the height meets the min requirement by simply running waybar
       # it will tell you if the height set is not enough
-      default = 30 + hyprCfg.borderSizeNumeric * 2;
+      default = 30 + hyprCfg.borderSizeNumeric * 2 + 1; # idk why plus 1
       type = lib.types.ints.positive;
     };
   };
@@ -37,6 +40,8 @@ in
     home.packages =
       # audio visualizer
       lib.optional (builtins.elem "cava" waybar-modules) pkgs.cava;
+
+    programs.virtual-headset-waybar.enable = true;
 
     programs.waybar = {
       # https://github.com/elythh/nixdots/blob/58db47f160c219c3e2a9630651dfd9aab0408b1a/modules/home/opt/wayland/services/swaync/default.nix
@@ -80,11 +85,11 @@ in
           #custom-arch,
           #custom-notification,
           #custom-pomodoro,
+          #custom-virtual-headset,
           #network,
           #pulseaudio,
           #tray,
-          #workspaces,
-          #custom-privacy-audio {
+          #workspaces {
             background: rgba(19, 6, 10, 0.65);
             border: ${toString hyprCfg.borderSizeNumeric}px solid #631f33;
             color: white;
@@ -97,6 +102,7 @@ in
           /*shift down these modules, fixes awkward text too close to top*/
           #clock,
           #custom-pomodoro,
+          #custom-virtual-headset,
           #network,
           #bluetooth,
           #custom-bluetooth,
@@ -120,8 +126,18 @@ in
             border-right: none;
           }
 
+          /* middle joined */
+          #pulseaudio {
+            border-radius: 0;
+            padding-left: 3px;
+            padding-right: 3px;
+            margin-right: 0;
+            border-left: none;
+            border-right: none;
+          }
+
           /* right joined */
-          #pulseaudio,
+          #custom-virtual-headset,
           #network
           /* , #clock */ {
             border-top-left-radius: 0;
@@ -196,6 +212,26 @@ in
           #custom-arch {
             padding-left: 6px;
             padding-right: 13px;
+          }
+
+          /* make it more visible people can hear me */
+          @keyframes pulse {
+            0% {
+              text-shadow: 0px 0px 4px rgba(255, 200, 200, 0.25);
+              color: rgba(255, 150, 150, 1);
+            }
+            50% {
+              text-shadow: 0px 0px 8px rgba(255, 200, 200, 1);
+              color: rgba(255, 50, 50, 1);
+            }
+            100% {
+              text-shadow: 0px 0px 4px rgba(255, 200, 200, 0.25);
+              color: rgba(255, 150, 150, 1);
+            }
+          }
+
+          #custom-virtual-headset.unmuted {
+            animation: pulse 2s ease-in-out infinite;
           }
         '';
     };

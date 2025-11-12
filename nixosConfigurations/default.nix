@@ -15,6 +15,7 @@ let
         };
         modules = [
           ./hosts/praesidium
+          inputs.virtual-headset.nixosModules.default
         ];
       };
     };

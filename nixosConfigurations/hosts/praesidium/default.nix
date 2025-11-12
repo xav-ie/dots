@@ -402,6 +402,10 @@ in
       flatpak.enable = true;
       geoclue2.enable = true;
       plover.enable = true;
+      virtual-headset = {
+        enable = true;
+        user = config.defaultUser;
+      };
 
       gnome.gnome-keyring.enable = true;
       hardware.openrgb = {
