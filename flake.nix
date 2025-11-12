@@ -1,101 +1,57 @@
 {
   description = "Xavier's NixOS";
   inputs = {
-    alacritty-theme.inputs.flake-parts.follows = "flake-parts";
-    alacritty-theme.inputs.nixpkgs.follows = "nixpkgs";
     alacritty-theme.url = "github:alexghr/alacritty-theme.nix";
-    ctpv.inputs.flake-utils.follows = "flake-utils";
-    ctpv.inputs.nixpkgs.follows = "nixpkgs";
     ctpv.url = "github:xav-ie/ctpv-nix";
     devenv.url = "github:cachix/devenv";
     devenv-root.flake = false;
     devenv-root.url = "file+file:///dev/null";
-    flake-compat.url = "github:edolstra/flake-compat";
     flake-parts.url = "github:hercules-ci/flake-parts";
-    flake-utils.inputs.systems.follows = "systems";
-    flake-utils.url = "github:numtide/flake-utils";
-    generate-kaomoji.inputs.flake-utils.follows = "flake-utils";
-    generate-kaomoji.inputs.nixpkgs.follows = "nixpkgs";
     generate-kaomoji.url = "github:xav-ie/generate-kaomoji";
-    # ghostty.inputs.flake-compat.follows = "flake-compat";
-    # ghostty.inputs.nixpkgs-stable.follows = "nixpkgs-stable";
-    # ghostty.inputs.zig.follows = "zig";
-    # ghostty.url = "git+ssh://git@github.com/ghostty-org/ghostty";
     hardware.url = "github:nixos/nixos-hardware";
-    home-manager.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.url = "github:nix-community/home-manager";
-    hyprland-contrib.inputs.nixpkgs.follows = "nixpkgs";
-    hyprland-contrib.url = "github:hyprwm/contrib";
-    hyprland.inputs.nixpkgs.follows = "nixpkgs";
-    hyprland.inputs.pre-commit-hooks.follows = "pre-commit-hooks";
-    hyprland.inputs.systems.follows = "systems-linux";
     hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
     jj.url = "github:martinvonz/jj";
-    jj.inputs."flake-utils".follows = "flake-utils";
-    jj.inputs."nixpkgs".follows = "nixpkgs-bleeding";
-    jj.inputs.rust-overlay.follows = "rust-overlay";
-    mk-shell-bin.url = "github:rrbutani/nix-mk-shell-bin";
     morlana.url = "github:ryanccn/morlana";
-    morlana.inputs.nixpkgs.follows = "nixpkgs";
-    nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
-    nix2container.url = "github:nlewo/nix2container";
-    nix2container.inputs.nixpkgs.follows = "nixpkgs";
     nixpkgs-bleeding.url = "github:nixos/nixpkgs/master";
     nixpkgs-homeassistant.url = "github:nixos/nixpkgs/master";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.05";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     notification-cleaner.url = "github:xav-ie/notification-cleaner";
-    notification-cleaner.inputs.devenv.follows = "devenv";
-    notification-cleaner.inputs.devenv-root.follows = "devenv-root";
-    notification-cleaner.inputs.flake-parts.follows = "flake-parts";
-    notification-cleaner.inputs.mk-shell-bin.follows = "mk-shell-bin";
-    notification-cleaner.inputs.nixpkgs.follows = "nixpkgs";
-    notification-cleaner.inputs.nix2container.follows = "nix2container";
-    nur.inputs.flake-parts.follows = "flake-parts";
-    nur.inputs.nixpkgs.follows = "nixpkgs";
     nur.url = "github:nix-community/NUR";
     nuenv.url = "github:xav-ie/nuenv";
-    nuenv.inputs.nixpkgs.follows = "nixpkgs";
-    nuenv.inputs.systems.follows = "systems";
     plover-flake.url = "github:openstenoproject/plover-flake";
-    plover-flake.inputs.nixpkgs.follows = "nixpkgs";
-    pre-commit-hooks.inputs.flake-compat.follows = "flake-compat";
-    pre-commit-hooks.inputs.nixpkgs.follows = "nixpkgs";
-    pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
     quadlet-nix.url = "github:SEIAROTg/quadlet-nix";
-    rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
-    rust-overlay.url = "github:oxalica/rust-overlay";
     sops-nix.url = "github:Mic92/sops-nix";
-    sops-nix.inputs.nixpkgs.follows = "nixpkgs";
-    systems-linux.url = "github:nix-systems/default-linux";
     virtual-headset.url = "path:/home/x/Projects/virtual-headset";
-    virtual-headset.inputs.nixpkgs.follows = "nixpkgs";
-    virtual-headset.inputs.treefmt-nix.follows = "treefmt-nix";
     systems.url = "github:nix-systems/default";
-    # kind of breaks `nix flake check` but idk for sure
-    treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
     treefmt-nix.url = "github:numtide/treefmt-nix";
-    waybar.inputs.flake-compat.follows = "flake-compat";
-    waybar.inputs.nixpkgs.follows = "nixpkgs";
     waybar.url = "github:Alexays/waybar";
-    # zig.inputs.flake-compat.follows = "flake-compat";
-    # zig.inputs.flake-utils.follows = "flake-utils";
-    # zig.inputs.nixpkgs.follows = "nixpkgs";
-    # zig.url = "github:mitchellh/zig-overlay";
-    # zj has exact inputs
-    # zjstatus.inputs.flake-utils.follows = "flake-utils";
-    # zjstatus.inputs.nixpkgs.follows = "nixpkgs";
-    # zjstatus.inputs.rust-overlay.follows = "rust-overlay";
     zjstatus.url = "github:dj95/zjstatus";
-
-    # wezterm.inputs.flake-utils.follows = "flake-utils";
-    # wezterm.inputs.nixpkgs.follows = "nixpkgs";
-    # wezterm.url = "github:wez/wezterm?dir=nix";
     # TODO: figure out how to use from misterio and vimjoyer
     # impermanence.url = "github:nix-community/impermanence";
     # nix-colors.url = "github:misterio77/nix-colors";
+
+    # transitive deps that are used by multiple inputs
+    cachix.url = "github:cachix/cachix/latest";
+    crane.url = "github:ipetkov/crane";
+    flake-compat.url = "github:edolstra/flake-compat";
+    flake-utils.url = "github:numtide/flake-utils";
+    git-hooks.url = "github:cachix/git-hooks.nix";
+    gitignore.url = "github:hercules-ci/gitignore.nix";
+    nix.url = "github:cachix/nix/devenv-2.30.6";
+    nixpkgs-lib.url = "github:nix-community/nixpkgs.lib";
+    rust-overlay.url = "github:oxalica/rust-overlay";
+
+    # overrides
+    alacritty-theme-themes.flake = false;
+    alacritty-theme-themes.url = "github:alacritty/alacritty-theme";
+    alacritty-theme.inputs.alacritty-theme.follows = "alacritty-theme-themes";
+    flake-parts.inputs.nixpkgs-lib.follows = "nixpkgs-lib-v1-merge";
+    # before v2 merge check
+    nixpkgs-lib-v1-merge.url = "github:nix-community/nixpkgs.lib/a73b9c743612e4244d865a2fdee11865283c04e6";
 
     # vendored
     homebrew-bundle.flake = false;
@@ -137,6 +93,8 @@
           # };
 
           devenv.shells.default = {
+            containers = lib.mkForce { };
+
             packages =
               (with pkgs; [
                 just
