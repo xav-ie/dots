@@ -70,6 +70,9 @@
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
     systems-linux.url = "github:nix-systems/default-linux";
+    virtual-headset.url = "path:/home/x/Projects/virtual-headset";
+    virtual-headset.inputs.nixpkgs.follows = "nixpkgs";
+    virtual-headset.inputs.treefmt-nix.follows = "treefmt-nix";
     systems.url = "github:nix-systems/default";
     # kind of breaks `nix flake check` but idk for sure
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
