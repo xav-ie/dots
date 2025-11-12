@@ -133,7 +133,7 @@ screenshot of it open and maybe even do some actions.
 <details>
 <summary>Miscellaneous</summary>
 
-- [ ] Global mute - this will require building a virtual HID device
+- [x] Global mute - this will require building a virtual HID device
       that is recognized by Zoom. Then, when you mute this virtual device,
       the state is reflected in Zoom as well. This opens up many
       possibilities, the most obvious being a notification tray icon you
