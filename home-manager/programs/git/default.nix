@@ -219,6 +219,7 @@ in
         # https://andrewlock.net/working-with-stacked-branches-in-git-is-easier-with-update-refs/
         # to temporarily turn off, --no-update-refs
         rebase.updateRefs = true;
+        remote.origin.fetch = "+refs/heads/*:refs/remotes/origin/*";
         # remote.origin.fetch = [
         #   # Normal branches - set up by default
         #   "+refs/heads/*:refs/remotes/origin/*"
