@@ -18,14 +18,11 @@ system:
         null
       }
       "Linux" => {
-        nh os build .
+        nh os switch . -o result
         # Update result-{hostname} to match result
         if ("result" | path exists) {
           ln -sfn (readlink result) $"result-($hostname)"
         }
-        # get password through askpass program
-        try { sudo -A true }
-        nh os switch .
       }
       _ => {
         error make { msg: "Unknown OS" }
