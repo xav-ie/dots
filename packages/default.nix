@@ -10,6 +10,7 @@ let
   writeNuApplication = nuenv.mkNushellScriptApplication pkgs.nushell pkgs.writeTextFile pkgs.lib;
   notify = pkgs.callPackage ./notify { inherit generate-kaomoji writeNuApplication; };
   base-ref = pkgs.callPackage ./base-ref { inherit writeNuApplication; };
+  zenity-askpass = pkgs.callPackage ./zenity-askpass { inherit writeNuApplication; };
 in
 rec {
   inherit base-ref notify;
@@ -51,11 +52,11 @@ rec {
   move-pip = pkgs.callPackage ./move-pip { inherit writeNuApplication; };
 })
 // (optionalAttrs pkgs.stdenv.isLinux {
+  inherit zenity-askpass;
   move-active = pkgs.callPackage ./move-active { inherit writeNuApplication; };
   openrgb-appimage = pkgs.callPackage ./openrgb-appimage { };
   record = pkgs.callPackage ./record { };
   record-section = pkgs.callPackage ./record-section { };
   rofi-cliphist = pkgs.callPackage ./rofi-cliphist { inherit writeNuApplication; };
   rofi-powermenu = pkgs.callPackage ./rofi-powermenu { inherit writeNuApplication; };
-  zenity-askpass = pkgs.callPackage ./zenity-askpass { inherit writeNuApplication; };
 })
