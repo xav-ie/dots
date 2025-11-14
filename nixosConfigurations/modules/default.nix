@@ -22,6 +22,7 @@
     ./remote-builder.nix
     ./sops.nix
     ./spdf.nix
+    ./sudo-askpass.nix
     ./systemd.nix
     ./tailscale.nix
     ./traefik.nix
