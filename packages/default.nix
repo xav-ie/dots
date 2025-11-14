@@ -40,6 +40,7 @@ rec {
   uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
   update-package-lock = pkgs.callPackage ./update-package-lock { inherit writeNuApplication; };
   update-pr = pkgs.callPackage ./update-pr { inherit pr-summary writeNuApplication; };
+  whisper-transcribe = pkgs.callPackage ./whisper-transcribe { inherit writeNuApplication; };
   zellij-tab-name-update = pkgs.callPackage ./zellij-tab-name-update { };
 }
 // (optionalAttrs pkgs.stdenv.isDarwin {

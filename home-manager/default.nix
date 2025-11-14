@@ -121,6 +121,7 @@
           uair-toggle-and-notify
           update-package-lock
           update-pr
+          whisper-transcribe
           zellij-tab-name-update
         ]);
 

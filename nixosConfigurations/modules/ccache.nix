@@ -25,16 +25,17 @@
     ];
 
     # Configure ccache to work with Nix's -frandom-seed flag
-    environment.etc."ccache.conf".text = ''
-      # Allow ccache to work despite Nix's -frandom-seed
-      sloppiness = random_seed
+    environment.etc."ccache.conf".text = # py
+      ''
+        # Allow ccache to work despite Nix's -frandom-seed
+        sloppiness = random_seed
 
-      # Increase cache size for large builds like ONNX Runtime
-      max_size = 20G
+        # Increase cache size for large builds like ONNX Runtime
+        max_size = 30G
 
-      # Enable compression to save disk space
-      compression = true
-      compression_level = 6
-    '';
+        # Enable compression to save disk space
+        compression = true
+        compression_level = 6
+      '';
   };
 }
