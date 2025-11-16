@@ -1,10 +1,14 @@
 {
   config,
+  lib,
   pkgs,
   ...
 }:
 let
-  claude-wrapped = pkgs.symlinkJoin {
+  cfg = config.programs.claude;
+
+  # Native binary from the custom package
+  claude-native = pkgs.symlinkJoin {
     name = "claude-wrapped";
     paths = [ pkgs.pkgs-mine.claude-code ];
     buildInputs = [ pkgs.makeWrapper ];
@@ -13,13 +17,36 @@ let
         --prefix PATH : "${config.home.homeDirectory}/.local/bin"
     '';
   };
+
+  # NPM-based installation - use the package from packages/claude-code/npm.nix
+  claude-npm = pkgs.pkgs-mine.claude-code-npm;
+
+  claude-package = if cfg.nativeInstall then claude-native else claude-npm;
 in
 {
-  config = {
-    home.packages = [ claude-wrapped ];
+  options.programs.claude = {
+    enable = lib.mkEnableOption "Claude Code CLI";
+
+    nativeInstall = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = ''
+        Whether to use the native (Bun-based) installation of Claude Code.
+
+        When true: Uses the pre-compiled native binary (faster startup, but has known issues with editor integration).
+        When false: Uses the npm/Node.js version (slower startup, but more reliable editor integration).
+
+        Note: The native version has a known bug where it drops keystrokes in external editors (Ctrl+G).
+        Using nativeInstall = false resolves this issue by using the npm installation instead.
+      '';
+    };
+  };
+
+  config = lib.mkIf cfg.enable {
+    home.packages = [ claude-package ];
 
     home.file.".local/bin/claude" = {
-      source = "${claude-wrapped}/bin/claude";
+      source = "${claude-package}/bin/claude";
     };
   };
 }
