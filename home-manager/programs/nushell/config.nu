@@ -51,7 +51,7 @@ $env.config.explore = {
 }
 
 $env.config.hooks.pre_execution = [
-  { || $env.TMUX_TAB_UPDATE_PANE = $env.TMUX_PANE }
+  { || if 'TMUX_PANE' in $env { $env.TMUX_TAB_UPDATE_PANE = $env.TMUX_PANE } }
 ]
 
 $env.config.hooks.pre_prompt = [
