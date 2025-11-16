@@ -1,22 +1,30 @@
 {
-  "gcs_bucket": "https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases",
-  "version": "2.0.34",
-  "sources": {
-    "x86_64-linux": {
-      "platform": "linux-x64",
-      "hash": "sha256-XTXKMNlCfGYC4UV9/Jk46qDmUzeSRNkzI5SZCU+u17E="
-    },
-    "aarch64-linux": {
-      "platform": "linux-arm64",
-      "hash": "sha256-/6H2d5CGRr1nYd0aZozMrPuqsOvVQQdPUa1rweOnf2c="
-    },
-    "x86_64-darwin": {
-      "platform": "darwin-x64",
-      "hash": "sha256-Bqw83CCKG0VIoVgifZlrAdyji6UKd0u15KCRmquIqGk="
-    },
-    "aarch64-darwin": {
-      "platform": "darwin-arm64",
-      "hash": "sha256-l//+yFvFRMHDr2WVkvCV8Ah1B+p0fWuT3+8VJZuTKRY="
+  "native": {
+    "version": "2.0.42",
+    "gcs_bucket": "https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases",
+    "sources": {
+      "x86_64-linux": {
+        "platform": "linux-x64",
+        "hash": "sha256-fWexKyXqJbocYbsounxrJP3JpKvsEE1G6iStvv0Uo/E="
+      },
+      "aarch64-linux": {
+        "platform": "linux-arm64",
+        "hash": "sha256-6HW374pxwJOls16xEJVVOvHd4LlNvffDg1IcHyAs+ZM="
+      },
+      "x86_64-darwin": {
+        "platform": "darwin-x64",
+        "hash": "sha256-u84utMPtS47Ma9qjcssST+pVL9ql4V8+xSVfHV6JfxU="
+      },
+      "aarch64-darwin": {
+        "platform": "darwin-arm64",
+        "hash": "sha256-s85AnS9uk4wkq8css7MSNsOsYXv72Sqkbgd6oY9noXc="
+      }
     }
+  },
+  "npm": {
+    "version": "2.0.42",
+    "hash": "sha256-7VbPO7ECC6yUQLppHSe26LlMOQX+NS+5Ryaz6cWIlVo=",
+    "npmDepsHash": "sha256-lM1BpuRSH7M5R2FoogMCoQLC+opgN5+LcwW2/5VF+ds=",
+    "packageLockJson": "{\n  \"name\": \"@anthropic-ai/claude-code\",\n  \"version\": \"2.0.42\",\n  \"lockfileVersion\": 3,\n  \"requires\": true,\n  \"packages\": {\n    \"\": {\n      \"name\": \"@anthropic-ai/claude-code\",\n      \"version\": \"2.0.42\",\n      \"license\": \"SEE LICENSE IN README.md\",\n      \"bin\": {\n        \"claude\": \"cli.js\"\n      },\n      \"engines\": {\n        \"node\": \">=18.0.0\"\n      },\n      \"optionalDependencies\": {\n        \"@img/sharp-darwin-arm64\": \"^0.33.5\",\n        \"@img/sharp-darwin-x64\": \"^0.33.5\",\n        \"@img/sharp-linux-arm\": \"^0.33.5\",\n        \"@img/sharp-linux-arm64\": \"^0.33.5\",\n        \"@img/sharp-linux-x64\": \"^0.33.5\",\n        \"@img/sharp-win32-x64\": \"^0.33.5\"\n      }\n    },\n    \"node_modules/@img/sharp-darwin-arm64\": {\n      \"version\": \"0.33.5\",\n      \"resolved\": \"https://registry.npmjs.org/@img/sharp-darwin-arm64/-/sharp-darwin-arm64-0.33.5.tgz\",\n      \"integrity\": \"sha512-UT4p+iz/2H4twwAoLCqfA9UH5pI6DggwKEGuaPy7nCVQ8ZsiY5PIcrRvD1DzuY3qYL07NtIQcWnBSY/heikIFQ==\",\n      \"cpu\": [\n        \"arm64\"\n      ],\n      \"license\": \"Apache-2.0\",\n      \"optional\": true,\n      \"os\": [\n        \"darwin\"\n      ],\n      \"engines\": {\n        \"node\": \"^18.17.0 || ^20.3.0 || >=21.0.0\"\n      },\n      \"funding\": {\n        \"url\": \"https://opencollective.com/libvips\"\n      },\n      \"optionalDependencies\": {\n        \"@img/sharp-libvips-darwin-arm64\": \"1.0.4\"\n      }\n    },\n    \"node_modules/@img/sharp-darwin-x64\": {\n      \"version\": \"0.33.5\",\n      \"resolved\": \"https://registry.npmjs.org/@img/sharp-darwin-x64/-/sharp-darwin-x64-0.33.5.tgz\",\n      \"integrity\": \"sha512-fyHac4jIc1ANYGRDxtiqelIbdWkIuQaI84Mv45KvGRRxSAa7o7d1ZKAOBaYbnepLC1WqxfpimdeWfvqqSGwR2Q==\",\n      \"cpu\": [\n        \"x64\"\n      ],\n      \"license\": \"Apache-2.0\",\n      \"optional\": true,\n      \"os\": [\n        \"darwin\"\n      ],\n      \"engines\": {\n        \"node\": \"^18.17.0 || ^20.3.0 || >=21.0.0\"\n      },\n      \"funding\": {\n        \"url\": \"https://opencollective.com/libvips\"\n      },\n      \"optionalDependencies\": {\n        \"@img/sharp-libvips-darwin-x64\": \"1.0.4\"\n      }\n    },\n    \"node_modules/@img/sharp-libvips-darwin-arm64\": {\n      \"version\": \"1.0.4\",\n      \"resolved\": \"https://registry.npmjs.org/@img/sharp-libvips-darwin-arm64/-/sharp-libvips-darwin-arm64-1.0.4.tgz\",\n      \"integrity\": \"sha512-XblONe153h0O2zuFfTAbQYAX2JhYmDHeWikp1LM9Hul9gVPjFY427k6dFEcOL72O01QxQsWi761svJ/ev9xEDg==\",\n      \"cpu\": [\n        \"arm64\"\n      ],\n      \"license\": \"LGPL-3.0-or-later\",\n      \"optional\": true,\n      \"os\": [\n        \"darwin\"\n      ],\n      \"funding\": {\n        \"url\": \"https://opencollective.com/libvips\"\n      }\n    },\n    \"node_modules/@img/sharp-libvips-darwin-x64\": {\n      \"version\": \"1.0.4\",\n      \"resolved\": \"https://registry.npmjs.org/@img/sharp-libvips-darwin-x64/-/sharp-libvips-darwin-x64-1.0.4.tgz\",\n      \"integrity\": \"sha512-xnGR8YuZYfJGmWPvmlunFaWJsb9T/AO2ykoP3Fz/0X5XV2aoYBPkX6xqCQvUTKKiLddarLaxpzNe+b1hjeWHAQ==\",\n      \"cpu\": [\n        \"x64\"\n      ],\n      \"license\": \"LGPL-3.0-or-later\",\n      \"optional\": true,\n      \"os\": [\n        \"darwin\"\n      ],\n      \"funding\": {\n        \"url\": \"https://opencollective.com/libvips\"\n      }\n    },\n    \"node_modules/@img/sharp-libvips-linux-arm\": {\n      \"version\": \"1.0.5\",\n      \"resolved\": \"https://registry.npmjs.org/@img/sharp-libvips-linux-arm/-/sharp-libvips-linux-arm-1.0.5.tgz\",\n      \"integrity\": \"sha512-gvcC4ACAOPRNATg/ov8/MnbxFDJqf/pDePbBnuBDcjsI8PssmjoKMAz4LtLaVi+OnSb5FK/yIOamqDwGmXW32g==\",\n      \"cpu\": [\n        \"arm\"\n      ],\n      \"license\": \"LGPL-3.0-or-later\",\n      \"optional\": true,\n      \"os\": [\n        \"linux\"\n      ],\n      \"funding\": {\n        \"url\": \"https://opencollective.com/libvips\"\n      }\n    },\n    \"node_modules/@img/sharp-libvips-linux-arm64\": {\n      \"version\": \"1.0.4\",\n      \"resolved\": \"https://registry.npmjs.org/@img/sharp-libvips-linux-arm64/-/sharp-libvips-linux-arm64-1.0.4.tgz\",\n      \"integrity\": \"sha512-9B+taZ8DlyyqzZQnoeIvDVR/2F4EbMepXMc/NdVbkzsJbzkUjhXv/70GQJ7tdLA4YJgNP25zukcxpX2/SueNrA==\",\n      \"cpu\": [\n        \"arm64\"\n      ],\n      \"license\": \"LGPL-3.0-or-later\",\n      \"optional\": true,\n      \"os\": [\n        \"linux\"\n      ],\n      \"funding\": {\n        \"url\": \"https://opencollective.com/libvips\"\n      }\n    },\n    \"node_modules/@img/sharp-libvips-linux-x64\": {\n      \"version\": \"1.0.4\",\n      \"resolved\": \"https://registry.npmjs.org/@img/sharp-libvips-linux-x64/-/sharp-libvips-linux-x64-1.0.4.tgz\",\n      \"integrity\": \"sha512-MmWmQ3iPFZr0Iev+BAgVMb3ZyC4KeFc3jFxnNbEPas60e1cIfevbtuyf9nDGIzOaW9PdnDciJm+wFFaTlj5xYw==\",\n      \"cpu\": [\n        \"x64\"\n      ],\n      \"license\": \"LGPL-3.0-or-later\",\n      \"optional\": true,\n      \"os\": [\n        \"linux\"\n      ],\n      \"funding\": {\n        \"url\": \"https://opencollective.com/libvips\"\n      }\n    },\n    \"node_modules/@img/sharp-linux-arm\": {\n      \"version\": \"0.33.5\",\n      \"resolved\": \"https://registry.npmjs.org/@img/sharp-linux-arm/-/sharp-linux-arm-0.33.5.tgz\",\n      \"integrity\": \"sha512-JTS1eldqZbJxjvKaAkxhZmBqPRGmxgu+qFKSInv8moZ2AmT5Yib3EQ1c6gp493HvrvV8QgdOXdyaIBrhvFhBMQ==\",\n      \"cpu\": [\n        \"arm\"\n      ],\n      \"license\": \"Apache-2.0\",\n      \"optional\": true,\n      \"os\": [\n        \"linux\"\n      ],\n      \"engines\": {\n        \"node\": \"^18.17.0 || ^20.3.0 || >=21.0.0\"\n      },\n      \"funding\": {\n        \"url\": \"https://opencollective.com/libvips\"\n      },\n      \"optionalDependencies\": {\n        \"@img/sharp-libvips-linux-arm\": \"1.0.5\"\n      }\n    },\n    \"node_modules/@img/sharp-linux-arm64\": {\n      \"version\": \"0.33.5\",\n      \"resolved\": \"https://registry.npmjs.org/@img/sharp-linux-arm64/-/sharp-linux-arm64-0.33.5.tgz\",\n      \"integrity\": \"sha512-JMVv+AMRyGOHtO1RFBiJy/MBsgz0x4AWrT6QoEVVTyh1E39TrCUpTRI7mx9VksGX4awWASxqCYLCV4wBZHAYxA==\",\n      \"cpu\": [\n        \"arm64\"\n      ],\n      \"license\": \"Apache-2.0\",\n      \"optional\": true,\n      \"os\": [\n        \"linux\"\n      ],\n      \"engines\": {\n        \"node\": \"^18.17.0 || ^20.3.0 || >=21.0.0\"\n      },\n      \"funding\": {\n        \"url\": \"https://opencollective.com/libvips\"\n      },\n      \"optionalDependencies\": {\n        \"@img/sharp-libvips-linux-arm64\": \"1.0.4\"\n      }\n    },\n    \"node_modules/@img/sharp-linux-x64\": {\n      \"version\": \"0.33.5\",\n      \"resolved\": \"https://registry.npmjs.org/@img/sharp-linux-x64/-/sharp-linux-x64-0.33.5.tgz\",\n      \"integrity\": \"sha512-opC+Ok5pRNAzuvq1AG0ar+1owsu842/Ab+4qvU879ippJBHvyY5n2mxF1izXqkPYlGuP/M556uh53jRLJmzTWA==\",\n      \"cpu\": [\n        \"x64\"\n      ],\n      \"license\": \"Apache-2.0\",\n      \"optional\": true,\n      \"os\": [\n        \"linux\"\n      ],\n      \"engines\": {\n        \"node\": \"^18.17.0 || ^20.3.0 || >=21.0.0\"\n      },\n      \"funding\": {\n        \"url\": \"https://opencollective.com/libvips\"\n      },\n      \"optionalDependencies\": {\n        \"@img/sharp-libvips-linux-x64\": \"1.0.4\"\n      }\n    },\n    \"node_modules/@img/sharp-win32-x64\": {\n      \"version\": \"0.33.5\",\n      \"resolved\": \"https://registry.npmjs.org/@img/sharp-win32-x64/-/sharp-win32-x64-0.33.5.tgz\",\n      \"integrity\": \"sha512-MpY/o8/8kj+EcnxwvrP4aTJSWw/aZ7JIGR4aBeZkZw5B7/Jn+tY9/VNwtcoGmdT7GfggGIU4kygOMSbYnOrAbg==\",\n      \"cpu\": [\n        \"x64\"\n      ],\n      \"license\": \"Apache-2.0 AND LGPL-3.0-or-later\",\n      \"optional\": true,\n      \"os\": [\n        \"win32\"\n      ],\n      \"engines\": {\n        \"node\": \"^18.17.0 || ^20.3.0 || >=21.0.0\"\n      },\n      \"funding\": {\n        \"url\": \"https://opencollective.com/libvips\"\n      }\n    }\n  }\n}\n"
   }
 }

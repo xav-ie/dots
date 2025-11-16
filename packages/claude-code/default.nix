@@ -5,12 +5,9 @@
   autoPatchelfHook,
 }:
 let
-  # Read version, bucket URL, and sources from sources.json
   # To update: run `claude-code-update` from the packages/claude-code directory
   sourcesData = builtins.fromJSON (builtins.readFile ./sources.json);
-  inherit (sourcesData) version;
-  inherit (sourcesData) gcs_bucket;
-  inherit (sourcesData) sources;
+  inherit (sourcesData.native) version gcs_bucket sources;
 
   # Get source info for current system
   sourceInfo =

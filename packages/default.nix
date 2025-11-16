@@ -19,6 +19,7 @@ rec {
   better-branch = pkgs.callPackage ./better-branch { inherit writeNuApplication; };
   cache-command = pkgs.callPackage ./cache-command { };
   claude-code = pkgs.callPackage ./claude-code { };
+  claude-code-npm = pkgs.callPackage ./claude-code/npm.nix { };
   claude-code-update = pkgs.callPackage ./claude-code/update.nix { inherit writeNuApplication; };
   ff = pkgs.callPackage ./ff { };
   git-amend = pkgs.callPackage ./git-amend { inherit writeNuApplication; };
