@@ -45,6 +45,8 @@
       # https://carapace-sh.github.io/carapace-bin/
       carapace.enable = true;
       carapace.package = pkgs.pkgs-bleeding.carapace;
+      claude.enable = true;
+      claude.nativeInstall = false;
       fzf.enable = true;
       jq.enable = true;
       jujutsu.enable = true;
