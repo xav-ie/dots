@@ -1,13 +1,20 @@
-{
-  writeShellApplication,
-  tmux,
-  git,
-}:
-writeShellApplication {
-  name = "tmux-tab-name-update";
-  runtimeInputs = [
-    tmux
-    git
-  ];
-  text = builtins.readFile ./tmux-tab-name-update.bash;
+{ pkgsStatic }:
+pkgsStatic.stdenv.mkDerivation {
+  pname = "tmux-tab-name-update";
+  version = "0.1.0";
+
+  src = ./tmux-tab-name-update.c;
+
+  dontUnpack = true;
+
+  buildPhase = ''
+    $CC -Os -fomit-frame-pointer -fno-asynchronous-unwind-tables \
+      -fno-stack-protector -ffunction-sections -fdata-sections \
+      -Wl,--gc-sections -static -s -o tmux-tab-name-update $src
+  '';
+
+  installPhase = ''
+    mkdir -p $out/bin
+    cp tmux-tab-name-update $out/bin/
+  '';
 }
