@@ -1,13 +1,13 @@
 {
-  writeNuApplication,
+  writeShellApplication,
   tmux,
   git,
 }:
-writeNuApplication {
+writeShellApplication {
   name = "tmux-tab-name-update";
   runtimeInputs = [
     tmux
     git
   ];
-  text = builtins.readFile ./tmux-tab-name-update.nu;
+  text = builtins.readFile ./tmux-tab-name-update.bash;
 }
