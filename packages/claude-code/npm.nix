@@ -2,7 +2,6 @@
   lib,
   buildNpmPackage,
   fetchurl,
-  jq,
   writeText,
 }:
 let
@@ -29,14 +28,11 @@ buildNpmPackage rec {
 
   inherit npmDepsHash;
 
-  nativeBuildInputs = [ jq ];
-
   postPatch = ''
     cp ${packageLockFile} package-lock.json
 
     # Remove the prepare script that blocks installation
-    jq 'del(.scripts.prepare)' package.json > package.json.tmp
-    mv package.json.tmp package.json
+    sed -i '/"prepare":/d' package.json
   '';
 
   dontNpmBuild = true;
