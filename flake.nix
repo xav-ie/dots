@@ -19,7 +19,6 @@
     nixpkgs-homeassistant.url = "github:nixos/nixpkgs/master";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.05";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    notification-cleaner.url = "github:xav-ie/notification-cleaner";
     nur.url = "github:nix-community/NUR";
     nuenv.url = "github:xav-ie/nuenv";
     plover-flake.url = "github:openstenoproject/plover-flake";
