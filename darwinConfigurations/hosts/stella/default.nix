@@ -42,12 +42,11 @@ in
         "ente"
         "firefox"
         "ghostty"
-        "little-snitch"
+        # "little-snitch"
         "loom"
         "microsoft-edge"
         "openvpn-connect"
         "protonvpn"
-        "raycast"
         "sf-symbols"
         "transmission"
         "vlc"
@@ -178,8 +177,6 @@ in
             ctrl + alt - s : yabai -m window --toggle sticky;\
               yabai -m window --toggle topmost;\
               yabai -m window --toggle pip
-
-            ctrl + alt - n : ${lib.getExe pkgs.notification-cleaner}
           '';
       };
       # a lot of this is taken from https://github.com/shaunsingh/nix-darwin-dotfiles/commit/a457a0b2d0e68d810e3503f84217db8698dd9533
@@ -426,19 +423,6 @@ in
               }
             ];
           };
-          "com.raycast.macos" = {
-            useHyperKeyIcon = true;
-            onboardingCompleted = true;
-            "NSStatusItem Visible raycastIcon" = false;
-            "emojiPicker_skinTone" = "standard";
-            raycastCurrentThemeId = "bundled-raycast-dark";
-            raycastCurrentThemeIdDarkAppearance = "bundled-raycast-dark";
-            raycastCurrentThemeIdLightAppearance = "bundled-raycast-light";
-            raycastShouldFollowSystemAppearance = 1;
-            showGettingStartedLink = 0;
-            navigationCommandStyleIdentifierKey = "vim";
-          };
-
         };
       };
 
