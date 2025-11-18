@@ -25,7 +25,7 @@
     plover-flake.url = "github:openstenoproject/plover-flake";
     quadlet-nix.url = "github:SEIAROTg/quadlet-nix";
     sops-nix.url = "github:Mic92/sops-nix";
-    virtual-headset.url = "path:/home/x/Projects/virtual-headset";
+    virtual-headset.url = "github:xav-ie/virtual-headset";
     systems.url = "github:nix-systems/default";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     waybar.url = "github:Alexays/waybar";
