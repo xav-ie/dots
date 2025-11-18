@@ -66,7 +66,6 @@
           deadnix # dead code linter
           delta
           dig
-          pkgs-bleeding.devenv # idk... I think I like plain flake approach
           fd
           # a wrapper around ffmpeg that adds a progress bar and ETA
           ffpb
