@@ -121,31 +121,45 @@
             nuenv = inputs.nuenv.lib;
           };
 
-          treefmt = {
-            programs = {
-              # buggy so far...
-              # nufmt.enable = true;
-              clang-format.enable = true;
-              clang-format.includes = [ "*.glsl" ];
-              deadnix.enable = true;
-              just.enable = true;
-              kdlfmt.enable = true;
-              nixfmt.enable = true;
-              prettier.enable = true;
-              ruff.enable = true;
-              shfmt.enable = true;
-              statix.enable = true;
-              swift-format.enable = true;
-              taplo.enable = true;
+          treefmt =
+            { options, ... }:
+            {
+              programs = {
+                # buggy so far...
+                # nufmt.enable = true;
+                clang-format = {
+                  enable = true;
+                  includes = options.programs.clang-format.includes.default ++ [ "*.glsl" ];
+                };
+                deadnix.enable = true;
+                just.enable = true;
+                kdlfmt.enable = true;
+                nixfmt.enable = true;
+                prettier = {
+                  enable = true;
+                  package = config.packages.prettier-with-toml;
+                  includes = options.programs.prettier.includes.default ++ [ "*.toml" ];
+                };
+                ruff.enable = true;
+                shfmt.enable = true;
+                statix.enable = true;
+                swift-format.enable = true;
+              };
+              settings = {
+                on-unmatched = "fatal";
+                excludes = [
+                  "*.conf"
+                  "*.patch"
+                  ".git-blame-ignore-revs"
+                  ".gitignore"
+                  "flake.lock"
+                  # formatter is borked
+                  "*.nu"
+                  # sops has its own formatter
+                  "secrets/*.yaml"
+                ];
+              };
             };
-            settings.global.excludes = [
-              # formatter is borked
-              "*.nu"
-              ".git-blame-ignore-revs"
-              # sops has its own formatter
-              "secrets/*.yaml"
-            ];
-          };
 
         };
 
