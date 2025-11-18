@@ -1,4 +1,5 @@
 {
+  inputs,
   pkgs,
   ...
 }:
@@ -125,7 +126,10 @@
           update-pr
           whisper-transcribe
           zellij-tab-name-update
-        ]);
+        ])
+        ++ [
+          inputs.nix-auto-follow.packages.${pkgs.system}.default
+        ];
 
       # The state version is required and should stay at the version you
       # originally installed.

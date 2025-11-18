@@ -13,6 +13,7 @@
     hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
     jj.url = "github:martinvonz/jj";
     morlana.url = "github:ryanccn/morlana";
+    nix-auto-follow.url = "github:xav-ie/nix-auto-follow/feat-consolidation";
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
     nixpkgs-bleeding.url = "github:nixos/nixpkgs/master";
@@ -111,7 +112,8 @@
                 inputs.morlana.packages.${system}.default
                 inputs.nix-darwin.packages.${system}.default
               ]
-              ++ [ config.treefmt.build.wrapper ];
+              ++ [ config.treefmt.build.wrapper ]
+              ++ [ inputs.nix-auto-follow.packages.${system}.default ];
 
             enterShell = ''
               printf "\n🐢 Use \e[32;40mjust\e[0m to build the system."

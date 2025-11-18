@@ -32,9 +32,9 @@ system:
 # fix the lockfile for auto-follow
 lock:
     nix flake lock
-    nix run /home/x/Projects/nix-auto-follow -- -i --consolidate
+    auto-follow -i --consolidate
     @sleep 1
-    nix run /home/x/Projects/nix-auto-follow -- -c
+    auto-follow -c
 
 # update all inputs
 update:
