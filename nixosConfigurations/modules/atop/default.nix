@@ -4,7 +4,7 @@
     programs.atop = {
       enable = true;
       atopgpu.enable = true;
-      netatop.enable = true;
+      netatop.enable = false;
       netatop.package = config.boot.kernelPackages.netatop.overrideAttrs (oldAttrs: {
         version = "3.2.2";
         src = pkgs.fetchurl {

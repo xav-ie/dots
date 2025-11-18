@@ -13,7 +13,7 @@
     nix-auto-follow.url = "github:xav-ie/nix-auto-follow/feat-consolidation";
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
-    nixpkgs-bleeding.url = "github:nixos/nixpkgs/master";
+    nixpkgs-bleeding.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-homeassistant.url = "github:nixos/nixpkgs/master";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.05";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
