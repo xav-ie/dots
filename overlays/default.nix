@@ -12,7 +12,9 @@ in
     ctpv = inputs.ctpv.packages.${final.system}.default;
     generate-kaomoji = inputs.generate-kaomoji.packages.${final.system}.default;
     pkgs-bleeding = import inputs.nixpkgs-bleeding {
-      inherit (final) system config;
+      inherit (final) system;
+      config.allowUnfree = true;
+      # Don't inherit cudaSupport/cudaCapabilities to avoid cache misses
     };
     pkgs-mine = toplevel.self.packages.${final.system};
     # Fix govee-local-api not setting the lights all the time
@@ -85,52 +87,56 @@ in
     writeNuApplication = final.nuenv.writeShellApplication;
     zjstatus = inputs.zjstatus.packages.${final.system}.default;
 
-    # Update subliminal to latest version (nixpkgs has 2.3.2, but 2.4.0 is available)
-    # Also fix missing dependencies: defusedxml, knowit, tomlkit
-    python3 = prev.python3.override {
-      packageOverrides = pself: psuper: {
-        # knowit doesn't exist in nixpkgs, so we need to add it
-        knowit = pself.buildPythonPackage rec {
-          pname = "knowit";
-          version = "0.5.11";
-          format = "pyproject";
+    # Custom subliminal 2.4.0 with fixed dependencies for mpv autosub
+    # This is a standalone package that doesn't affect the global python3
+    subliminal-custom = final.python3Packages.toPythonApplication (
+      final.python3.pkgs.buildPythonPackage rec {
+        pname = "subliminal";
+        version = "2.4.0";
+        format = "pyproject";
 
-          src = final.fetchPypi {
-            inherit pname version;
-            hash = "sha256-kEXWZAsb0A/MSfL36BmSzcbHJ5dn2xmdfztj4vUAe1g=";
-          };
-
-          nativeBuildInputs = with pself; [
-            poetry-core
-          ];
-
-          propagatedBuildInputs = with pself; [
-            babelfish
-            enzyme
-            pymediainfo
-            pyyaml
-            trakit
-          ];
+        src = final.fetchPypi {
+          inherit pname version;
+          hash = "sha256-c99tGUAWbvDizetPjWVaSv4QgtSB7AkK0qnmaxoWIfw=";
         };
 
-        subliminal = psuper.subliminal.overridePythonAttrs (_old: {
-          version = "2.4.0";
-          src = final.fetchPypi {
-            pname = "subliminal";
-            version = "2.4.0";
-            hash = "sha256-c99tGUAWbvDizetPjWVaSv4QgtSB7AkK0qnmaxoWIfw=";
-          };
+        nativeBuildInputs = with final.python3Packages; [
+          hatchling
+          hatch-vcs
+        ];
 
-          nativeBuildInputs = with pself; [
-            hatchling
-            hatch-vcs
-          ];
+        nativeCheckInputs = with final.python3Packages; [
+          colorama
+        ];
 
-          nativeCheckInputs = with pself; [
-            colorama
-          ];
+        # knowit doesn't exist in nixpkgs, so we need to create it inline
+        propagatedBuildInputs =
+          let
+            knowit = final.python3Packages.buildPythonPackage rec {
+              pname = "knowit";
+              version = "0.5.11";
+              format = "pyproject";
 
-          propagatedBuildInputs = with pself; [
+              src = final.fetchPypi {
+                inherit pname version;
+                hash = "sha256-kEXWZAsb0A/MSfL36BmSzcbHJ5dn2xmdfztj4vUAe1g=";
+              };
+
+              nativeBuildInputs = with final.python3Packages; [
+                poetry-core
+              ];
+
+              propagatedBuildInputs = with final.python3Packages; [
+                babelfish
+                enzyme
+                pymediainfo
+                pyyaml
+                trakit
+              ];
+            };
+          in
+          with final.python3Packages;
+          [
             babelfish
             beautifulsoup4
             chardet
@@ -147,9 +153,7 @@ in
             stevedore
             tomlkit
           ];
-        });
-      };
-    };
-    python3Packages = final.python3.pkgs;
+      }
+    );
   };
 }
