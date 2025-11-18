@@ -31,7 +31,7 @@
           xidel # like jq but for html and much more advanced.
           # prusa-slicer                # does not launch currently
           python312Packages."adblock"
-          python3Packages.subliminal # for mpv autosub script
+          subliminal-custom # for mpv autosub script (custom 2.4.0 with knowit)
           xdg-utils # xdg-open, xdg-mime, xdg-email, etc.
           wf-recorder
           # wtype # xdotool for wayland; used as part of rofi-rbw for typing

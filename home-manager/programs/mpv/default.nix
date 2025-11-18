@@ -7,6 +7,12 @@
 let
   cfg = config.programs.mpv;
   modernzPkg = pkgs.mpvScripts.modernz;
+  # Override autosub to use our custom subliminal with fixed dependencies
+  autosub-custom = pkgs.mpvScripts.autosub.override {
+    python3Packages = pkgs.python3.pkgs // {
+      subliminal = pkgs.subliminal-custom;
+    };
+  };
 in
 {
   options.programs.mpv = {
@@ -19,18 +25,19 @@ in
       enable = true;
 
       scripts =
-        with pkgs.mpvScripts;
-        [
+        (with pkgs.mpvScripts; [
           autoload # autoloads entries before and after current entry
           mpv-playlistmanager # resolves url titles, SHIFT+ENTER for playlist
           quality-menu # control video quality on the fly (Shift+F for video Alt+F for audio)
           skipsilence # increase playback speed during silence
-          autosub # automatically find and download subtitles
           thumbfast # thumbnailer
           modernz # more modern UI
+        ])
+        ++ [
+          autosub-custom # automatically find and download subtitles (uses custom subliminal 2.4.0)
         ]
         # extends mpv to handle magnet URLs
-        ++ lib.optional cfg.settings.enable-webtorrent webtorrent-mpv-hook
+        ++ lib.optional cfg.settings.enable-webtorrent pkgs.mpvScripts.webtorrent-mpv-hook
         ++
           # extends mpv to be controllable with MPD
           lib.optional pkgs.stdenv.isLinux pkgs.mpvScripts.mpris;
