@@ -1,5 +1,3 @@
-override_args := '--override-input devenv-root $"file+file://(pwd)/.devenv/root"'
-
 # `just system`
 default:
     @just system
@@ -62,7 +60,7 @@ build-stella:
 show:
     #!/usr/bin/env nu
     (nix run github:DeterminateSystems/nix-src/flake-schemas --
-      flake show . {{ override_args }})
+      flake show .)
 
 # flake check current system
 check:
@@ -70,11 +68,11 @@ check:
     match (uname | get kernel-name) {
       "Darwin" => {
         # https://github.com/NixOS/nix/issues/4265#issuecomment-2477954746
-        (nix flake check {{ override_args }}
+        (nix flake check
           --override-input systems github:nix-systems/aarch64-darwin)
       }
       "Linux" => {
-        nix flake check {{ override_args }}
+        nix flake check
       }
       _ => {
         error make { msg: "Unknown OS" }
@@ -85,5 +83,4 @@ check:
 check-all:
     #!/usr/bin/env nu
     (NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1
-      nix flake check --impure --all-systems
-      {{ override_args }})
+      nix flake check --impure --all-systems)

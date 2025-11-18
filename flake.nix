@@ -3,9 +3,6 @@
   inputs = {
     alacritty-theme.url = "github:alexghr/alacritty-theme.nix";
     ctpv.url = "github:xav-ie/ctpv-nix";
-    devenv.url = "github:cachix/devenv";
-    devenv-root.flake = false;
-    devenv-root.url = "file+file:///dev/null";
     flake-parts.url = "github:hercules-ci/flake-parts";
     generate-kaomoji.url = "github:xav-ie/generate-kaomoji";
     hardware.url = "github:nixos/nixos-hardware";
@@ -35,13 +32,10 @@
     # nix-colors.url = "github:misterio77/nix-colors";
 
     # transitive deps that are used by multiple inputs
-    cachix.url = "github:cachix/cachix/latest";
     crane.url = "github:ipetkov/crane";
     flake-compat.url = "github:edolstra/flake-compat";
     flake-utils.url = "github:numtide/flake-utils";
-    git-hooks.url = "github:cachix/git-hooks.nix";
     gitignore.url = "github:hercules-ci/gitignore.nix";
-    nix.url = "github:cachix/nix/devenv-2.30.6";
     nixpkgs-lib.url = "github:nix-community/nixpkgs.lib";
     rust-overlay.url = "github:oxalica/rust-overlay";
 
@@ -72,7 +66,6 @@
       systems = import inputs.systems;
 
       imports = [
-        inputs.devenv.flakeModule
         # inputs.git-hooks.flakeModule
         inputs.treefmt-nix.flakeModule
       ];
@@ -92,9 +85,7 @@
           #   overlays = builtins.attrValues self.overlays;
           # };
 
-          devenv.shells.default = {
-            containers = lib.mkForce { };
-
+          devShells.default = pkgs.mkShell {
             packages =
               (with pkgs; [
                 just
@@ -115,7 +106,7 @@
               ++ [ config.treefmt.build.wrapper ]
               ++ [ inputs.nix-auto-follow.packages.${system}.default ];
 
-            enterShell = ''
+            shellHook = ''
               printf "\n🐢 Use \e[32;40mjust\e[0m to build the system."
               printf "\n💄 Use \e[32;40mtreefmt\e[0m to format the files."
             '';
