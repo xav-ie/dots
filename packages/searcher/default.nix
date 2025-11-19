@@ -3,7 +3,7 @@
   fzf,
   jq,
   nix,
-  system,
+  stdenv,
 }:
 writeNuApplication {
   name = "searcher";
@@ -11,7 +11,8 @@ writeNuApplication {
     fzf
     jq
     nix
-    system
   ];
-  text = builtins.readFile ./searcher.nu;
+  text = builtins.replaceStrings [ "\${stdenv.hostPlatform.system}" ] [ stdenv.hostPlatform.system ] (
+    builtins.readFile ./searcher.nu
+  );
 }
