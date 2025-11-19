@@ -41,7 +41,8 @@ update:
 
 # update input nixpkgs-bleeding
 bleed:
-    nix flake lock --update-input nixpkgs-bleeding
+    nix flake update nixpkgs-bleeding
+    just lock
 
 # build praesidium nixos configuration with gc root (useful for remote builds on stella)
 build-praesidium:
