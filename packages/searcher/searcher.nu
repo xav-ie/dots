@@ -6,7 +6,7 @@ def main [...args: string] {
     $args = $args | skip 1
   }
   # idk why +1
-  let prefixLen = ($"* [0;1mlegacyPackages.${system}." | str length) + 1
+  let prefixLen = ($"* [0;1mlegacyPackages.${stdenv.hostPlatform.system}." | str length) + 1
   let len = if $repository == "nixpkgs" { $prefixLen } else { 0 }
 
   let selected = (

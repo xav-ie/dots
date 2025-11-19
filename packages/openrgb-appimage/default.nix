@@ -1,13 +1,13 @@
 {
   appimageTools,
   fetchurl,
-  system,
+  stdenv,
 }:
 let
   pname = "openrgb";
   release = "0.9";
   releaseCommit = "b5f46e3";
-  arch = builtins.elemAt (builtins.split "-" system) 0;
+  arch = builtins.elemAt (builtins.split "-" stdenv.hostPlatform.system) 0;
   version = builtins.concatStringsSep "_" [
     release
     arch
