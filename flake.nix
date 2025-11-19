@@ -23,7 +23,7 @@
     quadlet-nix.url = "github:SEIAROTg/quadlet-nix";
     sops-nix.url = "github:Mic92/sops-nix";
     virtual-headset.url = "github:xav-ie/virtual-headset";
-    systems.url = "github:nix-systems/default";
+    systems.url = "github:xav-ie/dots-systems";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     waybar.url = "github:Alexays/waybar";
     zjstatus.url = "github:dj95/zjstatus";
