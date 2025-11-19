@@ -11,9 +11,10 @@ let
   notify = pkgs.callPackage ./notify { inherit generate-kaomoji writeNuApplication; };
   base-ref = pkgs.callPackage ./base-ref { inherit writeNuApplication; };
   zenity-askpass = pkgs.callPackage ./zenity-askpass { inherit writeNuApplication; };
+  prettier-plugin-toml = pkgs.callPackage ./prettier-plugin-toml { };
 in
 rec {
-  inherit base-ref notify;
+  inherit base-ref notify prettier-plugin-toml;
   default = pkgs.callPackage ./cache-command { };
   apple-emoji-linux = pkgs.callPackage ./apple-emoji-linux { };
   better-branch = pkgs.callPackage ./better-branch { inherit writeNuApplication; };
@@ -33,7 +34,7 @@ rec {
   nix-repl = pkgs.callPackage ./nix-repl { inherit writeNuApplication; };
   nvim = pkgs.callPackage ./nvim { };
   pgpod = pkgs.callPackage ./pgpod { inherit writeNuApplication; };
-  prettier-with-toml = pkgs.callPackage ./prettier-with-toml { };
+  prettier-with-toml = pkgs.callPackage ./prettier-with-toml { inherit prettier-plugin-toml; };
   prs = pkgs.callPackage ./prs { inherit writeNuApplication; };
   pr-summary = pkgs.callPackage ./pr-summary { inherit base-ref writeNuApplication; };
   review = pkgs.callPackage ./review { inherit writeNuApplication; };

@@ -29,10 +29,11 @@ system:
 
 # fix the lockfile for auto-follow
 lock:
+    direnv deny
     nix flake lock
-    auto-follow -i --consolidate
-    @sleep 1
-    auto-follow -c
+    nix run ../nix-auto-follow -- -i --consolidate
+    nix run ../nix-auto-follow -- -c
+    direnv allow
 
 # update all inputs
 update:
