@@ -20,7 +20,11 @@ def get_descendants [parent_pid: int] {
 
 # Get relevant PIDs which would like SIGWINCH
 def get_pids [] {
-  (^tmux list-panes -a -F "#{pane_pid}:#{pane_tty}" | lines | where $it != "")
+  # Get all tmux server/client PIDs (without -x flag to match "tmux attach" etc)
+  let tmux_pids = (^pgrep tmux | lines | where $it != "" | each { |pid| ($pid | str trim | into int) })
+
+  # Get all pane processes
+  let pane_pids = (^tmux list-panes -a -F "#{pane_pid}:#{pane_tty}" | lines | where $it != "")
     | par-each -k { |entry|
       let parts = ($entry | split column ":" pane_pid pane_tty | get 0)
       let pane_pid = $parts.pane_pid | into int
@@ -39,7 +43,9 @@ def get_pids [] {
       ($tty_pids | append $descendant_pids)
     }
     | flatten
-    | uniq
+
+  # Combine tmux PIDs with pane PIDs
+  ($tmux_pids | append $pane_pids | uniq)
 }
 
 def get_theme [] {
@@ -49,6 +55,9 @@ def get_theme [] {
 def set_theme [theme, pids] {
   dconf write $THEME_PATH $theme
   try { kill --signal $SIGWINCH ...$pids }
+  # Schedule another SIGWINCH after 30 seconds to handle rate-limited case
+  let pids_str = ($pids | each { |p| $"($p)" } | str join " ")
+  sh -c $"\(sleep 31 && kill -28 ($pids_str) 2>/dev/null\) &"
 }
 
 def get_toggle [] {
