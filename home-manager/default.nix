@@ -65,6 +65,7 @@
           pstree
           curl
           deadnix # dead code linter
+          devenv
           delta
           dig
           fd
