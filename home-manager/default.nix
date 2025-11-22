@@ -34,6 +34,7 @@
     ./programs/transmission
     # ./programs/waybar
     # ./programs/wezterm
+    ./programs/wstunnel-ssh
     ./programs/yt-dlp
     # ./programs/zellij
     ./programs/zsh

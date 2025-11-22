@@ -1,0 +1,17 @@
+diff --git a/home-manager/programs/wstunnel-ssh/default.nix b/home-manager/programs/wstunnel-ssh/default.nix
+index ae75cb2..840a6f7 100644
+--- a/home-manager/programs/wstunnel-ssh/default.nix
++++ b/home-manager/programs/wstunnel-ssh/default.nix
+@@ -8,9 +8,10 @@
+     programs.ssh.matchBlocks = {
+       # SSH over WebSocket for accessing praesidium through hostile networks
+       "praesidium-ws" = {
+-        hostname = "praesidium";
++        hostname = "127.0.0.1";
+         # Use wstunnel client to connect through WebSocket on port 443
+-        proxyCommand = "wstunnel client --log-lvl=off -L stdio://%h:%p wss://ssh.lalala.casa";
++        # The tunnel connects to ssh.lalala.casa and forwards to SSH on the remote end
++        proxyCommand = "wstunnel client --log-lvl=off -L stdio://127.0.0.1:22 wss://ssh.lalala.casa";
+         user = "x";
+         identityFile = "~/.ssh/id_ed25519";
+       };

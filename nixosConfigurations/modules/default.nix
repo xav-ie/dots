@@ -27,6 +27,7 @@
     ./tailscale.nix
     ./traefik.nix
     ./udisks.nix
+    ./wstunnel.nix
     # not currently routing correctly...
     # ./twingate.nix
   ];

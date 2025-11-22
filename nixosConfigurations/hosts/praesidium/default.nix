@@ -423,6 +423,13 @@ in
           ClientAliveCountMax = 3;
         };
       };
+
+      # SSH over WebSocket for accessing SSH through hostile networks
+      wstunnel-ssh = {
+        enable = true;
+        # Default port 8080, SSH at 127.0.0.1:22
+      };
+
       pipewire = {
         enable = true;
         alsa.enable = true;

@@ -70,12 +70,28 @@ in
                   service = "${cfg.name}-service";
                   tls.certResolver = "cloudflare";
                 };
+              }
+              // lib.optionalAttrs config.services.wstunnel-ssh.enable {
+                ssh-websocket = {
+                  rule = "Host(`ssh.${baseDomain}`)";
+                  service = "ssh-websocket-service";
+                  tls.certResolver = "cloudflare";
+                };
               };
               services = {
                 home-assistant-service = {
                   loadBalancer = {
                     servers = [
                       { url = "http://127.0.0.1:8123"; }
+                    ];
+                  };
+                };
+              }
+              // lib.optionalAttrs config.services.wstunnel-ssh.enable {
+                ssh-websocket-service = {
+                  loadBalancer = {
+                    servers = [
+                      { url = "http://127.0.0.1:${toString config.services.wstunnel-ssh.port}"; }
                     ];
                   };
                 };
