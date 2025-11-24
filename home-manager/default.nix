@@ -119,6 +119,7 @@
           pr-summary
           review
           searcher
+          tmux-move-window
           tmux-tab-name-update
           toggle-theme
           uair-toggle-and-notify
