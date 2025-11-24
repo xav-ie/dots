@@ -333,6 +333,15 @@ in
 
     system = {
       activationScripts.postActivation.text = lib.mkAfter ''
+        # Relaunch org.nixos user agents to pick up new paths
+        launchGroup="gui/$(id -u)"
+        for plist in /Users/${config.defaultUser}/Library/LaunchAgents/org.nixos.*.plist; do
+          [ -e "$plist" ] || continue
+          label=$(basename "$plist" .plist)
+          echo "🍃 Relaunching $label"
+          launchctl kickstart -k "$launchGroup/$label" 2>/dev/null || true
+        done
+
         # https://github.com/koekeishiya/yabai/issues/2199#issuecomment-2031852290
         ${lib.getExe pkgs.yabai} -m rule --apply 2>/dev/null || true
 
