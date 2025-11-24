@@ -41,6 +41,7 @@
 
           set-option -g escape-time 5 # ms
           set-option -g history-limit 50000
+          set-option -g renumber-windows on
 
           bind-key -T copy-mode-vi v send-keys -X begin-selection
           bind-key -T copy-mode-vi y send-keys -X copy-selection
