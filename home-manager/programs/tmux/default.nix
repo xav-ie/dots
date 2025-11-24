@@ -29,6 +29,8 @@
 
           bind -n M-H previous-window
           bind -n M-L next-window
+          # insert window at specific index (shifts other windows)
+          bind . command-prompt -p "move window to:" "run-shell '${lib.getExe pkgs.pkgs-mine.tmux-move-window} %%'"
           # open next panes in same directory
           bind '"' split-window -c "#{pane_current_path}"
           bind 'j' split-window -c "#{pane_current_path}"
