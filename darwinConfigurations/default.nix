@@ -5,13 +5,13 @@ let
 in
 {
   # macbook air - m3
-  stella = darwinSystem {
+  nox = darwinSystem {
     inherit system;
     specialArgs = {
       inherit inputs toplevel;
     };
     modules = [
-      ./hosts/stella
+      ./hosts/nox
       ./modules
       ./modules/certs.nix
       ./modules/darwin-home-manager.nix
