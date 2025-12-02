@@ -156,8 +156,8 @@ in
             custom-shader-animation = ${if pkgs.stdenv.isDarwin then "true" else "false"}
 
             cursor-style-blink = false
-            background-opacity = ${if pkgs.stdenv.isDarwin then "0.80" else "1.0"}
-            background-blur-radius = ${if pkgs.stdenv.isDarwin then "20" else "0"}
+            background-opacity = 1.0
+            background-blur-radius = 0
             theme = light:${./theme-light.sh},dark:${./theme-dark.sh}
 
             font-family = "${fonts.configs.ghostty.font-family-1}"
