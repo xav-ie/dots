@@ -30,7 +30,7 @@ classDiagram
     lib: overlay setup,
     lib:  nix settings,
     lib:  utilities
-    darwinConfigurations: • stella
+    darwinConfigurations: • nox
     home-manager: hm modules and setup
     home-manager: for linux and mac
     nixosConfigurations: • praesidium

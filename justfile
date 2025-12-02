@@ -44,19 +44,19 @@ bleed:
     nix flake update nixpkgs-bleeding
     just lock
 
-# build praesidium nixos configuration with gc root (useful for remote builds on stella)
+# build praesidium nixos configuration with gc root (useful for remote builds on nox)
 build-praesidium:
     nix build .#nixosConfigurations.praesidium.config.system.build.toplevel --out-link result-praesidium
     @mkdir -p /nix/var/nix/gcroots/per-user/$USER
     @ln -sfn $(pwd)/result-praesidium /nix/var/nix/gcroots/per-user/$USER/result-praesidium
     @echo "Built and created GC root: /nix/var/nix/gcroots/per-user/$USER/result-praesidium -> $(pwd)/result-praesidium"
 
-# build stella darwin configuration with gc root (useful for remote builds on praesidium)
-build-stella:
-    nix build .#darwinConfigurations.stella.config.system.build.toplevel --out-link result-stella
+# build nox darwin configuration with gc root (useful for remote builds on praesidium)
+build-nox:
+    nix build .#darwinConfigurations.nox.config.system.build.toplevel --out-link result-stella
     @mkdir -p /nix/var/nix/gcroots/per-user/$USER
-    @ln -sfn $(pwd)/result-stella /nix/var/nix/gcroots/per-user/$USER/result-stella
-    @echo "Built and created GC root: /nix/var/nix/gcroots/per-user/$USER/result-stella -> $(pwd)/result-stella"
+    @ln -sfn $(pwd)/result-nox /nix/var/nix/gcroots/per-user/$USER/result-stella
+    @echo "Built and created GC root: /nix/var/nix/gcroots/per-user/$USER/result-nox -> $(pwd)/result-stella"
 
 # pretty-print outputs
 show:
