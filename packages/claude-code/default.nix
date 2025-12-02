@@ -3,6 +3,7 @@
   stdenv,
   fetchurl,
   autoPatchelfHook,
+  makeBinaryWrapper,
 }:
 let
   # To update: run `claude-code-update` from the packages/claude-code directory
@@ -28,12 +29,16 @@ stdenv.mkDerivation {
   # Stripping corrupts the bundled binary
   dontStrip = true;
 
-  nativeBuildInputs = lib.optionals stdenv.isLinux [ autoPatchelfHook ];
+  nativeBuildInputs = [ makeBinaryWrapper ] ++ lib.optionals stdenv.isLinux [ autoPatchelfHook ];
 
   installPhase = ''
     mkdir -p $out/bin
-    cp $src $out/bin/claude
-    chmod +x $out/bin/claude
+    cp $src $out/bin/.claude-wrapped
+    chmod +x $out/bin/.claude-wrapped
+    wrapProgram $out/bin/.claude-wrapped \
+      --set DISABLE_AUTOUPDATER 1 \
+      --argv0 claude
+    mv $out/bin/.claude-wrapped $out/bin/claude
   '';
 
   meta = with lib; {

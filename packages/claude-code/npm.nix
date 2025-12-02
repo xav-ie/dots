@@ -3,6 +3,7 @@
   buildNpmPackage,
   fetchurl,
   writeText,
+  makeBinaryWrapper,
 }:
 let
   # Read version and hashes from sources.json to stay in sync with native package
@@ -36,6 +37,13 @@ buildNpmPackage rec {
   '';
 
   dontNpmBuild = true;
+
+  nativeBuildInputs = [ makeBinaryWrapper ];
+
+  postFixup = ''
+    wrapProgram $out/bin/claude \
+      --set DISABLE_AUTOUPDATER 1
+  '';
 
   meta = with lib; {
     description = "Claude Code - Anthropic's AI-powered coding assistant CLI (NPM version)";
