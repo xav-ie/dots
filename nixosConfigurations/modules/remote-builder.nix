@@ -5,7 +5,7 @@
 
     buildMachines = [
       {
-        hostName = "stella";
+        hostName = "nox";
         system = "aarch64-darwin";
         systems = [
           "aarch64-darwin"
@@ -28,7 +28,7 @@
   };
 
   programs.ssh.extraConfig = ''
-    Host stella
+    Host nox
       ServerAliveInterval 60
       ServerAliveCountMax 10
       ControlMaster auto

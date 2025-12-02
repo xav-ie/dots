@@ -156,7 +156,7 @@ in
 
     environment.systemPackages = with pkgs; [
       nur.repos.dustinblackman.oatmeal
-      wakeonlan # For waking stella (macOS remote builder) over LAN
+      wakeonlan # For waking nox (macOS remote builder) over LAN
     ];
 
     environment.sessionVariables = { };
