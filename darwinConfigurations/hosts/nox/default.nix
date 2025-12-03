@@ -332,31 +332,62 @@ in
     users.users."${config.defaultUser}".home = "/Users/${config.defaultUser}";
 
     system = {
-      activationScripts.postActivation.text = lib.mkAfter ''
-        # Relaunch org.nixos user agents to pick up new paths
-        launchGroup="gui/$(id -u)"
-        for plist in /Users/${config.defaultUser}/Library/LaunchAgents/org.nixos.*.plist; do
-          [ -e "$plist" ] || continue
-          label=$(basename "$plist" .plist)
-          echo "🍃 Relaunching $label"
-          launchctl kickstart -k "$launchGroup/$label" 2>/dev/null || true
-        done
+      activationScripts.postActivation.text =
+        let
+          checkBootArgs = pkgs.writeNuApplication {
+            name = "checkBootArgs";
+            runtimeInputs = [ pkgs.coreutils ];
+            text = # nu
+              ''
+                def main [] {
+                  let new_boot_args = (nvram boot-args | complete | get stdout
+                                      | str substring ("boot-args" | str length)..
+                                      | str trim)
+                  let current_boot_args = (sysctl -n kern.bootargs)
 
-        # https://github.com/koekeishiya/yabai/issues/2199#issuecomment-2031852290
-        ${lib.getExe pkgs.yabai} -m rule --apply 2>/dev/null || true
+                  if $new_boot_args != $current_boot_args {
+                    [
+                      (ansi yellow_bold)
+                      "  Restart your computer to apply the new boot args."
+                      (ansi reset)
+                      (ansi yellow) "\ncurrent_boot_args: " (ansi reset)
+                      (ansi green) $current_boot_args (ansi reset)
+                      (ansi yellow) "\nnew_boot_args:     " (ansi reset)
+                      (ansi green) $new_boot_args (ansi reset)
+                    ] | str join "" | print -e $in
+                  }
+                }
+              '';
+          };
+        in
+        lib.mkAfter # sh
+          ''
+            # Relaunch org.nixos user agents to pick up new paths
+            launchGroup="gui/$(id -u)"
+            for plist in /Users/${config.defaultUser}/Library/LaunchAgents/org.nixos.*.plist; do
+              [ -e "$plist" ] || continue
+              label=$(basename "$plist" .plist)
+              echo "🍃 Relaunching $label"
+              launchctl kickstart -k "$launchGroup/$label" 2>/dev/null || true
+            done
 
-        # Power management for remote builder
-        # Battery: aggressive sleep for battery life
-        # AC: longer sleep (3 hours) for remote builds
-        pmset -b sleep 1   # Battery: sleep after 1 min
-        pmset -c sleep 180 # AC: sleep after 3 hours
+            # https://github.com/koekeishiya/yabai/issues/2199#issuecomment-2031852290
+            ${lib.getExe pkgs.yabai} -m rule --apply 2>/dev/null || true
 
-        # Enable wake for network access (SSH wake via HomePod sleep proxy)
-        # ttyskeepawake: keep system awake when SSH/tty sessions are active
-        # womp: wake on magic packet (wake for network access)
-        pmset -a ttyskeepawake 1
-        pmset -a womp 1
-      '';
+            # Power management for remote builder
+            # Battery: aggressive sleep for battery life
+            # AC: longer sleep (3 hours) for remote builds
+            pmset -b sleep 1   # Battery: sleep after 1 min
+            pmset -c sleep 180 # AC: sleep after 3 hours
+
+            # Enable wake for network access (SSH wake via HomePod sleep proxy)
+            # ttyskeepawake: keep system awake when SSH/tty sessions are active
+            # womp: wake on magic packet (wake for network access)
+            pmset -a ttyskeepawake 1
+            pmset -a womp 1
+
+            ${lib.getExe checkBootArgs}
+          '';
 
       defaults = {
         dock = {
@@ -435,12 +466,18 @@ in
         };
       };
 
-      primaryUser = config.defaultUser;
-
       keyboard = {
         enableKeyMapping = true;
         remapCapsLockToEscape = true;
       };
+
+      nvram.variables = {
+        # Allows compiling of arm64e binaries, which is necessary for os-level
+        # programs
+        "boot-args" = "-arm64e_preview_abi";
+      };
+
+      primaryUser = config.defaultUser;
 
       stateVersion = 5;
     };
