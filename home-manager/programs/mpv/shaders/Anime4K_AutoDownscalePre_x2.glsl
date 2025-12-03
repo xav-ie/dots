@@ -23,11 +23,13 @@
 
 // For more information, please refer to <https://unlicense.org>
 
-//! DESC Anime4K-v4.0-AutoDownscalePre-x2
-//! HOOK MAIN
-//! BIND HOOKED
-//! BIND NATIVE
-//! WHEN OUTPUT.w NATIVE.w / 2.0 < OUTPUT.h NATIVE.h / 2.0 < * OUTPUT.w NATIVE.w
-//! / 1.2 > OUTPUT.h NATIVE.h / 1.2 > * * WIDTH OUTPUT.w HEIGHT OUTPUT.h
+//!DESC Anime4K-v4.0-AutoDownscalePre-x2
+//!HOOK MAIN
+//!BIND HOOKED
+//!BIND NATIVE
+//!WHEN OUTPUT.w NATIVE.w / 2.0 < OUTPUT.h NATIVE.h / 2.0 < * OUTPUT.w NATIVE.w
+//!/ 1.2 > OUTPUT.h NATIVE.h / 1.2 > * * WIDTH OUTPUT.w HEIGHT OUTPUT.h
 
-vec4 hook() { return HOOKED_tex(HOOKED_pos); }
+vec4 hook() {
+  return HOOKED_tex(HOOKED_pos);
+}

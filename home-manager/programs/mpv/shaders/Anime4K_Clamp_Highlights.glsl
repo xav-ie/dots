@@ -21,21 +21,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//! DESC Anime4K-v4.0-De-Ring-Compute-Statistics
-//! HOOK MAIN
-//! BIND HOOKED
-//! SAVE STATSMAX
-//! COMPONENTS 1
+//!DESC Anime4K-v4.0-De-Ring-Compute-Statistics
+//!HOOK MAIN
+//!BIND HOOKED
+//!SAVE STATSMAX
+//!COMPONENTS 1
 
 #define KERNELSIZE 5 // Kernel size, must be an positive odd integer.
 #define KERNELHALFSIZE                                                         \
   2 // Half of the kernel size without remainder. Must be equal to
-    // trunc(KERNELSIZE/2).
+// trunc(KERNELSIZE/2).
 
-float get_luma(vec4 rgba) { return dot(vec4(0.299, 0.587, 0.114, 0.0), rgba); }
+float get_luma(vec4 rgba) {
+  return dot(vec4(0.299, 0.587, 0.114, 0.0), rgba);
+}
 
 vec4 hook() {
-
   float gmax = 0.0;
 
   for (int i = 0; i < KERNELSIZE; i++) {
@@ -47,20 +48,19 @@ vec4 hook() {
   return vec4(gmax, 0.0, 0.0, 0.0);
 }
 
-//! DESC Anime4K-v4.0-De-Ring-Compute-Statistics
-//! HOOK MAIN
-//! BIND HOOKED
-//! BIND STATSMAX
-//! SAVE STATSMAX
-//! COMPONENTS 1
+//!DESC Anime4K-v4.0-De-Ring-Compute-Statistics
+//!HOOK MAIN
+//!BIND HOOKED
+//!BIND STATSMAX
+//!SAVE STATSMAX
+//!COMPONENTS 1
 
 #define KERNELSIZE 5 // Kernel size, must be an positive odd integer.
 #define KERNELHALFSIZE                                                         \
   2 // Half of the kernel size without remainder. Must be equal to
-    // trunc(KERNELSIZE/2).
+// trunc(KERNELSIZE/2).
 
 vec4 hook() {
-
   float gmax = 0.0;
 
   for (int i = 0; i < KERNELSIZE; i++) {
@@ -72,15 +72,16 @@ vec4 hook() {
   return vec4(gmax, 0.0, 0.0, 0.0);
 }
 
-//! DESC Anime4K-v4.0-De-Ring-Clamp
-//! HOOK PREKERNEL
-//! BIND HOOKED
-//! BIND STATSMAX
+//!DESC Anime4K-v4.0-De-Ring-Clamp
+//!HOOK PREKERNEL
+//!BIND HOOKED
+//!BIND STATSMAX
 
-float get_luma(vec4 rgba) { return dot(vec4(0.299, 0.587, 0.114, 0.0), rgba); }
+float get_luma(vec4 rgba) {
+  return dot(vec4(0.299, 0.587, 0.114, 0.0), rgba);
+}
 
 vec4 hook() {
-
   float current_luma = get_luma(HOOKED_tex(HOOKED_pos));
   float new_luma = min(current_luma, STATSMAX_tex(HOOKED_pos).x);
 
