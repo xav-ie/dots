@@ -411,6 +411,9 @@ in
               pmset -a womp 1
 
               ${lib.getExe checkBootArgs}
+
+              # Activate user settings, somethimes takes a bit to fully apply
+              sudo -u ${config.defaultUser} /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
             '';
       };
 
