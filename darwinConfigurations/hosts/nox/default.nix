@@ -450,6 +450,16 @@ in
         };
 
         CustomUserPreferences = {
+          "com.apple.AppleMultitouchTrackpad" = {
+            Clicking = true;
+            HIDScrollZoomModifierMask = 262144; # Control key for zoom
+          };
+          "com.apple.driver.AppleBluetoothMultitouch.trackpad" = {
+            Clicking = true;
+          };
+          "com.apple.universalaccess" = {
+            closeViewScrollWheelToggle = true;
+          };
           "com.apple.AdLib" = {
             allowApplePersonalizedAdvertising = 0;
             allowIdentifierForAdvertising = 0;
