@@ -425,6 +425,19 @@
         "type": "github"
       }
     },
+    "glsl_analyzer": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1764781988,
+        "narHash": "sha256-lu5nPSgYPVo1G8O/ZrTT4v7yYIxIJJSSSczokWLfAOk=",
+        "path": "/Users/x/Projects/glsl_analyzer",
+        "type": "path"
+      },
+      "original": {
+        "path": "/Users/x/Projects/glsl_analyzer",
+        "type": "path"
+      }
+    },
     "hardware": {
       "locked": {
         "lastModified": 1758663926,
@@ -1560,6 +1573,7 @@
         "flake-utils": "flake-utils_2",
         "generate-kaomoji": "generate-kaomoji",
         "gitignore": "gitignore",
+        "glsl_analyzer": "glsl_analyzer",
         "hardware": "hardware",
         "home-manager": "home-manager",
         "homebrew-bundle": "homebrew-bundle",
