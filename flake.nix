@@ -48,6 +48,8 @@
     nixpkgs-lib-v1-merge.url = "github:nix-community/nixpkgs.lib/a73b9c743612e4244d865a2fdee11865283c04e6";
 
     # vendored
+    glsl_analyzer.flake = false;
+    glsl_analyzer.url = "path:/Users/x/Projects/glsl_analyzer";
     homebrew-bundle.flake = false;
     homebrew-bundle.url = "github:homebrew/homebrew-bundle";
     homebrew-cask.flake = false;
@@ -123,15 +125,49 @@
 
           treefmt =
             { options, ... }:
+            let
+              glsl_analyzer = pkgs.glsl_analyzer.overrideAttrs (_oldAttrs: {
+                src = inputs.glsl_analyzer;
+                nativeBuildInputs = [ pkgs.zig.hook ];
+                postPatch = ''
+                  substituteInPlace build.zig \
+                    --replace-fail 'b.run(&.{ "git", "describe", "--tags", "--always" })' '"dev"'
+                '';
+              });
+
+              # Custom GLSL formatter module
+              glslFormatterModule =
+                { mkFormatterModule, ... }:
+                {
+                  imports = [
+                    (mkFormatterModule {
+                      name = "glsl_analyzer";
+                      package = "glsl_analyzer";
+                      args = [
+                        "--tab-size=2"
+                        "--format"
+                      ];
+                      includes = [ "*.glsl" ];
+                    })
+                  ];
+                };
+            in
             {
+              imports = [ glslFormatterModule ];
+
               programs = {
                 # buggy so far...
                 # nufmt.enable = true;
                 clang-format = {
                   enable = true;
-                  includes = options.programs.clang-format.includes.default ++ [ "*.glsl" ];
+                  # Exclude GLSL files - they have special comment syntax that clang-format mangles
+                  excludes = [ "*.glsl" ];
                 };
                 deadnix.enable = true;
+                glsl_analyzer = {
+                  enable = true;
+                  package = glsl_analyzer;
+                };
                 just.enable = true;
                 kdlfmt.enable = true;
                 nixfmt.enable = true;
