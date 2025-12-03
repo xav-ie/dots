@@ -7,6 +7,11 @@
       systemPackages = [ pkgs.sops ];
     };
 
+    # Preserve SOPS_AGE_KEY_FILE when using sudo
+    security.sudo.extraConfig = ''
+      Defaults env_keep += "SOPS_AGE_KEY_FILE"
+    '';
+
     sops = {
       defaultSopsFile = ../../secrets/main.yaml;
       # TODO: what does not adding to the cache do?
