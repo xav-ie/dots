@@ -1,5 +1,7 @@
 // Calculate the squared length of a vector
-float length2(vec2 p) { return dot(p, p); }
+float length2(vec2 p) {
+  return dot(p, p);
+}
 
 // Generate some noise to scatter points
 float noise(vec2 p) {
@@ -19,8 +21,8 @@ float worley(vec2 p) {
 
 float fworley(vec2 p) {
   return sqrt(sqrt(sqrt(worley(p * 5.0 + 0.05 * iTime) *
-                        sqrt(worley(p * 50.0 + 0.12 + -0.1 * iTime)) *
-                        sqrt(sqrt(worley(p * -10.0 + 0.03 * iTime))))));
+          sqrt(worley(p * 50.0 + 0.12 + -0.1 * iTime)) *
+          sqrt(sqrt(worley(p * -10.0 + 0.03 * iTime))))));
 }
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord) {
@@ -42,8 +44,8 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
   } else {
     // Blend caustics with opacity where base is unpainted
     float effect_opacity =
-        0.5; // Adjust this value to control caustic visibility
+      0.5; // Adjust this value to control caustic visibility
     fragColor =
-        mix(terminalColor, vec4(blendedColor, terminalColor.a), effect_opacity);
+      mix(terminalColor, vec4(blendedColor, terminalColor.a), effect_opacity);
   }
 }
