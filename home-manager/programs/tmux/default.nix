@@ -45,11 +45,6 @@
           set-option -g history-limit 50000
           set-option -g renumber-windows on
 
-          bind-key -T copy-mode-vi v send-keys -X begin-selection
-          bind-key -T copy-mode-vi y send-keys -X copy-selection
-
-          unbind-key -n C-.
-          bind-key -n C-. send-keys C-.
           set -s set-clipboard on
           unbind r
           bind r command-prompt -I "#W" "rename-window '%%'"
@@ -62,10 +57,14 @@
 
           set-option -g status-style bg=default,fg=default
           set-option -g status-left " "
-          set-option -g status-right "#{?client_prefix, PREFIX ,}#{?pane_in_mode, COPY ,} #[fg=colour255,bg=colour238] #S #[default]"
-          set-option -g status-right "#{mode_indicator} #[fg=colour255,bg=colour238] #S #[default]"
+          set-option -g status-right "#{?client_prefix, PREFIX ,}#{?pane_in_mode, COPY ,}"
           set-option -g window-status-format "#[fg=colour244]#W#[default]"
           set-option -g window-status-current-format "#[bold]#W#[default]"
+
+          unbind-key -n C-.
+          bind-key -n C-. send-keys C-.
+          bind-key -T copy-mode-vi v send-keys -X begin-selection
+          bind-key -T copy-mode-vi y send-keys -X copy-selection
         '';
     };
   };
