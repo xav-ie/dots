@@ -13,6 +13,7 @@ in
     modules = [
       ./hosts/nox
       ./modules
+      ./modules/boot-args.nix
       ./modules/certs.nix
       ./modules/darwin-home-manager.nix
       ./modules/dnsmasq.nix
