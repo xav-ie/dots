@@ -42,6 +42,7 @@ in
         "ente"
         "firefox"
         "ghostty"
+        "google-chrome"
         # "little-snitch"
         "loom"
         "microsoft-edge"
