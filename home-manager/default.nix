@@ -117,5 +117,6 @@
         PATH = "$HOME/.config/scripts:$HOME/.npm/bin:$PATH";
       };
     };
+    xdg.enable = true;
   };
 }
