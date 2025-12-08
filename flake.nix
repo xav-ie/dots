@@ -194,6 +194,8 @@
                   "*.nu"
                   # sops has its own formatter
                   "secrets/*.yaml"
+                  # no standard formatter for AppleScript
+                  "*.scpt"
                 ];
               };
             };

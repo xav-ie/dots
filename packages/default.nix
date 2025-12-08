@@ -39,6 +39,7 @@ rec {
   pr-summary = pkgs.callPackage ./pr-summary { inherit base-ref writeNuApplication; };
   review = pkgs.callPackage ./review { inherit writeNuApplication; };
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
+  sketchybar-battery = pkgs.callPackage ./sketchybar-battery { inherit writeNuApplication; };
   tmux-move-window = pkgs.callPackage ./tmux-move-window { inherit writeNuApplication; };
   tmux-tab-name-update = pkgs.callPackage ./tmux-tab-name-update { };
   toggle-theme = pkgs.callPackage ./toggle-theme { inherit writeNuApplication; };

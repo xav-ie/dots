@@ -1,11 +1,7 @@
-# ~/.config/sketchybar/sketchybarrc.nu
-# This is a demo config to showcase some of the most important commands.
-# It is meant to be changed and configured, as it is intentionally kept sparse.
-# For a (much) more advanced configuration example see my dotfiles:
-# https://github.com/FelixKratz/dotfiles
+#!/usr/bin/env nu --stdin
 
-# $CONFIG_DIR is the directory where the currently loaded sketchybarrc is located
-let PLUGIN_DIR = "~/.config/sketchybar/plugins"
+source "~/.config/sketchybar/nix-settings.nu"
+let PLUGIN_DIR = "plugins"
 
 ##### Bar Appearance #####
 # Configuring the general appearance of the bar.
@@ -24,14 +20,18 @@ sketchybar --bar "position=top" "height=32" "blur_radius=30" "color=0x90000000"
 let default_props = [
   "padding_left=-10",
   "padding_right=-10",
-  $"icon.font=($env.SKETCHYBAR_ICON_FONT)",
-  $"label.font=($env.SKETCHYBAR_LABEL_FONT)",
+  $"icon.font=(get_icon_font)",
+  $"label.font=(get_label_font)",
   "icon.color=0xffffffff",
   "label.color=0xffffffff",
   "icon.padding_left=24",
   "icon.padding_right=2",
   "label.padding_left=4",
   "label.padding_right=4"
+  "label.background.height=24"
+  "icon.background.height=24"
+  "label.background.corner_radius=6"
+  "icon.background.corner_radius=6"
 ]
 sketchybar --default ...$default_props
 
@@ -43,17 +43,8 @@ sketchybar --bar "font_smoothing=on"
 # We add some regular items to the left side of the bar, where
 # only the properties deviating from the current defaults need to be set
 
-let front_app_props = [
-  "label.padding_left=4",
-  "label.padding_right=10",
-  "icon.background.drawing=on",
-  "display=active",
-  $"script=($PLUGIN_DIR)/front_app.nu",
-  "click_script=open -a 'Mission Control'"
-]
-
 (sketchybar --add item front_app left
-  --set front_app ...$front_app_props
+  --set front_app $"script=($PLUGIN_DIR)/front_app.nu"
   --subscribe front_app front_app_switched)
 
 ##### Adding Right Items #####
@@ -68,39 +59,36 @@ let front_app_props = [
 # https://felixkratz.github.io/SketchyBar/config/events
 
 # clock
-(sketchybar --add item clock right
-  --set clock "update_freq=30" $"script=($PLUGIN_DIR)/clock.nu")
+(sketchybar --add event clock_hover)
+(sketchybar --add item clock right --set clock $"script=($PLUGIN_DIR)/clock.nu")
+(sketchybar --add item clock_icon right --set clock_icon $"script=($PLUGIN_DIR)/clock_icon.nu")
 
-# Control Center,BentoBox
-(sketchybar --add alias "Control Center,BentoBox" right
-  --set "Control Center,BentoBox" "icon.padding_left=0" "padding_left=0" "padding_right=-20"
-  "click_script=osascript -e 'tell application \"System Events\" to tell process \"Control Center\" to perform action \"AXPress\" of menu bar item 2 of menu bar 1'")
-
-# Control Center,WiFi
+# wifi
+(sketchybar --add item wifi_background right --set wifi_background $"script=($PLUGIN_DIR)/wifi_background.nu")
 (sketchybar --add alias "Control Center,WiFi" right
-  --set "Control Center,WiFi" "icon.padding_left=4" "padding_left=0" "padding_right=-20"
-  "click_script=osascript -e 'tell application \"System Events\" to tell process \"Control Center\" to perform action \"AXPress\" of menu bar item 3 of menu bar 1'")
+  --set "Control Center,WiFi" $"script=($PLUGIN_DIR)/wifi.nu")
 
+# control center
+(sketchybar --add item control_center right
+  --set control_center $"script=($PLUGIN_DIR)/control_center.nu")
+
+(sketchybar --add event battery_change)
+(sketchybar --add event battery_hover)
 # battery
 (sketchybar --add item battery right
-  --set battery "update_freq=120" $"script=($PLUGIN_DIR)/battery.nu"
-  "click_script=osascript -e 'tell application \"System Events\" to tell process \"Control Center\" to perform action \"AXPress\" of menu bar item 4 of menu bar 1'"
-  --subscribe battery system_woke)
-
+  --set battery $"script=($PLUGIN_DIR)/battery.nu")
 # Control Center,Battery
 (sketchybar --add alias "Control Center,Battery" right
-  --set "Control Center,Battery" "icon.padding_left=4" "padding_left=0"
-  "click_script=osascript -e 'tell application \"System Events\" to tell process \"Control Center\" to perform action \"AXPress\" of menu bar item 4 of menu bar 1'")
+  --set "Control Center,Battery" $"script=($PLUGIN_DIR)/battery_icon.nu")
 
 # volume
+(sketchybar --add event volume_hover)
 (sketchybar --add item volume right
-  --set volume $"script=($PLUGIN_DIR)/volume.nu" "icon.padding_left=8" "padding_left=0"
-  --subscribe volume volume_change
-)
-
-# Twingate,Item-0
-(sketchybar --add alias "Twingate,Item-0" right
-  --set "Twingate,Item-0" "icon.padding_left=0" "padding_left=0" "padding_right=-20")
+  --set volume $"script=($PLUGIN_DIR)/volume.nu"
+  --subscribe volume volume_change)
+(sketchybar --add item volume_icon right
+  --set volume_icon $"script=($PLUGIN_DIR)/volume_icon.nu"
+  --subscribe volume_icon volume_change)
 
 ##### Force all scripts to run the first time (never do this in a script) #####
 sketchybar --update
