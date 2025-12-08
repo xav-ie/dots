@@ -5,19 +5,31 @@
 def main [] {
   let item_props = [
     "click_script=$HOME/.config/sketchybar/open_volume_control.scpt"
+    "icon.font.size=14.0"
     "icon.padding_left=0"
     "icon.padding_right=0"
-    "label.padding_left=29"
+    "icon.width=24"
+    "label.padding_left=0"
     "label.padding_right=0"
-    "label.width=67"
-    "padding_left=-29"
+    "padding_left=0"
     "padding_right=0"
   ];
 
   match $env.SENDER {
     "volume_change" => {
-      let volume = ($env.INFO | fill --alignment right --character ' ' --width 3)
-      sketchybar --set $"($env.NAME)" $"label=($volume)%"
+      let icon = match ($env.INFO | into int) {
+        # muted
+        0 => "􀊣 "
+        # no bars
+        1..24 => "􀊡"
+        # one bar
+        25..49 => "􀊥 "
+        # two bars
+        50..74 => "􀊧 "
+        # three bars
+        75..100 => "􀊩 "
+      }
+      sketchybar --set $"($env.NAME)" $"icon=($icon)"
     }
     "mouse.entered" => {
       sleep 4ms
@@ -26,15 +38,8 @@ def main [] {
     "mouse.exited" => {
       sketchybar --trigger "volume_hover" HOVERED=false
     }
-    "volume_hover" => {
-      if ($env.HOVERED == "true") {
-        sketchybar --set $"($env.NAME)" "label.background.color=0x33ffffff"
-      } else {
-        sketchybar --set $"($env.NAME)" "label.background.color=0x00000000"
-      }
-    }
     "forced" => {
-      sketchybar --set $"($env.NAME)" ...$item_props --subscribe $"($env.NAME)" mouse.entered mouse.exited volume_change volume_hover
+      sketchybar --set $"($env.NAME)" ...$item_props --subscribe $"($env.NAME)" mouse.entered mouse.exited volume_change
     }
   }
 }

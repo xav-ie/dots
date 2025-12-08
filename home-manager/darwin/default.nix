@@ -12,6 +12,7 @@
         fix-yabai
         focus-or-open-application
         move-pip
+        sketchybar-battery
       ];
     };
   };
