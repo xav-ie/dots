@@ -5,7 +5,7 @@
   ...
 }:
 let
-  inherit ((import ../../lib/fonts.nix { inherit lib pkgs; })) fonts;
+  inherit ((import ../../../lib/fonts.nix { inherit lib pkgs; })) fonts;
   cfg = config.gtk;
 in
 {

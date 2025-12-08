@@ -237,7 +237,7 @@ in
       };
     };
 
-    home.file.".config/git/config.default".source = gitIniFmt.generate "config.default" {
+    xdg.configFile."git/config.default".source = gitIniFmt.generate "config.default" {
       user = {
         name = config.programs.git.userName;
         email = "github@xav.ie";
@@ -245,7 +245,7 @@ in
       };
     };
 
-    home.file.".config/git/config.work".source = gitIniFmt.generate "config.work" {
+    xdg.configFile."git/config.work".source = gitIniFmt.generate "config.work" {
       user = {
         name = config.programs.git.userName;
         email = "xavier@outsmartly.com";

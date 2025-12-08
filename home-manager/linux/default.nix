@@ -1,18 +1,18 @@
 { lib, pkgs, ... }:
 {
   imports = [
-    ./gtk.nix
-    ../programs/cliphist
-    ../programs/dconf
-    ../programs/firefox
-    ../programs/nemo
-    ../programs/obs
-    ../programs/rofi
-    ../programs/sioyek
-    ../programs/swaynotificationcenter
-    ../programs/waybar
-    ./hyprland.nix
-    ./systemd.nix
+    ./cliphist
+    ./dconf
+    ./firefox
+    ./gtk
+    ./hyprland
+    ./nemo
+    ./obs
+    ./rofi
+    ./sioyek
+    ./swaynotificationcenter
+    ./systemd
+    ./waybar
   ];
 
   config = {

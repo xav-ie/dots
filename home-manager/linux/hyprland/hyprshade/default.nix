@@ -62,14 +62,14 @@ let
 
   brightnessFiles = lib.listToAttrs (
     map (level: {
-      name = ".config/hypr/shaders/${toString level}.glsl";
+      name = "hypr/shaders/${toString level}.glsl";
       value.text = brightnessShader level;
     }) brightnessLevels
   );
 
   rednessFiles = lib.listToAttrs (
     map (level: {
-      name = ".config/hypr/shaders/${toString level}-red.glsl";
+      name = "hypr/shaders/${toString level}-red.glsl";
       value.text = rednessShader level;
     }) brightnessLevels
   );
@@ -79,7 +79,7 @@ let
       map (
         redness:
         map (brightness: {
-          name = ".config/hypr/shaders/${toString redness}-red-${toString brightness}.glsl";
+          name = "hypr/shaders/${toString redness}-red-${toString brightness}.glsl";
           value.text = combinedShader redness brightness;
         }) brightnessLevels
       ) brightnessLevels
@@ -89,6 +89,6 @@ in
 {
   config = {
     home.packages = [ pkgs.hyprshade ];
-    home.file = brightnessFiles // rednessFiles // combinedFiles;
+    xdg.configFile = brightnessFiles // rednessFiles // combinedFiles;
   };
 }

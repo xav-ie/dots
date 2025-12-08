@@ -1,5 +1,4 @@
 {
-  config,
   inputs,
   lib,
   pkgs,
@@ -77,7 +76,7 @@ in
     };
 
     # Copy obs-shaderfilter examples to local config directory
-    home.file."${config.xdg.configHome}/obs-studio/shaders/".source =
+    xdg.configFile."obs-studio/shaders/".source =
       "${pkgs.obs-studio-plugins.obs-shaderfilter}/share/obs/data/obs-plugins/obs-shaderfilter/examples";
   };
 }

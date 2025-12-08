@@ -1,7 +1,7 @@
 { pkgs, ... }:
 {
   imports = [
-    ../programs/sketchybar
+    ./sketchybar
   ];
 
   config = {

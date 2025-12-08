@@ -188,6 +188,7 @@
                   "*.patch"
                   ".git-blame-ignore-revs"
                   ".gitignore"
+                  "**/.inputrc"
                   "flake.lock"
                   # formatter is borked
                   "*.nu"

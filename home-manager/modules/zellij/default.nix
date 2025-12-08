@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   ...
@@ -51,8 +52,9 @@ in
     programs.zellij = {
       enable = true;
     };
-    home.file.".config/zellij/config.kdl".source = ./config.kdl;
-    home.file.".config/zellij/layouts/default.kdl".text = ''
+    xdg.configFile."zellij/config.kdl".source =
+      config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/zellij/config.kdl";
+    xdg.configFile."zellij/layouts/default.kdl".text = ''
       layout {
           ${default_tab_template}
           tab
