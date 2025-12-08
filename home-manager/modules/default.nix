@@ -19,6 +19,7 @@ _: {
     ./neovide
     ./nushell
     ./nvim
+    ./ollama
     ./ov
     ./pijul
     ./plover
