@@ -1,7 +1,6 @@
 {
   pkgs,
   config,
-  lib,
   ...
 }:
 {
@@ -40,25 +39,19 @@
         nushellPlugins.gstat
       ];
 
-      # Source custom config file - this allows immediate updates while keeping shellAliases working
+      # Source custom files - this allows immediate updates while preserving module functionality
+      # (1) env.nu
+      extraEnv = ''
+        source ${config.dotFilesDir}/home-manager/modules/nushell/env.nu
+      '';
+      # (2) config.nu
       extraConfig = ''
         source ${config.dotFilesDir}/home-manager/modules/nushell/config.nu
       '';
-    };
-
-    # Use home.file with mkForce to override env.nu and login.nu only
-    # config.nu is handled via extraConfig sourcing to preserve shellAliases
-    home.file = {
-      # (1) The first file loaded is env.nu, which was historically used to
-      # override environment variables.
-      "${config.programs.nushell.configDir}/env.nu".source = lib.mkForce (
-        config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/nushell/env.nu"
-      );
-      # (4) login.nu runs commands or handles configuration that should only
-      # take place when Nushell is running as a login shell.
-      "${config.programs.nushell.configDir}/login.nu".source = lib.mkForce (
-        config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/nushell/login.nu"
-      );
+      # (4) login.nu
+      extraLogin = ''
+        source ${config.dotFilesDir}/home-manager/modules/nushell/login.nu
+      '';
     };
   };
 }
