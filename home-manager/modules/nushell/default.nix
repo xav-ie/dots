@@ -1,5 +1,7 @@
 {
   pkgs,
+  config,
+  lib,
   ...
 }:
 {
@@ -10,9 +12,6 @@
       enable = true;
       # https://www.nushell.sh/book/configuration.html#configuration-overview
       # (?) -> loading order
-      # (1) The first file loaded is env.nu, which was historically used to
-      # override environment variables.
-      envFile.source = ./env.nu;
       # However, the current "best-practice" recommendation is to set all
       # environment variables (and other configuration) using config.nu and the
       # autoload directories below.
@@ -34,18 +33,32 @@
         w = "watson";
         zj = "try { zellij attach } catch { zellij }";
       };
-      # (2) config.nu is typically used to override default Nushell settings,
-      # define (or import) custom commands, or run any other startup tasks.
-      configFile.source = ./config.nu;
       # (3) Files in $nu.vendor-autoload-dirs are loaded. These files can be
       # used for any purpose and are a convenient way to modularize a
       # configuration.
       plugins = with pkgs.pkgs-bleeding; [
         nushellPlugins.gstat
       ];
+
+      # Source custom config file - this allows immediate updates while keeping shellAliases working
+      extraConfig = ''
+        source ${config.dotFilesDir}/home-manager/modules/nushell/config.nu
+      '';
+    };
+
+    # Use home.file with mkForce to override env.nu and login.nu only
+    # config.nu is handled via extraConfig sourcing to preserve shellAliases
+    home.file = {
+      # (1) The first file loaded is env.nu, which was historically used to
+      # override environment variables.
+      "${config.programs.nushell.configDir}/env.nu".source = lib.mkForce (
+        config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/nushell/env.nu"
+      );
       # (4) login.nu runs commands or handles configuration that should only
       # take place when Nushell is running as a login shell.
-      loginFile.source = ./login.nu;
+      "${config.programs.nushell.configDir}/login.nu".source = lib.mkForce (
+        config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/nushell/login.nu"
+      );
     };
   };
 }

@@ -93,23 +93,25 @@ in
     # Link Anime4K shaders from nixpkgs package
     xdg.configFile =
       lib.listToAttrs (
-        map (shader: {
-          name = "mpv/shaders/${shader}";
-          value = {
-            source = "${pkgs.anime4k}/${shader}";
-          };
-        }) [
-          "Anime4K_Clamp_Highlights.glsl"
-          "Anime4K_Restore_CNN_VL.glsl"
-          "Anime4K_Restore_CNN_Soft_VL.glsl"
-          "Anime4K_Restore_CNN_M.glsl"
-          "Anime4K_Restore_CNN_Soft_M.glsl"
-          "Anime4K_Upscale_CNN_x2_VL.glsl"
-          "Anime4K_Upscale_CNN_x2_M.glsl"
-          "Anime4K_Upscale_Denoise_CNN_x2_VL.glsl"
-          "Anime4K_AutoDownscalePre_x2.glsl"
-          "Anime4K_AutoDownscalePre_x4.glsl"
-        ]
+        map
+          (shader: {
+            name = "mpv/shaders/${shader}";
+            value = {
+              source = "${pkgs.anime4k}/${shader}";
+            };
+          })
+          [
+            "Anime4K_Clamp_Highlights.glsl"
+            "Anime4K_Restore_CNN_VL.glsl"
+            "Anime4K_Restore_CNN_Soft_VL.glsl"
+            "Anime4K_Restore_CNN_M.glsl"
+            "Anime4K_Restore_CNN_Soft_M.glsl"
+            "Anime4K_Upscale_CNN_x2_VL.glsl"
+            "Anime4K_Upscale_CNN_x2_M.glsl"
+            "Anime4K_Upscale_Denoise_CNN_x2_VL.glsl"
+            "Anime4K_AutoDownscalePre_x2.glsl"
+            "Anime4K_AutoDownscalePre_x4.glsl"
+          ]
       )
       // {
         "mpv/script-opts/modernz.conf".source = ./modernz.conf;

@@ -12,7 +12,7 @@ let
 in
 {
   imports = [
-    ../programs/hyprshade
+    ./hyprshade
   ];
 
   options.programs.hyprland = {

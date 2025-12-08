@@ -6,37 +6,7 @@
 {
   imports = [
     ../lib/common/user.nix
-    ./dotfiles
-    ./programs/alacritty
-    ./programs/atuin
-    ./programs/bat
-    ./programs/claude
-    ./programs/direnv
-    ./programs/eza
-    # ./programs/firefox
-    ./programs/ghostty
-    ./programs/git
-    ./programs/gpg
-    ./programs/jujutsu
-    # ./programs/kitty
-    ./programs/pueue
-    ./programs/moar
-    ./programs/mpv
-    ./programs/neovide
-    ./programs/tmux
-    ./programs/nushell
-    ./programs/nvim
-    ./programs/ov
-    ./programs/plover
-    ./programs/ssh
-    ./programs/starship
-    # ./programs/swaynotificationcenter
-    ./programs/transmission
-    # ./programs/waybar
-    # ./programs/wezterm
-    ./programs/yt-dlp
-    # ./programs/zellij
-    ./programs/zsh
+    ./modules
   ];
 
   config = {
@@ -146,18 +116,6 @@
         PATH = "$HOME/.config/scripts:$HOME/.npm/bin:$PATH";
       };
     };
-    home.file.".inputrc".source =
-      builtins.toFile "inputrc" # readline
-        ''
-          set show-all-if-ambiguous on
-          set completion-ignore-case on
-          set mark-directories on
-          set mark-symlinked-directories on
-          set match-hidden-files off
-          set visible-stats on
-          set keymap vi
-          set editing-mode vi-insert
-        '';
     services = {
       ollama = {
         enable = true;
