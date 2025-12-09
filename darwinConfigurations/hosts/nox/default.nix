@@ -135,7 +135,7 @@ in
             applications = [
               "Ghostty"
               "Firefox"
-              "Zoom"
+              "zoom.us"
               "Finder"
               "Messages"
               "Chromium"
