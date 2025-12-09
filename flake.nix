@@ -49,7 +49,7 @@
 
     # vendored
     glsl_analyzer.flake = false;
-    glsl_analyzer.url = "path:/Users/x/Projects/glsl_analyzer";
+    glsl_analyzer.url = "github:xav-ie/glsl_analyzer/format";
     homebrew-bundle.flake = false;
     homebrew-bundle.url = "github:homebrew/homebrew-bundle";
     homebrew-cask.flake = false;
