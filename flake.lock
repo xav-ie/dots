@@ -428,14 +428,18 @@
     "glsl_analyzer": {
       "flake": false,
       "locked": {
-        "lastModified": 1764781988,
-        "narHash": "sha256-lu5nPSgYPVo1G8O/ZrTT4v7yYIxIJJSSSczokWLfAOk=",
-        "path": "/Users/x/Projects/glsl_analyzer",
-        "type": "path"
+        "lastModified": 1765315807,
+        "narHash": "sha256-kWr11kc4UfaSuYkuDGyiZcUAAqj1l9pu4PSKebnsMfo=",
+        "owner": "xav-ie",
+        "repo": "glsl_analyzer",
+        "rev": "6096a259b7a361a7d8a2c31380240cecfe05e7a8",
+        "type": "github"
       },
       "original": {
-        "path": "/Users/x/Projects/glsl_analyzer",
-        "type": "path"
+        "owner": "xav-ie",
+        "ref": "format",
+        "repo": "glsl_analyzer",
+        "type": "github"
       }
     },
     "hardware": {
