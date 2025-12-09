@@ -361,12 +361,11 @@ in
           lib.mkAfter # sh
             ''
               # Relaunch org.nixos user agents to pick up new paths
-              launchGroup="gui/$(id -u)"
               for plist in /Users/${config.defaultUser}/Library/LaunchAgents/org.nixos.*.plist; do
                 [ -e "$plist" ] || continue
                 label=$(basename "$plist" .plist)
                 echo "🍃 Relaunching $label"
-                launchctl kickstart -k "$launchGroup/$label" || true
+                sudo -u ${config.defaultUser} launchctl kickstart -k "gui/$(id -u ${config.defaultUser})/$label" || true
               done
 
               # https://github.com/koekeishiya/yabai/issues/2199#issuecomment-2031852290
