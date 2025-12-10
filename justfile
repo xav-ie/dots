@@ -31,8 +31,8 @@ system:
 lock:
     direnv deny
     nix flake lock
-    nix run ../nix-auto-follow -- -i --consolidate
-    nix run ../nix-auto-follow -- -c
+    nom-run ../nix-auto-follow -- -i --consolidate
+    nom-run ../nix-auto-follow -- -c
     direnv allow
 
 # update all inputs
@@ -46,14 +46,14 @@ bleed:
 
 # build praesidium nixos configuration with gc root (useful for remote builds on nox)
 build-praesidium:
-    nix build .#nixosConfigurations.praesidium.config.system.build.toplevel --out-link result-praesidium
+    nom build .#nixosConfigurations.praesidium.config.system.build.toplevel --out-link result-praesidium
     @mkdir -p /nix/var/nix/gcroots/per-user/$USER
     @ln -sfn $(pwd)/result-praesidium /nix/var/nix/gcroots/per-user/$USER/result-praesidium
     @echo "Built and created GC root: /nix/var/nix/gcroots/per-user/$USER/result-praesidium -> $(pwd)/result-praesidium"
 
 # build nox darwin configuration with gc root (useful for remote builds on praesidium)
 build-nox:
-    nix build .#darwinConfigurations.nox.config.system.build.toplevel --out-link result-nox
+    nom build .#darwinConfigurations.nox.config.system.build.toplevel --out-link result-nox
     @mkdir -p /nix/var/nix/gcroots/per-user/$USER
     @ln -sfn $(pwd)/result-nox /nix/var/nix/gcroots/per-user/$USER/result-nox
     @echo "Built and created GC root: /nix/var/nix/gcroots/per-user/$USER/result-nox -> $(pwd)/result-nox"
@@ -61,7 +61,7 @@ build-nox:
 # pretty-print outputs
 show:
     #!/usr/bin/env nu
-    (nix run github:DeterminateSystems/nix-src/flake-schemas --
+    (nom-run github:DeterminateSystems/nix-src/flake-schemas --
       flake show .)
 
 # flake check current system
