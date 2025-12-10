@@ -53,10 +53,10 @@ build-praesidium:
 
 # build nox darwin configuration with gc root (useful for remote builds on praesidium)
 build-nox:
-    nix build .#darwinConfigurations.nox.config.system.build.toplevel --out-link result-stella
+    nix build .#darwinConfigurations.nox.config.system.build.toplevel --out-link result-nox
     @mkdir -p /nix/var/nix/gcroots/per-user/$USER
-    @ln -sfn $(pwd)/result-nox /nix/var/nix/gcroots/per-user/$USER/result-stella
-    @echo "Built and created GC root: /nix/var/nix/gcroots/per-user/$USER/result-nox -> $(pwd)/result-stella"
+    @ln -sfn $(pwd)/result-nox /nix/var/nix/gcroots/per-user/$USER/result-nox
+    @echo "Built and created GC root: /nix/var/nix/gcroots/per-user/$USER/result-nox -> $(pwd)/result-nox"
 
 # pretty-print outputs
 show:
