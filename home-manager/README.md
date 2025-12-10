@@ -23,15 +23,13 @@ config:
     fontFamily: "monospace"
 ---
 classDiagram
-    home-manager: hm modules and setup for linux and mac
-    default: general modules
-    programs: program modules
+    home-manager: hm modules and setup for linux and darwin
+    modules: general modules
     linux: linux specific modules
-    mac: mac specific modules
-    home-manager <-- default
-    home-manager .. programs
+    darwin: darwin specific modules
+    home-manager <-- modules
     home-manager <-- linux
-    home-manager <-- mac
+    home-manager <-- darwin
 ```
 
 <div align="center">
