@@ -94,6 +94,10 @@
                 nix-diff
                 nushell
               ])
+              ++ (with config.packages; [
+                nom-run
+                nix-output-monitor
+              ])
               ++ lib.optionals pkgs.stdenv.isLinux (
                 with pkgs;
                 [
