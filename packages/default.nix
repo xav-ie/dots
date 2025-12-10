@@ -31,6 +31,7 @@ rec {
   jira-task-list = pkgs.callPackage ./jira-task-list { inherit cache-command; };
   localip = pkgs.callPackage ./localip { inherit writeNuApplication; };
   log-pr = pkgs.callPackage ./log-pr { inherit writeNuApplication; };
+  nix-output-monitor = pkgs.callPackage ./nix-output-monitor { };
   nix-repl = pkgs.callPackage ./nix-repl { inherit writeNuApplication; };
   nom-run = pkgs.callPackage ./nom-run { inherit writeNuApplication; };
   nvim = pkgs.callPackage ./nvim { };

@@ -87,22 +87,7 @@ in
     writeNuApplication = final.nuenv.writeShellApplication;
     zjstatus = inputs.zjstatus.packages.${final.system}.default;
 
-    # Custom nix-output-monitor with Nerd Font icons
-    # https://haseebmajid.dev/posts/2025-08-10-til-how-to-change-emojis-in-nh/
-    nix-output-monitor = prev.nix-output-monitor.overrideAttrs (old: {
-      postPatch = old.postPatch or "" + ''
-        substituteInPlace lib/NOM/Print.hs \
-          --replace 'down = "↓"' 'down = "\xf072e"' \
-          --replace 'up = "↑"' 'up = "\xf0737"' \
-          --replace 'clock = "⏱"' 'clock = "\xf520"' \
-          --replace 'running = "⏵"' 'running = "\xf04b"' \
-          --replace 'done = "✔"' 'done = "\xf00c"' \
-          --replace 'todo = "⏸"' 'todo = "\xf04d"' \
-          --replace 'warning = "⚠"' 'warning = "\xf071"' \
-          --replace 'average = "∅"' 'average = "\xf1da"' \
-          --replace 'bigsum = "∑"' 'bigsum = "\xf04a0"'
-      '';
-    });
+    inherit (final.pkgs-mine) nix-output-monitor;
 
     # Custom subliminal 2.4.0 with fixed dependencies for mpv autosub
     # This is a standalone package that doesn't affect the global python3
