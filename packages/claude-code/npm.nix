@@ -1,9 +1,12 @@
 {
   lib,
+  stdenv,
   buildNpmPackage,
   fetchurl,
   writeText,
   makeBinaryWrapper,
+  socat,
+  bubblewrap,
 }:
 let
   # Read version and hashes from sources.json to stay in sync with native package
@@ -42,7 +45,13 @@ buildNpmPackage rec {
 
   postFixup = ''
     wrapProgram $out/bin/claude \
-      --set DISABLE_AUTOUPDATER 1
+      --set DISABLE_AUTOUPDATER 1 \
+      ${lib.optionalString stdenv.isLinux "--prefix PATH : ${
+        lib.makeBinPath [
+          socat
+          bubblewrap
+        ]
+      }"}
   '';
 
   meta = with lib; {

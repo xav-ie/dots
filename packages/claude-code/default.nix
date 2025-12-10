@@ -4,6 +4,8 @@
   fetchurl,
   autoPatchelfHook,
   makeBinaryWrapper,
+  socat,
+  bubblewrap,
 }:
 let
   # To update: run `claude-code-update` from the packages/claude-code directory
@@ -37,6 +39,12 @@ stdenv.mkDerivation {
     chmod +x $out/bin/.claude-wrapped
     wrapProgram $out/bin/.claude-wrapped \
       --set DISABLE_AUTOUPDATER 1 \
+      ${lib.optionalString stdenv.isLinux "--prefix PATH : ${
+        lib.makeBinPath [
+          socat
+          bubblewrap
+        ]
+      }"} \
       --argv0 claude
     mv $out/bin/.claude-wrapped $out/bin/claude
   '';
