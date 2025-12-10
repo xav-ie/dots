@@ -165,15 +165,13 @@ def main [version?: string] {
 
   # Check if versions are unchanged
   let native_unchanged = ($existing != null and "native" in $existing and $existing.native.version == $ver)
-  let npm_unchanged = ($existing != null and "npm" in $existing and "version" in $existing.npm)
+  # Need to fetch current npm version to check if it's unchanged
+  let current_npm = (npm view @anthropic-ai/claude-code version | str trim)
+  let npm_unchanged = ($existing != null and "npm" in $existing and "version" in $existing.npm and $existing.npm.version == $current_npm)
 
   if ($native_unchanged and $npm_unchanged) {
-    # Still need to check npm version
-    let current_npm = (npm view @anthropic-ai/claude-code version | str trim)
-    if ($current_npm == $existing.npm.version) {
-      print "✅ Both versions unchanged - sources.json is already up to date"
-      return
-    }
+    print "✅ Both versions unchanged - sources.json is already up to date"
+    return
   }
 
   if $native_unchanged {
