@@ -105,7 +105,7 @@
                 inputs.morlana.packages.${system}.default
                 inputs.nix-darwin.packages.${system}.default
               ]
-              ++ [ config.treefmt.build.wrapper ]
+              ++ [ config.formatter ]
               ++ [ inputs.nix-auto-follow.packages.${system}.default ];
 
             shellHook = ''
