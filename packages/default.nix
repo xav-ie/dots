@@ -32,6 +32,7 @@ rec {
   localip = pkgs.callPackage ./localip { inherit writeNuApplication; };
   log-pr = pkgs.callPackage ./log-pr { inherit writeNuApplication; };
   nix-repl = pkgs.callPackage ./nix-repl { inherit writeNuApplication; };
+  nom-run = pkgs.callPackage ./nom-run { inherit writeNuApplication; };
   nvim = pkgs.callPackage ./nvim { };
   pgpod = pkgs.callPackage ./pgpod { inherit writeNuApplication; };
   prettier-with-toml = pkgs.callPackage ./prettier-with-toml { inherit prettier-plugin-toml; };

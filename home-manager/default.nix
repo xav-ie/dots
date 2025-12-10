@@ -85,6 +85,7 @@
           pgpod
           notify
           nix-repl
+          nom-run
           nvim
           prs
           pr-summary
