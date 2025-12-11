@@ -48,5 +48,12 @@ in
     home.file.".local/bin/claude" = {
       source = "${claude-package}/bin/claude";
     };
+
+    home.file.".claude/settings.json".source =
+      config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/settings.json";
+    home.file.".claude/notify.nu".source =
+      config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/notify.nu";
+    home.file.".claude/statusline.nu".source =
+      config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/statusline.nu";
   };
 }
