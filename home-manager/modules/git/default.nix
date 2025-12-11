@@ -252,5 +252,10 @@ in
         signingKey = "22420DD6C13E3EB7";
       };
     };
+
+    # Manage ~/.gitconfig to prevent manual edits from overriding home-manager config.
+    # Git reads ~/.gitconfig before ~/.config/git/config, so any settings there
+    # would take precedence over our conditional includes.
+    home.file.".gitconfig".text = "";
   };
 }
