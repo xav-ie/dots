@@ -1,11 +1,24 @@
-# originally adapted from:
-# https://github.com/segator/config/blob/dd34171470fea833fd9a3db44ba99e11d8f94ea3/nixos/host/vps1/tailscale.nix
 {
   config,
   lib,
   pkgs,
   ...
 }:
+let
+  tailscale-status = pkgs.writeNuApplication {
+    name = "tailscale-status";
+    runtimeInputs = [ pkgs.tailscale ];
+    text = # nu
+      ''
+        if ((tailscale status -json | from json | get BackendState) == "Running") {
+          print -e "Tailscale running."
+        } else {
+          print -e $"(ansi red)  Tailscale not running.(ansi reset)"
+          tailscale status | tee { print -e }
+        }
+      '';
+  };
+in
 {
   config = {
     environment.systemPackages = [ pkgs.tailscale ];
@@ -17,10 +30,8 @@
       allowedUDPPorts = [ config.services.tailscale.port ];
     };
 
-    sops.secrets."tailscale/token" = {
-      restartUnits = lib.optionals (lib.hasAttr "tailscale-autoconnect" config.systemd.services) [
-        "tailscale-autoconnect.service"
-      ];
-    };
+    system.activationScripts.tailscaleStatus = ''
+      ${lib.getExe tailscale-status}
+    '';
   };
 }
