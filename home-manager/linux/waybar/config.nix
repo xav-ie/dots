@@ -55,7 +55,7 @@ in
     "pulseaudio"
     "custom/virtual-headset"
     "custom/bluetooth"
-    "network"
+    "custom/network"
     "custom/notification"
     "clock"
   ];
@@ -155,21 +155,20 @@ in
     reverse-scrolling = true;
     on-click = lib.getExe pkgs.pavucontrol;
   };
-  # Disabled - causes Bluetooth discovery to turn on via D-Bus polling
-  #   bluetooth = {
-  #     format = "<span></span> {status}";
-  #     format-disabled = "";
-  #     format-connected = "<span></span>{num_connections}";
-  #     tooltip-format = "{device_enumerate}";
-  #     tooltip-format-enumerate-connected = "{device_alias}   {device_address}";
-  #   };
-  network = {
-    interface = "wlp4s0";
-    format = "{ifname}";
-    format-wifi = "<span> </span>{essid}";
-    format-ethernet = "{ipaddr}/{cidr} ";
-    format-disconnected = "<span>󰖪 </span>No Network";
-    tooltip-format-wifi = "{essid} ({signalStrength}%) ";
+  "custom/network" = {
+    format = "{}";
+    interval = 5;
+    return-type = "json";
+    exec = lib.getExe (
+      pkgs.writeNuApplication {
+        name = "waybar-network-status";
+        runtimeInputs = with pkgs; [
+          iproute2
+          wirelesstools
+        ];
+        text = builtins.readFile ./waybar-network-status.nu;
+      }
+    );
   };
   "custom/pomodoro" = {
     format = "{}";
@@ -204,24 +203,7 @@ in
           util-linux
           bluez
         ];
-        text = # nu
-          ''
-            let blocked = (rfkill list bluetooth | lines | find "Soft blocked" | str trim | split column ": " | get column2.0 | ansi strip)
-
-            if $blocked == "yes" {
-              print '{"text": "<span>󰂲 </span>", "tooltip": "Bluetooth disabled\nClick to enable"}'
-            } else {
-              let connected = (bluetoothctl devices Connected | lines | parse "Device {mac} {name}" | length)
-              let devices = (bluetoothctl devices Connected | lines | parse "Device {mac} {name}" | each { |dev| $"($dev.name)   ($dev.mac)" } | str join "\n")
-
-              if $connected > 0 {
-                let tooltip = if ($devices | is-empty) { "Connected devices" } else { $devices }
-                print $'{"text": "<span> </span>", "tooltip": "($tooltip)\nClick to disable"}'
-              } else {
-                print '{"text": "<span> </span>", "tooltip": "No devices connected\nClick to disable"}'
-              }
-            }
-          '';
+        text = builtins.readFile ./waybar-bluetooth-status.nu;
       }
     );
     on-click = lib.getExe (
