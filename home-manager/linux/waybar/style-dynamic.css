@@ -1,0 +1,142 @@
+window#waybar {
+  background: transparent;
+}
+
+/*this is the general box holding all modules*/
+window#waybar > box {
+}
+
+/*shift down these modules, fixes awkward text too close to top*/
+#clock,
+#custom-pomodoro,
+#custom-virtual-headset,
+#custom-network,
+#bluetooth,
+#custom-bluetooth,
+#pulseaudio,
+#cava,
+#workspaces,
+#custom-arch {
+  padding-top: 4px;
+  padding-bottom: 2px;
+}
+
+/* left joined */
+#backlight,
+#bluetooth,
+#custom-bluetooth,
+#cava {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  padding-right: 3px;
+  margin-right: 0;
+  border-right: none;
+}
+
+/* middle joined */
+#pulseaudio {
+  border-radius: 0;
+  padding-left: 3px;
+  padding-right: 3px;
+  margin-right: 0;
+  border-left: none;
+  border-right: none;
+}
+
+/* right joined */
+#custom-virtual-headset,
+#custom-network
+/* , #clock */ {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  padding-left: 3px;
+  border-left: none;
+}
+
+/* CUSTOM OVERRIDES/FIXES */
+/* fix right most module having a margin right */
+#clock {
+  margin-right: 0;
+}
+
+/*shift to bottom*/
+#cava {
+  padding-top: 6px;
+  padding-bottom: 0px;
+}
+
+/* buttons come with their own padding */
+#workspaces {
+  padding-left: 3px;
+  padding-right: 3px;
+}
+
+#workspaces button {
+  border: none;
+  color: white;
+  padding: 0;
+  padding-left: 3px;
+  padding-right: 6px;
+  border-radius: 4px;
+}
+#workspaces button:hover {
+  background: rgba(255, 255, 255, 0.5);
+  border: none;
+}
+
+#custom-notification {
+  /*should be inherited, so no change*/
+  padding-left: 8px;
+}
+/* no notifications */
+#custom-notification.none {
+  padding-right: 10px;
+}
+/* decrease padding to try and mantain width when notification icon active */
+#custom-notification.notification {
+  padding-right: 3px; /* a relative change of 7px */
+}
+
+/*no notifications in dnd. trying to make it so toggling dnd does not cause shift, too*/
+#custom-notification.dnd-none {
+  padding-left: 5px;
+  padding-right: 13px;
+}
+/*
+* dnd with notification icon to try and maintain position with notification active;
+* it should be the same relative diferrence between .none and .notification padding right */
+#custom-notification.dnd-notification {
+  padding-right: 6px;
+  /* but also include the dnd icon size spacing fix...*/
+  padding-left: 5px;
+}
+/*
+* so all of the above perfectly mantain the notification module width!
+* the only bad thing is the actual notification dot thing shift between dnd and normal,
+* but I guess that is okay for now */
+
+/*more spacing fixes*/
+#custom-arch {
+  padding-left: 6px;
+  padding-right: 13px;
+}
+
+/* make it more visible people can hear me */
+@keyframes pulse {
+  0% {
+    text-shadow: 0px 0px 4px rgba(255, 200, 200, 0.25);
+    color: rgba(255, 150, 150, 1);
+  }
+  50% {
+    text-shadow: 0px 0px 8px rgba(255, 200, 200, 1);
+    color: rgba(255, 50, 50, 1);
+  }
+  100% {
+    text-shadow: 0px 0px 4px rgba(255, 200, 200, 0.25);
+    color: rgba(255, 150, 150, 1);
+  }
+}
+
+#custom-virtual-headset.unmuted {
+  animation: pulse 2s ease-in-out infinite;
+}
