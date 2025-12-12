@@ -1,4 +1,4 @@
-#!/usr/bin/env nu --stdin
+#!/usr/bin/env -S nu --stdin
 
 def main [] {
   let input = $in | from json
