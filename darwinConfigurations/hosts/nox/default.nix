@@ -49,6 +49,7 @@ in
         "openvpn-connect"
         "protonvpn"
         "sf-symbols"
+        "signal"
         "transmission"
         "vlc"
         "zoom"
