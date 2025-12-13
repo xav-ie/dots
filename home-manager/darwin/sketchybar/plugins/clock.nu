@@ -1,10 +1,8 @@
 #!/usr/bin/env nu --stdin
 
-# The $NAME variable is passed from sketchybar and holds the name of
-# the item invoking this script:
-# https://felixkratz.github.io/SketchyBar/config/events#events-and-scripting
-def main [] {
+use "../hover.nu" *
 
+def main [] {
   let label = (date now | format date "%a %b %-d %-I:%M%p")
   let item_props = [
     "click_script=$HOME/.config/sketchybar/select_control_center.nu \"Clock\""
@@ -21,12 +19,10 @@ def main [] {
       sketchybar --set $"($env.NAME)" ...$item_props --subscribe $"($env.NAME)" mouse.entered mouse.exited clock_hover
     }
     "mouse.entered" => {
-      # ensure this state "wins"
-      sleep 1ms
-      sketchybar --trigger "clock_hover" HOVERED=true
+      hover_item "clock"
     }
     "mouse.exited" => {
-      sketchybar --trigger "clock_hover" HOVERED=false
+      unhover_item "clock"
     }
     "clock_hover" => {
       if ($env.HOVERED == "true") {

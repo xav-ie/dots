@@ -1,5 +1,7 @@
 #!/usr/bin/env nu --stdin
 
+use "../hover.nu" *
+
 def main [] {
    let item_props = [
     "label.padding_left=4"
@@ -15,10 +17,10 @@ def main [] {
       sketchybar --set $"($env.NAME)" $"label=($env.INFO)" $"icon.background.image=app.($env.INFO)"
     }
     "mouse.entered" => {
-      sketchybar --trigger "front_app_hover" HOVERED=true
+      hover_item "front_app"
     }
     "mouse.exited" => {
-      sketchybar --trigger "front_app_hover" HOVERED=false
+      unhover_item "front_app"
     }
     "front_app_hover" => {
       if ($env.HOVERED == "true") {
@@ -29,12 +31,7 @@ def main [] {
     }
     "mouse.exited.global" => {
       sleep 2ms
-      sketchybar --trigger "battery_hover" HOVERED=false
-      sketchybar --trigger "clock_hover" HOVERED=false
-      sketchybar --trigger "control_center_hover" HOVERED=false
-      sketchybar --trigger "front_app_hover" HOVERED=false
-      sketchybar --trigger "volume_hover" HOVERED=false
-      sketchybar --trigger "wifi_hover" HOVERED=false
+      unhover_all
     }
     "forced" => {
       sketchybar --set $"($env.NAME)" ...$item_props --subscribe $"($env.NAME)" mouse.entered mouse.exited front_app_hover

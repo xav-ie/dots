@@ -1,5 +1,7 @@
 #!/usr/bin/env nu --stdin
 
+use "../hover.nu" *
+
 def main [] {
   let item_props = [
     "click_script=$HOME/.config/sketchybar/select_control_center.nu \"Battery\""
@@ -25,11 +27,10 @@ def main [] {
       sketchybar --set $"($env.NAME)" $"label=($env.BATTERY | fill --alignment right --character ' ' --width 3)%"
     }
     "mouse.entered" => {
-      sleep 1ms
-      sketchybar --trigger "battery_hover" HOVERED=true
+      hover_item "battery"
     }
     "mouse.exited" => {
-      sketchybar --trigger "battery_hover" HOVERED=false
+      unhover_item "battery"
     }
     "battery_hover" => {
       if ($env.HOVERED == "true") {

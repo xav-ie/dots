@@ -1,5 +1,7 @@
 #!/usr/bin/env nu --stdin
 
+use "../hover.nu" *
+
 def main [] {
   let item_props = [
     "click_script=$HOME/.config/sketchybar/select_control_center.nu \"Wi-Fi\""
@@ -13,10 +15,10 @@ def main [] {
 
   match $env.SENDER {
     "mouse.entered" => {
-      sketchybar --trigger "wifi_hover" HOVERED=true
+      hover_item "wifi"
     }
     "mouse.exited" => {
-      sketchybar --trigger "wifi_hover" HOVERED=false
+      unhover_item "wifi"
     }
     "wifi_hover" => {
       if ($env.HOVERED == "true") {
