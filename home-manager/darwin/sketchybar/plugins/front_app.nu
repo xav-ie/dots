@@ -15,13 +15,29 @@ def main [] {
       sketchybar --set $"($env.NAME)" $"label=($env.INFO)" $"icon.background.image=app.($env.INFO)"
     }
     "mouse.entered" => {
-      sketchybar --set $"($env.NAME)" "label.background.color=0x33ffffff"
+      sketchybar --trigger "front_app_hover" HOVERED=true
     }
     "mouse.exited" => {
-      sketchybar --set $"($env.NAME)" "label.background.color=0x00000000"
+      sketchybar --trigger "front_app_hover" HOVERED=false
+    }
+    "front_app_hover" => {
+      if ($env.HOVERED == "true") {
+        sketchybar --set $"($env.NAME)" "label.background.color=0x33ffffff"
+      } else {
+        sketchybar --set $"($env.NAME)" "label.background.color=0x00000000"
+      }
+    }
+    "mouse.exited.global" => {
+      sleep 2ms
+      sketchybar --trigger "battery_hover" HOVERED=false
+      sketchybar --trigger "clock_hover" HOVERED=false
+      sketchybar --trigger "control_center_hover" HOVERED=false
+      sketchybar --trigger "front_app_hover" HOVERED=false
+      sketchybar --trigger "volume_hover" HOVERED=false
+      sketchybar --trigger "wifi_hover" HOVERED=false
     }
     "forced" => {
-      sketchybar --set $"($env.NAME)" ...$item_props --subscribe $"($env.NAME)" mouse.entered mouse.exited
+      sketchybar --set $"($env.NAME)" ...$item_props --subscribe $"($env.NAME)" mouse.entered mouse.exited front_app_hover
     }
   }
 }
