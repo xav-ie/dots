@@ -40,6 +40,8 @@ in
         config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/darwin/sketchybar/open_volume_control.scpt";
       "sketchybar/select_control_center.nu".source =
         config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/darwin/sketchybar/select_control_center.nu";
+      "sketchybar/hover.nu".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/darwin/sketchybar/hover.nu";
 
       "sketchybar/plugins/battery.nu".source =
         config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/darwin/sketchybar/plugins/battery.nu";
