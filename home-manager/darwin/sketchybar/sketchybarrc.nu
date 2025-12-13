@@ -42,10 +42,10 @@ sketchybar --bar "font_smoothing=on"
 ##### Adding Left Items #####
 # We add some regular items to the left side of the bar, where
 # only the properties deviating from the current defaults need to be set
-
+(sketchybar --add event front_app_hover)
 (sketchybar --add item front_app left
   --set front_app $"script=($PLUGIN_DIR)/front_app.nu"
-  --subscribe front_app front_app_switched)
+  --subscribe front_app front_app_switched mouse.exited.global)
 
 ##### Adding Right Items #####
 # In the same way as the left items we can add items to the right side.
@@ -64,11 +64,13 @@ sketchybar --bar "font_smoothing=on"
 (sketchybar --add item clock_icon right --set clock_icon $"script=($PLUGIN_DIR)/clock_icon.nu")
 
 # wifi
+(sketchybar --add event wifi_hover)
 (sketchybar --add item wifi_background right --set wifi_background $"script=($PLUGIN_DIR)/wifi_background.nu")
 (sketchybar --add alias "Control Center,WiFi" right
   --set "Control Center,WiFi" $"script=($PLUGIN_DIR)/wifi.nu")
 
 # control center
+(sketchybar --add event control_center_hover)
 (sketchybar --add item control_center right
   --set control_center $"script=($PLUGIN_DIR)/control_center.nu")
 
