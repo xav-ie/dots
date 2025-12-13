@@ -24,7 +24,7 @@ def main [] {
       sketchybar --set $"($env.NAME)" $"alias.update_freq=0"
     }
     "mouse.entered" => {
-      sleep 4ms
+      sleep 1ms
       sketchybar --trigger "battery_hover" HOVERED=true
     }
     "mouse.exited" => {

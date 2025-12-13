@@ -32,7 +32,7 @@ def main [] {
       sketchybar --set $"($env.NAME)" $"icon=($icon)"
     }
     "mouse.entered" => {
-      sleep 4ms
+      sleep 1ms
       sketchybar --trigger "volume_hover" HOVERED=true
     }
     "mouse.exited" => {

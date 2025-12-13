@@ -20,7 +20,7 @@ def main [] {
       sketchybar --set $"($env.NAME)" $"label=($volume)%"
     }
     "mouse.entered" => {
-      sleep 4ms
+      sleep 1ms
       sketchybar --trigger "volume_hover" HOVERED=true
     }
     "mouse.exited" => {
