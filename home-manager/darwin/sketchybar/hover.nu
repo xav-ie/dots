@@ -14,7 +14,7 @@ export def unhover_item [item] {
 }
 
 export def hover_item [item] {
-  sleep 3ms
+  sleep 1ms
   sketchybar --trigger $"($item)_hover" HOVERED=true
   sleep 5ms
   let other_items = ($hover_items | where $it != $item)
