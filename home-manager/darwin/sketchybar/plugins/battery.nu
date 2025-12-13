@@ -25,7 +25,7 @@ def main [] {
       sketchybar --set $"($env.NAME)" $"label=($env.BATTERY | fill --alignment right --character ' ' --width 3)%"
     }
     "mouse.entered" => {
-      sleep 4ms
+      sleep 1ms
       sketchybar --trigger "battery_hover" HOVERED=true
     }
     "mouse.exited" => {

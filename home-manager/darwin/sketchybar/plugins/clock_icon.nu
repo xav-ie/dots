@@ -41,7 +41,7 @@ def main [] {
     }
     "mouse.entered" => {
       # ensure this state "wins"
-      sleep 4ms
+      sleep 1ms
       sketchybar --trigger "clock_hover" HOVERED=true
     }
     "mouse.exited" => {
