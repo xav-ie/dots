@@ -29,6 +29,7 @@
         };
         ui = {
           show-cryptographic-signatures = true;
+          diff-formatter = "delta";
         };
         user = {
           name = "Xavier Ruiz";
