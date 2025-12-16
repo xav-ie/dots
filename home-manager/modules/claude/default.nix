@@ -22,6 +22,13 @@ let
   claude-npm = pkgs.pkgs-mine.claude-code-npm;
 
   claude-package = if cfg.nativeInstall then claude-native else claude-npm;
+
+  # Slack MCP Server wrapper that injects secrets from sops
+  slack-mcp-wrapper = pkgs.writeShellScriptBin "slack-mcp-server-wrapped" ''
+    export SLACK_MCP_XOXC_TOKEN="$(cat /run/secrets/slack/xoxc_token)"
+    export SLACK_MCP_XOXD_TOKEN="$(cat /run/secrets/slack/xoxd_token)"
+    exec ${pkgs.pkgs-mine.slack-mcp-server}/bin/slack-mcp-server "$@"
+  '';
 in
 {
   options.programs.claude = {
@@ -43,7 +50,10 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    home.packages = [ claude-package ];
+    home.packages = [
+      claude-package
+      slack-mcp-wrapper
+    ];
 
     home.file.".local/bin/claude" = {
       source = "${claude-package}/bin/claude";
@@ -55,5 +65,7 @@ in
       config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/notify.nu";
     home.file.".claude/statusline.nu".source =
       config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/statusline.nu";
+    home.file.".mcp.json".source =
+      config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/mcp.json";
   };
 }
