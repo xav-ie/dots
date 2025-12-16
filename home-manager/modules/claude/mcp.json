@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "slack": {
+      "command": "slack-mcp-server-wrapped",
+      "args": []
+    }
+  }
+}

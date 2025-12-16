@@ -30,6 +30,16 @@
         owner = config.defaultUser;
         mode = "0444";
       };
+
+      # Slack MCP Server tokens (stealth mode)
+      secrets."slack/xoxc_token" = {
+        owner = config.defaultUser;
+        mode = "0400";
+      };
+      secrets."slack/xoxd_token" = {
+        owner = config.defaultUser;
+        mode = "0400";
+      };
     };
 
     # Ensure that no one may read my key file
