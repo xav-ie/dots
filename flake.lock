@@ -350,7 +350,7 @@
     },
     "flake-utils_5": {
       "inputs": {
-        "systems": "systems_10"
+        "systems": "systems_9"
       },
       "locked": {
         "lastModified": 1731533236,
@@ -1601,6 +1601,7 @@
         "plover-flake": "plover-flake",
         "quadlet-nix": "quadlet-nix",
         "rust-overlay": "rust-overlay_2",
+        "slack-mcp-server": "slack-mcp-server",
         "sops-nix": "sops-nix",
         "systems": "systems_7",
         "treefmt-nix": "treefmt-nix",
@@ -1685,6 +1686,23 @@
         "type": "github"
       }
     },
+    "slack-mcp-server": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1765317553,
+        "narHash": "sha256-tA0JzWaMtYF0DC5xUm+hGAVEPvxBTMLau5lrhOQU9gU=",
+        "owner": "korotovsky",
+        "repo": "slack-mcp-server",
+        "rev": "454398a7f749846328cf4c8108a916a4f4944c8b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "korotovsky",
+        "ref": "v1.1.28",
+        "repo": "slack-mcp-server",
+        "type": "github"
+      }
+    },
     "sops-nix": {
       "inputs": {
         "nixpkgs": "nixpkgs_16"
@@ -1704,21 +1722,6 @@
       }
     },
     "systems": {
-      "locked": {
-        "lastModified": 1763560602,
-        "narHash": "sha256-YvS+ku3i/+npOIaAHwDt75m3fDHWitqB7Bh9wb+G5SE=",
-        "owner": "xav-ie",
-        "repo": "dots-systems",
-        "rev": "73b9e3bafcf87bbf8009c4d4d096fce2e5c036c9",
-        "type": "github"
-      },
-      "original": {
-        "owner": "xav-ie",
-        "repo": "dots-systems",
-        "type": "github"
-      }
-    },
-    "systems_10": {
       "locked": {
         "lastModified": 1763560602,
         "narHash": "sha256-YvS+ku3i/+npOIaAHwDt75m3fDHWitqB7Bh9wb+G5SE=",
@@ -1823,6 +1826,21 @@
         "type": "github"
       }
     },
+    "systems_8": {
+      "locked": {
+        "lastModified": 1763560602,
+        "narHash": "sha256-YvS+ku3i/+npOIaAHwDt75m3fDHWitqB7Bh9wb+G5SE=",
+        "owner": "xav-ie",
+        "repo": "dots-systems",
+        "rev": "73b9e3bafcf87bbf8009c4d4d096fce2e5c036c9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "xav-ie",
+        "repo": "dots-systems",
+        "type": "github"
+      }
+    },
     "systems_9": {
       "locked": {
         "lastModified": 1763560602,
@@ -1884,7 +1902,7 @@
         "home-manager": "home-manager_2",
         "nixpkgs": "nixpkgs_18",
         "nuenv": "nuenv_2",
-        "systems": "systems_9",
+        "systems": "systems_8",
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
