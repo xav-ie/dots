@@ -58,6 +58,8 @@
     homebrew-core.url = "github:homebrew/homebrew-core";
     obs-backgroundremoval.flake = false;
     obs-backgroundremoval.url = "github:royshil/obs-backgroundremoval";
+    slack-mcp-server.url = "github:korotovsky/slack-mcp-server/v1.1.28";
+    slack-mcp-server.flake = false;
   };
 
   outputs =
@@ -125,6 +127,7 @@
               config.allowUnfree = true;
             };
             nuenv = inputs.nuenv.lib;
+            slack-mcp-server-src = inputs.slack-mcp-server;
           };
 
           treefmt =

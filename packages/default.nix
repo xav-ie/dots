@@ -4,6 +4,7 @@
   pkgs ? import <nixpkgs>,
   generate-kaomoji,
   nuenv,
+  slack-mcp-server-src,
 }:
 let
   optionalAttrs = bool: attrSet: if bool then attrSet else { };
@@ -41,6 +42,7 @@ rec {
   review = pkgs.callPackage ./review { inherit writeNuApplication; };
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
   sketchybar-battery = pkgs.callPackage ./sketchybar-battery { inherit writeNuApplication; };
+  slack-mcp-server = pkgs.callPackage ./slack-mcp-server { src = slack-mcp-server-src; };
   tmux-move-window = pkgs.callPackage ./tmux-move-window { inherit writeNuApplication; };
   tmux-tab-name-update = pkgs.callPackage ./tmux-tab-name-update { };
   toggle-theme = pkgs.callPackage ./toggle-theme { inherit writeNuApplication; };
