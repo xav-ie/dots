@@ -27,6 +27,7 @@ let
   slack-mcp-wrapper = pkgs.writeShellScriptBin "slack-mcp-server-wrapped" ''
     export SLACK_MCP_XOXC_TOKEN="$(cat /run/secrets/slack/xoxc_token)"
     export SLACK_MCP_XOXD_TOKEN="$(cat /run/secrets/slack/xoxd_token)"
+    export SLACK_MCP_ADD_MESSAGE_TOOL=true
     exec ${pkgs.pkgs-mine.slack-mcp-server}/bin/slack-mcp-server "$@"
   '';
 in
