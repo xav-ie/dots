@@ -58,7 +58,8 @@
     homebrew-core.url = "github:homebrew/homebrew-core";
     obs-backgroundremoval.flake = false;
     obs-backgroundremoval.url = "github:royshil/obs-backgroundremoval";
-    slack-mcp-server.url = "github:korotovsky/slack-mcp-server/v1.1.28";
+    # slack-mcp-server.url = "github:korotovsky/slack-mcp-server/v1.1.28";
+    slack-mcp-server.url = "github:xav-ie/slack-mcp-server/feat-add-reactions";
     slack-mcp-server.flake = false;
   };
 
