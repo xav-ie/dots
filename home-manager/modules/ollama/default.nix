@@ -1,4 +1,8 @@
-{ pkgs, ... }:
+{
+  inputs,
+  pkgs,
+  ...
+}:
 {
   config = {
     services = {
@@ -9,15 +13,9 @@
             pkgs.pkgs-bleeding.ollama
           else
             pkgs.ollama.overrideAttrs (_oldAttrs: {
-              version = "0.11.3";
-              src = pkgs.fetchFromGitHub {
-                owner = "ollama";
-                repo = "ollama";
-                tag = "v0.11.3";
-                hash = "sha256-FghgCtVQIxc9qB5vZZlblugk6HLnxoT8xanZK+N8qEc=";
-                fetchSubmodules = true;
-              };
-              vendorHash = "sha256-SlaDsu001TUW+t9WRp7LqxUSQSGDF1Lqu9M1bgILoX4=";
+              version = "unstable-${inputs.ollama-src.shortRev}";
+              src = inputs.ollama-src;
+              vendorHash = "sha256-NM0vtue0MFrAJCjmpYJ/rPEDWBxWCzBrWDb0MVOhY+Q=";
             });
       };
     };

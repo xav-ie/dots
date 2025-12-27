@@ -36,7 +36,6 @@
           curl
           deadnix # dead code linter
           devenv
-          delta
           dig
           fd
           # a wrapper around ffmpeg that adds a progress bar and ETA
@@ -102,7 +101,7 @@
           zellij-tab-name-update
         ])
         ++ [
-          inputs.nix-auto-follow.packages.${pkgs.system}.default
+          inputs.nix-auto-follow.packages.${pkgs.stdenv.hostPlatform.system}.default
         ];
 
       # The state version is required and should stay at the version you

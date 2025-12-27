@@ -27,6 +27,8 @@
     treefmt-nix.url = "github:numtide/treefmt-nix";
     waybar.url = "github:Alexays/waybar";
     zjstatus.url = "github:dj95/zjstatus";
+    # Swift is broken on Linux with GCC 14 (nixpkgs#462451), pin to last working version
+    nixpkgs-swift.url = "github:nixos/nixpkgs/3c3988cce18bf31db263dd0374e34cb65e696def";
     # TODO: figure out how to use from misterio and vimjoyer
     # impermanence.url = "github:nix-community/impermanence";
     # nix-colors.url = "github:misterio77/nix-colors";
@@ -50,6 +52,8 @@
     # vendored
     glsl_analyzer.flake = false;
     glsl_analyzer.url = "github:xav-ie/glsl_analyzer/format";
+    ollama-src.flake = false;
+    ollama-src.url = "github:ollama/ollama/v0.13.5";
     homebrew-bundle.flake = false;
     homebrew-bundle.url = "github:homebrew/homebrew-bundle";
     homebrew-cask.flake = false;
@@ -134,6 +138,9 @@
           treefmt =
             { options, ... }:
             let
+              # Swift is broken on Linux with GCC 14, use pinned nixpkgs
+              pkgs-swift = import inputs.nixpkgs-swift { inherit system; };
+
               glsl_analyzer = pkgs.glsl_analyzer.overrideAttrs (_oldAttrs: {
                 src = inputs.glsl_analyzer;
                 nativeBuildInputs = [ pkgs.zig.hook ];
@@ -187,7 +194,10 @@
                 ruff.enable = true;
                 shfmt.enable = true;
                 statix.enable = true;
-                swift-format.enable = true;
+                swift-format = {
+                  enable = true;
+                  package = pkgs-swift.swift-format;
+                };
               };
               settings = {
                 on-unmatched = "fatal";

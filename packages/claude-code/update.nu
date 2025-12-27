@@ -208,6 +208,7 @@ def main [version?: string] {
 
   # Write to sources.json in current directory
   $output | to json --indent 2 | save -f sources.json
+  "\n" | save --append sources.json
 
   print $"\n✅ Updated sources.json"
   print $"  Native version: ($native.version)"

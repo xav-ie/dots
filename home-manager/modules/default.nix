@@ -4,6 +4,7 @@ _: {
     ./atuin
     ./bat
     ./claude
+    ./delta
     ./direnv
     ./dotfiles-dir
     ./eza
@@ -14,7 +15,7 @@ _: {
     ./inputrc
     ./jujutsu
     # ./kitty
-    ./moar
+    ./moor
     ./mpv
     ./neovide
     ./nushell

@@ -185,7 +185,7 @@ in
 
     wayland.windowManager.hyprland =
       let
-        inherit (inputs.hyprland.packages.${pkgs.system}) hyprland;
+        inherit (inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}) hyprland;
         inherit (cfg) borderSizeNumeric gapsNumeric;
         waybarHeightNumeric = waybarCfg.barHeight;
         gapAndBorderNumeric = gapsNumeric + borderSizeNumeric;
@@ -196,7 +196,6 @@ in
         gaps = toString gapsNumeric;
         windowLeft = toString windowLeftNumeric;
         windowTop = toString windowTopNumeric;
-        windowRight = "100%-w-${windowLeft}";
 
         # Specific positioning for swaync (using swaync config values)
         swayncNotificationWidth = swayncCfg.notificationWidth;
@@ -209,11 +208,10 @@ in
         swayncTopOffset = windowTopNumeric;
 
         pipHeight = 324;
-        # There seems to be a bug with using `h`, so we work around this by
-        # using the static height
-        windowBottom = "100%-${toString (pipHeight + gapAndBorderNumeric)}";
         move-active = lib.getExe pkgs.pkgs-mine.move-active;
-        virtual-headset-ctl = lib.getExe inputs.virtual-headset.packages.${pkgs.system}.virtual-headset-ctl;
+        virtual-headset-ctl =
+          lib.getExe
+            inputs.virtual-headset.packages.${pkgs.stdenv.hostPlatform.system}.virtual-headset-ctl;
       in
       {
         enable = true;
@@ -336,73 +334,75 @@ in
             ];
           };
 
-          windowrulev2 = [
+          windowrule = [
             # https://wiki.hyprland.org/Configuring/Window-Rules/
             # firefox pip (hacky workaround)
             # https://github.com/hyprwm/Hyprland/issues/2942#issuecomment-1923813933
-            "float, title:^(Picture-in-Picture)$"
-            "move ${windowRight} ${windowBottom}, title:(Picture-in-Picture)"
-            "noinitialfocus, title:^(Picture-in-Picture)$"
-            "pin, title:^(Picture-in-Picture)$"
-            "size 576 ${toString pipHeight}, title:(Picture-in-Picture)"
+            "match:title Picture-in-Picture, float on"
+            "match:title Picture-in-Picture, move (monitor_w-window_w-${windowLeft}) (monitor_h-${
+              toString (pipHeight + gapAndBorderNumeric)
+            })"
+            "match:title Picture-in-Picture, no_initial_focus on"
+            "match:title Picture-in-Picture, pin on"
+            "match:title Picture-in-Picture, size 576 ${toString pipHeight}"
 
             # shimeji desktop pets
-            "float, title:^(com-group_finity-mascot-Main)$"
-            "noblur, title:^(com-group_finity-mascot-Main)$"
-            "noborder, title:^(com-group_finity-mascot-Main)$"
-            "nofocus, title:^(com-group_finity-mascot-Main)$"
-            "noshadow, title:^(com-group_finity-mascot-Main)$"
+            "match:title com-group_finity-mascot-Main, float on"
+            "match:title com-group_finity-mascot-Main, no_blur on"
+            "match:title com-group_finity-mascot-Main, border_size 0"
+            "match:title com-group_finity-mascot-Main, no_focus on"
+            "match:title com-group_finity-mascot-Main, no_shadow on"
 
             # elkowar's wacky widgets
-            "float, title:^(eww)$"
+            "match:title eww, float on"
 
             # zoom windows?
-            "center, title:^()$"
-            "float, title:^()$"
-            "noblur, title:^()$"
-            "noborder, title:^()$"
-            "noshadow, title:^()$"
-            "size 25% 100%, title:^()$"
+            "match:title ^$, center on"
+            "match:title ^$, float on"
+            "match:title ^$, no_blur on"
+            "match:title ^$, border_size 0"
+            "match:title ^$, no_shadow on"
+            "match:title ^$, size 25% 100%"
 
             # sway notifications
             # Match notification popups by class
-            "float, class:^(swaync)$"
-            "move 100%-${
+            "match:class swaync, float on"
+            "match:class swaync, move (monitor_w-${
               toString (swayncNotificationWidth + swayncRightOffset)
-            } ${toString swayncTopOffset}, class:^(swaync)$"
-            "noinitialfocus, class:^(swaync)$"
-            "pin, class:^(swaync)$"
-            "size ${toString swayncNotificationWidth} ${toString swayncNotificationHeight}, class:^(swaync)$"
-            "animation slide, class:^(swaync)$"
+            }) ${toString swayncTopOffset}"
+            "match:class swaync, no_initial_focus on"
+            "match:class swaync, pin on"
+            "match:class swaync, size ${toString swayncNotificationWidth} ${toString swayncNotificationHeight}"
+            "match:class swaync, animation slide"
 
             # Control center specific rules (different class name)
-            "float, class:^(org.erikreider.swaync)$"
-            "move 100%-${
+            "match:class org.erikreider.swaync, float on"
+            "match:class org.erikreider.swaync, move (monitor_w-${
               toString (swayncControlWidth + swayncRightOffset)
-            } ${toString swayncTopOffset}, class:^(org.erikreider.swaync)$"
-            "noinitialfocus, class:^(org.erikreider.swaync)$"
-            "pin, class:^(org.erikreider.swaync)$"
-            "size ${toString swayncControlWidth} ${toString swayncControlHeight}, class:^(org.erikreider.swaync)$"
-            "animation slide, class:^(org.erikreider.swaync)$"
+            }) ${toString swayncTopOffset}"
+            "match:class org.erikreider.swaync, no_initial_focus on"
+            "match:class org.erikreider.swaync, pin on"
+            "match:class org.erikreider.swaync, size ${toString swayncControlWidth} ${toString swayncControlHeight}"
+            "match:class org.erikreider.swaync, animation slide"
 
             # improve animation on ueberzugpp windows
-            "animation slide right, title:^(ueberzugpp.*)"
+            "match:title ueberzugpp.*, animation slide right"
 
             # zenity
-            "pin, title:^(zenity)$"
+            "match:title zenity, pin on"
           ];
 
           # See https://wiki.hyprland.org/Configuring/Monitors/
           monitor = ",preferred,auto,auto";
 
           layerrule = [
-            "blur,notifications"
-            "blur,rofi"
-            "blur,swaync"
-            "blur,swaynotificationcenter"
-            "blur,waybar"
-            "ignorezero,rofi"
-            "ignorezero,waybar"
+            "match:namespace notifications, blur on"
+            "match:namespace rofi, blur on"
+            "match:namespace swaync, blur on"
+            "match:namespace swaynotificationcenter, blur on"
+            "match:namespace waybar, blur on"
+            "match:namespace rofi, ignore_alpha 0"
+            "match:namespace waybar, ignore_alpha 0"
           ];
           # Move/resize windows with mainMod + LMB/RMB and dragging
           bindm = [

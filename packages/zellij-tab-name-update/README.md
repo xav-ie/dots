@@ -28,7 +28,7 @@ zsh = {
   initContent = #zsh
   ''
     precmd() {
-      ${inputs.xav-ie.packages.${pkgs.system}.zellij-tab-name-update}/bin/zellij-tab-name-update
+      ${inputs.xav-ie.packages.${pkgs.stdenv.hostPlatform.system}.zellij-tab-name-update}/bin/zellij-tab-name-update
     }
   '';
 };
@@ -40,7 +40,7 @@ For bash, you will have you set `PROMPT_COMMAND` instead:
 bash = {
   initContent = #bash
   ''
-    PROMPT_COMMAND="${inputs.xav-ie.packages.${pkgs.system}.zellij-tab-name-update}/bin/zellij-tab-name-update; command2; ...;"
+    PROMPT_COMMAND="${inputs.xav-ie.packages.${pkgs.stdenv.hostPlatform.system}.zellij-tab-name-update}/bin/zellij-tab-name-update; command2; ...;"
   '';
 };
 ```

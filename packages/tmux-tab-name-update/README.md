@@ -51,7 +51,7 @@ programs.nushell = {
     ]
 
     $env.config.hooks.pre_prompt = [
-      { || ${inputs.xav-ie.packages.${pkgs.system}.tmux-tab-name-update}/bin/tmux-tab-name-update }
+      { || ${inputs.xav-ie.packages.${pkgs.stdenv.hostPlatform.system}.tmux-tab-name-update}/bin/tmux-tab-name-update }
     ]
   '';
 };
@@ -67,7 +67,7 @@ programs.zsh = {
     }
 
     precmd() {
-      ${inputs.xav-ie.packages.${pkgs.system}.tmux-tab-name-update}/bin/tmux-tab-name-update
+      ${inputs.xav-ie.packages.${pkgs.stdenv.hostPlatform.system}.tmux-tab-name-update}/bin/tmux-tab-name-update
     }
   '';
 };
@@ -82,7 +82,7 @@ programs.bash = {
       export TMUX_TAB_UPDATE_PANE="$TMUX_PANE"
     }
 
-    PROMPT_COMMAND="${inputs.xav-ie.packages.${pkgs.system}.tmux-tab-name-update}/bin/tmux-tab-name-update"
+    PROMPT_COMMAND="${inputs.xav-ie.packages.${pkgs.stdenv.hostPlatform.system}.tmux-tab-name-update}/bin/tmux-tab-name-update"
   '';
 };
 ```

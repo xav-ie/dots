@@ -13,7 +13,7 @@
   config = {
     programs.plover = {
       enable = true;
-      package = inputs.plover-flake.packages.${pkgs.system}.plover-full;
+      package = inputs.plover-flake.packages.${pkgs.stdenv.hostPlatform.system}.plover-full;
 
       settings = {
         "Machine Configuration" = {
