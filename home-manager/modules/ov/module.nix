@@ -376,7 +376,7 @@ in
             StyleSectionLine = {
               Background = "slateblue";
             };
-          } 
+          }
         '';
       description = ''
         Configuration written to
@@ -408,7 +408,7 @@ in
     programs.git = lib.mkIf cfg.enableBatIntegration {
       iniContent.core.pager = lib.mkForce "delta --pager='ov'";
 
-      extraConfig = {
+      settings = {
         pager = {
           # TODO: fix
           blame = "delta";
@@ -419,46 +419,46 @@ in
         };
       };
 
-      delta.options =
-        let
-          # greedily matches
-          subjects = [
-            "chore"
-            "docs"
-            "feat"
-            "fix"
-            "refactor"
-            "[a-z]+"
-          ];
-          suffix = ''\(.+\)'';
-          commitMessages = builtins.concatStringsSep "," (map (subject: "${subject}${suffix}") subjects);
-          multiColorHighlights = builtins.concatStringsSep "," [
-            commitMessages
-            "Merge pull request .+"
-            "https?://.+"
-          ];
-          delimiters = builtins.concatStringsSep "|" [
-            "commit"
-            "added:"
-            "removed:"
-            "renamed:"
-            "Δ"
-          ];
-          ov-show-and-diff-pager = "ov --section-delimiter '^(${delimiters})' --section-header --pattern '•' -M '${multiColorHighlights}'";
-        in
-        {
-          "ov-show" = {
-            pager = ov-show-and-diff-pager;
-          };
-          "ov-diff" = {
-            pager = ov-show-and-diff-pager;
-          };
-          "ov-log" = {
-            pager = "ov --section-delimiter '^commit' --section-header-num 3 --section-header --pattern 'commit' -M '${multiColorHighlights}'";
-          };
-        };
-
     };
+
+    programs.delta.options =
+      let
+        # greedily matches
+        subjects = [
+          "chore"
+          "docs"
+          "feat"
+          "fix"
+          "refactor"
+          "[a-z]+"
+        ];
+        suffix = ''\(.+\)'';
+        commitMessages = builtins.concatStringsSep "," (map (subject: "${subject}${suffix}") subjects);
+        multiColorHighlights = builtins.concatStringsSep "," [
+          commitMessages
+          "Merge pull request .+"
+          "https?://.+"
+        ];
+        delimiters = builtins.concatStringsSep "|" [
+          "commit"
+          "added:"
+          "removed:"
+          "renamed:"
+          "Δ"
+        ];
+        ov-show-and-diff-pager = "ov --section-delimiter '^(${delimiters})' --section-header --pattern '•' -M '${multiColorHighlights}'";
+      in
+      lib.mkIf cfg.enableBatIntegration {
+        "ov-show" = {
+          pager = ov-show-and-diff-pager;
+        };
+        "ov-diff" = {
+          pager = ov-show-and-diff-pager;
+        };
+        "ov-log" = {
+          pager = "ov --section-delimiter '^commit' --section-header-num 3 --section-header --pattern 'commit' -M '${multiColorHighlights}'";
+        };
+      };
 
   };
 }

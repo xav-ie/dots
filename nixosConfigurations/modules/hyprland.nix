@@ -23,7 +23,7 @@ in
       # implementation has expected support
       xdg.portal =
         let
-          inherit (inputs.hyprland.packages.${pkgs.system}) xdg-desktop-portal-hyprland;
+          inherit (inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}) xdg-desktop-portal-hyprland;
         in
         {
           enable = true;

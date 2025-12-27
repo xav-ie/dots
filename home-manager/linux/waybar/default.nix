@@ -50,7 +50,28 @@ in
       # https://github.com/elythh/nixdots/blob/58db47f160c219c3e2a9630651dfd9aab0408b1a/modules/home/opt/wayland/services/swaync/default.nix
       enable = true;
       systemd.enable = true;
-      package = inputs.waybar.packages.${pkgs.system}.default;
+      package =
+        let
+          libcava-src = pkgs.fetchFromGitHub {
+            owner = "LukashonakV";
+            repo = "cava";
+            # Match libcava.wrap: v0.10.7-beta
+            rev = "v0.10.7-beta";
+            hash = "sha256-IX1B375gTwVDRjpRfwKGuzTAZOV2pgDWzUd4bW2cTDU=";
+          };
+        in
+        inputs.waybar.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs (old: {
+          # Fix upstream bug: postUnpack copies to subprojects/cava but libcava.wrap expects cava-0.10.7-beta
+          prePatch = (old.prePatch or "") + ''
+            cp -R --no-preserve=mode,ownership ${libcava-src} subprojects/cava-0.10.7-beta
+          '';
+          # Fix cava module regression from PR #4682: cava_frontend.hpp only supports OUTPUT_RAW
+          # but cava_backend.cpp restores the original output method (OUTPUT_NONCURSES by default)
+          postPatch = (old.postPatch or "") + ''
+            substituteInPlace src/modules/cava/cava_backend.cpp \
+              --replace-fail 'prm_.output = output;' '// prm_.output = output; // Keep OUTPUT_RAW for waybar'
+          '';
+        });
       settings = {
         mainBar = import ./config.nix {
           inherit

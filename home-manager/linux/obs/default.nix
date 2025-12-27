@@ -31,10 +31,16 @@ let
     }).overrideAttrs
       (oldAttrs: {
         src = inputs.obs-backgroundremoval;
-        # Latest source uses ubuntu-x86_64 preset instead of linux-x86_64
-        cmakeFlags = builtins.map (
-          flag: if flag == "--preset linux-x86_64" then "--preset ubuntu-x86_64" else flag
-        ) oldAttrs.cmakeFlags;
+        inherit ((builtins.fromJSON (builtins.readFile "${inputs.obs-backgroundremoval}/buildspec.json")))
+          version
+          ;
+        nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ pkgs.pkg-config ];
+        # Remove preset - the CMakeLists.txt defaults (USE_PKGCONFIG=ON, VCPKG_TARGET_TRIPLET="")
+        # are already correct for Nix builds. Also clear custom build/install phases
+        # since they reference build_x86_64 which the preset created.
+        cmakeFlags = builtins.filter (flag: !(lib.hasPrefix "--preset" flag)) oldAttrs.cmakeFlags;
+        buildPhase = null;
+        installPhase = null;
       });
 in
 {

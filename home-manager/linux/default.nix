@@ -52,7 +52,7 @@
           ################################
           # user programs
           ################################
-          bitwarden
+          bitwarden-desktop
           chromium
           # discord
           noisetorch # noise filter

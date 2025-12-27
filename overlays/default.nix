@@ -8,15 +8,18 @@ in
 
   modifications = final: prev: {
     alacritty-theme =
-      if final.stdenv.isLinux then inputs.alacritty-theme.packages.${final.system} else null;
-    ctpv = inputs.ctpv.packages.${final.system}.default;
-    generate-kaomoji = inputs.generate-kaomoji.packages.${final.system}.default;
+      if final.stdenv.isLinux then
+        inputs.alacritty-theme.packages.${final.stdenv.hostPlatform.system}
+      else
+        null;
+    ctpv = inputs.ctpv.packages.${final.stdenv.hostPlatform.system}.default;
+    generate-kaomoji = inputs.generate-kaomoji.packages.${final.stdenv.hostPlatform.system}.default;
     pkgs-bleeding = import inputs.nixpkgs-bleeding {
-      inherit (final) system;
+      inherit (final.stdenv.hostPlatform) system;
       config.allowUnfree = true;
       # Don't inherit cudaSupport/cudaCapabilities to avoid cache misses
     };
-    pkgs-mine = toplevel.self.packages.${final.system};
+    pkgs-mine = toplevel.self.packages.${final.stdenv.hostPlatform.system};
     # Fix govee-local-api not setting the lights all the time
     # pkgs-homeassistant needing because poetry-core>=2.0.0 is not on stable
     # and I don't feel like overriding *another* sub-dependency
@@ -24,7 +27,8 @@ in
       if final.stdenv.isLinux then
         let
           pkgs-homeassistant = import inputs.nixpkgs-homeassistant {
-            inherit (final) system config;
+            inherit (final) config;
+            inherit (final.stdenv.hostPlatform) system;
           };
         in
         pkgs-homeassistant.home-assistant.override {
@@ -72,7 +76,7 @@ in
         null;
     notification-cleaner =
       if final.stdenv.isDarwin then
-        inputs.notification-cleaner.packages.${final.system}.default
+        inputs.notification-cleaner.packages.${final.stdenv.hostPlatform.system}.default
       else
         null;
     orca = prev.orca.overrideAttrs (old: {
@@ -85,7 +89,7 @@ in
       '';
     });
     writeNuApplication = final.nuenv.writeShellApplication;
-    zjstatus = inputs.zjstatus.packages.${final.system}.default;
+    zjstatus = inputs.zjstatus.packages.${final.stdenv.hostPlatform.system}.default;
 
     inherit (final.pkgs-mine) nix-output-monitor;
 

@@ -17,127 +17,94 @@ in
   config = {
     programs.git = {
       enable = true;
-      userName = "Xavier Ruiz";
-      # userEmail = defined below...
-      aliases =
-        let
-          diffTweaks = builtins.concatStringsSep " " [
-            "--ignore-all-space"
-            "--ignore-space-at-eol"
-            "--ignore-space-change"
-            "--ignore-blank-lines"
-            "--patch-with-stat"
-            "--"
-            "."
-            "':(exclude)*lock.json'"
-            "--"
-            "."
-            "':(exclude)*.lock'"
-          ];
-        in
-        {
-          # aliases are case-insensitive
-          amend = "!${lib.getExe pkgs.pkgs-mine.git-amend}";
-          B = "checkout -B";
-          bb = "!${lib.getExe pkgs.pkgs-mine.better-branch}";
-          blame-better = "blame -w -C -C -C";
-          c = "commit";
-          cam = "commit -am";
-          chekcout = "checkout";
-          cm = "commit -m";
-          co = "checkout";
-          d = "diff ${diffTweaks}";
-          dc = "diff --cached ${diffTweaks}";
-          delete-tag = ''!f() { git tag -d "$1" && git push origin :refs/tags/"$1"; }; f'';
-          ds = "!git d && git s";
-          graph =
-            let
-              columns = builtins.concatStringsSep " " [
-                "%C(bold blue)%h%Creset"
-                "%s"
-                "%C(bold green)%d%Creset"
-                "%C(blue)<%an>%Creset"
-                "%C(dim cyan)%cr"
-              ];
-            in
-            "log --graph --pretty=tformat:'${columns}' --abbrev-commit --decorate";
-          log-pr = "!${lib.getExe pkgs.pkgs-mine.log-pr}";
-          main = # sh
-            "!(git fetch && git fetch --tags && git checkout -B main origin/main)";
-          p = "push";
-          patch = "show --patch";
-          prs = "!${lib.getExe pkgs.pkgs-mine.prs}";
-          pull-force = "!git fetch && git reset --hard origin/$(git branch --show-current)";
-          review = "!${lib.getExe pkgs.pkgs-mine.review}";
-          rmc = "rm --cached";
-          s = "status";
-          sd = "!git s && git d";
-          sh = "show --patch-with-stat";
-          shove = "push --force-with-lease";
-          stash-all = "stash --all";
-          unstage = "restore --staged .";
-          update-package-lock = "!${lib.getExe pkgs.pkgs-mine.update-package-lock}";
-          # git log -L :functionName:/path/to/file
-          # git blame -L :functionName:/path/to/file
-          # git log -S your_regex -p
-          # git reflog <- idk what this does other than show history
-          # "So You Think You Know Git - Part 2":
-          # https://www.youtube.com/watch?v=Md44rcw13k4
-          # Helpful hooks
-          ## Commit Stuff
-          # - pre-commit
-          # - prepare-commit-msg
-          # - commit-msg
-          # - post-commit
-          ## Rewriting stuff
-          # - pre-rebase
-          # - post-rewrite
-          ## Merging Stuff
-          # - post-merge
-          # - pre-merge-commit
-          ## Switching/Pushing Stuff
-          # - post-checkout
-          # - reference-transaction
-          # - pre-push
-          # He recommends `pre-commit` binary
-        };
-      # attributes = {
-      # };
-      # I am guessing this option sets up the options I set in extraConfig
-      delta = {
-        # I think it might not be worth it to turn this off and try and set up
-        # yourself. There is a lot of set up this one flag does
-        enable = true;
-        options = {
-          # Set syntax-theme via BAT_THEME env var or use --light/--dark flags
-          # Light themes: GitHub, "Monokai Extended Light", OneHalfLight, "Solarized (light)", gruvbox-light
-          # Dark themes: Monokai Extended, base16, Dracula, Nord, etc.
-          features = "decorations unobtrusive-line-numbers";
-          line-numbers = true;
-          navigate = true;
-          true-color = "always";
-          side-by-side = true;
-          file-style = "yellow";
-          paging = "always";
-          hyperlinks = true;
-          # TODO: fix
-          # https://dandavison.github.io/delta/hyperlinks.html
-          # Something along the lines of https://github.com/`git remote get-url origin | some-filter`/`git branch -r --points-at COMMIT || COMMIT/{file}L{line}`
-          # hyperlinks-file-link-format = "https://github.com/{path}:{line}";
-          decorations = {
-            commit-decoration-style = "bold yellow box ul";
-            file-decoration-style = "none";
-            file-style = "bold yellow ul";
-          };
-          unobtrusive-line-numbers = {
-            line-numbers = true;
-            line-numbers-left-format = "{nm:>4}┊";
-            line-numbers-right-format = "{np:>4}│";
-          };
-        };
-      };
-      extraConfig = {
+      settings = {
+        user.name = "Xavier Ruiz";
+        # user.email = defined below...
         advice.detachedHead = false;
+        alias =
+          let
+            diffTweaks = builtins.concatStringsSep " " [
+              "--ignore-all-space"
+              "--ignore-space-at-eol"
+              "--ignore-space-change"
+              "--ignore-blank-lines"
+              "--patch-with-stat"
+              "--"
+              "."
+              "':(exclude)*lock.json'"
+              "--"
+              "."
+              "':(exclude)*.lock'"
+            ];
+          in
+          {
+            # aliases are case-insensitive
+            amend = "!${lib.getExe pkgs.pkgs-mine.git-amend}";
+            B = "checkout -B";
+            bb = "!${lib.getExe pkgs.pkgs-mine.better-branch}";
+            blame-better = "blame -w -C -C -C";
+            c = "commit";
+            cam = "commit -am";
+            chekcout = "checkout";
+            cm = "commit -m";
+            co = "checkout";
+            d = "diff ${diffTweaks}";
+            dc = "diff --cached ${diffTweaks}";
+            delete-tag = ''!f() { git tag -d "$1" && git push origin :refs/tags/"$1"; }; f'';
+            ds = "!git d && git s";
+            graph =
+              let
+                columns = builtins.concatStringsSep " " [
+                  "%C(bold blue)%h%Creset"
+                  "%s"
+                  "%C(bold green)%d%Creset"
+                  "%C(blue)<%an>%Creset"
+                  "%C(dim cyan)%cr"
+                ];
+              in
+              "log --graph --pretty=tformat:'${columns}' --abbrev-commit --decorate";
+            log-pr = "!${lib.getExe pkgs.pkgs-mine.log-pr}";
+            main = # sh
+              "!(git fetch && git fetch --tags && git checkout -B main origin/main)";
+            p = "push";
+            patch = "show --patch";
+            prs = "!${lib.getExe pkgs.pkgs-mine.prs}";
+            pull-force = "!git fetch && git reset --hard origin/$(git branch --show-current)";
+            review = "!${lib.getExe pkgs.pkgs-mine.review}";
+            rmc = "rm --cached";
+            s = "status";
+            sd = "!git s && git d";
+            sh = "show --patch-with-stat";
+            shove = "push --force-with-lease";
+            stash-all = "stash --all";
+            unstage = "restore --staged .";
+            update-package-lock = "!${lib.getExe pkgs.pkgs-mine.update-package-lock}";
+            # git log -L :functionName:/path/to/file
+            # git blame -L :functionName:/path/to/file
+            # git log -S your_regex -p
+            # git reflog <- idk what this does other than show history
+            # "So You Think You Know Git - Part 2":
+            # https://www.youtube.com/watch?v=Md44rcw13k4
+            # Helpful hooks
+            ## Commit Stuff
+            # - pre-commit
+            # - prepare-commit-msg
+            # - commit-msg
+            # - post-commit
+            ## Rewriting stuff
+            # - pre-rebase
+            # - post-rewrite
+            ## Merging Stuff
+            # - post-merge
+            # - pre-merge-commit
+            ## Switching/Pushing Stuff
+            # - post-checkout
+            # - reference-transaction
+            # - pre-push
+            # He recommends `pre-commit` binary
+          };
+        # attributes = {
+        # };
         core = {
           # configured by delta.enable=true and
           # ov.enable=true
@@ -244,7 +211,7 @@ in
 
     xdg.configFile."git/config.default".source = gitIniFmt.generate "config.default" {
       user = {
-        name = config.programs.git.userName;
+        inherit (config.programs.git.settings.user) name;
         email = "github@xav.ie";
         signingKey = "5B9134A9E7E7F965";
       };
@@ -252,7 +219,7 @@ in
 
     xdg.configFile."git/config.work".source = gitIniFmt.generate "config.work" {
       user = {
-        name = config.programs.git.userName;
+        inherit (config.programs.git.settings.user) name;
         email = "xavier@outsmartly.com";
         signingKey = "22420DD6C13E3EB7";
       };

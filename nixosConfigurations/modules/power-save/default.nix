@@ -34,10 +34,14 @@ in
                 $min_perf | save -f /sys/devices/system/cpu/intel_pstate/max_perf_pct
                 print $"CPU: Set to ($min_perf)% - hardware minimum"
 
-                # Limit GPU to hardware minimum
-                let gpu_min = (nvidia-smi --query-gpu=power.min_limit --format=csv,noheader,nounits | str trim)
-                nvidia-smi -pl $gpu_min
-                print $"GPU: Set to ($gpu_min)W - hardware minimum"
+                # Limit GPU to hardware minimum (graceful if driver mismatch)
+                try {
+                  let gpu_min = (nvidia-smi --query-gpu=power.min_limit --format=csv,noheader,nounits | str trim)
+                  nvidia-smi -pl $gpu_min
+                  print $"GPU: Set to ($gpu_min)W - hardware minimum"
+                } catch {
+                  print "GPU: Skipped - driver mismatch (reboot required)"
+                }
               '';
           }
         );
@@ -86,10 +90,14 @@ in
                 "100" | save -f /sys/devices/system/cpu/intel_pstate/max_perf_pct
                 print "CPU: Restored to 100%"
 
-                # Restore GPU to default power limit
-                let gpu_default = (nvidia-smi --query-gpu=power.default_limit --format=csv,noheader,nounits | str trim)
-                nvidia-smi -pl $gpu_default
-                print $"GPU: Restored to ($gpu_default)W - default limit"
+                # Restore GPU to default power limit (graceful if driver mismatch)
+                try {
+                  let gpu_default = (nvidia-smi --query-gpu=power.default_limit --format=csv,noheader,nounits | str trim)
+                  nvidia-smi -pl $gpu_default
+                  print $"GPU: Restored to ($gpu_default)W - default limit"
+                } catch {
+                  print "GPU: Skipped - driver mismatch (reboot required)"
+                }
               '';
           }
         );
