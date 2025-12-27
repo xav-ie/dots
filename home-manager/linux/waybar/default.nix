@@ -61,16 +61,22 @@ in
           };
         in
         inputs.waybar.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs (old: {
-          # Fix upstream bug: postUnpack copies to subprojects/cava but libcava.wrap expects cava-0.10.7-beta
+          # PR #4727 can't be applied via fetchpatch because .nix files are filtered out of the source
           prePatch = (old.prePatch or "") + ''
             cp -R --no-preserve=mode,ownership ${libcava-src} subprojects/cava-0.10.7-beta
           '';
-          # Fix cava module regression from PR #4682: cava_frontend.hpp only supports OUTPUT_RAW
-          # but cava_backend.cpp restores the original output method (OUTPUT_NONCURSES by default)
-          postPatch = (old.postPatch or "") + ''
-            substituteInPlace src/modules/cava/cava_backend.cpp \
-              --replace-fail 'prm_.output = output;' '// prm_.output = output; // Keep OUTPUT_RAW for waybar'
-          '';
+          patches = (old.patches or [ ]) ++ [
+            # https://github.com/Alexays/Waybar/pull/4728 - fix cava unknown module
+            (pkgs.fetchpatch {
+              url = "https://github.com/Alexays/Waybar/pull/4728.patch";
+              hash = "sha256-zJ7B+Fnrlgtm4sLFc7ljqfSVqKbO/zmVPmDDssu/Xwg=";
+            })
+            # https://github.com/Alexays/Waybar/pull/4729 - fix cava peaking (height after audio_raw_init)
+            (pkgs.fetchpatch {
+              url = "https://github.com/Alexays/Waybar/pull/4729.patch";
+              hash = "sha256-4uYPTVFtDkUZ2hsRG1fcBxc04EJwYewgfPYPCu2vDb8=";
+            })
+          ];
         });
       settings = {
         mainBar = import ./config.nix {
