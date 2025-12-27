@@ -9,6 +9,11 @@ let
   gitIniFmt = pkgs.formats.gitIni { };
 in
 {
+  imports = [
+    ./case-collision-check.nix
+    ./canonical-case-check.nix
+  ];
+
   config = {
     programs.git = {
       enable = true;
@@ -182,10 +187,10 @@ in
         #   true-color = "always";
         # };
         gpg.ssh.allowedSignersFile = osConfig.sops.secrets."git/allowed_signers".path;
-        "includeIf \"gitdir:~/\"" = {
+        "includeif \"gitdir:~/\"" = {
           path = "~/.config/git/config.default";
         };
-        "includeIf \"gitdir:~/Work/\"" = {
+        "includeif \"gitdir:~/Work/\"" = {
           path = "~/.config/git/config.work";
         };
         init = {
@@ -198,7 +203,7 @@ in
         };
         merge = {
           # https://becca.ooo/blog/why-diff3-is-confusing/
-          conflictstyle = "zdiff3";
+          conflictStyle = "zdiff3";
         };
         # This is needed so programs like Fugitive will use delta
         # Set by ov
