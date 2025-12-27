@@ -1,16 +1,15 @@
 { inputs, ... }@toplevel:
 let
-  system = "aarch64-darwin";
   inherit (inputs.nix-darwin.lib) darwinSystem;
 in
 {
   # macbook air - m3
   nox = darwinSystem {
-    inherit system;
     specialArgs = {
       inherit inputs toplevel;
     };
     modules = [
+      { nixpkgs.hostPlatform = "aarch64-darwin"; }
       ./hosts/nox
       ./modules
       ./modules/boot-args.nix

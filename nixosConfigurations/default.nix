@@ -2,16 +2,15 @@
 let
   supportedSystems = import inputs.systems;
   hasSystem = system: builtins.elem system supportedSystems;
-  system = "x86_64-linux";
 in
-lib.optionalAttrs (hasSystem system) {
+lib.optionalAttrs (hasSystem "x86_64-linux") {
   # custom desktop tower
   praesidium = inputs.nixpkgs.lib.nixosSystem {
-    inherit system;
     specialArgs = {
-      inherit inputs system toplevel;
+      inherit inputs toplevel;
     };
     modules = [
+      { nixpkgs.hostPlatform = "x86_64-linux"; }
       ./hosts/praesidium
       inputs.virtual-headset.nixosModules.default
     ];
