@@ -203,7 +203,7 @@ in
         };
         merge = {
           # https://becca.ooo/blog/why-diff3-is-confusing/
-          conflictStyle = "zdiff3";
+          conflictStyle = if config.programs.mergiraf.enable then "diff3" else "zdiff3";
         };
         # This is needed so programs like Fugitive will use delta
         # Set by ov

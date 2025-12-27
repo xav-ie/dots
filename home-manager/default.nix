@@ -21,6 +21,7 @@
       fzf.enable = true;
       jq.enable = true;
       jujutsu.enable = true;
+      mergiraf.enable = true;
       pay-respects.enable = true;
       ripgrep.enable = true;
       watson.enable = true;
