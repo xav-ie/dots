@@ -155,7 +155,6 @@ in
     # '';
 
     environment.systemPackages = with pkgs; [
-      nur.repos.dustinblackman.oatmeal
       wakeonlan # For waking nox (macOS remote builder) over LAN
     ];
 
