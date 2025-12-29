@@ -5,11 +5,13 @@
     ./atop
     ./bluetooth.nix
     ./ccache.nix
+    ./cloudflared.nix
     ./dnsmasq.nix
     ./hardware-configuration.nix
     ./home-assistant.nix
     ./hyprland.nix
     ./linux-home-manager.nix
+    ./n8n.nix
     ./nginx.nix
     ./nix-config.nix
     ./noisetorch.nix

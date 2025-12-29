@@ -63,6 +63,11 @@ in
                   service = "home-assistant-service";
                   tls.certResolver = "cloudflare";
                 };
+                n8n = {
+                  rule = "Host(`${config.services.n8n.subdomain}.${baseDomain}`)";
+                  service = "n8n-service";
+                  tls.certResolver = "cloudflare";
+                };
               }
               // lib.optionalAttrs cfg.enable {
                 ${cfg.name} = {
@@ -76,6 +81,13 @@ in
                   loadBalancer = {
                     servers = [
                       { url = "http://127.0.0.1:8123"; }
+                    ];
+                  };
+                };
+                n8n-service = {
+                  loadBalancer = {
+                    servers = [
+                      { url = "http://127.0.0.1:${toString config.services.n8n.environment.N8N_PORT}"; }
                     ];
                   };
                 };

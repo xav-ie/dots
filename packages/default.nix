@@ -41,7 +41,6 @@ rec {
   pr-summary = pkgs.callPackage ./pr-summary { inherit base-ref writeNuApplication; };
   review = pkgs.callPackage ./review { inherit writeNuApplication; };
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
-  sketchybar-battery = pkgs.callPackage ./sketchybar-battery { inherit writeNuApplication; };
   slack-mcp-server = pkgs.callPackage ./slack-mcp-server { src = slack-mcp-server-src; };
   tmux-move-window = pkgs.callPackage ./tmux-move-window { inherit writeNuApplication; };
   tmux-tab-name-update = pkgs.callPackage ./tmux-tab-name-update { };
@@ -58,6 +57,7 @@ rec {
     inherit writeNuApplication notify;
   };
   move-pip = pkgs.callPackage ./move-pip { inherit writeNuApplication; };
+  sketchybar-battery = pkgs.callPackage ./sketchybar-battery { inherit writeNuApplication; };
 })
 // (optionalAttrs pkgs.stdenv.isLinux {
   move-active = pkgs.callPackage ./move-active { inherit writeNuApplication; };
