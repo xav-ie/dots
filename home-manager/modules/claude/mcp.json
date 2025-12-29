@@ -3,6 +3,10 @@
     "slack": {
       "command": "slack-mcp-server-wrapped",
       "args": []
+    },
+    "nixos": {
+      "command": "mcp-nixos",
+      "args": []
     }
   }
 }

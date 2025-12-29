@@ -9,6 +9,7 @@
     home-manager.url = "github:nix-community/home-manager";
     hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
     jj.url = "github:martinvonz/jj";
+    mcp-nixos.url = "github:utensils/mcp-nixos";
     morlana.url = "github:ryanccn/morlana";
     nix-auto-follow.url = "github:xav-ie/nix-auto-follow/feat-consolidation";
     nix-darwin.url = "github:LnL7/nix-darwin";
