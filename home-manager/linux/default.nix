@@ -13,6 +13,7 @@
     ./swaynotificationcenter
     ./systemd
     ./waybar
+    ./wayvnc
   ];
 
   config = {
