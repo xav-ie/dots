@@ -29,6 +29,7 @@
         s = "sudo -E";
         ss = "sudo -E !!";
         tm = "try { tmux attach } catch { tmux }";
+        vnc720 = "hyprctl keyword monitor HDMI-A-2,1280x720@30,auto,0.80";
         w = "watson";
         zj = "try { zellij attach } catch { zellij }";
       };
