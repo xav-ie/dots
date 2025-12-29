@@ -1,5 +1,6 @@
 {
   config,
+  inputs,
   lib,
   pkgs,
   ...
@@ -53,6 +54,7 @@ in
   config = lib.mkIf cfg.enable {
     home.packages = [
       claude-package
+      inputs.mcp-nixos.packages.${pkgs.stdenv.hostPlatform.system}.default
       slack-mcp-wrapper
     ];
 
