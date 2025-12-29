@@ -33,8 +33,8 @@ let
     src = pkgs.fetchFromGitHub {
       owner = "gitroomhq";
       repo = "postiz-app";
-      rev = "v2.7.0";
-      sha256 = "sha256-6Xjmui5Y+wPVgQAIcHLMyG4mikujQSk2bqRrDI7uz2E=";
+      rev = "v2.11.3";
+      sha256 = "sha256-4KuETXSvI1hmpFUEMLgcfRrz3/2ceHkUdGAXlvMvUVk=";
     };
     patches = [ ./postiz-integration-fix.patch ];
     phases = [
