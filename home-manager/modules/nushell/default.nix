@@ -36,8 +36,10 @@
       # (3) Files in $nu.vendor-autoload-dirs are loaded. These files can be
       # used for any purpose and are a convenient way to modularize a
       # configuration.
-      plugins = with pkgs.pkgs-bleeding; [
-        nushellPlugins.gstat
+      plugins = with pkgs.pkgs-bleeding.nushellPlugins; [
+        formats
+        gstat
+        query
       ];
 
       # Source custom files - this allows immediate updates while preserving module functionality
