@@ -43,6 +43,13 @@ in
         ProtectSystem = "strict";
         ProtectHome = true;
         PrivateTmp = true;
+        PrivateDevices = true;
+        ProtectKernelTunables = true;
+        ProtectKernelModules = true;
+        ProtectControlGroups = true;
+        MemoryDenyWriteExecute = true;
+        LockPersonality = true;
+        RestrictRealtime = true;
       };
     };
   };
