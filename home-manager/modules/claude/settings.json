@@ -22,5 +22,9 @@
     "command": "~/.claude/statusline.nu",
     "padding": 0
   },
+  "enabledPlugins": {
+    "delivery-ticket-solver@outsmartly-plugins": true,
+    "product-ticket-solver@outsmartly-plugins": true
+  },
   "alwaysThinkingEnabled": true
 }
