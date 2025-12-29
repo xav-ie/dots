@@ -37,6 +37,10 @@ buildNpmPackage rec {
 
     # Remove the prepare script that blocks installation
     sed -i '/"prepare":/d' package.json
+
+    # Fix non-portable shebang for NixOS (Chrome native host wrapper)
+    # Claude Code hardcodes #!/bin/bash which doesn't exist on NixOS
+    sed -i 's|#!/bin/bash|#!/usr/bin/env bash|g' cli.js
   '';
 
   dontNpmBuild = true;
