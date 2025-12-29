@@ -52,6 +52,7 @@ in
         "signal"
         "transmission"
         "vlc"
+        "vnc-viewer"
         "zoom"
       ];
       brews = [ "mas" ];
