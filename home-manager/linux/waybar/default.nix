@@ -50,34 +50,15 @@ in
       # https://github.com/elythh/nixdots/blob/58db47f160c219c3e2a9630651dfd9aab0408b1a/modules/home/opt/wayland/services/swaync/default.nix
       enable = true;
       systemd.enable = true;
-      package =
-        let
-          libcava-src = pkgs.fetchFromGitHub {
-            owner = "LukashonakV";
-            repo = "cava";
-            # Match libcava.wrap: v0.10.7-beta
-            rev = "v0.10.7-beta";
-            hash = "sha256-IX1B375gTwVDRjpRfwKGuzTAZOV2pgDWzUd4bW2cTDU=";
-          };
-        in
-        inputs.waybar.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs (old: {
-          # PR #4727 can't be applied via fetchpatch because .nix files are filtered out of the source
-          prePatch = (old.prePatch or "") + ''
-            cp -R --no-preserve=mode,ownership ${libcava-src} subprojects/cava-0.10.7-beta
-          '';
-          patches = (old.patches or [ ]) ++ [
-            # https://github.com/Alexays/Waybar/pull/4728 - fix cava unknown module
-            (pkgs.fetchpatch {
-              url = "https://github.com/Alexays/Waybar/pull/4728.patch";
-              hash = "sha256-zJ7B+Fnrlgtm4sLFc7ljqfSVqKbO/zmVPmDDssu/Xwg=";
-            })
-            # https://github.com/Alexays/Waybar/pull/4729 - fix cava peaking (height after audio_raw_init)
-            (pkgs.fetchpatch {
-              url = "https://github.com/Alexays/Waybar/pull/4729.patch";
-              hash = "sha256-4uYPTVFtDkUZ2hsRG1fcBxc04EJwYewgfPYPCu2vDb8=";
-            })
-          ];
-        });
+      package = inputs.waybar.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          # https://github.com/Alexays/Waybar/pull/4729 - fix cava peaking (height after audio_raw_init)
+          (pkgs.fetchpatch {
+            url = "https://github.com/Alexays/Waybar/pull/4729.patch";
+            hash = "sha256-qOLGgwMlixhDx4zZuRJOtVoGudbh/tlLQ1TJsEU7FmU=";
+          })
+        ];
+      });
       settings = {
         mainBar = import ./config.nix {
           inherit
