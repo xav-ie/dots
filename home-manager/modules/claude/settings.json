@@ -23,8 +23,8 @@
     "padding": 0
   },
   "enabledPlugins": {
-    "delivery-ticket-solver@outsmartly-plugins": true,
-    "product-ticket-solver@outsmartly-plugins": true
+    "dts@outsmartly-plugins": true,
+    "pts@outsmartly-plugins": true
   },
   "alwaysThinkingEnabled": true
 }
