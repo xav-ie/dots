@@ -38,6 +38,11 @@ in
       restartUnits = [ "n8n.service" ];
     };
 
+    sops.secrets."n8n/github_webhook_secret_1" = {
+      owner = "n8n";
+      group = "n8n";
+    };
+
     services.local-networking.subdomains = [ config.services.n8n.subdomain ];
 
     services.n8n = {
