@@ -7,6 +7,14 @@
     "nixos": {
       "command": "mcp-nixos",
       "args": []
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@latest",
+        "--executable-path=/etc/profiles/per-user/x/bin/google-chrome-stable"
+      ]
     }
   }
 }
