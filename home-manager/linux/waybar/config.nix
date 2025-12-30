@@ -105,7 +105,7 @@ in
     spacing = 11;
   };
   cava = {
-    framerate = 60;
+    framerate = 30;
     autosens = 0;
     sensitivity = 2;
     bars = 12;
