@@ -147,7 +147,7 @@ in
             commands = lib.lists.imap1 (
               index: elem: # sh
               ''
-                cmd - ${builtins.toString index}: ${focus-or-open-application} ${elem}
+                lcmd - ${builtins.toString index}: ${focus-or-open-application} ${elem}
               '') applications;
             commandString = builtins.concatStringsSep "\n" commands;
             move-pip = lib.getExe pkgs.pkgs-mine.move-pip;
