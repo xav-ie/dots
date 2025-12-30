@@ -9,6 +9,8 @@
   bubblewrap,
 }:
 let
+  common = import ./common.nix { inherit lib stdenv socat bubblewrap; };
+
   # Read version and hashes from sources.json to stay in sync with native package
   sourcesData = builtins.fromJSON (builtins.readFile ./sources.json);
   inherit (sourcesData.npm)
@@ -49,21 +51,10 @@ buildNpmPackage rec {
 
   postFixup = ''
     wrapProgram $out/bin/claude \
-      --set DISABLE_AUTOUPDATER 1 \
-      ${lib.optionalString stdenv.isLinux "--prefix PATH : ${
-        lib.makeBinPath [
-          socat
-          bubblewrap
-        ]
-      }"}
+      ${common.wrapperArgs}
   '';
 
-  meta = with lib; {
-    description = "Claude Code - Anthropic's AI-powered coding assistant CLI (NPM version)";
-    homepage = "https://claude.ai";
-    license = licenses.unfree;
-    platforms = platforms.all;
-    maintainers = [ ];
-    mainProgram = "claude";
+  meta = common.meta "Claude Code - Anthropic's AI-powered coding assistant CLI (NPM version)" // {
+    platforms = lib.platforms.all;
   };
 }

@@ -8,6 +8,8 @@
   bubblewrap,
 }:
 let
+  common = import ./common.nix { inherit lib stdenv socat bubblewrap; };
+
   # To update: run `claude-code-update` from the packages/claude-code directory
   sourcesData = builtins.fromJSON (builtins.readFile ./sources.json);
   inherit (sourcesData.native) version gcs_bucket sources;
@@ -38,28 +40,17 @@ stdenv.mkDerivation {
     cp $src $out/bin/.claude-wrapped
     chmod +x $out/bin/.claude-wrapped
     wrapProgram $out/bin/.claude-wrapped \
-      --set DISABLE_AUTOUPDATER 1 \
-      ${lib.optionalString stdenv.isLinux "--prefix PATH : ${
-        lib.makeBinPath [
-          socat
-          bubblewrap
-        ]
-      }"} \
+      ${common.wrapperArgs} \
       --argv0 claude
     mv $out/bin/.claude-wrapped $out/bin/claude
   '';
 
-  meta = with lib; {
-    description = "Claude Code - Anthropic's AI-powered coding assistant CLI";
-    homepage = "https://claude.ai";
-    license = licenses.unfree;
+  meta = common.meta "Claude Code - Anthropic's AI-powered coding assistant CLI" // {
     platforms = [
       "x86_64-linux"
       "aarch64-linux"
       "x86_64-darwin"
       "aarch64-darwin"
     ];
-    maintainers = [ ];
-    mainProgram = "claude";
   };
 }
