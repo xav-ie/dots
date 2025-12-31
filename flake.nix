@@ -130,7 +130,11 @@
             generate-kaomoji = inputs.generate-kaomoji.packages.${system}.default;
             pkgs = import inputs.nixpkgs-bleeding {
               inherit system;
-              config.allowUnfree = true;
+              config = {
+                allowUnfree = true;
+                cudaSupport = pkgs.stdenv.isLinux;
+                cudaCapabilities = [ "8.6" ];
+              };
             };
             nuenv = inputs.nuenv.lib;
             slack-mcp-server-src = inputs.slack-mcp-server;
