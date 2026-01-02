@@ -8,6 +8,9 @@
 let
   cfg = config.programs.claude;
 
+  # The update script package
+  inherit (pkgs.pkgs-mine) claude-code-update;
+
   # Native binary from the custom package
   claude-native = pkgs.symlinkJoin {
     name = "claude-wrapped";
@@ -70,5 +73,15 @@ in
       config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/statusline.nu";
     home.file.".mcp.json".source =
       config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/mcp.json";
+
+    # Daily update check for claude-code sources
+    services.scheduled.claude-code-update = {
+      description = "Check for claude-code updates";
+      command = "${claude-code-update}/bin/claude-code-update";
+      workingDirectory = "${config.dotFilesDir}/packages/claude-code";
+      calendar = "daily";
+      hour = 9;
+      minute = 0;
+    };
   };
 }

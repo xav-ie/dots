@@ -16,14 +16,17 @@
     "--set DISABLE_AUTOUPDATER 1"
     "--set ENABLE_TOOL_SEARCH true"
     "--set ENABLE_EXPERIMENTAL_MCP_CLI false"
-    (lib.optionalString stdenv.isLinux "--prefix PATH : ${lib.makeBinPath [ socat bubblewrap ]}")
+    (lib.optionalString stdenv.isLinux "--prefix PATH : ${
+      lib.makeBinPath [
+        socat
+        bubblewrap
+      ]
+    }")
   ];
 
   # Shared meta attributes
   meta =
-    description:
-    with lib;
-    {
+    description: with lib; {
       inherit description;
       homepage = "https://claude.ai";
       license = licenses.unfree;
