@@ -25,6 +25,7 @@ _: {
     ./pijul
     ./plover
     ./pueue
+    ./scheduled-services
     ./scripts
     ./ssh
     ./starship
