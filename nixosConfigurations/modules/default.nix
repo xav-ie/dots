@@ -29,6 +29,7 @@
     ./tailscale.nix
     ./traefik.nix
     ./udisks.nix
+    ./uptime-kuma.nix
     # not currently routing correctly...
     # ./twingate.nix
   ];
