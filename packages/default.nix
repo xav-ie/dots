@@ -4,6 +4,7 @@
   pkgs ? import <nixpkgs>,
   generate-kaomoji,
   nuenv,
+  simulstreaming-src,
   slack-mcp-server-src,
 }:
 let
@@ -41,6 +42,7 @@ rec {
   pr-summary = pkgs.callPackage ./pr-summary { inherit base-ref writeNuApplication; };
   review = pkgs.callPackage ./review { inherit writeNuApplication; };
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
+  simulstreaming = pkgs.callPackage ./simulstreaming { src = simulstreaming-src; };
   slack-mcp-server = pkgs.callPackage ./slack-mcp-server { src = slack-mcp-server-src; };
   tmux-move-window = pkgs.callPackage ./tmux-move-window { inherit writeNuApplication; };
   tmux-tab-name-update = pkgs.callPackage ./tmux-tab-name-update { };

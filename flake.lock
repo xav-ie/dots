@@ -1788,6 +1788,7 @@
         "plover-flake": "plover-flake",
         "quadlet-nix": "quadlet-nix",
         "rust-overlay": "rust-overlay_2",
+        "simulstreaming-src": "simulstreaming-src",
         "slack-mcp-server": "slack-mcp-server",
         "sops-nix": "sops-nix",
         "systems": "systems_8",
@@ -1870,6 +1871,22 @@
       "original": {
         "owner": "oxalica",
         "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "simulstreaming-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1761143896,
+        "narHash": "sha256-aTZMVXgUxNEYTL19gD9fgumVcv6cO5E5qtXKTI+PfDo=",
+        "owner": "ufal",
+        "repo": "SimulStreaming",
+        "rev": "240be1f63f33e7cec35355d5002e745a44a88faa",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ufal",
+        "repo": "SimulStreaming",
         "type": "github"
       }
     },
