@@ -44,6 +44,7 @@
           ffmpeg
           generate-kaomoji
           gh
+          git-absorb
           gnumake
           go-jira
           hyperfine # perfomance tester
