@@ -66,6 +66,8 @@
     # slack-mcp-server.url = "github:korotovsky/slack-mcp-server/v1.1.28";
     slack-mcp-server.url = "github:xav-ie/slack-mcp-server/feat-add-reactions";
     slack-mcp-server.flake = false;
+    simulstreaming-src.url = "github:ufal/SimulStreaming";
+    simulstreaming-src.flake = false;
   };
 
   outputs =
@@ -137,6 +139,7 @@
               };
             };
             nuenv = inputs.nuenv.lib;
+            inherit (inputs) simulstreaming-src;
             slack-mcp-server-src = inputs.slack-mcp-server;
           };
 
