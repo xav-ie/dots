@@ -24,6 +24,7 @@
       mergiraf.enable = true;
       pay-respects.enable = true;
       ripgrep.enable = true;
+      uv.enable = true;
       watson.enable = true;
       zoxide.enable = true;
       zoxide.package = pkgs.pkgs-bleeding.zoxide;
