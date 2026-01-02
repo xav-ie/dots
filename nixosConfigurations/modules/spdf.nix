@@ -31,6 +31,7 @@ in
         "traefik.http.routers.${subdomain}-secure.entrypoints" = "websecure";
         "traefik.http.routers.${subdomain}-secure.rule" = "Host(`${fullHostName}`)";
         "traefik.http.routers.${subdomain}-secure.tls" = "true";
+        "traefik.http.routers.${subdomain}-secure.tls.certResolver" = "cloudflare";
         "traefik.http.routers.${subdomain}-secure.service" = "${subdomain}-svc";
         # --- Service Definition ---
         "traefik.http.services.${subdomain}-svc.loadbalancer.server.port" = "8080";
