@@ -1,0 +1,25 @@
+diff --git a/simul_whisper/whisper/triton_ops.py b/simul_whisper/whisper/triton_ops.py
+index edd4564..86e88e5 100644
+--- a/simul_whisper/whisper/triton_ops.py
++++ b/simul_whisper/whisper/triton_ops.py
+@@ -96,14 +96,9 @@ def median_kernel(filter_width: int):
+ 
+ 
+ def median_filter_cuda(x: torch.Tensor, filter_width: int):
+-    """Apply a median filter of given width along the last dimension of x"""
+-    slices = x.contiguous().unfold(-1, filter_width, 1)
+-    grid = np.prod(slices.shape[:-2])
+-
+-    kernel = median_kernel(filter_width)
+-    y = torch.empty_like(slices[..., 0])
+-
+-    BLOCK_SIZE = 1 << (y.stride(-2) - 1).bit_length()
+-    kernel[(grid,)](y, x, x.stride(-2), y.stride(-2), BLOCK_SIZE=BLOCK_SIZE)
+-
+-    return y
++    """Apply a median filter of given width along the last dimension of x - PyTorch fallback"""
++    from torch.nn.functional import pad
++    padding = filter_width // 2
++    x_padded = pad(x, (padding, padding), mode="replicate")
++    x_unfolded = x_padded.unfold(-1, filter_width, 1)
++    return x_unfolded.median(dim=-1).values
