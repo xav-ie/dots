@@ -11,6 +11,35 @@ let
   position = "top";
   margin-top = if position == "top" then marginAmount else 0;
   margin-bottom = if position == "top" then 0 else marginAmount;
+
+  # Cava visualizer bar characters (0-7 levels)
+  cavaBars = [
+    "▁"
+    "▂"
+    "▃"
+    "▄"
+    "▅"
+    "▆"
+    "▇"
+    "█"
+  ];
+  cavaSedCmd = lib.concatStrings (
+    [ "s/;//g" ] ++ lib.imap0 (i: bar: ";s/${toString i}/${bar}/g") cavaBars
+  );
+  cavaExec =
+    conf:
+    lib.getExe (
+      pkgs.writeShellApplication {
+        name = "cava-waybar";
+        runtimeInputs = [
+          pkgs.cava
+          pkgs.coreutils
+        ];
+        text = ''
+          cava -p ${conf} | stdbuf -oL tr -d '\0' | stdbuf -oL sed -u '${cavaSedCmd}'
+        '';
+      }
+    );
   get-uair-status = lib.getExe (
     pkgs.writeShellApplication {
       name = "get-uair-status";
@@ -51,8 +80,9 @@ in
   ];
   modules-right = [
     "tray"
-    "cava"
+    "custom/cava"
     "pulseaudio"
+    "custom/cava-mic"
     "custom/virtual-headset"
     "custom/bluetooth"
     "custom/network"
@@ -104,35 +134,15 @@ in
     icon-size = 22;
     spacing = 11;
   };
-  cava = {
-    framerate = 30;
-    autosens = 0;
-    sensitivity = 2;
-    bars = 12;
-    lower_cutoff_freq = 50;
-    higher_cutoff_freq = 10000;
-    method = "pipewire";
-    source = "auto";
-    stereo = false;
-    reverse = false;
-    bar_delimiter = 0;
-    monstercat = true;
-    waves = true;
-    noise_reduction = 0.77;
-    input_delay = 2;
-    format-icons = [
-      "▁"
-      "▂"
-      "▃"
-      "▄"
-      "▅"
-      "▆"
-      "▇"
-      "█"
-    ];
-    actions = {
-      on-click-right = "mode";
-    };
+  "custom/cava" = {
+    exec = cavaExec ./cava-speaker.conf;
+    format = "{}";
+    tooltip = false;
+  };
+  "custom/cava-mic" = {
+    exec = cavaExec ./cava-mic.conf;
+    format = "{}";
+    tooltip = false;
   };
   pulseaudio = {
     format = "<span>{icon}</span> {volume}%";
