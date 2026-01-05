@@ -56,7 +56,6 @@
           bitwarden-desktop
           chromium
           # discord
-          noisetorch # noise filter
           pavucontrol # audio mixer
           playerctl # play, pause, next
           pulseaudio # provides pactl for volume control

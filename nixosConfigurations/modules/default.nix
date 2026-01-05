@@ -15,7 +15,7 @@
     ./n8n.nix
     ./nginx.nix
     ./nix-config.nix
-    ./noisetorch.nix
+    ./noisetorch
     ./plover.nix
     ./podman.nix
     ./portainer.nix
