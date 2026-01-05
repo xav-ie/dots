@@ -14,7 +14,8 @@ window#waybar > box {
 #bluetooth,
 #custom-bluetooth,
 #pulseaudio,
-#cava,
+#custom-cava,
+#custom-cava-mic,
 #workspaces,
 #custom-arch {
   padding-top: 4px;
@@ -25,7 +26,7 @@ window#waybar > box {
 #backlight,
 #bluetooth,
 #custom-bluetooth,
-#cava {
+#custom-cava {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
   padding-right: 3px;
@@ -34,7 +35,8 @@ window#waybar > box {
 }
 
 /* middle joined */
-#pulseaudio {
+#pulseaudio,
+#custom-cava-mic {
   border-radius: 0;
   padding-left: 3px;
   padding-right: 3px;
@@ -60,7 +62,8 @@ window#waybar > box {
 }
 
 /*shift to bottom*/
-#cava {
+#custom-cava,
+#custom-cava-mic {
   padding-top: 6px;
   padding-bottom: 0px;
 }
