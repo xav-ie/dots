@@ -309,7 +309,6 @@ in
           # Execute your favorite apps at launch
           exec-once = [
             (lib.optionalString config.services.swww.enable "${lib.getExe pkgs.swww} img ~/Pictures/desktop.gif")
-            "${lib.getExe pkgs.noisetorch} -i"
             "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type text --watch cliphist store"
             "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type image --watch cliphist store"
             (lib.getExe config.programs.firefox.package)
