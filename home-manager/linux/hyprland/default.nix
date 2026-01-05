@@ -311,8 +311,8 @@ in
             (lib.optionalString config.services.swww.enable "${lib.getExe pkgs.swww} img ~/Pictures/desktop.gif")
             "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type text --watch cliphist store"
             "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type image --watch cliphist store"
-            (lib.getExe config.programs.firefox.package)
-            (lib.getExe config.programs.ghostty.package)
+            "[workspace 2 silent] ${lib.getExe config.programs.firefox.package}"
+            "[workspace 1 silent] ${lib.getExe config.programs.ghostty.package}"
           ];
 
           animations = {
