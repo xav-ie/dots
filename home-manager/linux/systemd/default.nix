@@ -1,5 +1,6 @@
 { lib, pkgs, ... }:
 {
+  imports = [ ./tailscale.nix ];
   config = {
     systemd.user = {
       # Nicely reload system units when changing configs
