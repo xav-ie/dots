@@ -490,6 +490,10 @@ in
       SuspendState=mem
     '';
 
+    # NetworkManager-wait-online blocks boot unnecessarily - network services
+    # already have proper After=network-online.target dependencies
+    systemd.services.NetworkManager-wait-online.wantedBy = lib.mkForce [ ];
+
     # Just don't change this. There is never a good reason to change this as all updates still
     # apply and changing this just messes things up. It is a state tracker
     system.stateVersion = "23.05"; # Did you read the comment?
