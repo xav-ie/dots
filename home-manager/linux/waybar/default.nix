@@ -91,7 +91,7 @@ in
           #custom-pomodoro,
           #custom-virtual-headset,
           #custom-network,
-          #pulseaudio,
+          #wireplumber,
           #tray,
           #workspaces {
             background: rgba(19, 6, 10, 0.65);

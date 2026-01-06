@@ -81,7 +81,7 @@ in
   modules-right = [
     "tray"
     "custom/cava"
-    "pulseaudio"
+    "wireplumber"
     "custom/cava-mic"
     "custom/virtual-headset"
     "custom/bluetooth"
@@ -144,23 +144,19 @@ in
     format = "{}";
     tooltip = false;
   };
-  pulseaudio = {
+  wireplumber = {
     format = "<span>{icon}</span> {volume}%";
     format-muted = "";
-    tooltip = false;
-    format-icons = {
-      headphone = "";
-      default = [
-        ""
-        ""
-        "󰕾"
-        "󰕾"
-        "󰕾"
-        ""
-        ""
-        ""
-      ];
-    };
+    # tooltip = false;
+    format-icons = [
+      " "
+      " "
+      " "
+      " "
+      " "
+      " "
+      " "
+    ];
     scroll-step = 0.5;
     reverse-scrolling = true;
     on-click = lib.getExe pkgs.pavucontrol;
