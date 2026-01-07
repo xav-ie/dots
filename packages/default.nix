@@ -29,6 +29,7 @@ rec {
   j = pkgs.callPackage ./j { };
   jira-list = pkgs.callPackage ./jira-list { inherit cache-command; };
   jira-task-list = pkgs.callPackage ./jira-task-list { inherit cache-command; };
+  lint-staged = pkgs.callPackage ./lint-staged { inherit writeNuApplication; };
   localip = pkgs.callPackage ./localip { inherit writeNuApplication; };
   log-pr = pkgs.callPackage ./log-pr { inherit writeNuApplication; };
   nix-output-monitor = pkgs.callPackage ./nix-output-monitor { };

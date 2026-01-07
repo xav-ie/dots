@@ -83,14 +83,15 @@
           j
           jira-list
           jira-task-list
+          lint-staged
           localip
-          pgpod
-          notify
           nix-repl
           nom-run
+          notify
           nvim
-          prs
+          pgpod
           pr-summary
+          prs
           review
           searcher
           tmux-move-window
