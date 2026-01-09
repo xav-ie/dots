@@ -1,0 +1,21 @@
+{
+  "marketplaces": {
+    "claude-plugins-official": "anthropics/claude-plugins-official",
+    "outsmartly-plugins": "outsmartly/claude-plugins",
+    "claude-code-lsps": "Piebald-AI/claude-code-lsps",
+    "Mixedbread-Grep": "mixedbread-ai/mgrep",
+    "meta-cc-marketplace": "yaleh/meta-cc"
+  },
+  "plugins": [
+    "dts@outsmartly-plugins",
+    "pts@outsmartly-plugins",
+    "vtsls@claude-code-lsps",
+    "vscode-langservers@claude-code-lsps",
+    "rust-analyzer@claude-code-lsps",
+    "gopls@claude-code-lsps",
+    "meta-cc@meta-cc-marketplace",
+    "plugin-dev@claude-plugins-official",
+    "mgrep@Mixedbread-Grep",
+    "typescript-lsp@claude-plugins-official"
+  ]
+}
