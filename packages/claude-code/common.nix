@@ -1,9 +1,14 @@
-{
-  lib,
-  stdenv,
-  socat,
-  bubblewrap,
-}:
+{ pkgs }:
+let
+  inherit (pkgs)
+    lib
+    stdenv
+    socat
+    bubblewrap
+    gopls
+    rust-analyzer
+    ;
+in
 {
   # Dependencies needed on Linux for sandboxing
   linuxDeps = [
@@ -21,6 +26,9 @@
       lib.makeBinPath [
         socat
         bubblewrap
+        # lsp server support
+        gopls
+        rust-analyzer
       ]
     }")
   ];

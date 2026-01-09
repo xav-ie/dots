@@ -1,21 +1,13 @@
 {
+  pkgs,
   lib,
   stdenv,
   fetchurl,
   autoPatchelfHook,
   makeBinaryWrapper,
-  socat,
-  bubblewrap,
 }:
 let
-  common = import ./common.nix {
-    inherit
-      lib
-      stdenv
-      socat
-      bubblewrap
-      ;
-  };
+  common = import ./common.nix { inherit pkgs; };
 
   # To update: run `claude-code-update` from the packages/claude-code directory
   sourcesData = builtins.fromJSON (builtins.readFile ./sources.json);
