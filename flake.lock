@@ -88,6 +88,22 @@
         "type": "github"
       }
     },
+    "claude-plugins": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1767110537,
+        "narHash": "sha256-l4/jNk2FJf2Cy6IUfLapJyj5X2rWgw/iSPalsCuT6ro=",
+        "ref": "refs/heads/main",
+        "rev": "a479ef147b606a3eeebbd8d99e36db8fe6ff9239",
+        "revCount": 14,
+        "type": "git",
+        "url": "ssh://git@github.com/outsmartly/claude-plugins"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/outsmartly/claude-plugins"
+      }
+    },
     "crane": {
       "locked": {
         "lastModified": 1766194365,
@@ -1754,6 +1770,7 @@
       "inputs": {
         "alacritty-theme": "alacritty-theme",
         "alacritty-theme-themes": "alacritty-theme-themes",
+        "claude-plugins": "claude-plugins",
         "crane": "crane",
         "ctpv": "ctpv",
         "flake-compat": "flake-compat",

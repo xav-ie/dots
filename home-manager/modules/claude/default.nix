@@ -1,6 +1,5 @@
 {
   config,
-  inputs,
   lib,
   pkgs,
   ...
@@ -27,14 +26,6 @@ let
 
   claude-package = if cfg.nativeInstall then claude-native else claude-npm;
 
-  # Slack MCP Server wrapper that injects secrets from sops
-  slack-mcp-wrapper = pkgs.writeShellScriptBin "slack-mcp-server-wrapped" ''
-    export SLACK_MCP_XOXC_TOKEN="$(cat /run/secrets/slack/xoxc_token)"
-    export SLACK_MCP_XOXD_TOKEN="$(cat /run/secrets/slack/xoxd_token)"
-    export SLACK_MCP_ADD_MESSAGE_TOOL=true
-    exec ${pkgs.pkgs-mine.slack-mcp-server}/bin/slack-mcp-server "$@"
-  '';
-
   # Wrapper script that calls the nu setup script
   pluginSetupScript = pkgs.writeShellScriptBin "claude-setup-plugins" ''
     exec ${pkgs.nushell}/bin/nu ~/.claude/setup-plugins.nu --config ~/.claude/marketplaces.json
@@ -60,10 +51,12 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    # Enable shared MCP servers
+    programs.mcp.enableSlackWrapper = true;
+    programs.mcp.enableNixos = true;
+
     home.packages = [
       claude-package
-      inputs.mcp-nixos.packages.${pkgs.stdenv.hostPlatform.system}.default
-      slack-mcp-wrapper
       pluginSetupScript
     ];
 

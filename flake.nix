@@ -51,6 +51,8 @@
     nixpkgs-lib-v1-merge.url = "github:nix-community/nixpkgs.lib/a73b9c743612e4244d865a2fdee11865283c04e6";
 
     # vendored
+    claude-plugins.url = "git+ssh://git@github.com/outsmartly/claude-plugins";
+    claude-plugins.flake = false;
     glsl_analyzer.flake = false;
     glsl_analyzer.url = "github:xav-ie/glsl_analyzer/format";
     ollama-src.flake = false;

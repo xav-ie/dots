@@ -15,12 +15,14 @@ _: {
     ./inputrc
     ./jujutsu
     # ./kitty
+    ./mcp
     ./moor
     ./mpv
     ./neovide
     ./nushell
     ./nvim
     ./ollama
+    ./opencode
     ./ov
     ./pijul
     ./plover
