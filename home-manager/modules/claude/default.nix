@@ -34,6 +34,11 @@ let
     export SLACK_MCP_ADD_MESSAGE_TOOL=true
     exec ${pkgs.pkgs-mine.slack-mcp-server}/bin/slack-mcp-server "$@"
   '';
+
+  # Wrapper script that calls the nu setup script
+  pluginSetupScript = pkgs.writeShellScriptBin "claude-setup-plugins" ''
+    exec ${pkgs.nushell}/bin/nu ~/.claude/setup-plugins.nu --config ~/.claude/marketplaces.json
+  '';
 in
 {
   options.programs.claude = {
@@ -59,6 +64,7 @@ in
       claude-package
       inputs.mcp-nixos.packages.${pkgs.stdenv.hostPlatform.system}.default
       slack-mcp-wrapper
+      pluginSetupScript
     ];
 
     home.file.".local/bin/claude" = {
@@ -71,6 +77,10 @@ in
       config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/notify.nu";
     home.file.".claude/statusline.nu".source =
       config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/statusline.nu";
+    home.file.".claude/marketplaces.json".source =
+      config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/marketplaces.json";
+    home.file.".claude/setup-plugins.nu".source =
+      config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/setup-plugins.nu";
     home.file.".mcp.json".source =
       config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/mcp.json";
 
@@ -79,6 +89,15 @@ in
       description = "Check for claude-code updates";
       command = "${claude-code-update}/bin/claude-code-update";
       workingDirectory = "${config.dotFilesDir}/packages/claude-code";
+      calendar = "daily";
+      hour = 9;
+      minute = 0;
+    };
+
+    # Daily plugin sync - ensures marketplaces and plugins are installed
+    services.scheduled.claude-plugin-sync = {
+      description = "Sync Claude Code marketplaces and plugins";
+      command = "${pluginSetupScript}/bin/claude-setup-plugins";
       calendar = "daily";
       hour = 9;
       minute = 0;
