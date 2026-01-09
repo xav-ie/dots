@@ -1,12 +1,30 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
   subdomain = "n8n";
   port = 5678;
   inherit (config.services.local-networking) baseDomain;
+
+  n8n = pkgs.pkgs-bleeding.n8n.overrideAttrs (old: rec {
+    version = "2.3.0";
+    src = pkgs.fetchFromGitHub {
+      owner = "n8n-io";
+      repo = "n8n";
+      tag = "n8n@${version}";
+      hash = "sha256-6VfoT8Rw2c46ugSpW1IHJPSHTWnphNn0MG1XDhrPeBg=";
+    };
+    pnpmDeps = pkgs.pkgs-bleeding.fetchPnpmDeps {
+      inherit (old) pname;
+      inherit version src;
+      pnpm = pkgs.pkgs-bleeding.pnpm_10;
+      fetcherVersion = 3;
+      hash = "sha256-wSKxoxWys3gf++yTDr/XBadW9bq/w/NKPGUZpbAPe+I=";
+    };
+  });
   # Private URL for UI access (via Tailscale)
   editorBaseUrl = "https://${config.services.n8n.subdomain}.${baseDomain}";
   # Public URL for webhooks (via Cloudflare Tunnel)
@@ -47,6 +65,7 @@ in
 
     services.n8n = {
       enable = true;
+      package = n8n;
       environment = {
         N8N_PORT = toString port;
         N8N_HOST = "127.0.0.1";
