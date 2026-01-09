@@ -1,22 +1,13 @@
 {
+  pkgs,
   lib,
-  stdenv,
   buildNpmPackage,
   fetchurl,
   writeText,
   makeBinaryWrapper,
-  socat,
-  bubblewrap,
 }:
 let
-  common = import ./common.nix {
-    inherit
-      lib
-      stdenv
-      socat
-      bubblewrap
-      ;
-  };
+  common = import ./common.nix { inherit pkgs; };
 
   # Read version and hashes from sources.json to stay in sync with native package
   sourcesData = builtins.fromJSON (builtins.readFile ./sources.json);
