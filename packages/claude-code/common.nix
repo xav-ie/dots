@@ -15,6 +15,7 @@
   wrapperArgs = lib.concatStringsSep " " [
     "--set DISABLE_AUTOUPDATER 1"
     "--set ENABLE_TOOL_SEARCH true"
+    "--set ENABLE_LSP_TOOL true"
     "--set ENABLE_EXPERIMENTAL_MCP_CLI false"
     (lib.optionalString stdenv.isLinux "--prefix PATH : ${
       lib.makeBinPath [
