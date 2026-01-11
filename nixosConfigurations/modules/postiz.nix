@@ -220,6 +220,13 @@ in
                 UPLOAD_DIRECTORY = "/uploads";
                 NEXT_PUBLIC_UPLOAD_DIRECTORY = "/uploads";
               };
+              # Health check - restart container if backend stops listening
+              healthCmd = "nc -z localhost 3000"; # Lightweight port check, no HTTP overhead
+              healthInterval = "2m";
+              healthTimeout = "5s";
+              healthRetries = 3;
+              healthStartPeriod = "90s"; # Give backend time to start
+              healthOnFailure = "restart"; # Actually restart on failure
               labels = {
                 "traefik.enable" = "true";
                 "traefik.http.routers.${subdomain}-secure.entrypoints" = "websecure";
