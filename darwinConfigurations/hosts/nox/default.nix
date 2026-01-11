@@ -75,39 +75,6 @@ in
       ];
     };
     fonts.packages = fonts.packages;
-    # unfortunately, this must be done in nix-darwin
-    # fonts.packages =
-    #   (with pkgs; [
-    #     maple-mono.truetype-autohint
-    #     maple-mono.NF
-    #     # These two are not packaged at all:
-    #     # "MonoLisa" # idk why this is not included yet in nerdfonts
-    #     # "Twilio Sans Mono" # <== may change very soon, open pr to add it.
-    #   ])
-    #   ++ (with pkgs.nerd-fonts; [
-    #     # I like all these fonts a lot. You can test them by going to programmingfonts.org
-    #     # However, the real names are to the right. I imagine it was renamed this way for
-    #     # licensing reasons
-    #     caskaydia-cove # "CaskaydiaCove Nerd Font"
-    #     fira-code
-    #     hasklug
-    #     jetbrains-mono
-    #     martian-mono
-    #     meslo-lg
-    #     # also in general packages??
-    #     monaspace # "MonaspiceNe Nerd Font"
-    #     # These ones should be in nerdfonts, but I guess they just aren't...
-    #     # You can find them above in package installs :(
-    #     # I think this is due to upstream not putting them in releases for some
-    #     # reason:
-    #     # https://github.com/ryanoasis/nerd-fonts/releases/
-    #     # "Cascadia Code"
-    #     # "Maple"
-    #     # "Martian Mono"
-    #     # "MonoLisa"
-    #     # "Twilio Sans Mono" # this one may be included in future release:
-    #     # https://github.com/ryanoasis/nerd-fonts/pull/1465
-    #   ]);
     security.pam = {
       services.sudo_local = {
         enable = true;
