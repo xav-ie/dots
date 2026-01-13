@@ -54,7 +54,7 @@ in
             http = {
               routers = {
                 dashboard = {
-                  rule = "Host(`${baseDomain}`)";
+                  rule = "Host(`${baseDomain}`) || Host(`traefik.${baseDomain}`)";
                   service = "api@internal";
                   tls.certResolver = "cloudflare";
                 };
