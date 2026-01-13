@@ -68,6 +68,8 @@ in
   };
 
   config = {
+    services.local-networking.subdomains = [ "traefik" ];
+
     environment.variables = {
       NODE_EXTRA_CA_CERTS = "${mkcertCA}/rootCA.pem";
     };
