@@ -390,7 +390,7 @@ in
         nvidiaSettings = true;
         # beta, production, stable (=production), or latest (=MAX(production,
         # some version))
-        package = config.boot.kernelPackages.nvidiaPackages.production;
+        package = config.boot.kernelPackages.nvidiaPackages.beta;
         # forceFullCompositionPipeline = true;
       };
       nvidia-container-toolkit.enable = true;
