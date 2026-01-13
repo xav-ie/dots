@@ -68,6 +68,11 @@ in
                   service = "n8n-service";
                   tls.certResolver = "cloudflare";
                 };
+                jellyfin = {
+                  rule = "Host(`jellyfin.${baseDomain}`)";
+                  service = "jellyfin-service";
+                  tls.certResolver = "cloudflare";
+                };
               }
               // lib.optionalAttrs cfg.enable {
                 ${cfg.name} = {
@@ -88,6 +93,13 @@ in
                   loadBalancer = {
                     servers = [
                       { url = "http://127.0.0.1:${toString config.services.n8n.environment.N8N_PORT}"; }
+                    ];
+                  };
+                };
+                jellyfin-service = {
+                  loadBalancer = {
+                    servers = [
+                      { url = "http://127.0.0.1:8096"; }
                     ];
                   };
                 };

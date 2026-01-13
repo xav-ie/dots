@@ -10,6 +10,7 @@
     ./hardware-configuration.nix
     ./home-assistant.nix
     ./hyprland.nix
+    ./jellyfin.nix
     ./lightrag.nix
     ./linux-home-manager.nix
     ./n8n.nix
