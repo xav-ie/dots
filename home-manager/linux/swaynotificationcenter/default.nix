@@ -37,12 +37,47 @@ in
     services.swaync =
       let
         timeout = 10;
-        timeout-critical = 0;
+        timeout-critical = 20;
         timeout-low = 5;
-        max-timeout = lib.max (lib.max timeout timeout-critical) timeout-low;
-        # do not count 0, that is actually infinity
-        not0 = thing: if thing == 0 then max-timeout else thing;
-        min-timeout = lib.min (lib.min (not0 timeout) (not0 timeout-critical)) (not0 timeout-low);
+        swayncLogic = pkgs.writeNuApplication {
+          name = "swaync-logic";
+          runtimeInputs = [ pkgs.hyprland ];
+          runtimeEnv = {
+            NOTIFICATION_HEIGHT = toString cfg.notificationHeight;
+            NOTIFICATION_WIDTH = toString cfg.notificationWidth;
+            MAX_HEIGHT = "600";
+          };
+          text = builtins.readFile ./swaync-logic.nu;
+        };
+        swayncLogicExe = lib.getExe swayncLogic;
+        swaync-notify-lifecycle = pkgs.writeShellApplication {
+          name = "swaync-notify-lifecycle";
+          runtimeInputs = [ pkgs.flock ];
+          text = ''
+            # Pick timeout based on urgency (passed by swaync as $SWAYNC_URGENCY)
+            case "''${SWAYNC_URGENCY:-Normal}" in
+              Low) sleep_time=${toString timeout-low} ;;
+              Critical) sleep_time=${toString timeout-critical} ;;
+              *) sleep_time=${toString timeout} ;;
+            esac
+
+            lock_file="$XDG_RUNTIME_DIR/swaync-visible-count.lock"
+            flock -x "$lock_file" -c '${swayncLogicExe} increment'
+            sleep "$sleep_time"
+            flock -x "$lock_file" -c '${swayncLogicExe} decrement'
+          '';
+        };
+        swaync-on-receive = pkgs.writeShellApplication {
+          name = "swaync-on-receive";
+          runtimeInputs = [
+            pkgs.systemd
+            swaync-notify-lifecycle
+          ];
+          text = ''
+            # Use systemd to properly daemonize - most robust option
+            systemd-run --user --no-block --collect swaync-notify-lifecycle
+          '';
+        };
       in
       {
         enable = true;
@@ -80,96 +115,9 @@ in
           relative-timestamps = true;
           script-fail-notify = true;
           scripts = {
-            reposition = {
-              exec = lib.getExe (
-                pkgs.writeNuApplication {
-                  name = "fix-notification-position";
-                  runtimeInputs = [
-                    pkgs.pkgs-mine.move-active
-                    config.services.swaync.package
-                    pkgs.hyprland
-                  ];
-                  text = # nu
-                    ''
-                      # Count file to track visible notifications
-                      let count_file = "/tmp/swaync-visible-count"
-
-                      # Initialize count file if it doesn't exist
-                      if not ($count_file | path exists) {
-                        "0" | save $count_file
-                      }
-
-                      # Increment the count for new notification
-                      let current_count = (open $count_file | into int)
-                      let new_count = $current_count + 1
-                      ($new_count | into string) | save -f $count_file
-
-                      # Calculate and set initial height
-                      let notification_height = ${toString cfg.notificationHeight}
-                      let calculated_height = ($new_count * $notification_height)
-                      let height = if $calculated_height < $notification_height { $notification_height } else if $calculated_height > 600 { 600 } else { $calculated_height }
-
-                      # Resize the swaync window
-                      hyprctl dispatch resizewindowpixel $"exact ${toString cfg.notificationWidth} ($height),class:^swaync$"
-
-                      # Then reposition as before
-                      def currentPrimaryJob [id: number] {
-                        let relevantJobs = (job list
-                                            | where tag == "spamMoveNotification"
-                                            | sort-by id)
-                        if (($relevantJobs | length) == 0) {
-                          return false
-                        }
-                        let firstRunningJobId = ($relevantJobs | first | get id)
-                        print $"First running ($firstRunningJobId)"
-                        $firstRunningJobId == $id
-                      }
-                      job spawn { move-active topRight "title:swaync" | complete }
-
-                      # For normal notifications, wait the full timeout then decrement
-                      # We spawn this immediately to track the actual timeout
-                      job spawn --tag notificationTimeout { ||
-                        # Wait for the actual notification timeout (10 seconds for normal)
-                        sleep ${toString timeout-low}sec
-
-                        # After timeout, decrement the count
-                        let count_file = "/tmp/swaync-visible-count"
-                        let current_count = (open $count_file | into int)
-                        let new_count = if $current_count > 0 { $current_count - 1 } else { 0 }
-                        ($new_count | into string) | save -f $count_file
-
-                        # Calculate new height after decrement
-                        let notification_height = ${toString cfg.notificationHeight}
-                        let calculated_height = ($new_count * $notification_height)
-                        let final_height = if $calculated_height < $notification_height { $notification_height } else if $calculated_height > 600 { 600 } else { $calculated_height }
-
-                        # Resize to new height
-                        hyprctl dispatch resizewindowpixel $"exact ${toString cfg.notificationWidth} ($final_height),class:^swaync$"
-                      }
-
-                      # Keep repositioning for a bit after min timeout
-                      sleep ("${toString min-timeout}sec" | into duration)
-                      job spawn --tag spamMoveNotification { ||
-                        # spam repositioning for a bit
-                        let currentId = (job id)
-                        mut timeLeft = ${toString (lib.max 0 (max-timeout - min-timeout))} | into float
-                        while $timeLeft >= 0.0 {
-                          let chunk = 0.25
-                          sleep ($"($chunk)sec" | into duration)
-                          $timeLeft = $timeLeft - $chunk
-                          # prevent contention of move-active
-                          if (currentPrimaryJob $currentId) {
-                            move-active topRight "title:swaync"
-                          }
-                        }
-
-                        # This job is just for repositioning now
-                      }
-                      # ensure job spawn completion
-                      sleep ${toString max-timeout}sec
-                    '';
-                }
-              );
+            resize-on-receive = {
+              exec = "${swaync-on-receive}/bin/swaync-on-receive";
+              app-name = ".*";
               run-on = "receive";
             };
           };
@@ -321,7 +269,6 @@ in
               background: transparent;
               border: none;
               color: white;
-              border-radius: 0;
               border-radius: 0;
             }
 
@@ -519,7 +466,7 @@ in
               font-size: 1.1rem;
             }
             carouselindicatordots {
-              background: green;
+              background: transparent;
             }
             /* Buttons widget */
             .widget-buttons-grid {
