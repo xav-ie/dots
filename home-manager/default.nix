@@ -11,23 +11,35 @@
 
   config = {
     programs = {
+      # system monitor
       btop.enable = true;
       # excellent completions that are fast
       # https://carapace-sh.github.io/carapace-bin/
       carapace.enable = true;
-      carapace.package = pkgs.pkgs-bleeding.carapace;
+      # AI chat client
       claude.enable = true;
       claude.nativeInstall = false;
+      # fuzzy finder
       fzf.enable = true;
+      # json processor
       jq.enable = true;
+      # A user-friendly VCS
       jujutsu.enable = true;
+      # automatic merge conflicts resolver
       mergiraf.enable = true;
+      # f
       pay-respects.enable = true;
+      # fast grep
       ripgrep.enable = true;
+      # a more featureful fzf
+      television.enable = true;
+      # python package manager
       uv.enable = true;
+      # time tracker
       watson.enable = true;
+      # cd supercharged
       zoxide.enable = true;
-      zoxide.package = pkgs.pkgs-bleeding.zoxide;
+      # file manager
       yazi.enable = true;
     };
     home = {
