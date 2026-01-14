@@ -73,11 +73,13 @@ def "main file" [
     exit 1
   }
 
-  # Determine output directory
+  # Determine output directory (default to current dir if no directory component)
   let output_dir = if ($output | is-empty) {
-    $file_path | path dirname
+    let dir = $file_path | path dirname
+    if ($dir | is-empty) { "." } else { $dir }
   } else {
-    $output | path dirname
+    let dir = $output | path dirname
+    if ($dir | is-empty) { "." } else { $dir }
   }
 
   # Check if we need to extract audio from video
