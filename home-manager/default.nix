@@ -90,6 +90,7 @@
           better-branch
           cache-command
           ff
+          format-staged
           gp
           is-sshed
           j
