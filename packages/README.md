@@ -51,10 +51,6 @@ Broken: Still working on nixifying this properly.
 Check if there is someone currently ssh-ed into system. Useful for
 showing/not-showing certain terminal stuff.
 
-### [jira-task-list](./jira-task-list)
-
-List Jira tasks, but fancier?
-
 ### [move-active](./move-active)
 
 Move active window to corner (accounting for borders, gaps, and bar) on hyprland.
