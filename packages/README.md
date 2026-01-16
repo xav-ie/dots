@@ -51,10 +51,6 @@ Broken: Still working on nixifying this properly.
 Check if there is someone currently ssh-ed into system. Useful for
 showing/not-showing certain terminal stuff.
 
-### [jira-list](./jira-list)
-
-List Jira tasks, powered by `cache-command` to make listing faster.
-
 ### [jira-task-list](./jira-task-list)
 
 List Jira tasks, but fancier?

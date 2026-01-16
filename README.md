@@ -36,7 +36,6 @@ classDiagram
     nixosConfigurations: • praesidium
     overlays: package overrides
     packages: • cache-command
-    packages: • jira-list
     packages: • record
     packages: • record-section
     packages: • ...
