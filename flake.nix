@@ -51,12 +51,10 @@
     nixpkgs-lib-v1-merge.url = "github:nix-community/nixpkgs.lib/a73b9c743612e4244d865a2fdee11865283c04e6";
 
     # vendored
-    claude-plugins.url = "git+ssh://git@github.com/outsmartly/claude-plugins";
     claude-plugins.flake = false;
+    claude-plugins.url = "git+ssh://git@github.com/outsmartly/claude-plugins";
     glsl_analyzer.flake = false;
     glsl_analyzer.url = "github:xav-ie/glsl_analyzer/format";
-    ollama-src.flake = false;
-    ollama-src.url = "github:ollama/ollama/v0.13.5";
     homebrew-bundle.flake = false;
     homebrew-bundle.url = "github:homebrew/homebrew-bundle";
     homebrew-cask.flake = false;
@@ -65,11 +63,13 @@
     homebrew-core.url = "github:homebrew/homebrew-core";
     obs-backgroundremoval.flake = false;
     obs-backgroundremoval.url = "github:royshil/obs-backgroundremoval";
+    ollama-src.flake = false;
+    ollama-src.url = "github:ollama/ollama/v0.13.5";
+    simulstreaming-src.url = "github:ufal/SimulStreaming";
+    simulstreaming-src.flake = false;
     # slack-mcp-server.url = "github:korotovsky/slack-mcp-server/v1.1.28";
     slack-mcp-server.url = "github:xav-ie/slack-mcp-server/feat-add-reactions";
     slack-mcp-server.flake = false;
-    simulstreaming-src.url = "github:ufal/SimulStreaming";
-    simulstreaming-src.flake = false;
   };
 
   outputs =
