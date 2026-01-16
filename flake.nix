@@ -65,6 +65,8 @@
     obs-backgroundremoval.url = "github:royshil/obs-backgroundremoval";
     ollama-src.flake = false;
     ollama-src.url = "github:ollama/ollama/v0.13.5";
+    ralph-src.url = "github:snarktank/ralph";
+    ralph-src.flake = false;
     simulstreaming-src.url = "github:ufal/SimulStreaming";
     simulstreaming-src.flake = false;
     # slack-mcp-server.url = "github:korotovsky/slack-mcp-server/v1.1.28";

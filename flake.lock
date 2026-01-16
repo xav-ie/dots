@@ -1766,6 +1766,22 @@
         "type": "github"
       }
     },
+    "ralph-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1767819319,
+        "narHash": "sha256-gCPFH835OM1YsTZzgLL080YS/9BxmECY4NJkpA2KxiY=",
+        "owner": "snarktank",
+        "repo": "ralph",
+        "rev": "afa22d1bdfcd705a6426709d7270bacc3ac25f06",
+        "type": "github"
+      },
+      "original": {
+        "owner": "snarktank",
+        "repo": "ralph",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "alacritty-theme": "alacritty-theme",
@@ -1804,6 +1820,7 @@
         "ollama-src": "ollama-src",
         "plover-flake": "plover-flake",
         "quadlet-nix": "quadlet-nix",
+        "ralph-src": "ralph-src",
         "rust-overlay": "rust-overlay_2",
         "simulstreaming-src": "simulstreaming-src",
         "slack-mcp-server": "slack-mcp-server",
