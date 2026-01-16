@@ -23,6 +23,7 @@
     ./postiz.nix
     ./power-save
     ./quadlet.nix
+    ./quartz.nix
     ./remote-builder.nix
     ./sops.nix
     ./spdf.nix
