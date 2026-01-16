@@ -113,8 +113,11 @@ def main [
       $config_changed = true
     }
 
+    # Always save to normalize formatting (trailing newline, indentation)
+    $config | to json --indent 2 | save -f $config_path
+    "\n" | save --append $config_path
+
     if $config_changed {
-      $config | save -f $config_path
       print $"\nUpdated ($config_path)"
     }
   }
