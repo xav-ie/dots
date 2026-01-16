@@ -95,7 +95,6 @@
           format-staged
           gp
           is-sshed
-          jira-task-list
           lint-staged
           localip
           nix-repl
