@@ -78,6 +78,8 @@ in
       config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/mcp.json";
     home.file.".claude/agents".source =
       config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/agents";
+    home.file.".claude/CLAUDE.md".source =
+      config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/CLAUDE.md";
 
     # Daily update check for claude-code sources
     services.scheduled.claude-code-update = {

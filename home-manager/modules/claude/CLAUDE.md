@@ -1,0 +1,3 @@
+- please use gh cli when accessing anything from github
+- please use #!/usr/bin/env INTERPRETER when creating scripts. I am on Nix, so this is important.
+- When accessing anything from github, you must try to use `gh` cli first to find out more. Resort to fetch tool as last resort

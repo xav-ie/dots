@@ -3,3 +3,6 @@ result*
 .pijul
 .devenv
 .direnv
+
+# Unignore tracked CLAUDE.md
+!home-manager/modules/claude/CLAUDE.md
