@@ -95,7 +95,6 @@
           format-staged
           gp
           is-sshed
-          j
           jira-list
           jira-task-list
           lint-staged
