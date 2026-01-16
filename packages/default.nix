@@ -26,7 +26,6 @@ rec {
   git-amend = pkgs.callPackage ./git-amend { inherit writeNuApplication; };
   gp = pkgs.callPackage ./gp { inherit update-pr writeNuApplication; };
   is-sshed = pkgs.callPackage ./is-sshed { inherit writeNuApplication; };
-  jira-list = pkgs.callPackage ./jira-list { inherit cache-command; };
   jira-task-list = pkgs.callPackage ./jira-task-list { inherit cache-command; };
   format-staged = pkgs.callPackage ./format-staged { inherit writeNuApplication; };
   lint-staged = pkgs.callPackage ./lint-staged { inherit writeNuApplication; };
