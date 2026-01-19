@@ -23,10 +23,11 @@ rec {
   claude-code-npm = pkgs.callPackage ./claude-code/npm.nix { };
   claude-code-update = pkgs.callPackage ./claude-code/update.nix { inherit writeNuApplication; };
   ff = pkgs.callPackage ./ff { };
+  flint = pkgs.callPackage ./flint { inherit format-staged lint-staged writeNuApplication; };
+  format-staged = pkgs.callPackage ./format-staged { inherit writeNuApplication; };
   git-amend = pkgs.callPackage ./git-amend { inherit writeNuApplication; };
   gp = pkgs.callPackage ./gp { inherit update-pr writeNuApplication; };
   is-sshed = pkgs.callPackage ./is-sshed { inherit writeNuApplication; };
-  format-staged = pkgs.callPackage ./format-staged { inherit writeNuApplication; };
   lint-staged = pkgs.callPackage ./lint-staged { inherit writeNuApplication; };
   localip = pkgs.callPackage ./localip { inherit writeNuApplication; };
   log-pr = pkgs.callPackage ./log-pr { inherit writeNuApplication; };
@@ -35,10 +36,10 @@ rec {
   nom-run = pkgs.callPackage ./nom-run { inherit nix-output-monitor writeNuApplication; };
   nvim = pkgs.callPackage ./nvim { };
   pgpod = pkgs.callPackage ./pgpod { inherit writeNuApplication; };
+  pr-summary = pkgs.callPackage ./pr-summary { inherit base-ref writeNuApplication; };
   prettier-plugin-toml = pkgs.callPackage ./prettier-plugin-toml { };
   prettier-with-toml = pkgs.callPackage ./prettier-with-toml { inherit prettier-plugin-toml; };
   prs = pkgs.callPackage ./prs { inherit writeNuApplication; };
-  pr-summary = pkgs.callPackage ./pr-summary { inherit base-ref writeNuApplication; };
   review = pkgs.callPackage ./review { inherit writeNuApplication; };
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
   simulstreaming = pkgs.callPackage ./simulstreaming { src = simulstreaming-src; };

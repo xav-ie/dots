@@ -92,6 +92,7 @@
           better-branch
           cache-command
           ff
+          flint
           format-staged
           gp
           is-sshed
