@@ -5,10 +5,9 @@
 # --enforce: config wins, removes things not in config
 
 def main [
-  --config: path = "~/.claude/marketplaces.json"
   --enforce  # Remove installed items not in config
 ] {
-  let config_path = $config | path expand
+  let config_path = $env.CLAUDE_PLUGINS_CONFIG | path expand
   if not ($config_path | path exists) {
     print $"Config file not found: ($config_path)"
     exit 1
