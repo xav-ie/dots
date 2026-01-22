@@ -16,7 +16,7 @@ system:
         null
       }
       "Linux" => {
-        nh os switch . -o result
+        nh os switch . -o result -- --show-trace
         # Update result-{hostname} to match result
         if ("result" | path exists) {
           ln -sfn (readlink result) $"result-($hostname)"
