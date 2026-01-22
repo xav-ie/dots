@@ -27,9 +27,13 @@ let
   '';
 
   # Wrapper script that calls the nu setup script
-  pluginSetupScript = pkgs.writeShellScriptBin "claude-setup-plugins" ''
-    exec ${pkgs.nushell}/bin/nu ~/.claude/setup-plugins.nu --config ~/.claude/marketplaces.json
-  '';
+  pluginSetupScript = pkgs.writeNuApplication {
+    name = "claude-setup-plugins";
+    runtimeEnv = {
+      CLAUDE_PLUGINS_CONFIG = "${config.dotFilesDir}/home-manager/modules/claude/marketplaces.json";
+    };
+    text = builtins.readFile ./setup-plugins.nu;
+  };
 in
 {
   options.programs.claude = {
