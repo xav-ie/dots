@@ -2,6 +2,7 @@
   description = "Xavier's NixOS";
   inputs = {
     alacritty-theme.url = "github:alexghr/alacritty-theme.nix";
+    beads.url = "github:steveyegge/beads";
     ctpv.url = "github:xav-ie/ctpv-nix";
     flake-parts.url = "github:hercules-ci/flake-parts";
     generate-kaomoji.url = "github:xav-ie/generate-kaomoji";
