@@ -4,6 +4,7 @@ _: {
     ./atuin
     ./bat
     ./beads
+    ./carapace
     ./claude
     ./delta
     ./direnv

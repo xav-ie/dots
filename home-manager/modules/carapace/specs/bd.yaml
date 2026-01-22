@@ -1,0 +1,5 @@
+name: bd
+description: Issue tracker with first-class dependency support
+parsing: disabled
+completion:
+  positionalany: ["$carapace.bridge.Cobra([bd])"]
