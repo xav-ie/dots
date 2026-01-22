@@ -10,21 +10,21 @@ let
   # The update script package
   inherit (pkgs.pkgs-mine) claude-code-update;
 
-  # Native binary from the custom package
-  claude-native = pkgs.symlinkJoin {
-    name = "claude-wrapped";
-    paths = [ pkgs.pkgs-mine.claude-code ];
-    buildInputs = [ pkgs.makeWrapper ];
-    postBuild = ''
-      wrapProgram $out/bin/claude \
-        --prefix PATH : "${config.home.homeDirectory}/.local/bin"
-    '';
-  };
+  # Native binary wrapper
+  claude-native = pkgs.writeShellScriptBin "claude-native" ''
+    export PATH="${config.home.homeDirectory}/.local/bin:$PATH"
+    exec ${lib.getExe pkgs.pkgs-mine.claude-code} "$@"
+  '';
 
-  # NPM-based installation - use the package from packages/claude-code/npm.nix
-  claude-npm = pkgs.pkgs-mine.claude-code-npm;
+  # NPM-based binary wrapper
+  claude-npm = pkgs.writeShellScriptBin "claude-npm" ''
+    exec ${lib.getExe pkgs.pkgs-mine.claude-code-npm} "$@"
+  '';
 
-  claude-package = if cfg.nativeInstall then claude-native else claude-npm;
+  # Main 'claude' command pointing to the selected version
+  claude-package = pkgs.writeShellScriptBin "claude" ''
+    exec ${lib.getExe (if cfg.nativeInstall then claude-native else claude-npm)} "$@"
+  '';
 
   # Wrapper script that calls the nu setup script
   pluginSetupScript = pkgs.writeShellScriptBin "claude-setup-plugins" ''
@@ -57,6 +57,8 @@ in
 
     home.packages = [
       claude-package
+      claude-native
+      claude-npm
       pluginSetupScript
     ];
 
