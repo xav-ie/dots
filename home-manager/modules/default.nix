@@ -3,6 +3,7 @@ _: {
     ./alacritty
     ./atuin
     ./bat
+    ./beads
     ./claude
     ./delta
     ./direnv
