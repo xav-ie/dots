@@ -6,6 +6,14 @@ default:
 system:
     #!/usr/bin/env nu
     let hostname = (hostname)
+
+    # start: pin devshell to gc-roots
+    let gc_root_name = "result-system-devshell"
+    let devshell_job = job spawn {
+      let system = (nix eval --raw --impure --expr "builtins.currentSystem")
+      nix build $".#devShells.($system).default" --out-link $gc_root_name
+    }
+
     match (uname | get kernel-name) {
       "Darwin" => {
         morlana switch --flake . --no-confirm -- --show-trace
@@ -26,6 +34,14 @@ system:
         error make { msg: "Unknown OS" }
       }
     }
+
+    # cleanup: pin devshell to gc-roots
+    while (job list | where id == $devshell_job | length) == 1 {
+      print "Waiting for devshell job to finish..."
+      sleep 1sec
+    }
+    (ln -sfn $"(pwd)/($gc_root_name)"
+      $"/nix/var/nix/gcroots/per-user/($env.USER)/($gc_root_name)")
 
 # fix the lockfile for auto-follow
 lock:
