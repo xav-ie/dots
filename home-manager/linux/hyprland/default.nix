@@ -167,6 +167,12 @@ in
               on-timeout = "loginctl lock-session";
             }
             {
+              # Enable DND before DPMS off to prevent notifications from waking the monitor
+              timeout = 1170;
+              on-timeout = "${lib.getExe' pkgs.swaynotificationcenter "swaync-client"} -dn";
+              on-resume = "${lib.getExe' pkgs.swaynotificationcenter "swaync-client"} -df";
+            }
+            {
               timeout = 1200;
               on-timeout = "hyprctl dispatch dpms off";
               on-resume = "hyprctl dispatch dpms on";
