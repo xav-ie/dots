@@ -8,20 +8,12 @@
 let
   cfg = config.programs.ralph;
 
-  # Fetch the PR patch
-  claudePatch = pkgs.fetchpatch {
-    url = "https://github.com/snarktank/ralph/pull/2.patch";
-    hash = "sha256-YYqLScCIKTKHNStWdbOdLIYfJOwjNzTYJjRflCWT7s0=";
-  };
-
   # Build ralph with the patch applied
   ralph = pkgs.stdenv.mkDerivation {
     pname = "ralph";
     version = "unstable";
 
     src = inputs.ralph-src;
-
-    patches = [ claudePatch ];
 
     nativeBuildInputs = [ pkgs.makeWrapper ];
 
