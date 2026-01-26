@@ -4,6 +4,7 @@
     "commit": "",
     "pr": ""
   },
+  "model": "opus",
   "hooks": {
     "Notification": [
       {
@@ -30,8 +31,8 @@
     "vscode-langservers@claude-code-lsps": true,
     "rust-analyzer@claude-code-lsps": true,
     "gopls@claude-code-lsps": true,
-    "typescript-lsp@claude-plugins-official": true
+    "typescript-lsp@claude-plugins-official": true,
+    "beads@beads-marketplace": true
   },
-  "alwaysThinkingEnabled": true,
-  "model": "opus"
+  "alwaysThinkingEnabled": true
 }
