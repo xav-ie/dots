@@ -1822,11 +1822,11 @@
     "ralph-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1767819319,
-        "narHash": "sha256-gCPFH835OM1YsTZzgLL080YS/9BxmECY4NJkpA2KxiY=",
+        "lastModified": 1768931961,
+        "narHash": "sha256-G4jVVfmVLwb8KuHRn2QQnBnr/6g8bfjoF2iDKoo2hA4=",
         "owner": "snarktank",
         "repo": "ralph",
-        "rev": "afa22d1bdfcd705a6426709d7270bacc3ac25f06",
+        "rev": "ed82d0032d19c453c422ae10716716e1d74f9959",
         "type": "github"
       },
       "original": {
