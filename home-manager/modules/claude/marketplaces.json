@@ -4,7 +4,8 @@
     "outsmartly-plugins": "outsmartly/claude-plugins",
     "claude-code-lsps": "Piebald-AI/claude-code-lsps",
     "Mixedbread-Grep": "mixedbread-ai/mgrep",
-    "meta-cc-marketplace": "yaleh/meta-cc"
+    "meta-cc-marketplace": "yaleh/meta-cc",
+    "beads-marketplace": "steveyegge/beads"
   },
   "plugins": [
     "dts@outsmartly-plugins",
@@ -16,6 +17,7 @@
     "meta-cc@meta-cc-marketplace",
     "plugin-dev@claude-plugins-official",
     "mgrep@Mixedbread-Grep",
-    "typescript-lsp@claude-plugins-official"
+    "typescript-lsp@claude-plugins-official",
+    "beads@beads-marketplace"
   ]
 }
