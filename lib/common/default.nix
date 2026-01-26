@@ -13,6 +13,12 @@
   imports = [ ./user.nix ];
 
   config = {
+    # Ensure per-user gcroots directory exists for GC root pinning
+    system.activationScripts.postActivation.text = # sh
+      ''
+        install -d -o ${config.defaultUser} -m 0755 /nix/var/nix/gcroots/per-user/${config.defaultUser}
+      '';
+
     nix = {
       enable = true;
       # https://nixos.wiki/wiki/Storage_optimization
