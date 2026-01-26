@@ -13,6 +13,8 @@ in
   ];
 
   config = {
+    networking.hostName = "nox";
+
     # https://github.com/nix-darwin/nix-darwin/issues/1035
     # seems to be waiting on
     # https://github.com/nix-darwin/nix-darwin/pull/1205
