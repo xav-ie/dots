@@ -16,23 +16,19 @@ system:
 
     match (uname | get kernel-name) {
       "Darwin" => {
-        morlana switch --flake . --no-confirm -- --show-trace
-        # Update result-{hostname} to match result
-        if ("result" | path exists) {
-          ln -sfn (readlink result) $"result-($hostname)"
-        }
-        null
+        morlana switch --flake . --no-confirm -- --show-trace --out-link result
       }
       "Linux" => {
         nh os switch . -o result -- --show-trace
-        # Update result-{hostname} to match result
-        if ("result" | path exists) {
-          ln -sfn (readlink result) $"result-($hostname)"
-        }
       }
       _ => {
         error make { msg: "Unknown OS" }
       }
+    }
+
+    # Update result-{hostname} to match result
+    if ("result" | path exists) {
+      ln -sfn (readlink result) $"result-($hostname)"
     }
 
     # cleanup: pin devshell to gc-roots
