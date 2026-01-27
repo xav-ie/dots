@@ -22,6 +22,7 @@ in
     "--set ENABLE_TOOL_SEARCH true"
     "--set ENABLE_LSP_TOOL true"
     "--set ENABLE_EXPERIMENTAL_MCP_CLI false"
+    "--set CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD 1"
     (lib.optionalString stdenv.isLinux "--prefix PATH : ${
       lib.makeBinPath [
         socat
