@@ -21,6 +21,7 @@ _: {
     ./moor
     ./mpv
     ./neovide
+    ./npm
     ./nushell
     ./nvim
     ./ollama
