@@ -1,0 +1,11 @@
+{
+  "@anthropic-ai/sandbox-runtime": "0.0.32",
+  "@google/gemini-cli": "0.25.2",
+  "@mixedbread/mgrep": "0.1.10",
+  "@nanocollective/nanocoder": "1.21.0",
+  "@vtsls/language-server": "0.3.0",
+  "opencode-ai": "1.1.36",
+  "run-deepseek-cli": "0.1.1",
+  "typescript-language-server": "5.1.3",
+  "typescript": "5.9.3"
+}

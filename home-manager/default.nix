@@ -25,6 +25,8 @@
       fzf.enable = true;
       # json processor
       jq.enable = true;
+      # nodejs + declarative npm global package sync
+      npm.enable = true;
       # A user-friendly VCS
       jujutsu.enable = true;
       # automatic merge conflicts resolver
@@ -75,7 +77,6 @@
           lsof
           magic-wormhole-rs # send files easily
           neovide
-          nodejs
           nix-output-monitor # better nix build
           tldr
           tree
