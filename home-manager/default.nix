@@ -134,7 +134,7 @@
         HISTCONTROL = "ignoreboth";
         # increase history file size (default is 500)
         HISTFILESIZE = 100000;
-        PATH = "$HOME/.config/scripts:$HOME/.npm/bin:$PATH";
+        PATH = "$HOME/.local/bin:$HOME/.config/scripts:$HOME/.npm/bin:$PATH";
       };
     };
     xdg.enable = true;
