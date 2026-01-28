@@ -55,10 +55,16 @@ def main [
   mut changed = false
   mut config_changed = false
 
-  # Install missing packages (config → installed)
+  # Install missing packages or wrong Python version (config → installed)
   for pkg in $config_packages {
-    if $pkg.name not-in $installed_names {
+    let installed_pkg = $installed | where name == $pkg.name | first
+    if $installed_pkg == null {
       print $"Installing: ($pkg.name)==($pkg.version) with Python ($pkg.python)"
+      uv tool install $"($pkg.name)==($pkg.version)" --python $pkg.python
+      $changed = true
+    } else if $installed_pkg.python != $pkg.python {
+      print $"Reinstalling: ($pkg.name)==($pkg.version) with Python ($pkg.python) - was Python ($installed_pkg.python)"
+      uv tool uninstall $pkg.name
       uv tool install $"($pkg.name)==($pkg.version)" --python $pkg.python
       $changed = true
     }
