@@ -38,6 +38,7 @@ _: {
     ./tmux
     ./transmission
     ./uair
+    ./uv
     # ./wezterm
     ./yt-dlp
     # ./zellij

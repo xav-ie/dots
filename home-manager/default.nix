@@ -41,6 +41,7 @@
       television.enable = true;
       # python package manager
       uv.enable = true;
+      uv.tools.enable = true;
       # time tracker
       watson.enable = true;
       # cd supercharged
