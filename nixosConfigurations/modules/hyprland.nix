@@ -17,6 +17,36 @@ in
       security.pam.services.hyprlock = { };
     })
 
+    # Service to start Hyprland remotely via SSH
+    # Usage: sudo systemctl start hyprland-remote
+    (lib.mkIf hyprlandEnabled {
+      systemd.services.hyprland-remote = {
+        description = "Hyprland on TTY1 (for remote start)";
+        after = [ "systemd-user-sessions.service" ];
+        conflicts = [ "getty@tty1.service" ];
+        serviceConfig = {
+          Type = "simple";
+          User = config.defaultUser;
+          PAMName = "login";
+          TTYPath = "/dev/tty1";
+          StandardInput = "tty";
+          StandardOutput = "tty";
+          StandardError = "tty";
+          TTYVHangup = true;
+          TTYReset = true;
+          ExecStart = "${pkgs.writeShellScript "start-hyprland-tty" ''
+            # Ensure we're on TTY1
+            chvt 1
+            exec start-hyprland
+          ''}";
+          Restart = "no";
+        };
+      };
+
+      # Unlock GNOME Keyring when using this service
+      security.pam.services.login.enableGnomeKeyring = true;
+    })
+
     # XDG portal configuration for hyprland
     (lib.mkIf hyprlandEnabled {
       # TIP: run `nix run nixpkgs#door-knocker` and check that portal
