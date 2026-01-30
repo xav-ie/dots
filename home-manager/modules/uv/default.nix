@@ -7,7 +7,7 @@
 let
   cfg = config.programs.uv.tools;
 
-  uvToolSync = pkgs.writeNuApplication {
+  defaultPackage = pkgs.writeNuApplication {
     name = "uv-tool-sync";
     runtimeEnv = {
       UV_TOOLS_CONFIG = "${config.dotFilesDir}/home-manager/modules/uv/packages.json";
@@ -18,14 +18,20 @@ in
 {
   options.programs.uv.tools = {
     enable = lib.mkEnableOption "uv tool sync";
+
+    package = lib.mkOption {
+      type = lib.types.package;
+      default = defaultPackage;
+      description = "The uv-tool-sync package";
+    };
   };
 
   config = lib.mkIf cfg.enable {
-    home.packages = [ uvToolSync ];
+    home.packages = [ cfg.package ];
 
     services.scheduled.uv-tool-sync = {
       description = "Sync uv tools";
-      command = "${uvToolSync}/bin/uv-tool-sync";
+      command = lib.getExe cfg.package;
       calendar = "daily";
       hour = 9;
       minute = 5;

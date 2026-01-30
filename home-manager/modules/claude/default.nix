@@ -27,8 +27,9 @@ let
   '';
 
   # Wrapper script that calls the nu setup script
-  pluginSetupScript = pkgs.writeNuApplication {
-    name = "claude-setup-plugins";
+  defaultPluginSyncPackage = pkgs.writeNuApplication {
+    name = "claude-plugin-sync";
+    runtimeInputs = [ claude-package ];
     runtimeEnv = {
       CLAUDE_PLUGINS_CONFIG = "${config.dotFilesDir}/home-manager/modules/claude/marketplaces.json";
     };
@@ -52,6 +53,12 @@ in
         Using nativeInstall = false resolves this issue by using the npm installation instead.
       '';
     };
+
+    pluginSyncPackage = lib.mkOption {
+      type = lib.types.package;
+      default = defaultPluginSyncPackage;
+      description = "The claude-plugin-sync package";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -63,7 +70,7 @@ in
       claude-package
       claude-native
       claude-npm
-      pluginSetupScript
+      cfg.pluginSyncPackage
     ];
 
     home.file.".local/bin/claude" = {
@@ -100,7 +107,7 @@ in
     # Daily plugin sync - ensures marketplaces and plugins are installed
     services.scheduled.claude-plugin-sync = {
       description = "Sync Claude Code marketplaces and plugins";
-      command = "${pluginSetupScript}/bin/claude-setup-plugins";
+      command = lib.getExe cfg.pluginSyncPackage;
       calendar = "daily";
       hour = 9;
       minute = 0;

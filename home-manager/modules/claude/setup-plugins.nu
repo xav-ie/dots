@@ -42,8 +42,7 @@ def main [
   for entry in ($config.marketplaces | transpose name repo) {
     if $entry.name not-in $installed_marketplaces {
       print $"Installing marketplace: ($entry.name) \(($entry.repo)\)"
-      claude plugin marketplace add $entry.repo
-      $changed = true
+      try { claude plugin marketplace add $entry.repo; $changed = true }
     }
   }
 
@@ -51,8 +50,7 @@ def main [
   for plugin in $config_plugins {
     if $plugin not-in $installed_plugins {
       print $"Installing plugin: ($plugin)"
-      claude plugin install $plugin
-      $changed = true
+      try { claude plugin install $plugin; $changed = true }
     }
   }
 

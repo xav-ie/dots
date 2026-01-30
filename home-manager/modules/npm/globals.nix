@@ -7,7 +7,7 @@
 let
   cfg = config.programs.npm.globals;
 
-  npmGlobalSync = pkgs.writeNuApplication {
+  defaultPackage = pkgs.writeNuApplication {
     name = "npm-global-sync";
     runtimeEnv = {
       NPM_GLOBALS_CONFIG = "${config.dotFilesDir}/home-manager/modules/npm/packages.json";
@@ -20,14 +20,20 @@ in
     enable = lib.mkEnableOption "npm global package sync" // {
       default = true;
     };
+
+    package = lib.mkOption {
+      type = lib.types.package;
+      default = defaultPackage;
+      description = "The npm-global-sync package";
+    };
   };
 
   config = lib.mkIf cfg.enable {
-    home.packages = [ npmGlobalSync ];
+    home.packages = [ cfg.package ];
 
     services.scheduled.npm-global-sync = {
       description = "Sync npm global packages";
-      command = "${npmGlobalSync}/bin/npm-global-sync";
+      command = lib.getExe cfg.package;
       calendar = "daily";
       hour = 9;
       minute = 0;
