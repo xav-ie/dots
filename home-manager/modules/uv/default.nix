@@ -9,6 +9,7 @@ let
 
   defaultPackage = pkgs.writeNuApplication {
     name = "uv-tool-sync";
+    runtimeInputs = [ pkgs.uv ];
     runtimeEnv = {
       UV_TOOLS_CONFIG = "${config.dotFilesDir}/home-manager/modules/uv/packages.json";
     };
@@ -28,6 +29,11 @@ in
 
   config = lib.mkIf cfg.enable {
     home.packages = [ cfg.package ];
+
+    home.activation.uvToolSync = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      echo "Syncing uv tools..."
+      run ${lib.getExe cfg.package} || true
+    '';
 
     services.scheduled.uv-tool-sync = {
       description = "Sync uv tools";

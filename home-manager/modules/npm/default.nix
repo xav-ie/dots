@@ -15,10 +15,6 @@
     home.sessionVariables.NPM_CONFIG_GLOBALCONFIG = "${config.home.homeDirectory}/.npm/etc/npmrc";
 
     # Write static config to globalconfig location
-    home.file.".npm/etc/npmrc".text = ''
-      prefix=~/.npm
-      fund=false
-      audit=false
-    '';
+    home.file.".npm/etc/npmrc".text = builtins.readFile ./.npmrc;
   };
 }

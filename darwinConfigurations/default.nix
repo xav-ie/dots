@@ -25,7 +25,6 @@ in
       ./modules/settings.nix
       ./modules/sops.nix
       ./modules/tailscale.nix
-      ./modules/tool-sync.nix
     ];
   };
 }

@@ -66,6 +66,11 @@ in
     programs.mcp.enableSlackWrapper = true;
     programs.mcp.enableNixos = true;
 
+    home.activation.claudePluginSync = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      echo "Syncing claude plugins..."
+      run ${lib.getExe cfg.pluginSyncPackage} || true
+    '';
+
     home.packages = [
       claude-package
       claude-native
