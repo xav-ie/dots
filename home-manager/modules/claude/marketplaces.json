@@ -10,6 +10,8 @@
     "plugin-dev@claude-plugins-official",
     "mgrep@Mixedbread-Grep",
     "beads@beads-marketplace",
-    "typescript-lsp@claude-plugins-official"
+    "typescript-lsp@claude-plugins-official",
+    "hookify@claude-plugins-official",
+    "superpowers@claude-plugins-official"
   ]
 }
