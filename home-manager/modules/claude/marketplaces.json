@@ -1,12 +1,4 @@
 {
-  "marketplaces": {
-    "claude-plugins-official": "anthropics/claude-plugins-official",
-    "outsmartly-plugins": "outsmartly/claude-plugins",
-    "claude-code-lsps": "Piebald-AI/claude-code-lsps",
-    "Mixedbread-Grep": "mixedbread-ai/mgrep",
-    "meta-cc-marketplace": "yaleh/meta-cc",
-    "beads-marketplace": "steveyegge/beads"
-  },
   "plugins": [
     "dts@outsmartly-plugins",
     "pts@outsmartly-plugins",
