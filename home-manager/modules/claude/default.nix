@@ -72,6 +72,7 @@ let
 
   # NPM-based binary wrapper
   claude-npm = pkgs.writeShellScriptBin "claude-npm" ''
+    export DISABLE_INSTALLATION_CHECKS=1
     exec ${lib.getExe pkgs.pkgs-mine.claude-code-npm} "$@"
   '';
 

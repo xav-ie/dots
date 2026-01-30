@@ -34,7 +34,9 @@
     "typescript-lsp@claude-plugins-official": true,
     "beads@beads-marketplace": true,
     "meta-cc@meta-cc-marketplace": true,
-    "plugin-dev@claude-plugins-official": true
+    "plugin-dev@claude-plugins-official": true,
+    "hookify@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true
   },
   "alwaysThinkingEnabled": true
 }
