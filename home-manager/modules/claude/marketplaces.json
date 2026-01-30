@@ -17,7 +17,8 @@
     "meta-cc@meta-cc-marketplace",
     "plugin-dev@claude-plugins-official",
     "mgrep@Mixedbread-Grep",
-    "typescript-lsp@claude-plugins-official",
-    "beads@beads-marketplace"
+    "beads@beads-marketplace",
+    "delivery-ticket-solver@outsmartly-plugins",
+    "product-ticket-solver@outsmartly-plugins"
   ]
 }

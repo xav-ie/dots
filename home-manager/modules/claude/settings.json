@@ -26,13 +26,15 @@
   "enabledPlugins": {
     "dts@outsmartly-plugins": true,
     "pts@outsmartly-plugins": true,
-    "mgrep@Mixedbread-Grep": false,
+    "mgrep@Mixedbread-Grep": true,
     "vtsls@claude-code-lsps": true,
     "vscode-langservers@claude-code-lsps": true,
     "rust-analyzer@claude-code-lsps": true,
     "gopls@claude-code-lsps": true,
     "typescript-lsp@claude-plugins-official": true,
-    "beads@beads-marketplace": true
+    "beads@beads-marketplace": true,
+    "meta-cc@meta-cc-marketplace": true,
+    "plugin-dev@claude-plugins-official": true
   },
   "alwaysThinkingEnabled": true
 }
