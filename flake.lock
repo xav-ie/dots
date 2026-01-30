@@ -107,6 +107,102 @@
         "type": "github"
       }
     },
+    "claude-marketplace-beads": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1769745953,
+        "narHash": "sha256-MaXonP3cKzhIudOwyHThSiKVWpH5cm4HKhBgw69P6Q0=",
+        "owner": "steveyegge",
+        "repo": "beads",
+        "rev": "761d2e76379a03c7fe0efc2157ac23e8a52217df",
+        "type": "github"
+      },
+      "original": {
+        "owner": "steveyegge",
+        "repo": "beads",
+        "type": "github"
+      }
+    },
+    "claude-marketplace-lsps": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1769784577,
+        "narHash": "sha256-TK/MiLadPoRIN/llmtnp7geLGfpHf5xrr00S9mFSxxw=",
+        "owner": "Piebald-AI",
+        "repo": "claude-code-lsps",
+        "rev": "fd71fcf477add53835f6cd5a562a524d353b8009",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Piebald-AI",
+        "repo": "claude-code-lsps",
+        "type": "github"
+      }
+    },
+    "claude-marketplace-meta-cc": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1761922065,
+        "narHash": "sha256-SnWeBayXiTmt74C14zCQaSE8lFjKSCI+P9aWYJQY0to=",
+        "owner": "yaleh",
+        "repo": "meta-cc",
+        "rev": "70907c8d6bb911290adf77ababb4f337b06011c3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "yaleh",
+        "repo": "meta-cc",
+        "type": "github"
+      }
+    },
+    "claude-marketplace-mgrep": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1769171503,
+        "narHash": "sha256-Njs0h2Roqm9xK8TV7BqrR5EwpK+ONNl3ct1fHU0UZEY=",
+        "owner": "mixedbread-ai",
+        "repo": "mgrep",
+        "rev": "fe2c523686e9a98a983660d0aa253ffdc097faf7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "mixedbread-ai",
+        "repo": "mgrep",
+        "type": "github"
+      }
+    },
+    "claude-marketplace-official": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1769730263,
+        "narHash": "sha256-hx8LNT3mnJs2RiwYMwC+T4CFXVOWQrZS7PLzgJO+rlY=",
+        "owner": "anthropics",
+        "repo": "claude-plugins-official",
+        "rev": "27d2b86d72da27c64585150857cee8472ad47abb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "anthropics",
+        "repo": "claude-plugins-official",
+        "type": "github"
+      }
+    },
+    "claude-marketplace-outsmartly": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1769204841,
+        "narHash": "sha256-SIhdgm04PvTTf2rZOT+uk8mOrBa06qkPfkLvagG5J2M=",
+        "ref": "refs/heads/main",
+        "rev": "be4e5e319d0bc812ef56f06d7a43d2f3b2fff8f5",
+        "revCount": 15,
+        "type": "git",
+        "url": "ssh://git@github.com/outsmartly/claude-plugins"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/outsmartly/claude-plugins"
+      }
+    },
     "claude-plugins": {
       "flake": false,
       "locked": {
@@ -1840,6 +1936,12 @@
         "alacritty-theme": "alacritty-theme",
         "alacritty-theme-themes": "alacritty-theme-themes",
         "beads": "beads",
+        "claude-marketplace-beads": "claude-marketplace-beads",
+        "claude-marketplace-lsps": "claude-marketplace-lsps",
+        "claude-marketplace-meta-cc": "claude-marketplace-meta-cc",
+        "claude-marketplace-mgrep": "claude-marketplace-mgrep",
+        "claude-marketplace-official": "claude-marketplace-official",
+        "claude-marketplace-outsmartly": "claude-marketplace-outsmartly",
         "claude-plugins": "claude-plugins",
         "crane": "crane",
         "ctpv": "ctpv",

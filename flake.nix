@@ -52,6 +52,20 @@
     nixpkgs-lib-v1-merge.url = "github:nix-community/nixpkgs.lib/a73b9c743612e4244d865a2fdee11865283c04e6";
 
     # vendored
+    # Claude Code marketplaces (pinned for reproducibility)
+    claude-marketplace-official.flake = false;
+    claude-marketplace-official.url = "github:anthropics/claude-plugins-official";
+    claude-marketplace-outsmartly.flake = false;
+    claude-marketplace-outsmartly.url = "git+ssh://git@github.com/outsmartly/claude-plugins";
+    claude-marketplace-lsps.flake = false;
+    claude-marketplace-lsps.url = "github:Piebald-AI/claude-code-lsps";
+    claude-marketplace-mgrep.flake = false;
+    claude-marketplace-mgrep.url = "github:mixedbread-ai/mgrep";
+    claude-marketplace-meta-cc.flake = false;
+    claude-marketplace-meta-cc.url = "github:yaleh/meta-cc";
+    claude-marketplace-beads.flake = false;
+    claude-marketplace-beads.url = "github:steveyegge/beads";
+
     claude-plugins.flake = false;
     claude-plugins.url = "git+ssh://git@github.com/outsmartly/claude-plugins";
     glsl_analyzer.flake = false;
