@@ -41,6 +41,15 @@ buildNpmPackage rec {
     # Fix non-portable shebang for NixOS (Chrome native host wrapper)
     # Claude Code hardcodes #!/bin/bash which doesn't exist on NixOS
     sed -i 's|#!/bin/bash|#!/usr/bin/env bash|g' cli.js
+
+    # Fix dotfile leak: sandbox mounts /dev/null on non-existent deny paths,
+    # creating empty files on host. Remove the push, keep the log.
+    # See: https://github.com/anthropics/claude-code/issues/17087
+    # See: https://github.com/anthropic-experimental/sandbox-runtime/pull/91
+    substituteInPlace cli.js \
+      --replace-fail \
+        'H.push("--ro-bind","/dev/null",j),T8(`[Sandbox Linux] Mounted /dev/null at ''${j} to block creation of ''${_}`)' \
+        'T8(`[Sandbox Linux] Skipping non-existent deny path: ''${_}`)'
   '';
 
   dontNpmBuild = true;
