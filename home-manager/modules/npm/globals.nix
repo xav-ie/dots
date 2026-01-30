@@ -9,8 +9,10 @@ let
 
   defaultPackage = pkgs.writeNuApplication {
     name = "npm-global-sync";
+    runtimeInputs = [ config.programs.npm.package ];
     runtimeEnv = {
       NPM_GLOBALS_CONFIG = "${config.dotFilesDir}/home-manager/modules/npm/packages.json";
+      NPM_CONFIG_GLOBALCONFIG = ./.npmrc;
     };
     text = builtins.readFile ./sync-npm-globals.nu;
   };
@@ -30,6 +32,11 @@ in
 
   config = lib.mkIf cfg.enable {
     home.packages = [ cfg.package ];
+
+    home.activation.npmGlobalSync = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      echo "Syncing npm globals..."
+      run ${lib.getExe cfg.package} || true
+    '';
 
     services.scheduled.npm-global-sync = {
       description = "Sync npm global packages";

@@ -215,18 +215,19 @@
               settings = {
                 on-unmatched = "fatal";
                 excludes = [
-                  "*.conf"
-                  "*.patch"
-                  ".git-blame-ignore-revs"
-                  ".gitignore"
                   "**/.inputrc"
-                  "flake.lock"
+                  "**/.npmrc"
+                  "*.conf"
                   # formatter is borked
                   "*.nu"
-                  # sops has its own formatter
-                  "secrets/*.yaml"
+                  "*.patch"
                   # no standard formatter for AppleScript
                   "*.scpt"
+                  ".git-blame-ignore-revs"
+                  ".gitignore"
+                  "flake.lock"
+                  # sops has its own formatter
+                  "secrets/*.yaml"
                 ];
               };
             };

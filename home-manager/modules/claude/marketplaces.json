@@ -18,7 +18,6 @@
     "plugin-dev@claude-plugins-official",
     "mgrep@Mixedbread-Grep",
     "beads@beads-marketplace",
-    "delivery-ticket-solver@outsmartly-plugins",
-    "product-ticket-solver@outsmartly-plugins"
+    "typescript-lsp@claude-plugins-official"
   ]
 }
