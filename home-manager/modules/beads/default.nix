@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  inputs,
   pkgs,
   ...
 }:
@@ -14,7 +13,8 @@ in
 
     package = lib.mkOption {
       type = lib.types.package;
-      inherit (inputs.beads.packages.${pkgs.stdenv.hostPlatform.system}) default;
+      default = pkgs.beads;
+      defaultText = lib.literalExpression "pkgs.beads";
       description = "The beads package to use";
     };
   };
