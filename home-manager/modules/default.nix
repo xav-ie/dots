@@ -3,6 +3,7 @@ _: {
     ./alacritty
     ./atuin
     ./bat
+    ./link-optimization
     ./beads
     ./carapace
     ./claude
