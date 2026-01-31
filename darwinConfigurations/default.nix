@@ -19,6 +19,7 @@ in
       # ./modules/linux-builder.nix  # Disabled: using praesidium as remote builder instead
       ./modules/openssh.nix
       ./modules/remote-builder.nix
+      ./modules/homebrew-cache.nix
       ./modules/nix-homebrew.nix
       ./modules/pam-reattach.nix
       ./modules/reverse-proxy.nix
