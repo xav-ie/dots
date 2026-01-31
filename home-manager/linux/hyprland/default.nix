@@ -158,7 +158,7 @@ in
             before_sleep_cmd = "loginctl lock-session";
             # prevent having to press key twice
             after_sleep_cmd = "hyprctl dispatch dpms on";
-            lock_cmd = "${lib.getExe config.programs.hyprlock.package} --grace 10 || true";
+            lock_cmd = "${config.programs.hyprlock.package}/bin/hyprlock --grace 10 || true";
           };
 
           listener = [
@@ -214,10 +214,10 @@ in
         swayncTopOffset = windowTopNumeric;
 
         pipHeight = 324;
-        move-active = lib.getExe pkgs.pkgs-mine.move-active;
-        virtual-headset-ctl =
-          lib.getExe
-            inputs.virtual-headset.packages.${pkgs.stdenv.hostPlatform.system}.virtual-headset-ctl;
+        move-active = "${pkgs.pkgs-mine.move-active}/bin/move-active";
+        virtual-headset-ctl = "${
+          inputs.virtual-headset.packages.${pkgs.stdenv.hostPlatform.system}.virtual-headset-ctl
+        }/bin/virtual-headset-ctl";
       in
       {
         enable = true;
@@ -314,11 +314,11 @@ in
 
           # Execute your favorite apps at launch
           exec-once = [
-            (lib.optionalString config.services.swww.enable "${lib.getExe pkgs.swww} img ~/Pictures/desktop.gif")
+            (lib.optionalString config.services.swww.enable "${pkgs.swww}/bin/swww img ~/Pictures/desktop.gif")
             "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type text --watch cliphist store"
             "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type image --watch cliphist store"
-            "[workspace 2 silent] ${lib.getExe config.programs.firefox.package}"
-            "[workspace 1 silent] ${lib.getExe config.programs.ghostty.package}"
+            "[workspace 2 silent] ${config.programs.firefox.package}/bin/firefox"
+            "[workspace 1 silent] ${config.programs.ghostty.package}/bin/ghostty"
           ];
 
           animations = {
@@ -422,9 +422,9 @@ in
 
           # https://github.com/sulmone/X11/blob/master/include/X11/XF86keysym.h
           bindel = [
-            ", XF86AudioPlay, exec, ${lib.getExe pkgs.playerctl} play-pause"
-            ", XF86AudioNext, exec, ${lib.getExe pkgs.playerctl} next"
-            ", XF86AudioPrev, exec, ${lib.getExe pkgs.playerctl} previous"
+            ", XF86AudioPlay, exec, ${pkgs.playerctl}/bin/playerctl play-pause"
+            ", XF86AudioNext, exec, ${pkgs.playerctl}/bin/playerctl next"
+            ", XF86AudioPrev, exec, ${pkgs.playerctl}/bin/playerctl previous"
             ", XF86AudioRaiseVolume, exec, ${lib.getExe' pkgs.pulseaudio "pactl"} set-sink-volume @DEFAULT_SINK@ +5%"
             ", XF86AudioLowerVolume, exec, ${lib.getExe' pkgs.pulseaudio "pactl"} set-sink-volume @DEFAULT_SINK@ -5%"
           ];
@@ -450,7 +450,7 @@ in
           # Example binds, see https://wiki.hyprland.org/Configuring/Binds/ for more
           bind = [
             "$mainMod, Q, killactive,"
-            "$mainMod, T, exec, ${lib.getExe config.programs.ghostty.package}"
+            "$mainMod, T, exec, ${config.programs.ghostty.package}/bin/ghostty"
             "$mainMod SHIFT, F, togglefloating,"
             ''$mainMod, F, exec, hyprctl --batch "dispatch togglefloating active; dispatch pin active; dispatch moveactive exact ${windowLeft} ${windowTop}; dispatch resizeactive exact 640 360"''
             "$mainMod ALT,1,exec,${move-active} topLeft"
@@ -458,20 +458,20 @@ in
             "$mainMod ALT,3,exec,${move-active} bottomRight"
             "$mainMod ALT,4,exec,${move-active} bottomLeft"
             "$mainMod, P, pin,"
-            "$mainMod, Escape, exec, ${lib.getExe pkgs.pkgs-mine.rofi-powermenu}"
-            "$mainMod, B, exec, ${lib.getExe pkgs.rofi-bluetooth} -i"
-            "$mainMod, E, exec, ${lib.getExe pkgs.rofimoji} --use-icons --skin-tone neutral"
-            "$mainMod, SPACE, exec, ${lib.getExe config.programs.rofi.package} -show drun -show-icons"
+            "$mainMod, Escape, exec, ${pkgs.pkgs-mine.rofi-powermenu}/bin/rofi-powermenu"
+            "$mainMod, B, exec, ${pkgs.rofi-bluetooth}/bin/rofi-bluetooth -i"
+            "$mainMod, E, exec, ${pkgs.rofimoji}/bin/rofimoji --use-icons --skin-tone neutral"
+            "$mainMod, SPACE, exec, ${config.programs.rofi.package}/bin/rofi -show drun -show-icons"
             # "$mainMod, P, pseudo, # dwindle"
             # "$mainMod, T, togglesplit, # dwindle"
-            "$mainMod, V, exec, ${lib.getExe pkgs.pkgs-mine.rofi-cliphist}"
-            "$mainMod SHIFT, V, exec, ${lib.getExe pkgs.pkgs-mine.rofi-cliphist} --images"
-            "$mainMod, S, exec, ${lib.getExe pkgs.hyprshot} -m region -z --clipboard-only"
-            "$mainMod SHIFT, S, exec, ${lib.getExe pkgs.hyprshot} -m region -z -o ~/Pictures"
+            "$mainMod, V, exec, ${pkgs.pkgs-mine.rofi-cliphist}/bin/rofi-cliphist"
+            "$mainMod SHIFT, V, exec, ${pkgs.pkgs-mine.rofi-cliphist}/bin/rofi-cliphist --images"
+            "$mainMod, S, exec, ${pkgs.hyprshot}/bin/hyprshot -m region -z --clipboard-only"
+            "$mainMod SHIFT, S, exec, ${pkgs.hyprshot}/bin/hyprshot -m region -z -o ~/Pictures"
             "$mainMod, N, exec, ${lib.getExe' config.services.swaync.package "swaync-client"} -t"
-            "$mainMod, C, exec, ${lib.getExe config.programs.mpv.package} av://v4l2:/dev/video1"
+            "$mainMod, C, exec, ${config.programs.mpv.package}/bin/mpv av://v4l2:/dev/video1"
             "$mainMod SHIFT, M, exit,"
-            "$mainMod, U, exec, ${lib.getExe pkgs.pkgs-mine.uair-toggle-and-notify}"
+            "$mainMod, U, exec, ${pkgs.pkgs-mine.uair-toggle-and-notify}/bin/uair-toggle-and-notify"
             # Move focus with mainMod + arrow keys
             "$mainMod, H, movefocus, l"
             "$mainMod, L, movefocus, r"

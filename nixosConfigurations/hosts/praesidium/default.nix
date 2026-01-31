@@ -55,7 +55,7 @@ in
       initrd = {
         preDeviceCommands = ''
           message="Hello, this is Praesidium."
-          printf "$message" | ${lib.getExe pkgs.cowsay} -n
+          printf "$message" | ${pkgs.cowsay}/bin/cowsay -n
         '';
       };
     };

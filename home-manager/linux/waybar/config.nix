@@ -28,8 +28,8 @@ let
   );
   cavaExec =
     conf:
-    lib.getExe (
-      pkgs.writeShellApplication {
+    let
+      pkg = pkgs.writeShellApplication {
         name = "cava-waybar";
         runtimeInputs = [
           pkgs.cava
@@ -38,30 +38,65 @@ let
         text = ''
           cava -p ${conf} | stdbuf -oL tr -d '\0' | stdbuf -oL sed -u '${cavaSedCmd}'
         '';
-      }
-    );
-  get-uair-status = lib.getExe (
-    pkgs.writeShellApplication {
-      name = "get-uair-status";
-      runtimeInputs = [
-        pkgs.uair
-        pkgs.pkgs-mine.is-sshed
-      ];
-      text = ''
-        [[ "$(is-sshed)" == "false" ]] && uairctl fetch '{state} {time}' 2>/dev/null
-      '';
-    }
-  );
+      };
+    in
+    "${pkg}/bin/cava-waybar";
+
+  get-uair-status-pkg = pkgs.writeShellApplication {
+    name = "get-uair-status";
+    runtimeInputs = [
+      pkgs.uair
+      pkgs.pkgs-mine.is-sshed
+    ];
+    text = ''
+      [[ "$(is-sshed)" == "false" ]] && uairctl fetch '{state} {time}' 2>/dev/null
+    '';
+  };
+  get-uair-status = "${get-uair-status-pkg}/bin/get-uair-status";
+
   writeNotificationApplication =
     name: text:
-    lib.getExe (
-      pkgs.writeShellApplication {
+    let
+      pkg = pkgs.writeShellApplication {
         inherit name text;
         runtimeInputs = with pkgs; [
           swaynotificationcenter
         ];
-      }
-    );
+      };
+    in
+    "${pkg}/bin/${name}";
+
+  waybar-network-status = pkgs.writeNuApplication {
+    name = "waybar-network-status";
+    runtimeInputs = with pkgs; [
+      iproute2
+      wirelesstools
+    ];
+    text = builtins.readFile ./waybar-network-status.nu;
+  };
+
+  waybar-bluetooth-status = pkgs.writeNuApplication {
+    name = "waybar-bluetooth-status";
+    runtimeInputs = with pkgs; [
+      util-linux
+      bluez
+    ];
+    text = builtins.readFile ./waybar-bluetooth-status.nu;
+  };
+
+  waybar-bluetooth-toggle = pkgs.writeNuApplication {
+    name = "waybar-bluetooth-toggle";
+    runtimeInputs = [ pkgs.util-linux ];
+    text = # nu
+      ''
+        let status = (rfkill list bluetooth | lines | find "Soft blocked" | str trim | split column ": " | get column2.0 | ansi strip)
+        if $status == "no" {
+          rfkill block bluetooth
+        } else {
+          rfkill unblock bluetooth
+        }
+      '';
+  };
 in
 {
   height = cfg.barHeight;
@@ -92,7 +127,7 @@ in
   "custom/arch" = {
     format = "";
     tooltip = false;
-    on-click = lib.getExe pkgs.pkgs-mine.rofi-powermenu;
+    on-click = "${pkgs.pkgs-mine.rofi-powermenu}/bin/rofi-powermenu";
   };
   "hyprland/workspaces" = {
     format = "{icon}";
@@ -159,27 +194,18 @@ in
     ];
     scroll-step = 0.5;
     reverse-scrolling = true;
-    on-click = lib.getExe pkgs.pavucontrol;
+    on-click = "${pkgs.pavucontrol}/bin/pavucontrol";
   };
   "custom/network" = {
     format = "{}";
     interval = 5;
     return-type = "json";
-    exec = lib.getExe (
-      pkgs.writeNuApplication {
-        name = "waybar-network-status";
-        runtimeInputs = with pkgs; [
-          iproute2
-          wirelesstools
-        ];
-        text = builtins.readFile ./waybar-network-status.nu;
-      }
-    );
+    exec = "${waybar-network-status}/bin/waybar-network-status";
   };
   "custom/pomodoro" = {
     format = "{}";
     tooltip = false;
-    on-click = lib.getExe pkgs.pkgs-mine.uair-toggle-and-notify;
+    on-click = "${pkgs.pkgs-mine.uair-toggle-and-notify}/bin/uair-toggle-and-notify";
     exec = get-uair-status;
     interval = 1;
   };
@@ -202,30 +228,7 @@ in
     format = "{}";
     interval = 5;
     return-type = "json";
-    exec = lib.getExe (
-      pkgs.writeNuApplication {
-        name = "waybar-bluetooth-status";
-        runtimeInputs = with pkgs; [
-          util-linux
-          bluez
-        ];
-        text = builtins.readFile ./waybar-bluetooth-status.nu;
-      }
-    );
-    on-click = lib.getExe (
-      pkgs.writeNuApplication {
-        name = "waybar-bluetooth-toggle";
-        runtimeInputs = [ pkgs.util-linux ];
-        text = # nu
-          ''
-            let status = (rfkill list bluetooth | lines | find "Soft blocked" | str trim | split column ": " | get column2.0 | ansi strip)
-            if $status == "no" {
-              rfkill block bluetooth
-            } else {
-              rfkill unblock bluetooth
-            }
-          '';
-      }
-    );
+    exec = "${waybar-bluetooth-status}/bin/waybar-bluetooth-status";
+    on-click = "${waybar-bluetooth-toggle}/bin/waybar-bluetooth-toggle";
   };
 }

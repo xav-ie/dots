@@ -13,9 +13,9 @@ let
       onnxruntime = pkgs.onnxruntime.overrideAttrs (old: {
         cmakeFlags = old.cmakeFlags ++ [
           # Enable ccache via CMAKE_*_COMPILER_LAUNCHER
-          (pkgs.lib.cmakeFeature "CMAKE_C_COMPILER_LAUNCHER" (lib.getExe pkgs.ccache))
-          (pkgs.lib.cmakeFeature "CMAKE_CXX_COMPILER_LAUNCHER" (lib.getExe pkgs.ccache))
-          (pkgs.lib.cmakeFeature "CMAKE_CUDA_COMPILER_LAUNCHER" (lib.getExe pkgs.ccache))
+          (pkgs.lib.cmakeFeature "CMAKE_C_COMPILER_LAUNCHER" "${pkgs.ccache}/bin/ccache")
+          (pkgs.lib.cmakeFeature "CMAKE_CXX_COMPILER_LAUNCHER" "${pkgs.ccache}/bin/ccache")
+          (pkgs.lib.cmakeFeature "CMAKE_CUDA_COMPILER_LAUNCHER" "${pkgs.ccache}/bin/ccache")
         ];
         # Set ccache directory
         preConfigure =

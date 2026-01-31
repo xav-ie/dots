@@ -9,7 +9,7 @@ let
 
   # so that I don't have to hard-code $HOME
   sketchybarWrapper = pkgs.writeShellScript "sketchybar-wrapper" ''
-    exec ${lib.getExe pkgs.sketchybar} --config "$HOME/.config/sketchybar/sketchybarrc" "$@"
+    exec ${pkgs.sketchybar}/bin/sketchybar --config "$HOME/.config/sketchybar/sketchybarrc" "$@"
   '';
 
   # TODO: get this to work
@@ -92,7 +92,7 @@ in
       inherit (config.launchd.agents.sketchybar) enable;
       config = {
         Debug = true;
-        Program = lib.getExe pkgs.pkgs-mine.sketchybar-battery;
+        Program = "${pkgs.pkgs-mine.sketchybar-battery}/bin/sketchybar-battery";
         KeepAlive = true;
         RunAtLoad = true;
         StandardOutPath = "/tmp/sketchybar-battery.log";

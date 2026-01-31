@@ -81,7 +81,7 @@ in
             PROXY_DOMAIN=$(cat ${config.sops.secrets."reverse-proxy/reverse-hostname".path})
             mkdir -p /var/lib/certs
             export CAROOT=${mkcertCA}
-            ${lib.getExe pkgs.mkcert} -cert-file /var/lib/certs/cert.pem \
+            ${pkgs.mkcert}/bin/mkcert -cert-file /var/lib/certs/cert.pem \
               -key-file /var/lib/certs/key.pem \
               "$PROXY_DOMAIN"
             chmod 644 /var/lib/certs/cert.pem

@@ -1,4 +1,74 @@
-{ lib, pkgs, ... }:
+{ pkgs, ... }:
+let
+  check-systemd-units = pkgs.writeNuApplication {
+    name = "check-systemd-units";
+    runtimeInputs = with pkgs.pkgs-mine; [ notify ];
+    text = # nu
+      ''
+        let bad_units = (systemctl --user list-unit-files --legend=false
+                         | lines
+                         | split column -r '\s+' unit state preset
+                         | where unit !~ "@\\."
+                         | get unit
+                         | par-each { |unit|
+                           {
+                             unit: $unit,
+                             bad_setting: (
+                               systemctl --user status $unit
+                               | str contains 'bad-setting'
+                             )
+                           }
+                         }
+                         | where bad_setting == true)
+
+        if ($bad_units | length) > 0 {
+          let bad_units_str = $bad_units | get unit | str join ', '
+          notify $"Bad systemd units found: ($bad_units_str)"
+          error make { msg: $"Bad settings found: ($bad_units)" }
+        } else {
+          print "✓ No bad systemd user units found!"
+        }
+      '';
+  };
+
+  kill-spyware = pkgs.writeNuApplication {
+    name = "kill-spyware";
+    runtimeInputs = with pkgs; [
+      pkgs-mine.notify
+      pkgs-mine.openrgb-appimage
+      hyprland
+      zenity
+    ];
+    text = # nu
+      ''
+        notify "Work is done. Time to log off..."
+        let zoom_window_client = (hyprctl clients -j
+                                  | from json
+                                  | where {|| $in.title == "Zoom" })
+        if ($zoom_window_client | length) == 1 {
+          try {
+            zenity --question --text="Close Zoom?"; kill ($zoom_window_client | first | get pid)
+          } catch {
+            notify "No (or more than one) Zoom windows found."
+          }
+        }
+        openrgb -p off
+      '';
+  };
+
+  start-work = pkgs.writeNuApplication {
+    name = "start-work";
+    runtimeInputs = with pkgs.pkgs-mine; [
+      notify
+      openrgb-appimage
+    ];
+    text = # nu
+      ''
+        notify "Good morning, time to start work!"
+        openrgb -p purple
+      '';
+  };
+in
 {
   imports = [ ./tailscale.nix ];
   config = {
@@ -14,38 +84,7 @@
         };
         Service = {
           Type = "oneshot";
-          ExecStart = lib.getExe (
-            pkgs.writeNuApplication {
-              name = "check-systemd-units";
-              runtimeInputs = with pkgs.pkgs-mine; [ notify ];
-              text = # nu
-                ''
-                  let bad_units = (systemctl --user list-unit-files --legend=false
-                                   | lines
-                                   | split column -r '\s+' unit state preset
-                                   | where unit !~ "@\\."
-                                   | get unit
-                                   | par-each { |unit|
-                                     {
-                                       unit: $unit,
-                                       bad_setting: (
-                                         systemctl --user status $unit
-                                         | str contains 'bad-setting'
-                                       )
-                                     }
-                                   }
-                                   | where bad_setting == true)
-
-                  if ($bad_units | length) > 0 {
-                    let bad_units_str = $bad_units | get unit | str join ', '
-                    notify $"Bad systemd units found: ($bad_units_str)"
-                    error make { msg: $"Bad settings found: ($bad_units)" }
-                  } else {
-                    print "✓ No bad systemd user units found!"
-                  }
-                '';
-            }
-          );
+          ExecStart = "${check-systemd-units}/bin/check-systemd-units";
         };
         Install = {
           WantedBy = [ "default.target" ];
@@ -59,32 +98,7 @@
         };
         Service = {
           Type = "oneshot";
-          ExecStart = lib.getExe (
-            pkgs.writeNuApplication {
-              name = "kill-spyware";
-              runtimeInputs = with pkgs; [
-                pkgs-mine.notify
-                pkgs-mine.openrgb-appimage
-                hyprland
-                zenity
-              ];
-              text = # nu
-                ''
-                  notify "Work is done. Time to log off..."
-                  let zoom_window_client = (hyprctl clients -j
-                                            | from json
-                                            | where {|| $in.title == "Zoom" })
-                  if ($zoom_window_client | length) == 1 {
-                    try {
-                      zenity --question --text="Close Zoom?"; kill ($zoom_window_client | first | get pid)
-                    } catch {
-                      notify "No (or more than one) Zoom windows found."
-                    }
-                  }
-                  openrgb -p off
-                '';
-            }
-          );
+          ExecStart = "${kill-spyware}/bin/kill-spyware";
         };
       };
       timers.kill-spyware = {
@@ -107,20 +121,7 @@
         };
         Service = {
           Type = "oneshot";
-          ExecStart = lib.getExe (
-            pkgs.writeNuApplication {
-              name = "start-work";
-              runtimeInputs = with pkgs.pkgs-mine; [
-                notify
-                openrgb-appimage
-              ];
-              text = # nu
-                ''
-                  notify "Good morning, time to start work!"
-                  openrgb -p purple
-                '';
-            }
-          );
+          ExecStart = "${start-work}/bin/start-work";
         };
       };
       timers.start-work = {

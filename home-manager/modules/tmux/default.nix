@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }:
+{ pkgs, ... }:
 {
   config = {
     programs.tmux = {
@@ -17,7 +17,7 @@
         # https://github.com/tmux-plugins/tmux-copycat
         copycat
       ];
-      shell = lib.getExe pkgs.pkgs-bleeding.nushell;
+      shell = "${pkgs.pkgs-bleeding.nushell}/bin/nu";
       shortcut = "Space";
       # inherit from previous shell
       terminal = "$TERM";
@@ -30,7 +30,7 @@
           bind -n M-H previous-window
           bind -n M-L next-window
           # insert window at specific index (shifts other windows)
-          bind . command-prompt -p "move window to:" "run-shell '${lib.getExe pkgs.pkgs-mine.tmux-move-window} %%'"
+          bind . command-prompt -p "move window to:" "run-shell '${pkgs.pkgs-mine.tmux-move-window}/bin/tmux-move-window %%'"
           # open next panes in same directory
           bind '"' split-window -c "#{pane_current_path}"
           bind 'j' split-window -c "#{pane_current_path}"

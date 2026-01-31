@@ -5,7 +5,7 @@
   ...
 }:
 let
-  is-sshed = lib.getExe pkgs.pkgs-mine.is-sshed;
+  is-sshed = "${pkgs.pkgs-mine.is-sshed}/bin/is-sshed";
   default_tab_template = # kdl
     ''
       default_tab_template {
