@@ -102,6 +102,7 @@
           is-sshed
           lint-staged
           localip
+          nix-flamegraph
           nix-repl
           nom-run
           notify
