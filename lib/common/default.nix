@@ -13,6 +13,9 @@
   imports = [ ./user.nix ];
 
   config = {
+    # Reduce GC overhead during Nix evaluation (saves ~2s on large configs)
+    environment.variables.GC_INITIAL_HEAP_SIZE = toString (4 * 1024 * 1024 * 1024);
+
     # Ensure per-user gcroots directory exists for GC root pinning
     system.activationScripts.postActivation.text = # sh
       ''
