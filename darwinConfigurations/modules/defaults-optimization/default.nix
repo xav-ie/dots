@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }:
 let
@@ -38,18 +37,38 @@ let
     else
       null;
 
-  # Generate expected plist value and hash it (for complex types)
-  hashPlistValue =
-    value:
+  # Convert Nix value to PlistBuddy Print output format (for complex types)
+  toPlistBuddyOutput =
+    indent: v:
     let
-      plist = lib.generators.toPlist { escape = true; } value;
-      lines = lib.splitString "\n" plist;
-      contentLines = lib.sublist 3 (lib.length lines - 4) lines;
-      content = lib.concatStringsSep "\n" contentLines + "\n";
+      spaces = lib.concatStrings (lib.genList (_: "    ") indent);
+      nextIndent = indent + 1;
     in
-    builtins.hashString "sha256" content;
+    if lib.isBool v then
+      if v then "true" else "false"
+    else if lib.isInt v then
+      toString v
+    else if lib.isFloat v then
+      lib.strings.floatToString v
+    else if lib.isString v then
+      v
+    else if lib.isList v then
+      "Array {\n${
+        lib.concatStringsSep "\n" (map (elem: "${spaces}    ${toPlistBuddyOutput nextIndent elem}") v)
+      }\n${spaces}}"
+    else if lib.isAttrs v then
+      "Dict {\n${
+        lib.concatStringsSep "\n" (
+          lib.mapAttrsToList (k: val: "${spaces}    ${k} = ${toPlistBuddyOutput nextIndent val}") v
+        )
+      }\n${spaces}}"
+    else
+      toString v;
 
-  # Generate check command - use raw for simple types, xml1 hash for complex
+  # Hash PlistBuddy output for complex types
+  hashPlistBuddyValue = value: builtins.hashString "sha256" (toPlistBuddyOutput 0 value + "\n");
+
+  # Generate check command - use raw for simple types, PlistBuddy for complex
   # Runs in background, writes to $mismatch_file on mismatch
   mkKeyCheckCmd =
     plistPath: key: value:
@@ -60,9 +79,9 @@ let
       "(actual=$(plutil -extract ${lib.escapeShellArg key} raw -o - ${lib.escapeShellArg plistPath} 2>/dev/null); [[ \"$actual\" != ${lib.escapeShellArg expected} ]] && echo 1 > \"$mismatch_file\") &"
     else
       let
-        expectedHash = hashPlistValue value;
+        expectedHash = hashPlistBuddyValue value;
       in
-      "(actual=$(plutil -extract ${lib.escapeShellArg key} xml1 -o - ${lib.escapeShellArg plistPath} 2>/dev/null | tail -n +4 | head -n -1 | shasum -a 256 | cut -d' ' -f1); [[ \"$actual\" != \"${expectedHash}\" ]] && echo 1 > \"$mismatch_file\") &";
+      "(actual=$(/usr/libexec/PlistBuddy -c \"Print :${key}\" ${lib.escapeShellArg plistPath} 2>/dev/null | shasum -a 256 | cut -d' ' -f1); [[ \"$actual\" != \"${expectedHash}\" ]] && echo 1 > \"$mismatch_file\") &";
 
   # Collect all check commands as a list
   mkDomainCheckCmds =
