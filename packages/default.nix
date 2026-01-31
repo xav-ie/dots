@@ -58,7 +58,7 @@ rec {
 // (optionalAttrs pkgs.stdenv.isDarwin {
   fix-yabai = pkgs.callPackage ./fix-yabai { inherit writeNuApplication; };
   focus-or-open-application = pkgs.callPackage ./focus-or-open-application {
-    inherit writeNuApplication notify;
+    inherit writeNuApplication;
   };
   move-pip = pkgs.callPackage ./move-pip { inherit writeNuApplication; };
   sketchybar-battery = pkgs.callPackage ./sketchybar-battery { inherit writeNuApplication; };

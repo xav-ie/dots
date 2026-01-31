@@ -48,7 +48,7 @@ in
         # Use yt-dlp instead of youtube-dl (use full path)
         # Enable skipsilence by default
         # Use browser cookies for YouTube authentication (fixes 403 errors and enables Premium)
-        script-opts = "ytdl_hook-ytdl_path=${lib.getExe config.programs.yt-dlp.package},skipsilence-enabled=yes";
+        script-opts = "ytdl_hook-ytdl_path=${config.programs.yt-dlp.package}/bin/yt-dlp,skipsilence-enabled=yes";
         # Disable built-in OSC to use ModernZ instead
         osc = "no";
         # Disable built-in OSD on seek to show ModernZ OSC instead

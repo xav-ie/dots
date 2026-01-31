@@ -106,30 +106,20 @@ in
         enable = true;
         skhdConfig =
           let
-            applications = [
-              "Ghostty"
-              "Firefox"
-              "zoom.us"
-              "Finder"
-              "Messages"
-              "Chromium"
-              "Safari"
-            ];
-            focus-or-open-application = lib.getExe pkgs.pkgs-mine.focus-or-open-application;
-            commands = lib.lists.imap1 (
-              index: elem: # sh
-              ''
-                lcmd - ${builtins.toString index}: ${focus-or-open-application} ${elem}
-              '') applications;
-            commandString = builtins.concatStringsSep "\n" commands;
-            move-pip = lib.getExe pkgs.pkgs-mine.move-pip;
+            # Direct path references - evaluated once
+            focus = "${pkgs.pkgs-mine.focus-or-open-application}/bin/focus-or-open-application";
+            move-pip = "${pkgs.pkgs-mine.move-pip}/bin/move-pip";
           in
           # sh
           ''
-            # I really like application-driven window management. I just want
-            # simple keybindings to just go where I want. Only downside is new
-            # bindings must be added for new apps.
-            ${commandString}
+            # Application-driven window management - static list avoids imap1/concatStringsSep overhead
+            lcmd - 1 : ${focus} Ghostty
+            lcmd - 2 : ${focus} Firefox
+            lcmd - 3 : ${focus} zoom.us
+            lcmd - 4 : ${focus} Finder
+            lcmd - 5 : ${focus} Messages
+            lcmd - 6 : ${focus} Chromium
+            lcmd - 7 : ${focus} Safari
 
             ctrl + alt - h : yabai -m space --focus prev
             ctrl + alt - j : yabai -m window --focus stack.next

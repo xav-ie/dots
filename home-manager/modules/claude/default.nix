@@ -74,8 +74,19 @@ let
   '';
 
   # Main 'claude' command pointing to the selected version
+  selectedClaude =
+    if cfg.nativeInstall then
+      {
+        pkg = claude-native;
+        bin = "claude-native";
+      }
+    else
+      {
+        pkg = claude-npm;
+        bin = "claude-npm";
+      };
   claude-package = pkgs.writeShellScriptBin "claude" ''
-    exec ${lib.getExe (if cfg.nativeInstall then claude-native else claude-npm)} "$@"
+    exec ${selectedClaude.pkg}/bin/${selectedClaude.bin} "$@"
   '';
 
   # Wrapper script that calls the nu setup script
