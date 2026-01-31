@@ -97,7 +97,7 @@ in
         after = [ "bluetooth.service" ];
         serviceConfig = {
           Type = "oneshot";
-          ExecStart = lib.getExe bluetooth-auto-block;
+          ExecStart = "${bluetooth-auto-block}/bin/bluetooth-auto-block";
           StateDirectory = "bluetooth-auto-block";
         };
       };

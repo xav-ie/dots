@@ -6,15 +6,6 @@
 }:
 let
   cfg = config.programs.uv.tools;
-
-  defaultPackage = pkgs.writeNuApplication {
-    name = "uv-tool-sync";
-    runtimeInputs = [ pkgs.uv ];
-    runtimeEnv = {
-      UV_TOOLS_CONFIG = "${config.dotFilesDir}/home-manager/modules/uv/packages.json";
-    };
-    text = builtins.readFile ./sync-uv-tools.nu;
-  };
 in
 {
   options.programs.uv.tools = {
@@ -22,26 +13,39 @@ in
 
     package = lib.mkOption {
       type = lib.types.package;
-      default = defaultPackage;
+      default = pkgs.writeNuApplication {
+        name = "uv-tool-sync";
+        runtimeInputs = [ pkgs.uv ];
+        runtimeEnv = {
+          UV_TOOLS_CONFIG = "${config.dotFilesDir}/home-manager/modules/uv/packages.json";
+        };
+        text = builtins.readFile ./sync-uv-tools.nu;
+      };
+      defaultText = lib.literalExpression "pkgs.writeNuApplication { ... }";
       description = "The uv-tool-sync package";
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    home.packages = [ cfg.package ];
+  config = lib.mkIf cfg.enable (
+    let
+      exe = "${cfg.package}/bin/uv-tool-sync";
+    in
+    {
+      home.packages = [ cfg.package ];
 
-    home.activation.uvToolSync = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      echo "Syncing uv tools (background)..."
-      ${lib.getExe cfg.package} &>/dev/null &
-      disown
-    '';
+      home.activation.uvToolSync = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        echo "Syncing uv tools (background)..."
+        ${exe} &>/dev/null &
+        disown
+      '';
 
-    services.scheduled.uv-tool-sync = {
-      description = "Sync uv tools";
-      command = lib.getExe cfg.package;
-      calendar = "daily";
-      hour = 9;
-      minute = 5;
-    };
-  };
+      services.scheduled.uv-tool-sync = {
+        description = "Sync uv tools";
+        command = exe;
+        calendar = "daily";
+        hour = 9;
+        minute = 5;
+      };
+    }
+  );
 }

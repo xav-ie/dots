@@ -1,11 +1,10 @@
 {
-  lib,
   pkgs,
   ...
 }:
 let
   sudo-askpass-script = pkgs.writeShellScript "sudo-askpass-wrapper" ''
-    export SUDO_ASKPASS="${lib.getExe pkgs.pkgs-mine.zenity-askpass}"
+    export SUDO_ASKPASS="${pkgs.pkgs-mine.zenity-askpass}/bin/zenity-askpass"
     exec /run/wrappers/bin/sudo -A "$@"
   '';
 in

@@ -46,12 +46,12 @@ python3.pkgs.buildPythonApplication {
     mkdir -p $out/bin
 
     # Create wrapper for server
-    makeWrapper ${lib.getExe python} $out/bin/simulstreaming-server \
+    makeWrapper ${python}/bin/python3 $out/bin/simulstreaming-server \
       --add-flags "$out/lib/simulstreaming/simulstreaming_whisper_server.py" \
       --prefix PYTHONPATH : "$out/lib/simulstreaming"
 
     # Create wrapper for file transcription
-    makeWrapper ${lib.getExe python} $out/bin/simulstreaming \
+    makeWrapper ${python}/bin/python3 $out/bin/simulstreaming \
       --add-flags "$out/lib/simulstreaming/simulstreaming_whisper.py" \
       --prefix PYTHONPATH : "$out/lib/simulstreaming"
 

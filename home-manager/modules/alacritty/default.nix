@@ -2,7 +2,7 @@
 let
   inherit ((import ../../../lib/fonts.nix { inherit lib pkgs; })) fonts;
 
-  zellij-bin = lib.getExe pkgs.zellij;
+  zellij-bin = "${pkgs.zellij}/bin/zellij";
 in
 {
   config = {

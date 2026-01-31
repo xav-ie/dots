@@ -1,6 +1,5 @@
 {
   config,
-  lib,
   osConfig,
   pkgs,
   ...
@@ -39,9 +38,9 @@ in
           in
           {
             # aliases are case-insensitive
-            amend = "!${lib.getExe pkgs.pkgs-mine.git-amend}";
+            amend = "!${pkgs.pkgs-mine.git-amend}/bin/git-amend";
             B = "checkout -B";
-            bb = "!${lib.getExe pkgs.pkgs-mine.better-branch}";
+            bb = "!${pkgs.pkgs-mine.better-branch}/bin/better-branch";
             blame-better = "blame -w -C -C -C";
             c = "commit";
             cam = "commit -am";
@@ -63,14 +62,14 @@ in
                 ];
               in
               "log --graph --pretty=tformat:'${columns}' --abbrev-commit --decorate";
-            log-pr = "!${lib.getExe pkgs.pkgs-mine.log-pr}";
+            log-pr = "!${pkgs.pkgs-mine.log-pr}/bin/log-pr";
             main = # sh
               "!(git fetch && git fetch --tags && git checkout -B main origin/main)";
             p = "push";
             patch = "show --patch";
-            prs = "!${lib.getExe pkgs.pkgs-mine.prs}";
+            prs = "!${pkgs.pkgs-mine.prs}/bin/prs";
             pull-force = "!git fetch && git reset --hard origin/$(git branch --show-current)";
-            review = "!${lib.getExe pkgs.pkgs-mine.review}";
+            review = "!${pkgs.pkgs-mine.review}/bin/review";
             rmc = "rm --cached";
             s = "status";
             sd = "!git s && git d";
@@ -78,7 +77,7 @@ in
             shove = "push --force-with-lease";
             stash-all = "stash --all";
             unstage = "restore --staged .";
-            update-package-lock = "!${lib.getExe pkgs.pkgs-mine.update-package-lock}";
+            update-package-lock = "!${pkgs.pkgs-mine.update-package-lock}/bin/update-package-lock";
             # git log -L :functionName:/path/to/file
             # git blame -L :functionName:/path/to/file
             # git log -S your_regex -p

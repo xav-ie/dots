@@ -1,9 +1,15 @@
 {
   inputs,
-  lib,
   pkgs,
   ...
 }:
+let
+  delta-jj = pkgs.writeNuApplication {
+    name = "delta-jj";
+    runtimeInputs = [ pkgs.delta ];
+    text = builtins.readFile ./delta-jj.nu;
+  };
+in
 {
   config = {
     programs.jjui = {
@@ -31,13 +37,7 @@
         ui = {
           show-cryptographic-signatures = true;
 
-          diff-formatter = lib.getExe (
-            pkgs.writeNuApplication {
-              name = "delta-jj";
-              runtimeInputs = [ pkgs.delta ];
-              text = builtins.readFile ./delta-jj.nu;
-            }
-          );
+          diff-formatter = "${delta-jj}/bin/delta-jj";
         };
         user = {
           name = "Xavier Ruiz";

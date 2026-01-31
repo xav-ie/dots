@@ -26,7 +26,7 @@ in
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-        ExecStart = lib.getExe noisetorchInit;
+        ExecStart = "${noisetorchInit}/bin/noisetorch-init";
         ExecStop = "/run/wrappers/bin/noisetorch -u";
         # Block network access so noisetorch's update check fails instantly
         PrivateNetwork = true;

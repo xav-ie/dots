@@ -49,7 +49,7 @@ in
           };
           text = builtins.readFile ./swaync-logic.nu;
         };
-        swayncLogicExe = lib.getExe swayncLogic;
+        swayncLogicExe = "${swayncLogic}/bin/swaync-logic";
         swaync-notify-lifecycle = pkgs.writeShellApplication {
           name = "swaync-notify-lifecycle";
           runtimeInputs = [ pkgs.flock ];

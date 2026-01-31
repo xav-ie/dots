@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }:
+{ pkgs, ... }:
 {
   imports = [
     ./cliphist
@@ -83,7 +83,7 @@
         LIBVA_DRIVER_NAME = "nvidia";
         NH_ELEVATION_PROGRAM = "/run/wrappers/bin/sudo-askpass";
         NIXOS_OZONE_WL = "1";
-        SUDO_ASKPASS = lib.getExe pkgs.pkgs-mine.zenity-askpass;
+        SUDO_ASKPASS = "${pkgs.pkgs-mine.zenity-askpass}/bin/zenity-askpass";
         WLR_NO_HARDWARE_CURSORS = "1";
         XDG_CONFIG_HOME = "/home/x/.config";
         __GLX_VENDOR_LIBRARY_NAME = "nvidia";

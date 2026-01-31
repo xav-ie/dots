@@ -27,7 +27,7 @@ in
         [[ -f "$hash_file" ]] && stored_hash=$(cat "$hash_file")
 
         if [[ "$current_hash" != "$stored_hash" ]]; then
-          run ${lib.getExe cfg.package} cache --build
+          run ${cfg.package}/bin/bat cache --build
           mkdir -p "$cache_dir"
           echo "$current_hash" > "$hash_file"
         fi
@@ -35,7 +35,7 @@ in
     );
 
     home.sessionVariables = lib.mkIf cfg.enable {
-      PAGER = lib.getExe cfg.package;
+      PAGER = "${cfg.package}/bin/bat";
     };
   };
 }

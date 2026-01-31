@@ -216,7 +216,7 @@ in
                   def main [] {
                     (yabai -m signal --add event=window_focused
                       app="^Firefox$"
-                      action="${lib.getExe firefoxWindowFocused}"
+                      action="${firefoxWindowFocused}/bin/firefoxWindowFocused"
                       label="${oneShotName}")
                   }
                 '';
@@ -239,7 +239,7 @@ in
                           --toggle float)
                         (yabai -m window $env.YABAI_WINDOW_ID
                           --grid 5:4:3:1:1:3)
-                        ^${lib.getExe firefoxExtensionWindowCreated}
+                        ^${firefoxExtensionWindowCreated}/bin/firefoxExtensionWindowCreated
                       }
                     }
                   }
@@ -282,12 +282,12 @@ in
             # Auto re-open the Firefox window
             yabai -m signal --add event=window_created \
               app="^Firefox$" title="^(Firefox -.*|Extension:.*|.*Bitwarden)$" \
-              action='${lib.getExe firefoxExtensionWindowCreated}'
+              action='${firefoxExtensionWindowCreated}/bin/firefoxExtensionWindowCreated'
             # sometimes, does not work... this seems to make up for it
             # TODO: test some more... probably not 100% there
             yabai -m signal --add event=window_title_changed \
               app="^Firefox$" title="^(Firefox -.*|Extension:.*|.*Bitwarden)$" \
-              action='${lib.getExe logWindowPretty}'
+              action='${logWindowPretty}/bin/logWindowPretty'
           '';
       };
     };
@@ -318,7 +318,7 @@ in
           in
           lib.mkAfter # sh
             ''
-              ${lib.getExe checkSIP}
+              ${checkSIP}/bin/checkSIP
             '';
 
         postActivation.text =
@@ -341,7 +341,7 @@ in
               fi
 
               # https://github.com/koekeishiya/yabai/issues/2199#issuecomment-2031852290
-              ${lib.getExe pkgs.yabai} -m rule --apply 2>/dev/null || true
+              ${pkgs.yabai}/bin/yabai -m rule --apply 2>/dev/null || true
 
               # Power management for remote builder
               # Battery: aggressive sleep for battery life
@@ -355,7 +355,7 @@ in
               pmset -a ttyskeepawake 1
               pmset -a womp 1
 
-              ${lib.getExe config.boot-args.checkBootArgs}
+              ${config.boot-args.checkBootArgs}/bin/checkBootArgs
 
               # Activate user settings, somethimes takes a bit to fully apply
               sudo -u ${config.defaultUser} /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
