@@ -48,8 +48,8 @@ buildNpmPackage rec {
     # See: https://github.com/anthropic-experimental/sandbox-runtime/pull/91
     substituteInPlace cli.js \
       --replace-fail \
-        'H.push("--ro-bind","/dev/null",j),T8(`[Sandbox Linux] Mounted /dev/null at ''${j} to block creation of ''${_}`)' \
-        'T8(`[Sandbox Linux] Skipping non-existent deny path: ''${_}`)'
+        'let W=xI5(X);H.push("--ro-bind","/dev/null",W),f8(`[Sandbox Linux] Mounted /dev/null at ''${W} to block creation of ''${X}`)' \
+        'f8(`[Sandbox Linux] Skipping non-existent deny path: ''${X}`)'
   '';
 
   dontNpmBuild = true;

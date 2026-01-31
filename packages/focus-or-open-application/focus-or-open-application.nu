@@ -24,7 +24,7 @@ def main [appName: string] {
       ^open (mdfind kMDItemContentTypeTree=com.apple.application-bundle
             | grep $'/($appName).app$')
     } catch {
-      notify $"Could not focus or open '($appName)'"
+      osascript -e $'display notification "Could not focus or open \'($appName)\'" with title "focus-or-open-application"'
     }
   }
 }
