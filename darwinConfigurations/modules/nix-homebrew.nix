@@ -18,6 +18,10 @@
     nix-homebrew = {
       # Install Homebrew under the default prefix
       enable = true;
+      # TODO: Replace with zerobrew once Brewfile support lands
+      # - https://github.com/lucasgelfond/zerobrew/issues/97 (Brewfile support)
+      # - https://github.com/lucasgelfond/zerobrew/issues/56 (Cask support)
+      # package = pkgs.pkgs-mine.zerobrew;
       # Apple Silicon Only: Also install Homebrew under the default Intel prefix for Rosetta 2
       enableRosetta = true;
       # User owning the Homebrew prefix
