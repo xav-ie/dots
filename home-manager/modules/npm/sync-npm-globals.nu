@@ -15,12 +15,31 @@ def main [
 
   mut config = open $config_path
 
-  # Get installed global packages via npm
-  let npm_output = npm list -g --json --depth=0 | from json
-  let installed = if ($npm_output | get -o dependencies) != null {
-    $npm_output.dependencies | transpose name info | each {|row|
-      { name: $row.name, version: $row.info.version }
-    }
+  # Get installed global packages via filesystem (faster than npm list)
+  let npm_prefix = (npm config get prefix | str trim)
+  let node_modules = $npm_prefix | path join "lib" | path join "node_modules"
+  let installed = if ($node_modules | path exists) {
+    # Handle both scoped (@org/pkg) and regular packages
+    ls $node_modules | where type == dir | each {|d|
+      let dir_name = $d.name | path basename
+      if ($dir_name | str starts-with "@") {
+        # Scoped package - list subdirs
+        ls $d.name | where type == dir | each {|sub|
+          let pkg_json = $sub.name | path join "package.json"
+          if ($pkg_json | path exists) {
+            let pkg = open $pkg_json
+            { name: $pkg.name, version: $pkg.version }
+          }
+        }
+      } else {
+        # Regular package
+        let pkg_json = $d.name | path join "package.json"
+        if ($pkg_json | path exists) {
+          let pkg = open $pkg_json
+          { name: $pkg.name, version: $pkg.version }
+        }
+      }
+    } | flatten | compact
   } else {
     []
   }
