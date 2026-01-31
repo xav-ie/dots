@@ -158,8 +158,9 @@ in
     programs.mcp.enableNixos = true;
 
     home.activation.claudePluginSync = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      echo "Syncing claude plugins..."
-      run ${lib.getExe cfg.pluginSyncPackage} || true
+      echo "Syncing claude plugins (background)..."
+      ${lib.getExe cfg.pluginSyncPackage} &>/dev/null &
+      disown
     '';
 
     home.packages = [

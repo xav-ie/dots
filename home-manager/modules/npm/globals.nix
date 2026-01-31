@@ -34,8 +34,9 @@ in
     home.packages = [ cfg.package ];
 
     home.activation.npmGlobalSync = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      echo "Syncing npm globals..."
-      run ${lib.getExe cfg.package} || true
+      echo "Syncing npm globals (background)..."
+      ${lib.getExe cfg.package} &>/dev/null &
+      disown
     '';
 
     services.scheduled.npm-global-sync = {

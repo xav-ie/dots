@@ -31,8 +31,9 @@ in
     home.packages = [ cfg.package ];
 
     home.activation.uvToolSync = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      echo "Syncing uv tools..."
-      run ${lib.getExe cfg.package} || true
+      echo "Syncing uv tools (background)..."
+      ${lib.getExe cfg.package} &>/dev/null &
+      disown
     '';
 
     services.scheduled.uv-tool-sync = {
