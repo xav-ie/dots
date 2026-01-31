@@ -6,6 +6,7 @@
   nuenv,
   simulstreaming-src,
   slack-mcp-server-src,
+  zerobrew-src,
 }:
 let
   optionalAttrs = bool: attrSet: if bool then attrSet else { };
@@ -52,6 +53,7 @@ rec {
   update-pr = pkgs.callPackage ./update-pr { inherit pr-summary writeNuApplication; };
   whisper-transcribe = pkgs.callPackage ./whisper-transcribe { inherit writeNuApplication; };
   zellij-tab-name-update = pkgs.callPackage ./zellij-tab-name-update { };
+  zerobrew = pkgs.callPackage ./zerobrew { src = zerobrew-src; };
 }
 // (optionalAttrs pkgs.stdenv.isDarwin {
   fix-yabai = pkgs.callPackage ./fix-yabai { inherit writeNuApplication; };

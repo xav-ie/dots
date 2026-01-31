@@ -1985,6 +1985,7 @@
         "treefmt-nix": "treefmt-nix",
         "virtual-headset": "virtual-headset",
         "waybar": "waybar",
+        "zerobrew-src": "zerobrew-src",
         "zjstatus": "zjstatus"
       }
     },
@@ -2400,6 +2401,22 @@
       "original": {
         "owner": "hyprwm",
         "repo": "xdg-desktop-portal-hyprland",
+        "type": "github"
+      }
+    },
+    "zerobrew-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1769800136,
+        "narHash": "sha256-jI0Kf2Y12rmIlcvv3roUBvUGGTt7gE8w90EyiZ+g4dQ=",
+        "owner": "lucasgelfond",
+        "repo": "zerobrew",
+        "rev": "067c2135f35a205edc5f14861a08e39e0517d2f5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "lucasgelfond",
+        "repo": "zerobrew",
         "type": "github"
       }
     },
