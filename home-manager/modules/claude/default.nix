@@ -12,28 +12,25 @@ let
   inherit (pkgs.pkgs-mine) claude-code-update;
 
   # Marketplace submodule
-  marketplaceOpts =
-    _:
-    {
-      options = {
-        repo = lib.mkOption {
-          type = lib.types.str;
-          description = "GitHub repository in owner/repo format";
-          example = "anthropics/claude-plugins-official";
-        };
+  marketplaceOpts = _: {
+    options = {
+      repo = lib.mkOption {
+        type = lib.types.str;
+        description = "GitHub repository in owner/repo format";
+        example = "anthropics/claude-plugins-official";
+      };
 
-        src = lib.mkOption {
-          type = lib.types.path;
-          description = "Flake input source for the marketplace";
-          example = "inputs.claude-marketplace-official";
-        };
+      src = lib.mkOption {
+        type = lib.types.path;
+        description = "Flake input source for the marketplace";
+        example = "inputs.claude-marketplace-official";
       };
     };
+  };
 
   # Find input name by matching src path against inputs
   findInputName =
-    src:
-    lib.findFirst (name: inputs.${name}.outPath or null == "${src}") null (lib.attrNames inputs);
+    src: lib.findFirst (name: inputs.${name}.outPath or null == "${src}") null (lib.attrNames inputs);
 
   marketplaceInputNames = lib.filter (x: x != null) (
     lib.mapAttrsToList (_: m: findInputName m.src) cfg.marketplaces
@@ -173,28 +170,27 @@ in
       updateMarketplacesPackage
     ];
 
-    home.file =
-      {
-        ".local/bin/claude".source = "${claude-package}/bin/claude";
-        ".claude/settings.json".source =
-          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/settings.json";
-        ".claude/notify.nu".source =
-          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/notify.nu";
-        ".claude/statusline.nu".source =
-          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/statusline.nu";
-        ".claude/marketplaces.json".source =
-          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/marketplaces.json";
-        ".claude/setup-plugins.nu".source =
-          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/setup-plugins.nu";
-        ".mcp.json".source =
-          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/mcp.json";
-        ".claude/agents".source =
-          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/agents";
-        ".claude/CLAUDE.md".source =
-          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/CLAUDE.md";
-        ".claude/plugins/known_marketplaces.json".text = knownMarketplacesJson;
-      }
-      // marketplaceFiles;
+    home.file = {
+      ".local/bin/claude".source = "${claude-package}/bin/claude";
+      ".claude/settings.json".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/settings.json";
+      ".claude/notify.nu".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/notify.nu";
+      ".claude/statusline.nu".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/statusline.nu";
+      ".claude/marketplaces.json".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/marketplaces.json";
+      ".claude/setup-plugins.nu".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/setup-plugins.nu";
+      ".mcp.json".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/mcp.json";
+      ".claude/agents".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/agents";
+      ".claude/CLAUDE.md".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/CLAUDE.md";
+      ".claude/plugins/known_marketplaces.json".text = knownMarketplacesJson;
+    }
+    // marketplaceFiles;
 
     # Daily update check for claude-code sources
     services.scheduled.claude-code-update = {
