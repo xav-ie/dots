@@ -26,20 +26,34 @@ in
           local newGenFiles
           newGenFiles="$(readlink -e "$newGenPath/home-files")"
 
-          local linked_files=""
-          find "$newGenFiles" \( -type f -or -type l \) -print0 | while IFS= read -r -d "" sourcePath; do
-            relativePath="''${sourcePath#$newGenFiles/}"
-            targetPath="$HOME/$relativePath"
+          # Temp file to collect files needing linking
+          local needs_linking=$(mktemp)
 
-            # Skip if symlink already correct
-            if [[ -L "$targetPath" && "$(readlink "$targetPath")" == "$sourcePath" ]]; then
-              continue
-            fi
+          # Parallel check phase
+          while IFS= read -r -d "" sourcePath; do
+            (
+              relativePath="''${sourcePath#$newGenFiles/}"
+              targetPath="$HOME/$relativePath"
 
-            echo "  linking: $relativePath" >&2
-            run mkdir -p "$(dirname "$targetPath")"
-            run ln -Tsf "$sourcePath" "$targetPath"
-          done
+              # Check if symlink needs updating
+              if [[ ! -L "$targetPath" || "$(readlink "$targetPath")" != "$sourcePath" ]]; then
+                echo "$sourcePath" >> "$needs_linking"
+              fi
+            ) &
+          done < <(find "$newGenFiles" \( -type f -or -type l \) -print0)
+          wait
+
+          # Sequential link phase (only for files that need it)
+          if [[ -s "$needs_linking" ]]; then
+            while IFS= read -r sourcePath; do
+              relativePath="''${sourcePath#$newGenFiles/}"
+              targetPath="$HOME/$relativePath"
+              run mkdir -p "$(dirname "$targetPath")"
+              run ln -Tsf "$sourcePath" "$targetPath"
+            done < "$needs_linking"
+          fi
+
+          rm -f "$needs_linking"
         }
 
         function cleanOldGen() {
@@ -49,12 +63,30 @@ in
           newGenFiles="$(readlink -e "$newGenPath/home-files")"
           oldGenFiles="$(readlink -e "$oldGenPath/home-files")"
 
-          find "$oldGenFiles" \( -type f -or -type l \) -print0 | while IFS= read -r -d "" sourcePath; do
-            relativePath="''${sourcePath#$oldGenFiles/}"
-            [[ -e "$newGenFiles/$relativePath" ]] && continue
-            targetPath="$HOME/$relativePath"
-            [[ "$(readlink "$targetPath")" == /nix/store/* ]] && run rm "$targetPath"
-          done
+          # Temp file to collect files needing removal
+          local needs_removal=$(mktemp)
+
+          # Parallel check phase
+          while IFS= read -r -d "" sourcePath; do
+            (
+              relativePath="''${sourcePath#$oldGenFiles/}"
+              [[ -e "$newGenFiles/$relativePath" ]] && exit 0
+              targetPath="$HOME/$relativePath"
+              if [[ "$(readlink "$targetPath")" == /nix/store/* ]]; then
+                echo "$targetPath" >> "$needs_removal"
+              fi
+            ) &
+          done < <(find "$oldGenFiles" \( -type f -or -type l \) -print0)
+          wait
+
+          # Sequential removal phase
+          if [[ -s "$needs_removal" ]]; then
+            while IFS= read -r targetPath; do
+              run rm "$targetPath"
+            done < "$needs_removal"
+          fi
+
+          rm -f "$needs_removal"
         }
 
         cleanOldGen
