@@ -6,6 +6,9 @@
 }:
 let
   inherit ((import ../../../lib/fonts.nix { inherit lib pkgs; })) fonts;
+
+  # Hash all user agents at build time to detect changes
+  launchdUserAgentsHash = builtins.hashString "sha256" (builtins.toJSON config.launchd.user.agents);
 in
 {
   imports = [
@@ -331,13 +334,21 @@ in
         postActivation.text =
           lib.mkAfter # sh
             ''
-              # Relaunch org.nixos user agents to pick up new paths
-              for plist in /Users/${config.defaultUser}/Library/LaunchAgents/org.nixos.*.plist; do
-                [ -e "$plist" ] || continue
-                label=$(basename "$plist" .plist)
-                echo "🍃 Relaunching $label"
-                sudo -u ${config.defaultUser} launchctl kickstart -k "gui/$(id -u ${config.defaultUser})/$label" || true
-              done
+              # Relaunch org.nixos user agents only if config changed
+              hash_file="/var/lib/nix-darwin/launchd-user-agents.hash"
+              current_hash="${launchdUserAgentsHash}"
+              stored_hash=""
+              [ -f "$hash_file" ] && stored_hash=$(cat "$hash_file")
+              if [ "$current_hash" != "$stored_hash" ]; then
+                for plist in /Users/${config.defaultUser}/Library/LaunchAgents/org.nixos.*.plist; do
+                  [ -e "$plist" ] || continue
+                  label=$(basename "$plist" .plist)
+                  echo "🍃 Relaunching $label"
+                  sudo -u ${config.defaultUser} launchctl kickstart -k "gui/$(id -u ${config.defaultUser})/$label" || true
+                done
+                mkdir -p "$(dirname "$hash_file")"
+                echo "$current_hash" > "$hash_file"
+              fi
 
               # https://github.com/koekeishiya/yabai/issues/2199#issuecomment-2031852290
               ${lib.getExe pkgs.yabai} -m rule --apply 2>/dev/null || true
