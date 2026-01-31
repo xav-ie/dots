@@ -50,18 +50,19 @@ let
     builtins.hashString "sha256" content;
 
   # Generate check command - use raw for simple types, xml1 hash for complex
+  # Runs in background, writes to $mismatch_file on mismatch
   mkKeyCheckCmd =
     plistPath: key: value:
     if isSimple value then
       let
         expected = toRawValue value;
       in
-      "actual=$(plutil -extract ${lib.escapeShellArg key} raw -o - ${lib.escapeShellArg plistPath} 2>/dev/null); if [[ \"$actual\" != ${lib.escapeShellArg expected} ]]; then echo >&2 \"MISMATCH: ${key} expected=${lib.escapeShellArg expected} actual=$actual\"; exit 1; fi"
+      "(actual=$(plutil -extract ${lib.escapeShellArg key} raw -o - ${lib.escapeShellArg plistPath} 2>/dev/null); [[ \"$actual\" != ${lib.escapeShellArg expected} ]] && echo 1 > \"$mismatch_file\") &"
     else
       let
         expectedHash = hashPlistValue value;
       in
-      "actual=$(plutil -extract ${lib.escapeShellArg key} xml1 -o - ${lib.escapeShellArg plistPath} 2>/dev/null | tail -n +4 | head -n -1 | shasum -a 256 | cut -d' ' -f1); if [[ \"$actual\" != \"${expectedHash}\" ]]; then echo >&2 \"MISMATCH: ${key} expected=${expectedHash} actual=$actual\"; exit 1; fi";
+      "(actual=$(plutil -extract ${lib.escapeShellArg key} xml1 -o - ${lib.escapeShellArg plistPath} 2>/dev/null | tail -n +4 | head -n -1 | shasum -a 256 | cut -d' ' -f1); [[ \"$actual\" != \"${expectedHash}\" ]] && echo 1 > \"$mismatch_file\") &";
 
   # Collect all check commands as a list
   mkDomainCheckCmds =
@@ -102,17 +103,18 @@ in
       '')
       (lib.mkAfter ''
         }
-        # Check if defaults match expected state (parallel)
+        # Check if defaults match expected state (pure bash parallel)
         echo "checking defaults..." >&2
-        check_commands=$(cat <<'CHECKS'
+        mismatch_file=$(mktemp)
+        echo 0 > "$mismatch_file"
         ${allCheckCmds}
-        CHECKS
-        )
-        if echo "$check_commands" | ${lib.getExe pkgs.parallel} --will-cite --halt now,fail=1 -j0 bash -c; then
+        wait
+        if [[ "$(cat "$mismatch_file")" == "0" ]]; then
           echo "user defaults unchanged, skipping..." >&2
         else
           _nix_darwin_user_defaults
         fi
+        rm -f "$mismatch_file"
       '')
     ];
   };
