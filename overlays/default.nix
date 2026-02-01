@@ -92,7 +92,12 @@ in
     beads = inputs.beads.packages.${final.stdenv.hostPlatform.system}.default;
     zjstatus = inputs.zjstatus.packages.${final.stdenv.hostPlatform.system}.default;
 
-    inherit (final.pkgs-mine) nix-output-monitor;
+    inherit (final.pkgs-mine)
+      nix-output-monitor
+      claude-code
+      claude-code-npm
+      claude-code-update
+      ;
 
     # Custom subliminal 2.4.0 with fixed dependencies for mpv autosub
     # This is a standalone package that doesn't affect the global python3
