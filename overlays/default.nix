@@ -3,7 +3,6 @@ let
   inherit (toplevel) inputs;
 in
 {
-  nur = inputs.nur.overlays.default;
   nuenv = inputs.nuenv.overlays.default;
 
   modifications = final: prev: {
