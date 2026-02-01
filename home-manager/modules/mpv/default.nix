@@ -8,8 +8,9 @@ let
   cfg = config.programs.mpv;
   modernzPkg = pkgs.mpvScripts.modernz;
   # Override autosub to use our custom subliminal with fixed dependencies
+  # Only pass what autosub needs (just subliminal), not the entire python3.pkgs set
   autosub-custom = pkgs.mpvScripts.autosub.override {
-    python3Packages = pkgs.python3.pkgs // {
+    python3Packages = {
       subliminal = pkgs.subliminal-custom;
     };
   };
