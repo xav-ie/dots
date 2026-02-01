@@ -89,6 +89,50 @@
     slack-mcp-server.flake = false;
     zerobrew-src.url = "github:lucasgelfond/zerobrew";
     zerobrew-src.flake = false;
+
+    # no way around this :/
+    alacritty-theme.inputs.flake-parts.follows = "flake-parts";
+    alacritty-theme.inputs.nixpkgs.follows = "nixpkgs";
+    beads.inputs.flake-utils.follows = "flake-utils";
+    beads.inputs.nixpkgs.follows = "nixpkgs";
+    ctpv.inputs.flake-utils.follows = "flake-utils";
+    ctpv.inputs.nixpkgs.follows = "nixpkgs";
+    flake-utils.inputs.systems.follows = "systems";
+    generate-kaomoji.inputs.flake-utils.follows = "flake-utils";
+    generate-kaomoji.inputs.nixpkgs.follows = "nixpkgs";
+    gitignore.inputs.nixpkgs.follows = "nixpkgs";
+    home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    hyprland.inputs.nixpkgs.follows = "nixpkgs";
+    hyprland.inputs.systems.follows = "systems";
+    jj.inputs.flake-utils.follows = "flake-utils";
+    jj.inputs.nixpkgs.follows = "nixpkgs";
+    jj.inputs.rust-overlay.follows = "rust-overlay";
+    mcp-nixos.inputs.flake-parts.follows = "flake-parts";
+    mcp-nixos.inputs.nixpkgs.follows = "nixpkgs";
+    morlana.inputs.nixpkgs.follows = "nixpkgs";
+    nix-auto-follow.inputs.nixpkgs.follows = "nixpkgs";
+    nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
+    nuenv.inputs.nixpkgs.follows = "nixpkgs";
+    nuenv.inputs.systems.follows = "systems";
+    nur.inputs.flake-parts.follows = "flake-parts";
+    nur.inputs.nixpkgs.follows = "nixpkgs";
+    plover-flake.inputs.nixpkgs.follows = "nixpkgs";
+    rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
+    sops-nix.inputs.nixpkgs.follows = "nixpkgs";
+    treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
+    virtual-headset.inputs.crane.follows = "crane";
+    virtual-headset.inputs.flake-parts.follows = "flake-parts";
+    virtual-headset.inputs.home-manager.follows = "home-manager";
+    virtual-headset.inputs.nixpkgs.follows = "nixpkgs";
+    virtual-headset.inputs.nuenv.follows = "nuenv";
+    virtual-headset.inputs.systems.follows = "systems";
+    virtual-headset.inputs.treefmt-nix.follows = "treefmt-nix";
+    waybar.inputs.flake-compat.follows = "flake-compat";
+    waybar.inputs.nixpkgs.follows = "nixpkgs";
+    zjstatus.inputs.crane.follows = "crane";
+    zjstatus.inputs.flake-utils.follows = "flake-utils";
+    zjstatus.inputs.nixpkgs.follows = "nixpkgs";
+    zjstatus.inputs.rust-overlay.follows = "rust-overlay";
   };
 
   outputs =
