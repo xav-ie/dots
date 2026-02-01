@@ -1,11 +1,12 @@
 # Generate a flamegraph of Nix evaluation time
 # Usage: nix-flamegraph [flake-output]
-# Example: nix-flamegraph .#darwinConfigurations.nox.system
-
+# Examples:
+#   nix-flamegraph .#darwinConfigurations.nox.system
+#   nix-flamegraph .#nixosConfigurations.praesidium.config.system.build.toplevel
 def main [
-  flake_output?: string  # Flake output to profile (default: .#darwinConfigurations.nox.system)
+  flake_output?: string  # Flake output to profile (auto-detects based on host)
 ] {
-  let flake_output = $flake_output | default ".#darwinConfigurations.nox.system"
+  let flake_output = $flake_output | default (get-default-flake-output)
   let profile_file = "/tmp/nix.profile"
   let readable_profile = "/tmp/nix-readable.profile"
   let dots_profile = "/tmp/nix-dots.profile"
@@ -71,6 +72,7 @@ def main [
     | str replace --all --regex '/nix/store/[a-z0-9]+-source/modules/environment/' "[nix-darwin]/modules/environment/"
     | str replace --all --regex '/nix/store/[a-z0-9]+-source/modules/launchd/' "[nix-darwin]/modules/launchd/"
     | str replace --all --regex '/nix/store/[a-z0-9]+-source/modules/services/' "[nix-darwin]/modules/services/"
+    | str replace --all --regex '/nix/store/[a-z0-9]+-source/nixos/modules/' "[nixos]/modules/"
     | str replace --all --regex '/nix/store/[a-z0-9]+-source/modules/programs/' "[home-manager]/modules/programs/"
     | str replace --all --regex '/nix/store/[a-z0-9]+-source/modules/files\.nix' "[home-manager]/modules/files.nix"
     | str replace --all --regex '/nix/store/[a-z0-9]+-source/modules/' "[modules]/modules/"
@@ -99,8 +101,12 @@ def main [
     | str replace --all --regex '(<title>\[dots\]/[^<]+</title><rect [^>]*fill=")rgb\([^)]+\)"' '${1}rgb(70,130,180)"')
   $svg_content | save --force $output_svg
 
-  print $"Opening ($output_svg)..."
-  open-file $output_svg
+  try {
+    open-file $output_svg
+    print $"Opened ($output_svg)"
+  } catch {
+    print $"Flamegraph saved to ($output_svg)"
+  }
 
   # Show top [dots] hotspots
   print ""
@@ -109,7 +115,7 @@ def main [
   # Parse the profile and aggregate samples by location
   let hotspots = ($dots_content
     | lines
-    | each { |line|
+    | par-each { |line|
       let parts = ($line | split row " ")
       let count = ($parts | last | into int | default 0)
       let stack = ($parts | drop 1 | str join " ")
@@ -162,5 +168,16 @@ def open-file [path: string] {
   match (uname | get kernel-name) {
     "Darwin" => (^open $path)
     "Linux" => (xdg-open $path)
+  }
+}
+
+# Auto-detect the default flake output based on current host
+def get-default-flake-output [] {
+  let hostname = (hostname)
+  let kernel = (uname | get kernel-name)
+  match $kernel {
+    "Darwin" => $".#darwinConfigurations.($hostname).system"
+    "Linux" => $".#nixosConfigurations.($hostname).config.system.build.toplevel"
+    _ => ".#darwinConfigurations.nox.system"
   }
 }
