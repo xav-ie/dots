@@ -8,10 +8,8 @@ let
   gitIniFmt = pkgs.formats.gitIni { };
 in
 {
-  imports = [
-    ./case-collision-check.nix
-    ./canonical-case-check.nix
-  ];
+  # Git config validation (canonical casing, case collisions) runs via `nix flake check`.
+  # See ./checks.nix for the validation logic.
 
   config = {
     programs.git = {

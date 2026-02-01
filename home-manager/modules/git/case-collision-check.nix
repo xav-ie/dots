@@ -23,14 +23,11 @@
 #   { branch.main = { ... }; }               -> OK - different subsections
 #
 # We detect subsections by checking if the value is an attrset.
-{
-  config,
-  lib,
-  ...
-}:
+#
+# This module exports check results for use by flake checks.
+# Run `nix flake check` or `just check` to validate git config.
+{ lib, gitSettings }:
 let
-  cfg = config.programs.git;
-
   # Find keys that differ only in case AND have different values.
   # Returns list of detailed conflict descriptions.
   findConflicts =
@@ -60,7 +57,7 @@ let
     lib.mapAttrsToList formatConflict conflicting;
 
   # Group sections by lowercase name to find collisions
-  sectionKeys = lib.attrNames cfg.settings;
+  sectionKeys = lib.attrNames gitSettings;
   sectionsByLower = builtins.groupBy lib.strings.toLower sectionKeys;
 
   # For each group of case-colliding sections, merge their contents and check
@@ -73,8 +70,8 @@ let
       collectTaggedVars =
         sectionName:
         let
-          sectionAttrs = cfg.settings.${sectionName};
-          isSubsection = _name: val: lib.isAttrs val;
+          sectionAttrs = gitSettings.${sectionName};
+          isSubsection = _name: val: builtins.isAttrs val;
           variables = lib.filterAttrs (n: v: !isSubsection n v) sectionAttrs;
         in
         lib.mapAttrsToList (varName: val: {
@@ -110,8 +107,8 @@ let
       checkSubsections =
         sectionName:
         let
-          sectionAttrs = cfg.settings.${sectionName};
-          isSubsection = _name: val: lib.isAttrs val;
+          sectionAttrs = gitSettings.${sectionName};
+          isSubsection = _name: val: builtins.isAttrs val;
           subsections = lib.filterAttrs isSubsection sectionAttrs;
           addSubsectionPrefix =
             subName: c:
@@ -170,28 +167,29 @@ let
   );
 in
 {
-  config = lib.mkIf cfg.enable {
-    assertions = [
-      {
-        assertion = allConflicts == [ ];
-        message = ''
-          programs.git.settings contains keys that differ only in case but have different
-          values.
-          Git config section and variable names are case-insensitive, so only one value
-          will be used and others silently discarded.
+  issues = allConflicts;
 
-          ${formattedConflicts}
-          Consider matching the casing. This will cause a Nix module conflict, which you
-          may then resolve (e.g. via lib.mkForce).
+  hasErrors = allConflicts != [ ];
 
-          Example - before:
-            merge.conflictstyle = "zdiff3";  # your config
-            merge.conflictStyle = "diff3";   # from another module
+  errorMessage =
+    if allConflicts == [ ] then
+      ""
+    else
+      ''
+        programs.git.settings contains keys that differ only in case but have different
+        values.
+        Git config section and variable names are case-insensitive, so only one value
+        will be used and others silently discarded.
 
-          Example - after:
-            merge.conflictStyle = lib.mkForce "zdiff3";  # match casing, set priority
-        '';
-      }
-    ];
-  };
+        ${formattedConflicts}
+        Consider matching the casing. This will cause a Nix module conflict, which you
+        may then resolve (e.g. via lib.mkForce).
+
+        Example - before:
+          merge.conflictstyle = "zdiff3";  # your config
+          merge.conflictStyle = "diff3";   # from another module
+
+        Example - after:
+          merge.conflictStyle = lib.mkForce "zdiff3";  # match casing, set priority
+      '';
 }

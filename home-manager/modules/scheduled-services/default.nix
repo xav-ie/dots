@@ -73,6 +73,8 @@ let
 
   enabledServices = lib.filterAttrs (_: svc: svc.enable) cfg;
 
+  inherit (pkgs.stdenv) isLinux isDarwin;
+
   # Convert calendar string to launchd StartCalendarInterval
   mkLaunchdInterval =
     svc:
@@ -105,7 +107,7 @@ in
 
   config = lib.mkIf (enabledServices != { }) {
     # Linux - systemd user services and timers
-    systemd.user.services = lib.mkIf pkgs.stdenv.isLinux (
+    systemd.user.services = lib.mkIf isLinux (
       lib.mapAttrs (_name: svc: {
         Unit.Description = svc.description;
         Service = {
@@ -118,7 +120,7 @@ in
       }) enabledServices
     );
 
-    systemd.user.timers = lib.mkIf pkgs.stdenv.isLinux (
+    systemd.user.timers = lib.mkIf isLinux (
       lib.mapAttrs (_name: svc: {
         Unit.Description = "${svc.description} timer";
         Timer = {
@@ -131,7 +133,7 @@ in
     );
 
     # macOS - launchd agents
-    launchd.agents = lib.mkIf pkgs.stdenv.isDarwin (
+    launchd.agents = lib.mkIf isDarwin (
       lib.mapAttrs (name: svc: {
         enable = true;
         config = {

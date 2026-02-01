@@ -1,14 +1,11 @@
 # Checks that git config uses canonical casing:
 # - Sections should be lowercase (subsections are case-sensitive, left unchanged)
 # - Variables should use camelCase per git documentation
-{
-  config,
-  lib,
-  ...
-}:
+#
+# This module exports check results for use by flake checks.
+# Run `nix flake check` or `just check` to validate git config.
+{ lib, gitSettings }:
 let
-  cfg = config.programs.git;
-
   # section.lowercasevar -> "canonicalVar"
   canonical = import ./canonical-variables-generated.nix;
 
@@ -19,7 +16,10 @@ let
     let
       match = builtins.match "([^ \"]+)(.*)" name;
     in
-    if match == null then lib.toLower name else lib.toLower (lib.elemAt match 0) + lib.elemAt match 1;
+    if match == null then
+      lib.toLower name
+    else
+      lib.toLower (builtins.elemAt match 0) + builtins.elemAt match 1;
 
   checkSection =
     sectionName: attrs:
@@ -53,29 +53,30 @@ let
             ]
           else
             [ ]
-        ) (lib.filterAttrs (_: v: !lib.isAttrs v) attrs)
+        ) (lib.filterAttrs (_: v: !builtins.isAttrs v) attrs)
       );
     in
     badVars;
 
   issues = lib.concatLists (
-    lib.mapAttrsToList (name: val: if lib.isAttrs val then checkSection name val else [ ]) (
-      cfg.settings or { }
-    )
+    lib.mapAttrsToList (
+      name: val: if builtins.isAttrs val then checkSection name val else [ ]
+    ) gitSettings
   );
 in
 {
-  config = lib.mkIf (cfg.enable && issues != [ ]) {
-    assertions = [
-      {
-        assertion = false;
-        message = ''
-          programs.git.settings uses non-canonical casing.
-          Sections should be lowercase, variables should use camelCase:
+  inherit issues;
 
-          ${lib.concatMapStringsSep "\n" (i: "  ${i.path} -> ${i.fix}") issues}
-        '';
-      }
-    ];
-  };
+  hasErrors = issues != [ ];
+
+  errorMessage =
+    if issues == [ ] then
+      ""
+    else
+      ''
+        programs.git.settings uses non-canonical casing.
+        Sections should be lowercase, variables should use camelCase:
+
+        ${lib.concatMapStringsSep "\n" (i: "  ${i.path} -> ${i.fix}") issues}
+      '';
 }

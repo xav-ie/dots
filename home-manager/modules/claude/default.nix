@@ -8,10 +8,7 @@
 let
   cfg = config.programs.claude;
 
-  # The update script package
-  inherit (pkgs.pkgs-mine) claude-code-update;
-
-  # Marketplace submodule
+  # Marketplace submodule (no cfg dependency - safe in outer let)
   marketplaceOpts = _: {
     options = {
       repo = lib.mkOption {
@@ -28,76 +25,9 @@ let
     };
   };
 
-  # Find input name by matching src path against inputs
+  # Find input name by matching src path against inputs (pure function, safe)
   findInputName =
     src: lib.findFirst (name: inputs.${name}.outPath or null == "${src}") null (lib.attrNames inputs);
-
-  marketplaceInputNames = lib.filter (x: x != null) (
-    lib.mapAttrsToList (_: m: findInputName m.src) cfg.marketplaces
-  );
-
-  updateMarketplacesPackage = pkgs.writeShellScriptBin "claude-update-marketplaces" ''
-    cd "${config.dotFilesDir}"
-    exec nix flake lock ${lib.concatMapStringsSep " " (i: "--update-input ${i}") marketplaceInputNames}
-  '';
-
-  # Generate known_marketplaces.json from configured marketplaces
-  knownMarketplacesJson = builtins.toJSON (
-    lib.mapAttrs (name: marketplace: {
-      source = {
-        source = "github";
-        inherit (marketplace) repo;
-      };
-      installLocation = "${config.home.homeDirectory}/.claude/plugins/marketplaces/${name}";
-      lastUpdated = "1970-01-01T00:00:00.000Z"; # Managed by Nix, not runtime updates
-    }) cfg.marketplaces
-  );
-
-  # Generate home.file entries for marketplace directories
-  marketplaceFiles = lib.mapAttrs' (name: marketplace: {
-    name = ".claude/plugins/marketplaces/${name}";
-    value = {
-      source = marketplace.src;
-    };
-  }) cfg.marketplaces;
-
-  # Native binary wrapper
-  claude-native = pkgs.writeShellScriptBin "claude-native" ''
-    export PATH="${config.home.homeDirectory}/.local/bin:$PATH"
-    exec ${lib.getExe pkgs.pkgs-mine.claude-code} "$@"
-  '';
-
-  # NPM-based binary wrapper
-  claude-npm = pkgs.writeShellScriptBin "claude-npm" ''
-    export DISABLE_INSTALLATION_CHECKS=1
-    exec ${lib.getExe pkgs.pkgs-mine.claude-code-npm} "$@"
-  '';
-
-  # Main 'claude' command pointing to the selected version
-  selectedClaude =
-    if cfg.nativeInstall then
-      {
-        pkg = claude-native;
-        bin = "claude-native";
-      }
-    else
-      {
-        pkg = claude-npm;
-        bin = "claude-npm";
-      };
-  claude-package = pkgs.writeShellScriptBin "claude" ''
-    exec ${selectedClaude.pkg}/bin/${selectedClaude.bin} "$@"
-  '';
-
-  # Wrapper script that calls the nu setup script
-  defaultPluginSyncPackage = pkgs.writeNuApplication {
-    name = "claude-plugin-sync";
-    runtimeInputs = [ claude-package ];
-    runtimeEnv = {
-      CLAUDE_PLUGINS_CONFIG = "${config.dotFilesDir}/home-manager/modules/claude/marketplaces.json";
-    };
-    text = builtins.readFile ./setup-plugins.nu;
-  };
 in
 {
   options.programs.claude = {
@@ -119,8 +49,7 @@ in
 
     pluginSyncPackage = lib.mkOption {
       type = lib.types.package;
-      default = defaultPluginSyncPackage;
-      description = "The claude-plugin-sync package";
+      description = "The claude-plugin-sync package (default set in config when enabled)";
     };
 
     marketplaces = lib.mkOption {
@@ -163,64 +92,145 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    # Enable shared MCP servers
-    programs.mcp.enableSlackWrapper = true;
-    programs.mcp.enableNixos = true;
+  config = lib.mkIf cfg.enable (
+    let
+      # Move all expensive computations inside mkIf so they're only evaluated when enabled
 
-    home.activation.claudePluginSync = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      echo "Syncing claude plugins (background)..."
-      ${lib.getExe cfg.pluginSyncPackage} &>/dev/null &
-      disown
-    '';
+      # The update script package (in overlay)
+      inherit (pkgs) claude-code-update;
 
-    home.packages = [
-      claude-package
-      claude-native
-      claude-npm
-      cfg.pluginSyncPackage
-      updateMarketplacesPackage
-    ];
+      marketplaceInputNames = lib.filter (x: x != null) (
+        lib.mapAttrsToList (_: m: findInputName m.src) cfg.marketplaces
+      );
 
-    home.file = {
-      ".local/bin/claude".source = "${claude-package}/bin/claude";
-      ".claude/settings.json".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/settings.json";
-      ".claude/notify.nu".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/notify.nu";
-      ".claude/statusline.nu".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/statusline.nu";
-      ".claude/marketplaces.json".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/marketplaces.json";
-      ".claude/setup-plugins.nu".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/setup-plugins.nu";
-      ".mcp.json".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/mcp.json";
-      ".claude/agents".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/agents";
-      ".claude/CLAUDE.md".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/CLAUDE.md";
-      ".claude/plugins/known_marketplaces.json".text = knownMarketplacesJson;
+      updateMarketplacesPackage = pkgs.writeShellScriptBin "claude-update-marketplaces" ''
+        cd "${config.dotFilesDir}"
+        exec nix flake lock ${lib.concatMapStringsSep " " (i: "--update-input ${i}") marketplaceInputNames}
+      '';
+
+      # Generate known_marketplaces.json from configured marketplaces
+      knownMarketplacesJson = builtins.toJSON (
+        lib.mapAttrs (name: marketplace: {
+          source = {
+            source = "github";
+            inherit (marketplace) repo;
+          };
+          installLocation = "${config.home.homeDirectory}/.claude/plugins/marketplaces/${name}";
+          lastUpdated = "1970-01-01T00:00:00.000Z"; # Managed by Nix, not runtime updates
+        }) cfg.marketplaces
+      );
+
+      # Generate home.file entries for marketplace directories
+      marketplaceFiles = lib.mapAttrs' (name: marketplace: {
+        name = ".claude/plugins/marketplaces/${name}";
+        value = {
+          source = marketplace.src;
+        };
+      }) cfg.marketplaces;
+
+      # Native binary wrapper
+      claude-native = pkgs.writeShellScriptBin "claude-native" ''
+        export PATH="${config.home.homeDirectory}/.local/bin:$PATH"
+        exec ${pkgs.claude-code}/bin/claude "$@"
+      '';
+
+      # NPM-based binary wrapper
+      claude-npm = pkgs.writeShellScriptBin "claude-npm" ''
+        export DISABLE_INSTALLATION_CHECKS=1
+        exec ${pkgs.claude-code-npm}/bin/claude "$@"
+      '';
+
+      # Main 'claude' command pointing to the selected version
+      selectedClaude =
+        if cfg.nativeInstall then
+          {
+            pkg = claude-native;
+            bin = "claude-native";
+          }
+        else
+          {
+            pkg = claude-npm;
+            bin = "claude-npm";
+          };
+
+      claude-package = pkgs.writeShellScriptBin "claude" ''
+        exec ${selectedClaude.pkg}/bin/${selectedClaude.bin} "$@"
+      '';
+
+      # Default plugin sync package (set via mkDefault below)
+      defaultPluginSyncPackage = pkgs.writeNuApplication {
+        name = "claude-plugin-sync";
+        runtimeInputs = [ claude-package ];
+        runtimeEnv = {
+          CLAUDE_PLUGINS_CONFIG = "${config.dotFilesDir}/home-manager/modules/claude/marketplaces.json";
+        };
+        text = builtins.readFile ./setup-plugins.nu;
+      };
+
+      pluginSyncExe = "${cfg.pluginSyncPackage}/bin/claude-plugin-sync";
+    in
+    {
+      # Set the default for pluginSyncPackage (can be overridden by user)
+      programs.claude.pluginSyncPackage = lib.mkDefault defaultPluginSyncPackage;
+
+      # Enable shared MCP servers
+      programs.mcp.enableSlackWrapper = true;
+      programs.mcp.enableNixos = true;
+
+      home.activation.claudePluginSync = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        echo "Syncing claude plugins (background)..."
+        ${pluginSyncExe} &>/dev/null &
+        disown
+      '';
+
+      home.packages = [
+        claude-package
+        claude-native
+        claude-npm
+        cfg.pluginSyncPackage
+        updateMarketplacesPackage
+      ];
+
+      home.file = {
+        ".local/bin/claude".source = "${claude-package}/bin/claude";
+        ".claude/settings.json".source =
+          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/settings.json";
+        ".claude/notify.nu".source =
+          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/notify.nu";
+        ".claude/statusline.nu".source =
+          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/statusline.nu";
+        ".claude/marketplaces.json".source =
+          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/marketplaces.json";
+        ".claude/setup-plugins.nu".source =
+          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/setup-plugins.nu";
+        ".mcp.json".source =
+          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/mcp.json";
+        ".claude/agents".source =
+          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/agents";
+        ".claude/CLAUDE.md".source =
+          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/CLAUDE.md";
+        ".claude/plugins/known_marketplaces.json".text = knownMarketplacesJson;
+      }
+      // marketplaceFiles;
+
+      # Daily update check for claude-code sources
+      services.scheduled.claude-code-update = {
+        description = "Check for claude-code updates";
+        command = "${claude-code-update}/bin/claude-code-update";
+        workingDirectory = "${config.dotFilesDir}/packages/claude-code";
+        calendar = "daily";
+        hour = 9;
+        minute = 0;
+      };
+
+      # Daily plugin sync - ensures marketplaces and plugins are installed
+      services.scheduled.claude-plugin-sync = {
+        description = "Sync Claude Code marketplaces and plugins";
+        command = pluginSyncExe;
+        calendar = "daily";
+        hour = 9;
+        minute = 0;
+      };
     }
-    // marketplaceFiles;
-
-    # Daily update check for claude-code sources
-    services.scheduled.claude-code-update = {
-      description = "Check for claude-code updates";
-      command = "${claude-code-update}/bin/claude-code-update";
-      workingDirectory = "${config.dotFilesDir}/packages/claude-code";
-      calendar = "daily";
-      hour = 9;
-      minute = 0;
-    };
-
-    # Daily plugin sync - ensures marketplaces and plugins are installed
-    services.scheduled.claude-plugin-sync = {
-      description = "Sync Claude Code marketplaces and plugins";
-      command = lib.getExe cfg.pluginSyncPackage;
-      calendar = "daily";
-      hour = 9;
-      minute = 0;
-    };
-  };
+  );
 }

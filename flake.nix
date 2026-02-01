@@ -137,14 +137,26 @@
 
   outputs =
     inputs@{ flake-parts, ... }:
+    let
+      systems' = import inputs.systems;
+      # Memoize unfree pkgs per-system at flake level (evaluated once, shared)
+      pkgsUnfreeFor = inputs.nixpkgs.lib.genAttrs systems' (
+        system:
+        import inputs.nixpkgs {
+          inherit system;
+          config.allowUnfree = true;
+        }
+      );
+    in
     flake-parts.lib.mkFlake { inherit inputs; } (toplevel: {
       debug = true;
 
-      systems = import inputs.systems;
+      systems = systems';
 
       imports = [
         # inputs.git-hooks.flakeModule
         inputs.treefmt-nix.flakeModule
+        (import ./home-manager/modules/git/flake-check.nix toplevel)
       ];
 
       perSystem =
@@ -195,14 +207,14 @@
 
           packages = import ./packages {
             generate-kaomoji = inputs.generate-kaomoji.packages.${system}.default;
-            pkgs = import inputs.nixpkgs-bleeding {
-              inherit system;
-              config = {
-                allowUnfree = true;
-                cudaSupport = pkgs.stdenv.isLinux;
-                cudaCapabilities = [ "8.6" ];
-              };
-            };
+            # Use regular nixpkgs - most packages are writeNuApplication wrappers
+            # that don't need bleeding-edge.
+            inherit pkgs;
+            # Compute platform from system string - avoids forcing pkgs.stdenv evaluation
+            isDarwin = lib.hasSuffix "-darwin" system;
+            isLinux = lib.hasSuffix "-linux" system;
+            # Memoized unfree pkgs (shared across evaluations)
+            pkgs-unfree = pkgsUnfreeFor.${system};
             nuenv = inputs.nuenv.lib;
             inherit (inputs) simulstreaming-src zerobrew-src;
             slack-mcp-server-src = inputs.slack-mcp-server;

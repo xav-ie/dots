@@ -2,6 +2,10 @@
 # https://github.com/Misterio77/nix-config/blob/e360a9ecf6de7158bea813fc075f3f6228fc8fc0/pkgs/default.nix
 {
   pkgs ? import <nixpkgs>,
+  pkgs-unfree ? pkgs, # For packages needing allowUnfree (claude-code)
+  # Platform flags passed from caller to avoid pkgs.stdenv access here
+  isDarwin ? pkgs.stdenv.isDarwin,
+  isLinux ? pkgs.stdenv.isLinux,
   generate-kaomoji,
   nuenv,
   simulstreaming-src,
@@ -20,9 +24,12 @@ rec {
   base-ref = pkgs.callPackage ./base-ref { inherit writeNuApplication; };
   better-branch = pkgs.callPackage ./better-branch { inherit writeNuApplication; };
   cache-command = pkgs.callPackage ./cache-command { };
-  claude-code = pkgs.callPackage ./claude-code { };
-  claude-code-npm = pkgs.callPackage ./claude-code/npm.nix { };
-  claude-code-update = pkgs.callPackage ./claude-code/update.nix { inherit writeNuApplication; };
+  # claude-code packages need allowUnfree, passed via pkgs-unfree
+  claude-code = pkgs-unfree.callPackage ./claude-code { };
+  claude-code-npm = pkgs-unfree.callPackage ./claude-code/npm.nix { };
+  claude-code-update = pkgs-unfree.callPackage ./claude-code/update.nix {
+    inherit writeNuApplication;
+  };
   ff = pkgs.callPackage ./ff { };
   flint = pkgs.callPackage ./flint { inherit format-staged lint-staged writeNuApplication; };
   format-staged = pkgs.callPackage ./format-staged { inherit writeNuApplication; };
@@ -44,7 +51,6 @@ rec {
   prs = pkgs.callPackage ./prs { inherit writeNuApplication; };
   review = pkgs.callPackage ./review { inherit writeNuApplication; };
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
-  simulstreaming = pkgs.callPackage ./simulstreaming { src = simulstreaming-src; };
   slack-mcp-server = pkgs.callPackage ./slack-mcp-server { src = slack-mcp-server-src; };
   tmux-move-window = pkgs.callPackage ./tmux-move-window { inherit writeNuApplication; };
   tmux-tab-name-update = pkgs.callPackage ./tmux-tab-name-update { };
@@ -56,7 +62,7 @@ rec {
   zellij-tab-name-update = pkgs.callPackage ./zellij-tab-name-update { };
   zerobrew = pkgs.callPackage ./zerobrew { src = zerobrew-src; };
 }
-// (optionalAttrs pkgs.stdenv.isDarwin {
+// (optionalAttrs isDarwin {
   fix-yabai = pkgs.callPackage ./fix-yabai { inherit writeNuApplication; };
   focus-or-open-application = pkgs.callPackage ./focus-or-open-application {
     inherit writeNuApplication;
@@ -64,9 +70,10 @@ rec {
   move-pip = pkgs.callPackage ./move-pip { inherit writeNuApplication; };
   sketchybar-battery = pkgs.callPackage ./sketchybar-battery { inherit writeNuApplication; };
 })
-// (optionalAttrs pkgs.stdenv.isLinux {
+// (optionalAttrs isLinux {
   move-active = pkgs.callPackage ./move-active { inherit writeNuApplication; };
   openrgb-appimage = pkgs.callPackage ./openrgb-appimage { };
+  simulstreaming = pkgs.callPackage ./simulstreaming { src = simulstreaming-src; };
   record = pkgs.callPackage ./record { };
   record-section = pkgs.callPackage ./record-section { };
   rofi-cliphist = pkgs.callPackage ./rofi-cliphist { inherit writeNuApplication; };
