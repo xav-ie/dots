@@ -19,7 +19,6 @@
     nixpkgs-homeassistant.url = "github:nixos/nixpkgs/master";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.05";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    nur.url = "github:nix-community/NUR";
     nuenv.url = "github:xav-ie/nuenv";
     plover-flake.url = "github:openstenoproject/plover-flake";
     quadlet-nix.url = "github:SEIAROTg/quadlet-nix";
@@ -114,8 +113,6 @@
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
     nuenv.inputs.nixpkgs.follows = "nixpkgs";
     nuenv.inputs.systems.follows = "systems";
-    nur.inputs.flake-parts.follows = "flake-parts";
-    nur.inputs.nixpkgs.follows = "nixpkgs";
     plover-flake.inputs.nixpkgs.follows = "nixpkgs";
     rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";

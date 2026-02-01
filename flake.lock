@@ -1104,29 +1104,6 @@
         "type": "github"
       }
     },
-    "nur": {
-      "inputs": {
-        "flake-parts": [
-          "flake-parts"
-        ],
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1766735268,
-        "narHash": "sha256-vYgzDz9vMl9OSRS1d+NMqN2w8IfPZMk71vut7DBGvDo=",
-        "owner": "nix-community",
-        "repo": "NUR",
-        "rev": "93329e80353dd7e59109080439be3757d193d634",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-community",
-        "repo": "NUR",
-        "type": "github"
-      }
-    },
     "obs-backgroundremoval": {
       "flake": false,
       "locked": {
@@ -1378,7 +1355,6 @@
         "nixpkgs-stable": "nixpkgs-stable",
         "nixpkgs-swift": "nixpkgs-swift",
         "nuenv": "nuenv",
-        "nur": "nur",
         "obs-backgroundremoval": "obs-backgroundremoval",
         "ollama-src": "ollama-src",
         "plover-flake": "plover-flake",
