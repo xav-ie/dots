@@ -134,9 +134,8 @@ in
         exec ${pkgs.claude-code}/bin/claude "$@"
       '';
 
-      # NPM-based binary wrapper
+      # NPM-based binary wrapper (provides the claude-npm command name)
       claude-npm = pkgs.writeShellScriptBin "claude-npm" ''
-        export DISABLE_INSTALLATION_CHECKS=1
         exec ${pkgs.claude-code-npm}/bin/claude "$@"
       '';
 

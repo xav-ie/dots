@@ -33,11 +33,35 @@
     ./traefik.nix
     ./udisks.nix
     ./uptime-kuma.nix
+    ./vllm.nix
     # not currently routing correctly...
     # ./twingate.nix
   ];
 
   config = {
     services.reverse-proxy.enable = false;
+
+    # vLLM for local AI code completion (cursortab)
+    # Accessible at https://vllm.lalala.casa via traefik
+    services.vllm = {
+      enable = false;
+      model = "Xenova/sweep-next-edit-1.5B";
+      # 3060 Ti has 8GB, leave headroom for desktop/browser
+      gpuMemoryUtilization = 0.7;
+      # Limit context to save VRAM (4k is plenty for code completions)
+      maxModelLen = 4096;
+      # Disable CUDA graphs to save VRAM
+      enforceEager = true;
+      # Performance optimizations
+      enablePrefixCaching = true;
+      enableChunkedPrefill = true;
+      # Ngram speculation - good for edit prediction
+      ngramSpeculation = {
+        enable = true;
+        lookupMax = 4;
+        lookupMin = 2;
+        numTokens = 8;
+      };
+    };
   };
 }

@@ -25,7 +25,7 @@ _: {
     ./npm
     ./nushell
     ./nvim
-    ./ollama
+    # ./ollama # disabled - using vllm/cursortab instead
     ./opencode
     ./ov
     ./pijul

@@ -20,8 +20,26 @@ let
 
   # Write the package-lock.json to a file
   packageLockFile = writeText "package-lock.json" packageLockJson;
+
+  # How to fix agent tmux panes when default-shell is non-POSIX (e.g. nushell)
+  #   "split-window" - patch split-window to use a POSIX shell wrapper (fast, cleanest)
+  #   "nushell"      - patch shell syntax for nushell compatibility (fragile)
+  patchMethod = "split-window";
+
+  # "split-window": force agent panes to use a POSIX shell with env vars pre-set
+  splitWindowPatch = ''
+    sed -i 's|"split-window",\([^]]*\)"#{pane_id}"\]|"split-window",\1"#{pane_id}","${common.spawnWrapper}"]|g' cli.js
+  '';
+
+  # "nushell": patch POSIX syntax that nushell doesn't handle
+  nushellPatch = ''
+    # Replace && with ; on agent spawn lines (identified by CLAUDECODE=1)
+    sed -i '/CLAUDECODE=1/s| && | ; |g' cli.js
+    # Fix shell-quote escaping @ as \@ (nushell doesn't recognize \@)
+    sed -i 's|;<=>?@\[|;<=>?\[|g' cli.js
+  '';
 in
-buildNpmPackage rec {
+buildNpmPackage {
   pname = "claude-code";
   inherit version;
 
@@ -42,14 +60,9 @@ buildNpmPackage rec {
     # Claude Code hardcodes #!/bin/bash which doesn't exist on NixOS
     sed -i 's|#!/bin/bash|#!/usr/bin/env bash|g' cli.js
 
-    # Fix dotfile leak: sandbox mounts /dev/null on non-existent deny paths,
-    # creating empty files on host. Remove the push, keep the log.
-    # See: https://github.com/anthropics/claude-code/issues/17087
-    # See: https://github.com/anthropic-experimental/sandbox-runtime/pull/91
-    substituteInPlace cli.js \
-      --replace-fail \
-        'H.push("--ro-bind","/dev/null",j),T8(`[Sandbox Linux] Mounted /dev/null at ''${j} to block creation of ''${_}`)' \
-        'T8(`[Sandbox Linux] Skipping non-existent deny path: ''${_}`)'
+    # Fix agent tmux panes for non-POSIX default-shell
+    ${if patchMethod == "split-window" then splitWindowPatch else nushellPatch}
+
   '';
 
   dontNpmBuild = true;
