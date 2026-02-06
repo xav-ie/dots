@@ -1,20 +1,12 @@
 {
   "mcpServers": {
     "slack": {
-      "command": "slack-mcp-server-wrapped",
-      "args": []
-    },
-    "nixos": {
-      "command": "mcp-nixos",
-      "args": []
+      "command": "mcp-sse-client",
+      "args": ["http://127.0.0.1:18199/servers/slack/sse"]
     },
     "chrome-devtools": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "chrome-devtools-mcp@latest",
-        "--executable-path=/etc/profiles/per-user/x/bin/google-chrome-stable"
-      ]
+      "command": "mcp-sse-client",
+      "args": ["http://127.0.0.1:18199/servers/chrome-devtools/sse"]
     }
   }
 }

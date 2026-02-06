@@ -19,13 +19,20 @@ let
   # Environment variables for Claude Code
   # Single source of truth: used by both wrapProgram and tmux agent spawn patches
   envVars = {
+    CLAUBBIT = "1"; # skip TrustDialog render/unmount cycles on startup
     CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD = "1";
+    CLAUDE_CODE_DISABLE_BACKGROUND_TASKS = "1"; # hide run_in_background docs/UI
+    CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = "1"; # skip connectivity polling, changelog, auto-updater
+    CLAUDE_CODE_DISABLE_OFFICIAL_MARKETPLACE_AUTOINSTALL = "1"; # skip marketplace plugin auto-install
     CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1"; # https://code.claude.com/docs/en/agent-teams
     DISABLE_AUTOUPDATER = "1";
+    DISABLE_ERROR_REPORTING = "1";
     DISABLE_INSTALLATION_CHECKS = "1";
+    DISABLE_TELEMETRY = "1"; # skip GrowthBook, tool search indexing, Datadog flush
     ENABLE_EXPERIMENTAL_MCP_CLI = "false";
     ENABLE_LSP_TOOL = "true";
     ENABLE_TOOL_SEARCH = "true";
+    NODE_COMPILE_CACHE = "/tmp/claude-code-compile-cache"; # ~3x faster Node.js startup (395ms→120ms)
   };
 in
 {

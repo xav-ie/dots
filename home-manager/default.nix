@@ -12,7 +12,7 @@
   config = {
     programs = {
       # git-backed graph issue tracker for AI agents
-      beads.enable = true;
+      beads.enable = false;
       # system monitor
       btop.enable = true;
       # excellent completions that are fast

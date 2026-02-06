@@ -1,6 +1,6 @@
 { inputs, lib, ... }:
 let
-  claude-plugins-src = inputs.claude-plugins;
+  claude-plugins-src = inputs.claude-marketplace-outsmartly;
 
   # Find all .mcp.json files in claude-plugins repo and merge their mcpServers
   mcpJsonFiles = lib.filter (f: lib.hasSuffix ".mcp.json" f) (

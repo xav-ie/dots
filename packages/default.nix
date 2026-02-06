@@ -38,6 +38,7 @@ rec {
   is-sshed = pkgs.callPackage ./is-sshed { inherit writeNuApplication; };
   lint-staged = pkgs.callPackage ./lint-staged { inherit writeNuApplication; };
   localip = pkgs.callPackage ./localip { inherit writeNuApplication; };
+  mcp-sse-client = pkgs.callPackage ./mcp-sse-client { };
   log-pr = pkgs.callPackage ./log-pr { inherit writeNuApplication; };
   nix-flamegraph = pkgs.callPackage ./nix-flamegraph { inherit writeNuApplication; };
   nix-output-monitor = pkgs.callPackage ./nix-output-monitor { };
