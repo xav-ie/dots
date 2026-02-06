@@ -20,6 +20,7 @@
     home = {
       packages =
         (with pkgs; [
+          python3
           ################################
           # in triage - try to minimize this list
           ################################

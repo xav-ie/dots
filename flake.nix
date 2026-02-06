@@ -60,13 +60,7 @@
     claude-marketplace-lsps.url = "github:Piebald-AI/claude-code-lsps";
     claude-marketplace-mgrep.flake = false;
     claude-marketplace-mgrep.url = "github:mixedbread-ai/mgrep";
-    claude-marketplace-meta-cc.flake = false;
-    claude-marketplace-meta-cc.url = "github:yaleh/meta-cc";
-    claude-marketplace-beads.flake = false;
-    claude-marketplace-beads.url = "github:steveyegge/beads";
 
-    claude-plugins.flake = false;
-    claude-plugins.url = "git+ssh://git@github.com/outsmartly/claude-plugins";
     glsl_analyzer.flake = false;
     glsl_analyzer.url = "github:xav-ie/glsl_analyzer/format";
     homebrew-bundle.flake = false;
