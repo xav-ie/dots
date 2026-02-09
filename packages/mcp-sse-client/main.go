@@ -259,7 +259,9 @@ func main() {
 		}
 
 		if debug {
-			var peek struct{ Method string `json:"method"` }
+			var peek struct {
+				Method string `json:"method"`
+			}
 			json.Unmarshal([]byte(line), &peek)
 			fmt.Fprintf(os.Stderr, "[mcp-sse] +%dms recv %s\n", time.Since(t0).Milliseconds(), peek.Method)
 		}

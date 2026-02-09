@@ -61,7 +61,7 @@ rec {
   update-pr = pkgs.callPackage ./update-pr { inherit pr-summary writeNuApplication; };
   whisper-transcribe = pkgs.callPackage ./whisper-transcribe { inherit writeNuApplication; };
   zellij-tab-name-update = pkgs.callPackage ./zellij-tab-name-update { };
-  zerobrew = pkgs.callPackage ./zerobrew { src = zerobrew-src; };
+
 }
 // (optionalAttrs isDarwin {
   fix-yabai = pkgs.callPackage ./fix-yabai { inherit writeNuApplication; };
@@ -70,6 +70,7 @@ rec {
   };
   move-pip = pkgs.callPackage ./move-pip { inherit writeNuApplication; };
   sketchybar-battery = pkgs.callPackage ./sketchybar-battery { inherit writeNuApplication; };
+  zerobrew = pkgs.callPackage ./zerobrew { src = zerobrew-src; };
 })
 // (optionalAttrs isLinux {
   move-active = pkgs.callPackage ./move-active { inherit writeNuApplication; };
