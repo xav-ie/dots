@@ -27,6 +27,7 @@
       jq.enable = true;
       # nodejs + declarative npm global package sync
       npm.enable = true;
+      orca-slicer.enable = true;
       # A user-friendly VCS
       jujutsu.enable = true;
       # automatic merge conflicts resolver
