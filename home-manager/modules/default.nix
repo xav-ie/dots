@@ -27,6 +27,7 @@ _: {
     ./nvim
     # ./ollama # disabled - using vllm/cursortab instead
     ./opencode
+    ./orca-slicer
     ./ov
     ./pijul
     ./plover

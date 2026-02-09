@@ -8,6 +8,7 @@
     ./hyprland
     ./nemo
     ./obs
+    ./orca-slicer.nix
     ./rofi
     ./sioyek
     ./swaynotificationcenter
