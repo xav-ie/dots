@@ -8,6 +8,7 @@ let
   buttonTextSize = 12;
   buttonPaddingSize = 35;
 in
+# css
 ''
   configuration {
     show-icons: false;

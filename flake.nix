@@ -242,9 +242,30 @@
                     })
                   ];
                 };
+
+              # Custom go.mod formatter module
+              goModFormatterModule =
+                { mkFormatterModule, ... }:
+                {
+                  imports = [
+                    (mkFormatterModule {
+                      name = "go-mod-fmt";
+                      package = "go";
+                      args = [
+                        "mod"
+                        "edit"
+                        "-fmt"
+                      ];
+                      includes = [ "**/go.mod" ];
+                    })
+                  ];
+                };
             in
             {
-              imports = [ glslFormatterModule ];
+              imports = [
+                glslFormatterModule
+                goModFormatterModule
+              ];
 
               programs = {
                 # buggy so far...
@@ -261,6 +282,8 @@
                 };
                 just.enable = true;
                 kdlfmt.enable = true;
+                go-mod-fmt.enable = true;
+                gofmt.enable = true;
                 nixfmt.enable = true;
                 prettier = {
                   enable = true;
