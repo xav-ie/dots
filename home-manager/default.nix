@@ -82,7 +82,6 @@
           nix-output-monitor # better nix build
           tldr
           tree
-          uair # pomodoro manager
           (ueberzugpp.override {
             enableOpencv = false;
           })

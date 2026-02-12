@@ -24,6 +24,14 @@ in
         inputs.notification-cleaner.packages.${final.stdenv.hostPlatform.system}.default
       else
         null;
+    uair = prev.uair.overrideAttrs (old: {
+      patches = (old.patches or [ ]) ++ [
+        (final.fetchpatch {
+          url = "https://github.com/metent/uair/pull/31.patch";
+          hash = "sha256-p96z3vfsOT9Rz4GDQ8P+hZTJ7QdEGRooOmidfSHT8aI=";
+        })
+      ];
+    });
     orca = prev.orca.overrideAttrs (old: {
       propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [
         final.python3.pkgs.wrapPython
