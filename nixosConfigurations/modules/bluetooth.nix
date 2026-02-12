@@ -70,9 +70,12 @@ in
         enable = true;
         settings = {
           General = {
-            # Disable auto-discovery to prevent CPU drain
-            # Your computer won't be discoverable by other devices
-            DiscoverableTimeout = 0;
+            # Short discoverable window (seconds) — limits how long this
+            # adapter is visible to other devices when discoverable is toggled on.
+            # 0 means "forever", so use a sane default.
+            DiscoverableTimeout = 30;
+            # Required for Home Assistant passive BLE scanning
+            Experimental = true;
           };
         };
       };
