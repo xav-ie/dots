@@ -148,6 +148,7 @@
         # inputs.git-hooks.flakeModule
         inputs.treefmt-nix.flakeModule
         (import ./home-manager/modules/git/flake-check.nix toplevel)
+        ./lib/nix-multiline-lint
       ];
 
       perSystem =
@@ -303,6 +304,7 @@
                 excludes = [
                   "**/.inputrc"
                   "**/.npmrc"
+                  "*.awk"
                   "*.conf"
                   # formatter is borked
                   "*.nu"

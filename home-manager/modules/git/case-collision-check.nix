@@ -152,6 +152,7 @@ let
     if withinSectionConflicts == [ ] then
       ""
     else
+      # txt
       ''
         Variable conflicts:
         ${lib.concatMapStringsSep "\n" (
@@ -175,6 +176,7 @@ in
     if allConflicts == [ ] then
       ""
     else
+      # txt
       ''
         programs.git.settings contains keys that differ only in case but have different
         values.

@@ -20,146 +20,148 @@ in
 
   config = lib.mkIf config.programs.linkOptimization.enable {
     home.activation.linkGeneration = lib.mkForce (
-      lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        function linkNewGen() {
-          _i "Creating home file links in %s" "$HOME"
-          local newGenFiles
-          newGenFiles="$(readlink -e "$newGenPath/home-files")"
+      lib.hm.dag.entryAfter [ "writeBoundary" ] # sh
+        ''
+          function linkNewGen() {
+            _i "Creating home file links in %s" "$HOME"
+            local newGenFiles
+            newGenFiles="$(readlink -e "$newGenPath/home-files")"
 
-          # Temp file to collect files needing linking
-          local needs_linking=$(mktemp)
+            # Temp file to collect files needing linking
+            local needs_linking=$(mktemp)
 
-          # Parallel check phase
-          while IFS= read -r -d "" sourcePath; do
-            (
-              relativePath="''${sourcePath#$newGenFiles/}"
-              targetPath="$HOME/$relativePath"
+            # Parallel check phase
+            while IFS= read -r -d "" sourcePath; do
+              (
+                relativePath="''${sourcePath#$newGenFiles/}"
+                targetPath="$HOME/$relativePath"
 
-              # Check if symlink needs updating
-              if [[ ! -L "$targetPath" || "$(readlink "$targetPath")" != "$sourcePath" ]]; then
-                echo "$sourcePath" >> "$needs_linking"
-              fi
-            ) &
-          done < <(find "$newGenFiles" \( -type f -or -type l \) -print0)
-          wait
+                # Check if symlink needs updating
+                if [[ ! -L "$targetPath" || "$(readlink "$targetPath")" != "$sourcePath" ]]; then
+                  echo "$sourcePath" >> "$needs_linking"
+                fi
+              ) &
+            done < <(find "$newGenFiles" \( -type f -or -type l \) -print0)
+            wait
 
-          # Sequential link phase (only for files that need it)
-          if [[ -s "$needs_linking" ]]; then
-            while IFS= read -r sourcePath; do
-              relativePath="''${sourcePath#$newGenFiles/}"
-              targetPath="$HOME/$relativePath"
-              run mkdir -p "$(dirname "$targetPath")"
-              run ln -Tsf "$sourcePath" "$targetPath"
-            done < "$needs_linking"
-          fi
+            # Sequential link phase (only for files that need it)
+            if [[ -s "$needs_linking" ]]; then
+              while IFS= read -r sourcePath; do
+                relativePath="''${sourcePath#$newGenFiles/}"
+                targetPath="$HOME/$relativePath"
+                run mkdir -p "$(dirname "$targetPath")"
+                run ln -Tsf "$sourcePath" "$targetPath"
+              done < "$needs_linking"
+            fi
 
-          rm -f "$needs_linking"
-        }
+            rm -f "$needs_linking"
+          }
 
-        function cleanOldGen() {
-          [[ ! -v oldGenPath || ! -e "$oldGenPath/home-files" ]] && return
-          _i "Cleaning up orphan links from %s" "$HOME"
-          local newGenFiles oldGenFiles
-          newGenFiles="$(readlink -e "$newGenPath/home-files")"
-          oldGenFiles="$(readlink -e "$oldGenPath/home-files")"
+          function cleanOldGen() {
+            [[ ! -v oldGenPath || ! -e "$oldGenPath/home-files" ]] && return
+            _i "Cleaning up orphan links from %s" "$HOME"
+            local newGenFiles oldGenFiles
+            newGenFiles="$(readlink -e "$newGenPath/home-files")"
+            oldGenFiles="$(readlink -e "$oldGenPath/home-files")"
 
-          # Temp file to collect files needing removal
-          local needs_removal=$(mktemp)
+            # Temp file to collect files needing removal
+            local needs_removal=$(mktemp)
 
-          # Parallel check phase
-          while IFS= read -r -d "" sourcePath; do
-            (
-              relativePath="''${sourcePath#$oldGenFiles/}"
-              [[ -e "$newGenFiles/$relativePath" ]] && exit 0
-              targetPath="$HOME/$relativePath"
-              if [[ "$(readlink "$targetPath")" == /nix/store/* ]]; then
-                echo "$targetPath" >> "$needs_removal"
-              fi
-            ) &
-          done < <(find "$oldGenFiles" \( -type f -or -type l \) -print0)
-          wait
+            # Parallel check phase
+            while IFS= read -r -d "" sourcePath; do
+              (
+                relativePath="''${sourcePath#$oldGenFiles/}"
+                [[ -e "$newGenFiles/$relativePath" ]] && exit 0
+                targetPath="$HOME/$relativePath"
+                if [[ "$(readlink "$targetPath")" == /nix/store/* ]]; then
+                  echo "$targetPath" >> "$needs_removal"
+                fi
+              ) &
+            done < <(find "$oldGenFiles" \( -type f -or -type l \) -print0)
+            wait
 
-          # Sequential removal phase
-          if [[ -s "$needs_removal" ]]; then
-            while IFS= read -r targetPath; do
-              run rm "$targetPath"
-            done < "$needs_removal"
-          fi
+            # Sequential removal phase
+            if [[ -s "$needs_removal" ]]; then
+              while IFS= read -r targetPath; do
+                run rm "$targetPath"
+              done < "$needs_removal"
+            fi
 
-          rm -f "$needs_removal"
-        }
+            rm -f "$needs_removal"
+          }
 
-        cleanOldGen
-        linkNewGen
-      ''
+          cleanOldGen
+          linkNewGen
+        ''
     );
 
     home.activation.checkLinkTargets = lib.mkForce (
-      lib.hm.dag.entryBefore [ "writeBoundary" ] ''
-        function checkNewGenCollision() {
-          local newGenFiles
-          newGenFiles="$(readlink -e "$newGenPath/home-files")"
-          local homeFilePattern="/nix/store/*-home-manager-files/*"
+      lib.hm.dag.entryBefore [ "writeBoundary" ] # sh
+        ''
+          function checkNewGenCollision() {
+            local newGenFiles
+            newGenFiles="$(readlink -e "$newGenPath/home-files")"
+            local homeFilePattern="/nix/store/*-home-manager-files/*"
 
-          # Build associative array of forced paths for O(1) lookup
-          declare -A forcedPathsMap
-          while IFS= read -r p; do
-            [[ -n "$p" ]] && forcedPathsMap["$p"]=1
-          done <<'FORCED_PATHS'
-        ${forcedPaths}
-        FORCED_PATHS
+            # Build associative array of forced paths for O(1) lookup
+            declare -A forcedPathsMap
+            while IFS= read -r p; do
+              [[ -n "$p" ]] && forcedPathsMap["$p"]=1
+            done <<'FORCED_PATHS'
+          ${forcedPaths}
+          FORCED_PATHS
 
-          # Temp files for parallel results
-          local collision_errors=$(mktemp)
-          local collision_warnings=$(mktemp)
+            # Temp files for parallel results
+            local collision_errors=$(mktemp)
+            local collision_warnings=$(mktemp)
 
-          # Use process substitution to avoid subshell from pipe
-          while IFS= read -r -d "" sourcePath; do
-            relativePath="''${sourcePath#$newGenFiles/}"
-            targetPath="$HOME/$relativePath"
+            # Use process substitution to avoid subshell from pipe
+            while IFS= read -r -d "" sourcePath; do
+              relativePath="''${sourcePath#$newGenFiles/}"
+              targetPath="$HOME/$relativePath"
 
-            # Skip if force = true for this path
-            [[ -v "forcedPathsMap[$relativePath]" ]] && continue
+              # Skip if force = true for this path
+              [[ -v "forcedPathsMap[$relativePath]" ]] && continue
 
-            # Check in background
-            (
-              if [[ -e "$targetPath" ]]; then
-                linkTarget=$(readlink "$targetPath" 2>/dev/null || true)
-                if [[ ! "$linkTarget" == $homeFilePattern ]]; then
-                  # Not a home-manager symlink - check if contents match
-                  if cmp -s "$sourcePath" "$targetPath"; then
-                    echo "Existing file '$targetPath' is in the way of '$sourcePath', will be skipped since they are the same" >> "$collision_warnings"
-                  else
-                    echo "Existing file '$targetPath' would be clobbered by '$sourcePath'" >> "$collision_errors"
+              # Check in background
+              (
+                if [[ -e "$targetPath" ]]; then
+                  linkTarget=$(readlink "$targetPath" 2>/dev/null || true)
+                  if [[ ! "$linkTarget" == $homeFilePattern ]]; then
+                    # Not a home-manager symlink - check if contents match
+                    if cmp -s "$sourcePath" "$targetPath"; then
+                      echo "Existing file '$targetPath' is in the way of '$sourcePath', will be skipped since they are the same" >> "$collision_warnings"
+                    else
+                      echo "Existing file '$targetPath' would be clobbered by '$sourcePath'" >> "$collision_errors"
+                    fi
                   fi
                 fi
-              fi
-            ) &
-          done < <(find "$newGenFiles" \( -type f -or -type l \) -print0)
-          wait
+              ) &
+            done < <(find "$newGenFiles" \( -type f -or -type l \) -print0)
+            wait
 
-          # Print warnings
-          if [[ -s "$collision_warnings" ]]; then
-            while IFS= read -r warning; do
-              warnEcho "$warning"
-            done < "$collision_warnings"
-          fi
+            # Print warnings
+            if [[ -s "$collision_warnings" ]]; then
+              while IFS= read -r warning; do
+                warnEcho "$warning"
+              done < "$collision_warnings"
+            fi
 
-          # Check for errors
-          if [[ -s "$collision_errors" ]]; then
-            errorEcho "Please set 'force = true' on the related file options to forcefully overwrite"
-            while IFS= read -r error; do
-              errorEcho "$error"
-            done < "$collision_errors"
+            # Check for errors
+            if [[ -s "$collision_errors" ]]; then
+              errorEcho "Please set 'force = true' on the related file options to forcefully overwrite"
+              while IFS= read -r error; do
+                errorEcho "$error"
+              done < "$collision_errors"
+              rm -f "$collision_errors" "$collision_warnings"
+              return 1
+            fi
+
             rm -f "$collision_errors" "$collision_warnings"
-            return 1
-          fi
+          }
 
-          rm -f "$collision_errors" "$collision_warnings"
-        }
-
-        checkNewGenCollision || exit 1
-      ''
+          checkNewGenCollision || exit 1
+        ''
     );
   };
 }

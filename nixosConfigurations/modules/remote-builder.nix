@@ -27,12 +27,13 @@
     settings.builders-use-substitutes = true;
   };
 
-  programs.ssh.extraConfig = ''
-    Host nox
-      ServerAliveInterval 60
-      ServerAliveCountMax 10
-      ControlMaster auto
-      ControlPath ~/.ssh/master-%r@%n:%p
-      ControlPersist 10m
-  '';
+  programs.ssh.extraConfig = # sshconfig
+    ''
+      Host nox
+        ServerAliveInterval 60
+        ServerAliveCountMax 10
+        ControlMaster auto
+        ControlPath ~/.ssh/master-%r@%n:%p
+        ControlPersist 10m
+    '';
 }

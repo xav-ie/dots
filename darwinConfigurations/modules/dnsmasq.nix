@@ -7,14 +7,16 @@
 let
   cfg = config.services.dnsmasq;
 
-  dnsmasqConf = pkgs.writeText "dnsmasq.conf" ''
-    dnssec
-    conf-file=${pkgs.dnsmasq}/share/dnsmasq/trust-anchors.conf
-    domain-needed
-    conf-dir=/etc/dnsmasq.d/,*.conf
-    server=1.1.1.1
-    server=1.0.0.1
-  '';
+  dnsmasqConf =
+    pkgs.writeText "dnsmasq.conf" # conf
+      ''
+        dnssec
+        conf-file=${pkgs.dnsmasq}/share/dnsmasq/trust-anchors.conf
+        domain-needed
+        conf-dir=/etc/dnsmasq.d/,*.conf
+        server=1.1.1.1
+        server=1.0.0.1
+      '';
 
   mapA = f: attrs: with builtins; attrValues (mapAttrs f attrs);
 in
