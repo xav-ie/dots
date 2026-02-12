@@ -36,7 +36,14 @@ let
           pkgs.coreutils
         ];
         text = ''
-          cava -p ${conf} | stdbuf -oL tr -d '\0' | stdbuf -oL sed -u '${cavaSedCmd}'
+          prev=""
+          cava -p ${conf} | stdbuf -oL tr -d '\0' | stdbuf -oL sed -u '${cavaSedCmd}' |
+            while IFS= read -r line; do
+              if [ "$line" != "$prev" ]; then
+                echo "$line"
+                prev="$line"
+              fi
+            done
         '';
       };
     in
@@ -46,10 +53,11 @@ let
     name = "get-uair-status";
     runtimeInputs = [
       pkgs.uair
-      pkgs.pkgs-mine.is-sshed
     ];
     text = ''
-      [[ "$(is-sshed)" == "false" ]] && uairctl fetch '{state} {time}' 2>/dev/null
+      while ! uairctl listen 2>/dev/null; do
+        sleep 5
+      done
     '';
   };
   get-uair-status = "${get-uair-status-pkg}/bin/get-uair-status";
@@ -68,6 +76,10 @@ let
 
   waybar-network-status = pkgs.writeNuApplication {
     name = "waybar-network-status";
+    nushellArgs = [
+      "--no-config-file"
+      "--stdin"
+    ];
     runtimeInputs = with pkgs; [
       iproute2
       wirelesstools
@@ -77,6 +89,10 @@ let
 
   waybar-bluetooth-status = pkgs.writeNuApplication {
     name = "waybar-bluetooth-status";
+    nushellArgs = [
+      "--no-config-file"
+      "--stdin"
+    ];
     runtimeInputs = with pkgs; [
       util-linux
       bluez
@@ -115,7 +131,7 @@ in
   ];
   modules-right = [
     "tray"
-    "custom/cava"
+    # "custom/cava"
     "wireplumber"
     "custom/cava-mic"
     "custom/virtual-headset"
@@ -198,7 +214,6 @@ in
   };
   "custom/network" = {
     format = "{}";
-    interval = 5;
     return-type = "json";
     exec = "${waybar-network-status}/bin/waybar-network-status";
   };
@@ -207,7 +222,6 @@ in
     tooltip = false;
     on-click = "${pkgs.pkgs-mine.uair-toggle-and-notify}/bin/uair-toggle-and-notify";
     exec = get-uair-status;
-    interval = 1;
   };
   "custom/notification" = {
     format = "{icon}";
@@ -226,7 +240,6 @@ in
   };
   "custom/bluetooth" = {
     format = "{}";
-    interval = 5;
     return-type = "json";
     exec = "${waybar-bluetooth-status}/bin/waybar-bluetooth-status";
     on-click = "${waybar-bluetooth-toggle}/bin/waybar-bluetooth-toggle";

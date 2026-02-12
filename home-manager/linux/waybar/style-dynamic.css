@@ -26,7 +26,8 @@ window#waybar > box {
 #backlight,
 #bluetooth,
 #custom-bluetooth,
-#custom-cava {
+#custom-cava,
+#wireplumber {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
   padding-right: 3px;
@@ -35,7 +36,6 @@ window#waybar > box {
 }
 
 /* middle joined */
-#wireplumber,
 #custom-cava-mic {
   border-radius: 0;
   padding-left: 3px;
