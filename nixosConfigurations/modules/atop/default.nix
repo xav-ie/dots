@@ -36,6 +36,7 @@
           let
             inherit (config.boot.kernelPackages) kernel;
           in
+          # sh
           ''
             patchShebangs mkversion
             sed -i -e 's,^KERNDIR.*,KERNDIR=${kernel.dev}/lib/modules/${kernel.modDirVersion}/build,' \
@@ -59,6 +60,7 @@
           let
             inherit (config.boot.kernelPackages) kernel;
           in
+          # sh
           ''
             mkdir -p $out/lib/systemd/system $out/bin $out/sbin $out/share/man/man{4,8}
             mkdir -p $out/lib/modules/${kernel.modDirVersion}/extra

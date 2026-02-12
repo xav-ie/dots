@@ -12,14 +12,15 @@ in
       secrets."lightrag/openai_api_key" = { };
       templates."lightrag.env" = {
         mode = "0440";
-        content = ''
-          LLM_BINDING=openai
-          LLM_BINDING_API_KEY=${cfgSecret."lightrag/openai_api_key"}
-          EMBEDDING_BINDING=openai
-          EMBEDDING_BINDING_API_KEY=${cfgSecret."lightrag/openai_api_key"}
-          LLM_MODEL=gpt-4o-mini
-          EMBEDDING_MODEL=text-embedding-3-small
-        '';
+        content = # sh
+          ''
+            LLM_BINDING=openai
+            LLM_BINDING_API_KEY=${cfgSecret."lightrag/openai_api_key"}
+            EMBEDDING_BINDING=openai
+            EMBEDDING_BINDING_API_KEY=${cfgSecret."lightrag/openai_api_key"}
+            LLM_MODEL=gpt-4o-mini
+            EMBEDDING_MODEL=text-embedding-3-small
+          '';
         restartUnits = [ "podman-${subdomain}.service" ];
       };
     };

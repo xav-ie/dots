@@ -41,7 +41,7 @@ let
           mkcertCAHelper
           pkgs.coreutils
         ];
-      }
+      } # sh
       ''
         cp -r ${mkcertCAHelper} $out
         chmod -R +w $out
@@ -106,12 +106,13 @@ in
         Type = "oneshot";
         RemainAfterExit = true;
       };
-      script = ''
-        mkdir -p ${config.services.traefik.dataDir}
-        touch ${config.services.traefik.dataDir}/acme.json
-        chmod 600 ${config.services.traefik.dataDir}/acme.json
-        chown traefik:${config.services.traefik.group} ${config.services.traefik.dataDir}/acme.json
-      '';
+      script = # sh
+        ''
+          mkdir -p ${config.services.traefik.dataDir}
+          touch ${config.services.traefik.dataDir}/acme.json
+          chmod 600 ${config.services.traefik.dataDir}/acme.json
+          chown traefik:${config.services.traefik.group} ${config.services.traefik.dataDir}/acme.json
+        '';
     };
 
     services.traefik = {
@@ -189,13 +190,14 @@ in
       dynamicConfigFile = "/etc/traefik/traefik-config.yaml";
     };
 
-    networking.extraHosts = ''
-      127.0.0.1 localhost
-      ::1       localhost
+    networking.extraHosts = # ini
+      ''
+        127.0.0.1 localhost
+        ::1       localhost
 
-      # Custom local DNS entries for your services
-      ${hostEntries}
-    '';
+        # Custom local DNS entries for your services
+        ${hostEntries}
+      '';
 
     systemd.tmpfiles.rules = [
       "d ${config.services.traefik.dataDir} 0755 traefik ${config.services.traefik.group} - -"

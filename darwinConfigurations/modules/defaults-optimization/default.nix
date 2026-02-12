@@ -120,21 +120,23 @@ in
       (lib.mkBefore ''
         _nix_darwin_user_defaults() {
       '')
-      (lib.mkAfter ''
-        }
-        # Check if defaults match expected state (pure bash parallel)
-        echo "checking defaults..." >&2
-        mismatch_file=$(mktemp)
-        echo 0 > "$mismatch_file"
-        ${allCheckCmds}
-        wait
-        if [[ "$(cat "$mismatch_file")" == "0" ]]; then
-          echo "user defaults unchanged, skipping..." >&2
-        else
-          _nix_darwin_user_defaults
-        fi
-        rm -f "$mismatch_file"
-      '')
+      (lib.mkAfter # sh
+        ''
+          }
+          # Check if defaults match expected state (pure bash parallel)
+          echo "checking defaults..." >&2
+          mismatch_file=$(mktemp)
+          echo 0 > "$mismatch_file"
+          ${allCheckCmds}
+          wait
+          if [[ "$(cat "$mismatch_file")" == "0" ]]; then
+            echo "user defaults unchanged, skipping..." >&2
+          else
+            _nix_darwin_user_defaults
+          fi
+          rm -f "$mismatch_file"
+        ''
+      )
     ];
   };
 }

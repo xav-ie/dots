@@ -32,6 +32,7 @@ in
           fontName = lib.replaceChars [ " " ] [ "" ] (fonts.name "mono");
           mapleFontFeatures = lib.concatMapStringsSep " " (thing: "+" + thing) (fonts.features "mono");
         in
+        # conf
         ''
           font_features ${fontName}-Bold ${mapleFontFeatures}
           font_features ${fontName}-BoldItalic ${mapleFontFeatures}

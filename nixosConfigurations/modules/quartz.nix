@@ -22,15 +22,16 @@ in
         RemainAfterExit = true;
         User = defaultUser;
       };
-      script = ''
-        if [ ! -d "${quartzRepoPath}/.git" ]; then
-          echo "Quartz repo not found at ${quartzRepoPath}, cloning..."
-          mkdir -p "$(dirname "${quartzRepoPath}")"
-          gh repo clone xav-ie/quartz "${quartzRepoPath}"
-        else
-          echo "Quartz repo already exists at ${quartzRepoPath}"
-        fi
-      '';
+      script = # sh
+        ''
+          if [ ! -d "${quartzRepoPath}/.git" ]; then
+            echo "Quartz repo not found at ${quartzRepoPath}, cloning..."
+            mkdir -p "$(dirname "${quartzRepoPath}")"
+            gh repo clone xav-ie/quartz "${quartzRepoPath}"
+          else
+            echo "Quartz repo already exists at ${quartzRepoPath}"
+          fi
+        '';
     };
 
     virtualisation.oci-containers.containers.${subdomain} = {

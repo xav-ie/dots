@@ -53,19 +53,20 @@ in
         swaync-notify-lifecycle = pkgs.writeShellApplication {
           name = "swaync-notify-lifecycle";
           runtimeInputs = [ pkgs.flock ];
-          text = ''
-            # Pick timeout based on urgency (passed by swaync as $SWAYNC_URGENCY)
-            case "''${SWAYNC_URGENCY:-Normal}" in
-              Low) sleep_time=${toString timeout-low} ;;
-              Critical) sleep_time=${toString timeout-critical} ;;
-              *) sleep_time=${toString timeout} ;;
-            esac
+          text = # sh
+            ''
+              # Pick timeout based on urgency (passed by swaync as $SWAYNC_URGENCY)
+              case "''${SWAYNC_URGENCY:-Normal}" in
+                Low) sleep_time=${toString timeout-low} ;;
+                Critical) sleep_time=${toString timeout-critical} ;;
+                *) sleep_time=${toString timeout} ;;
+              esac
 
-            lock_file="$XDG_RUNTIME_DIR/swaync-visible-count.lock"
-            flock -x "$lock_file" -c '${swayncLogicExe} increment'
-            sleep "$sleep_time"
-            flock -x "$lock_file" -c '${swayncLogicExe} decrement'
-          '';
+              lock_file="$XDG_RUNTIME_DIR/swaync-visible-count.lock"
+              flock -x "$lock_file" -c '${swayncLogicExe} increment'
+              sleep "$sleep_time"
+              flock -x "$lock_file" -c '${swayncLogicExe} decrement'
+            '';
         };
         swaync-on-receive = pkgs.writeShellApplication {
           name = "swaync-on-receive";

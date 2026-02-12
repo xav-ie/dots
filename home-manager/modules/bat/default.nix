@@ -18,20 +18,21 @@ in
 
     # Override batCache to skip if bat package hasn't changed
     home.activation.batCache = lib.mkForce (
-      lib.hm.dag.entryAfter [ "linkGeneration" ] ''
-        cache_dir="${config.xdg.cacheHome}/bat"
-        hash_file="$cache_dir/.nix-cache-key"
-        current_hash="${cacheKey}"
+      lib.hm.dag.entryAfter [ "linkGeneration" ] # sh
+        ''
+          cache_dir="${config.xdg.cacheHome}/bat"
+          hash_file="$cache_dir/.nix-cache-key"
+          current_hash="${cacheKey}"
 
-        stored_hash=""
-        [[ -f "$hash_file" ]] && stored_hash=$(cat "$hash_file")
+          stored_hash=""
+          [[ -f "$hash_file" ]] && stored_hash=$(cat "$hash_file")
 
-        if [[ "$current_hash" != "$stored_hash" ]]; then
-          run ${cfg.package}/bin/bat cache --build
-          mkdir -p "$cache_dir"
-          echo "$current_hash" > "$hash_file"
-        fi
-      ''
+          if [[ "$current_hash" != "$stored_hash" ]]; then
+            run ${cfg.package}/bin/bat cache --build
+            mkdir -p "$cache_dir"
+            echo "$current_hash" > "$hash_file"
+          fi
+        ''
     );
 
     home.sessionVariables = lib.mkIf cfg.enable {
