@@ -56,7 +56,7 @@
           # user programs
           ################################
           bitwarden-desktop
-          chromium
+          # chromium - configured via programs.chromium below
           # discord
           pavucontrol # audio mixer
           playerctl # play, pause, next
@@ -92,6 +92,19 @@
       };
     };
     programs = {
+      chromium = {
+        enable = true;
+        commandLineArgs = [
+          "--ignore-gpu-blocklist"
+          "--enable-gpu-rasterization"
+          "--enable-zero-copy"
+          # feature flags updated for Chromium 131+ (old Vaapi* names were renamed)
+          # VaapiOnNvidiaGPUs is required for NVIDIA VA-API/NVDEC support
+          "--enable-features=AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiOnNvidiaGPUs,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo"
+          # omit --use-gl/--use-angle to let Chromium pick the default (egl-angle,angle=opengl)
+          # opengles is blocked on NVIDIA; vulkan causes render pass stalls with video apps
+        ];
+      };
       rbw.enable = true; # unnofficial bitwarden client
       lazygit.enable = true; # easy git tui
       himalaya.enable = true; # email
