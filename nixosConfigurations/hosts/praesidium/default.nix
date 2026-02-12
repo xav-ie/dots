@@ -41,8 +41,6 @@ in
       kernelModules = [
         # Virtual Camera
         "v4l2loopback"
-        # Virtual Microphone, built-in
-        "snd-aloop"
       ];
       kernelPackages = pkgs.pkgs-bleeding.linuxPackages_latest;
       extraModulePackages = with config.boot.kernelPackages; [ v4l2loopback.out ];
@@ -149,10 +147,6 @@ in
         useDefaultShell = true;
       };
     };
-
-    # environment.etc."sysconfig/lm_sensors".text = ''
-    #   HWMON_MODULES="coretemp"
-    # '';
 
     environment.systemPackages = with pkgs; [
       wakeonlan # For waking nox (macOS remote builder) over LAN
