@@ -166,11 +166,11 @@
     "claude-marketplace-outsmartly": {
       "flake": false,
       "locked": {
-        "lastModified": 1770415807,
-        "narHash": "sha256-lJepuof3zeenmpOsWpRLid5UvxVRleF8vPvkiPv9mfU=",
+        "lastModified": 1771879625,
+        "narHash": "sha256-mBUZagHowcXUuf/FQIzZbQJVhEi317eXimL79zlLVWI=",
         "ref": "refs/heads/main",
-        "rev": "ddf35b4dba0306d52a8046a0ebcbcbf5f841c9bd",
-        "revCount": 16,
+        "rev": "32ea11e450939a09e9b6bfe5fc5d0192b3f7d05f",
+        "revCount": 17,
         "type": "git",
         "url": "ssh://git@github.com/outsmartly/claude-plugins"
       },
@@ -940,11 +940,11 @@
     },
     "nixpkgs-bleeding": {
       "locked": {
-        "lastModified": 1766651565,
-        "narHash": "sha256-QEhk0eXgyIqTpJ/ehZKg9IKS7EtlWxF3N7DXy42zPfU=",
+        "lastModified": 1771369470,
+        "narHash": "sha256-0NBlEBKkN3lufyvFegY4TYv5mCNHbi5OmBDrzihbBMQ=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "3e2499d5539c16d0d173ba53552a4ff8547f4539",
+        "rev": "0182a361324364ae3f436a63005877674cf45efb",
         "type": "github"
       },
       "original": {

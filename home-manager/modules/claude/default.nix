@@ -122,12 +122,14 @@ in
 
       # Native binary wrapper
       claude-native = pkgs.writeShellScriptBin "claude-native" ''
+        export CLAUDE_CONFIG_DIR="$HOME/.claude"
         export PATH="${config.home.homeDirectory}/.local/bin:$PATH"
         exec ${pkgs.claude-code}/bin/claude "$@"
       '';
 
       # NPM-based binary wrapper (provides the claude-npm command name)
       claude-npm = pkgs.writeShellScriptBin "claude-npm" ''
+        export CLAUDE_CONFIG_DIR="$HOME/.claude"
         exec ${pkgs.claude-code-npm}/bin/claude "$@"
       '';
 
@@ -170,24 +172,16 @@ in
       programs.mcp.enableProxy = true;
       programs.mcp.proxyServers.chrome-devtools = {
         command = "chrome-devtools-mcp";
-        args = [ "--executable-path=/etc/profiles/per-user/x/bin/google-chrome-stable" ];
-      };
-      programs.mcp.proxyServers.jira-d = {
-        command = "${config.home.homeDirectory}/.npm/bin/mcp-remote";
         args = [
-          "https://mcp.atlassian.com/v1/sse"
-          "--resource"
-          "https://outsmartly-delivery.atlassian.net/"
+          "--executable-path=/etc/profiles/per-user/x/bin/google-chrome-stable"
+          "--userDataDir"
+          "${config.home.homeDirectory}/.config/google-chrome"
+          "--category-extensions"
+          "--ignore-default-chrome-arg=--disable-extensions"
         ];
       };
-      programs.mcp.proxyServers.jira-p = {
-        command = "${config.home.homeDirectory}/.npm/bin/mcp-remote";
-        args = [
-          "https://mcp.atlassian.com/v1/sse"
-          "--resource"
-          "https://outsmartly.atlassian.net/"
-        ];
-      };
+      programs.mcp.enableJiraDelivery = true;
+      programs.mcp.enableJiraProjects = true;
 
       home.activation.claudePluginSync = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         echo "Syncing claude plugins (background)..."

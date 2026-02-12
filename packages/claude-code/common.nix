@@ -16,8 +16,13 @@ let
     rust-analyzer
   ];
 
+  # Keep .claude.json inside ~/.claude/ so all writes stay in one dir (enables bwrap sandboxing)
+  # Needs runtime $HOME expansion, so it can't go in envVars (which use --set at build time)
+  configDirExport = ''export CLAUDE_CONFIG_DIR="$HOME/.claude"'';
+
   # Environment variables for Claude Code
   # Single source of truth: used by both wrapProgram and tmux agent spawn patches
+
   envVars = {
     CLAUBBIT = "1"; # skip TrustDialog render/unmount cycles on startup
     CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD = "1";
@@ -36,7 +41,7 @@ let
   };
 in
 {
-  inherit envVars;
+  inherit envVars configDirExport;
 
   # Dependencies needed on Linux for sandboxing
   linuxDeps = [
@@ -44,7 +49,7 @@ in
     bubblewrap
   ];
 
-  # Common wrapper arguments for wrapProgram
+  # Common wrapper arguments for wrapProgram (makeBinaryWrapper, no --run support)
   wrapperArgs = lib.concatStringsSep " " (
     (lib.mapAttrsToList (k: v: "--set ${k} ${v}") envVars)
     ++ lib.optional stdenv.isLinux "--prefix PATH : ${linuxBinPath}"
@@ -57,6 +62,7 @@ in
     + lib.concatStringsSep "\n" (
       lib.mapAttrsToList (k: v: "export ${k}=${lib.escapeShellArg v}") envVars
     )
+    + "\nexport CLAUDE_CONFIG_DIR=\"$HOME/.claude\""
     + "\nexec /bin/sh\n"
   );
 

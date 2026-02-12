@@ -16,6 +16,29 @@ let
     exec ${pkgs.pkgs-mine.slack-mcp-server}/bin/slack-mcp-server "$@"
   '';
 
+  # Jira/Confluence MCP wrappers (mcp-atlassian with API token auth)
+  jira-delivery-wrapper = pkgs.writeShellScriptBin "jira-mcp-delivery" ''
+    _url="$(cat /run/secrets/jira/dts_url)"
+    export JIRA_URL="$_url"
+    export JIRA_USERNAME="$(cat /run/secrets/jira/email)"
+    export JIRA_API_TOKEN="$(cat /run/secrets/jira/api_token)"
+    export CONFLUENCE_URL="$_url/wiki"
+    export CONFLUENCE_USERNAME="$(cat /run/secrets/jira/email)"
+    export CONFLUENCE_API_TOKEN="$(cat /run/secrets/jira/api_token)"
+    exec ${config.home.homeDirectory}/.local/share/uv/tools/mcp-atlassian/bin/mcp-atlassian --transport stdio "$@"
+  '';
+
+  jira-projects-wrapper = pkgs.writeShellScriptBin "jira-mcp-projects" ''
+    _url="$(cat /run/secrets/jira/pts_url)"
+    export JIRA_URL="$_url"
+    export JIRA_USERNAME="$(cat /run/secrets/jira/email)"
+    export JIRA_API_TOKEN="$(cat /run/secrets/jira/api_token)"
+    export CONFLUENCE_URL="$_url/wiki"
+    export CONFLUENCE_USERNAME="$(cat /run/secrets/jira/email)"
+    export CONFLUENCE_API_TOKEN="$(cat /run/secrets/jira/api_token)"
+    exec ${config.home.homeDirectory}/.local/share/uv/tools/mcp-atlassian/bin/mcp-atlassian --transport stdio "$@"
+  '';
+
   # mcp-nixos package from flake input
   mcp-nixos = inputs.mcp-nixos.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
@@ -32,6 +55,8 @@ in
 {
   options.programs.mcp = {
     enableSlackWrapper = lib.mkEnableOption "Slack MCP server wrapper with sops secrets";
+    enableJiraDelivery = lib.mkEnableOption "Jira MCP server for outsmartly-delivery Atlassian site";
+    enableJiraProjects = lib.mkEnableOption "Jira MCP server for outsmartly Atlassian site";
     enableNixos = lib.mkEnableOption "mcp-nixos server for NixOS/Home Manager assistance";
     enableProxy = lib.mkEnableOption "persistent MCP proxy for instant startup";
 
@@ -53,6 +78,20 @@ in
       home.packages = [ slack-mcp-wrapper ];
       programs.mcp.proxyServers.slack = lib.mkDefault {
         command = "${slack-mcp-wrapper}/bin/slack-mcp-server-wrapped";
+        args = [ ];
+      };
+    })
+    (lib.mkIf cfg.enableJiraDelivery {
+      home.packages = [ jira-delivery-wrapper ];
+      programs.mcp.proxyServers.jira-d = lib.mkDefault {
+        command = "${jira-delivery-wrapper}/bin/jira-mcp-delivery";
+        args = [ ];
+      };
+    })
+    (lib.mkIf cfg.enableJiraProjects {
+      home.packages = [ jira-projects-wrapper ];
+      programs.mcp.proxyServers.jira-p = lib.mkDefault {
+        command = "${jira-projects-wrapper}/bin/jira-mcp-projects";
         args = [ ];
       };
     })
