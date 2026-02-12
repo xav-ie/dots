@@ -4,6 +4,7 @@
     ./cliphist
     ./dconf
     ./firefox
+    ./google-chrome
     ./gtk
     ./hyprland
     ./nemo
@@ -65,7 +66,6 @@
         ])
         ++ (with pkgs.pkgs-bleeding; [
           # needs latest security releases
-          google-chrome
           signal-desktop
         ])
         ++ (with pkgs.pkgs-mine; [

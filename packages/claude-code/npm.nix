@@ -50,6 +50,15 @@ let
       cli.js
   '';
 
+  # Stub out the npm-view update checker that polls every 30s.
+  # The setInterval runs even with CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC set.
+  # Replace "npm" with "/bin/true" in the two c4("npm",["view",...) calls so
+  # /bin/true runs instead (instant exit 0, empty stdout, no node/npm overhead).
+  # The callers handle empty/failed responses gracefully (return null).
+  disableNpmViewPatch = ''
+    sed -i 's|"npm",\["view"|"/bin/true",["view"|g' cli.js
+  '';
+
   # Eliminate the 200ms post-split-window sleep (no longer needed with paste-buffer)
   # Only matches parameterless functions: function <name>(){return new Promise(...setTimeout...)}
   # This avoids clobbering the general-purpose sleep(ms) utility
@@ -98,6 +107,10 @@ buildNpmPackage {
     # Skip pane border decoration and post-creation sleep
     ${disablePaneBordersPatch}
     ${disableSleepPatch}
+
+    # Stub out npm view update check — runs every 30s despite
+    # CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC being set
+    ${disableNpmViewPatch}
 
   '';
 
