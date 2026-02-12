@@ -41,6 +41,13 @@ let
         cmakeFlags = builtins.filter (flag: !(lib.hasPrefix "--preset" flag)) oldAttrs.cmakeFlags;
         buildPhase = null;
         installPhase = null;
+        postBuild = ''
+          echo "Building benchmark..."
+          cmake -B bench-build -S $src/benchmark -DCMAKE_BUILD_TYPE=Release
+          cmake --build bench-build
+          echo "Running benchmark..."
+          ./bench-build/bench $src/benchmark/test-clip.mp4 -m $src/benchmark/tiny.onnx
+        '';
       });
 in
 {
@@ -48,6 +55,15 @@ in
     # camera magic
     programs.obs-studio = {
       enable = true;
+      # Prevent OpenMP threads (from ONNX Runtime / OpenCV) from busy-spinning
+      # at barriers. Without this, OBS burns ~90% CPU on gomp_barrier_wait_end
+      # even though the actual inference runs on GPU via CUDA.
+      package = pkgs.obs-studio.overrideAttrs (old: {
+        postFixup = (old.postFixup or "") + ''
+          wrapProgram $out/bin/obs \
+            --set OMP_WAIT_POLICY passive
+        '';
+      });
       plugins =
         with pkgs.obs-studio-plugins;
         [
