@@ -35,19 +35,26 @@ let
           version
           ;
         nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ pkgs.pkg-config ];
-        # Remove preset - the CMakeLists.txt defaults (USE_PKGCONFIG=ON, VCPKG_TARGET_TRIPLET="")
-        # are already correct for Nix builds. Also clear custom build/install phases
-        # since they reference build_x86_64 which the preset created.
         cmakeFlags = builtins.filter (flag: !(lib.hasPrefix "--preset" flag)) oldAttrs.cmakeFlags;
         buildPhase = null;
         installPhase = null;
-        postBuild = ''
-          echo "Building benchmark..."
-          cmake -B bench-build -S $src/benchmark -DCMAKE_BUILD_TYPE=Release
-          cmake --build bench-build
-          echo "Running benchmark..."
-          ./bench-build/bench $src/benchmark/test-clip.mp4 -m $src/benchmark/tiny.onnx
-        '';
+        patches = (oldAttrs.patches or [ ]) ++ [
+          (pkgs.fetchpatch {
+            name = "benchmark-and-ort-spinning.patch";
+            url = "https://github.com/royshil/obs-backgroundremoval/pull/785.patch";
+            hash = "sha256-VhIp8o97CEhcZa0HgtFXxpzup78x4CAR5TJTWTWzJtE=";
+          })
+          (pkgs.fetchpatch {
+            name = "fix-race-and-reduce-copies.patch";
+            url = "https://github.com/royshil/obs-backgroundremoval/pull/786.patch";
+            hash = "sha256-WmbxJqKtQV70X2zLVsVHfQncD5+QKk7gHDsnf96n6iQ=";
+          })
+          (pkgs.fetchpatch {
+            name = "optimize-inference-preprocessing.patch";
+            url = "https://github.com/royshil/obs-backgroundremoval/pull/787.patch";
+            hash = "sha256-fkLm7visT2ie0f7maMBRob9MFK275HuFG9uEZVtmRWs=";
+          })
+        ];
       });
 in
 {
