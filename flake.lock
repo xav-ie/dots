@@ -1175,11 +1175,11 @@
     "obs-backgroundremoval": {
       "flake": false,
       "locked": {
-        "lastModified": 1765677636,
-        "narHash": "sha256-q8nqIiS4doInf2ih41/Typd0rhgo1pv5sVUheHRt/1I=",
+        "lastModified": 1772121601,
+        "narHash": "sha256-SKVKRju/zEbVgpIjTbqB39J4m/GEaQGA0PchgiQ4r1E=",
         "owner": "royshil",
         "repo": "obs-backgroundremoval",
-        "rev": "67b9b045222b73dc073ae238ae86b605b680de95",
+        "rev": "331c260be8995270e205cef9776cca485067f255",
         "type": "github"
       },
       "original": {
