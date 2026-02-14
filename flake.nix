@@ -12,6 +12,8 @@
     jj.url = "github:martinvonz/jj";
     mcp-nixos.url = "github:utensils/mcp-nixos";
     morlana.url = "github:ryanccn/morlana";
+    himalaya-latest.url = "github:pimalaya/himalaya";
+    neverest.url = "github:pimalaya/neverest";
     nix-auto-follow.url = "github:xav-ie/nix-auto-follow/feat-consolidation";
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";

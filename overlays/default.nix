@@ -43,6 +43,8 @@ in
     });
     writeNuApplication = final.nuenv.writeShellApplication;
     beads = inputs.beads.packages.${final.stdenv.hostPlatform.system}.default;
+    himalaya = inputs.himalaya-latest.packages.${final.stdenv.hostPlatform.system}.default;
+    neverest = inputs.neverest.packages.${final.stdenv.hostPlatform.system}.default;
     zjstatus = inputs.zjstatus.packages.${final.stdenv.hostPlatform.system}.default;
 
     inherit (final.pkgs-mine)

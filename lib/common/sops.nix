@@ -41,15 +41,24 @@
         mode = "0400";
       };
 
-      # Gmail app passwords for mbsync/himalaya
-      secrets."gmail/account1_pass" = {
+      # Jira/Confluence API token auth (mcp-atlassian)
+      secrets."jira/email" = {
         owner = config.defaultUser;
         mode = "0400";
       };
-      secrets."gmail/account2_pass" = {
+      secrets."jira/api_token" = {
         owner = config.defaultUser;
         mode = "0400";
       };
+      secrets."jira/dts_url" = {
+        owner = config.defaultUser;
+        mode = "0400";
+      };
+      secrets."jira/pts_url" = {
+        owner = config.defaultUser;
+        mode = "0400";
+      };
+
     };
 
     # Ensure that no one may read my key file
