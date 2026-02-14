@@ -227,13 +227,18 @@ in
         _override_plugin_mcp
       '';
 
-      home.packages = [
-        claude-package
-        claude-native
-        claude-npm
-        cfg.pluginSyncPackage
-        updateMarketplacesPackage
-      ];
+      home.packages =
+        [
+          claude-package
+          claude-native
+          claude-npm
+          cfg.pluginSyncPackage
+          updateMarketplacesPackage
+        ]
+        ++ lib.optionals pkgs.stdenv.isLinux [
+          pkgs.pkgs-mine.claude-yolo
+          pkgs.pkgs-mine.claude-overlay
+        ];
 
       home.file = {
         ".local/bin/claude".source = "${claude-package}/bin/claude";

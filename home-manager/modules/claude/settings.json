@@ -33,5 +33,6 @@
     "hookify@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true
   },
-  "alwaysThinkingEnabled": true
+  "alwaysThinkingEnabled": true,
+  "skipDangerousModePermissionPrompt": true
 }
