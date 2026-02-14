@@ -40,6 +40,16 @@
         owner = config.defaultUser;
         mode = "0400";
       };
+
+      # Gmail app passwords for mbsync/himalaya
+      secrets."gmail/account1_pass" = {
+        owner = config.defaultUser;
+        mode = "0400";
+      };
+      secrets."gmail/account2_pass" = {
+        owner = config.defaultUser;
+        mode = "0400";
+      };
     };
 
     # Ensure that no one may read my key file

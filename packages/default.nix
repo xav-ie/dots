@@ -73,6 +73,8 @@ rec {
   zerobrew = pkgs.callPackage ./zerobrew { src = zerobrew-src; };
 })
 // (optionalAttrs isLinux {
+  claude-overlay = pkgs.callPackage ./claude-overlay { };
+  claude-yolo = pkgs.callPackage ./claude-yolo { };
   move-active = pkgs.callPackage ./move-active { inherit writeNuApplication; };
   openrgb-appimage = pkgs.callPackage ./openrgb-appimage { };
   simulstreaming = pkgs.callPackage ./simulstreaming { src = simulstreaming-src; };
