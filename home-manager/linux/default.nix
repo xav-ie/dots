@@ -107,7 +107,6 @@
       };
       rbw.enable = true; # unnofficial bitwarden client
       lazygit.enable = true; # easy git tui
-      himalaya.enable = true; # email
     };
 
     services = {
