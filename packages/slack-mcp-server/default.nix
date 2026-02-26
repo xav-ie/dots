@@ -9,7 +9,7 @@ buildGoModule {
 
   inherit src;
 
-  vendorHash = "sha256-CEg7OHriwCD1XM4lOCNcIPiMXnHuerramWp4//9roOo=";
+  vendorHash = "sha256-mR+UFQRi98OTCyNISy3e7QTGKusd8XhNW4iz57QvpZE=";
 
   subPackages = [ "cmd/slack-mcp-server" ];
 
