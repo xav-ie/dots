@@ -1560,16 +1560,16 @@
     "slack-mcp-server": {
       "flake": false,
       "locked": {
-        "lastModified": 1766114031,
-        "narHash": "sha256-qulBmZFOmUeeeLbgjx/uGcsZoxE6IOJXpjxTTptckOE=",
-        "owner": "xav-ie",
+        "lastModified": 1772046878,
+        "narHash": "sha256-OZDnfLhS0ZfCewaM9TkRqU2uTnH97MMF2Ex5azR1ojk=",
+        "owner": "korotovsky",
         "repo": "slack-mcp-server",
-        "rev": "af19d5ee177fb032de16380f3f7836416c8eba1a",
+        "rev": "6681f33083f7adee8addcfc0a5e5023864ace437",
         "type": "github"
       },
       "original": {
-        "owner": "xav-ie",
-        "ref": "feat-add-reactions",
+        "owner": "korotovsky",
+        "ref": "v1.2.2",
         "repo": "slack-mcp-server",
         "type": "github"
       }
