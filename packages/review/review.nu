@@ -17,7 +17,7 @@ def main [] {
   }
 
   # 2. Get the baseRefName
-  let temp_out = (mktemp)
+  let temp_out = (mktemp -t review-XXXX)
   let fetch_job_id = job spawn {
     try {
       git pull;

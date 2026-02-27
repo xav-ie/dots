@@ -80,7 +80,7 @@ def fetch_npm [
   print $"  [NPM] Package hash: ($npm_hash)"
 
   print "  [NPM] Computing npmDepsHash..."
-  let extract_dir = (mktemp -d)
+  let extract_dir = (mktemp -d -t claude-extract-XXXX)
   tar -xzf $npm_tmp -C $extract_dir
   let package_dir = (ls $extract_dir | get name | first)
 

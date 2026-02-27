@@ -22,7 +22,7 @@ def color [command: string] {
 
 # List the PRs with `fzf` and check out selected PR.
 def main [] {
-  let temp_out = (mktemp)
+  let temp_out = (mktemp -t prs-XXXX)
   let fetch_job_id = job spawn {
     try {
       gh pr list --json number,title,headRefName,createdAt,author,isDraft -L 1000
