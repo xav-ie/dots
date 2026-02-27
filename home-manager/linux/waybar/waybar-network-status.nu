@@ -29,7 +29,7 @@ def get-network-status [] {
   }
 }
 
-let prev_file = (mktemp -t)
+let prev_file = (mktemp -t waybar-network-XXXX)
 
 # Print initial status
 let status = (get-network-status)

@@ -30,7 +30,7 @@ def get-bluetooth-status [] {
   }
 }
 
-let prev_file = (mktemp -t)
+let prev_file = (mktemp -t waybar-bluetooth-XXXX)
 
 # Print initial status
 let status = (get-bluetooth-status)

@@ -53,7 +53,7 @@ def main [
   selection?: string  # The selected text (passed by rofi, but we use ROFI_INFO instead)
 ] {
   # Create temp directory for image thumbnails
-  let temp_dir = (mktemp -d)
+  let temp_dir = (mktemp -d -t rofi-cliphist-XXXX)
 
   # Get rofi state from environment
   let rofi_retv = ($env.ROFI_RETV? | default "0")
