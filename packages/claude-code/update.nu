@@ -31,7 +31,7 @@ def fetch_native [
   print "  [Native] Computing hashes for all platforms..."
   let sources = ($PLATFORMS | par-each { |p|
     print $"  [Native] Computing hash for ($p.platform)..."
-    let tmp_file = $"/tmp/claude-($p.platform)"
+    let tmp_file = (mktemp -t claude-XXXX)
     http get $"($GCS_BUCKET)/($version)/($p.platform)/claude" | save -f $tmp_file
     let hash = (nix hash file $tmp_file --sri | str trim)
     rm $tmp_file
@@ -74,7 +74,7 @@ def fetch_npm [
   let npm_url = $"https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-($npm_version).tgz"
   print $"  [NPM] Downloading from ($npm_url)..."
 
-  let npm_tmp = "/tmp/claude-code-npm.tgz"
+  let npm_tmp = (mktemp -t claude-npm-XXXX --suffix .tgz)
   http get $npm_url | save -f $npm_tmp
   let npm_hash = (nix hash file $npm_tmp --sri | str trim)
   print $"  [NPM] Package hash: ($npm_hash)"

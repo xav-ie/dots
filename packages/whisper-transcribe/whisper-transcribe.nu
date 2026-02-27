@@ -135,9 +135,15 @@ def "main file" [
 
   # If we need extraction but didn't save audio, use a temporary file
   let final_audio = if $needs_extraction and ($audio_file | is-empty) {
-    let temp_audio = $"/tmp/whisper-temp-($file_path | path basename | str replace -a '/' '-').wav"
+    let temp_audio = (mktemp -t whisper-XXXX --suffix .wav)
     print $"Extracting audio track ($selected_track) to temporary file..."
-    bash -c $"ffmpeg -i '($file_path)' -map 0:a:($selected_track) -ar 16000 -ac 1 -c:a pcm_s16le '($temp_audio)' -y 2>&1 | grep -v '^frame='"
+    ffmpeg -i $file_path -map $"0:a:($selected_track)" -ar 16000 -ac 1 -c:a pcm_s16le $temp_audio -y
+      | complete
+      | get stderr
+      | lines
+      | where { $in !~ "^frame=" }
+      | str join "\n"
+      | print
     print "Audio extraction completed"
     $temp_audio
   } else {
@@ -190,7 +196,7 @@ def "main file" [
     if ($audio_file | is-not-empty) and ($audio_file != $file_path) {
       rm -f $audio_file
     }
-    if ($final_audio | str starts-with '/tmp/whisper-temp-') {
+    if ($final_audio != $file_path) and ($final_audio | str ends-with '.wav') {
       rm -f $final_audio
     }
   }

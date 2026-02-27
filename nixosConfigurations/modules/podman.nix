@@ -13,7 +13,7 @@ _: {
     };
     # generally good to have this set up
     systemd.tmpfiles.rules = [
-      "d /media 0777 root root -"
+      "d /media 0755 root root -"
     ];
   };
 }

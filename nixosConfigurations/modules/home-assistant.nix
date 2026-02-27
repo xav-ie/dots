@@ -169,7 +169,7 @@ in
           # "d /var/lib/hass/backups 0750 hass hass"
         ]
         # blegh... I guess this is how we must configure media dir
-        ++ lib.lists.optional (isDefined mediaDir) "d ${mediaDir} 0777 hass hass";
+        ++ lib.lists.optional (isDefined mediaDir) "d ${mediaDir} 0750 hass hass";
     };
 
   };
