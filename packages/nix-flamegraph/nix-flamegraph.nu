@@ -7,10 +7,11 @@ def main [
   flake_output?: string  # Flake output to profile (auto-detects based on host)
 ] {
   let flake_output = $flake_output | default (get-default-flake-output)
-  let profile_file = "/tmp/nix.profile"
-  let readable_profile = "/tmp/nix-readable.profile"
-  let dots_profile = "/tmp/nix-dots.profile"
-  let output_svg = "/tmp/nix-flamegraph.svg"
+  let tmpdir = (mktemp -d -t nix-flamegraph.XXX)
+  let profile_file = $"($tmpdir)/nix.profile"
+  let readable_profile = $"($tmpdir)/nix-readable.profile"
+  let dots_profile = $"($tmpdir)/nix-dots.profile"
+  let output_svg = $"($tmpdir)/nix-flamegraph.svg"
 
   print $"Evaluating ($flake_output) with profiler..."
 
