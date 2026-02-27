@@ -43,7 +43,22 @@ in
     });
     writeNuApplication = final.nuenv.writeShellApplication;
     beads = inputs.beads.packages.${final.stdenv.hostPlatform.system}.default;
-    himalaya = inputs.himalaya-latest.packages.${final.stdenv.hostPlatform.system}.default;
+    himalaya =
+      let
+        base = inputs.himalaya-latest.packages.${final.stdenv.hostPlatform.system}.default;
+        # https://github.com/pimalaya/core/pull/44
+        threadingPatch = final.fetchpatch {
+          url = "https://github.com/pimalaya/core/pull/44.patch";
+          hash = "sha256-rc5ifhBo+AHhSia6LaQf9gCSPYn4dwUhlvTzuoZxKvc=";
+          includes = [ "email/src/email/envelope/thread/mod.rs" ];
+        };
+      in
+      base.overrideAttrs (old: {
+        postPatch = (old.postPatch or "") + ''
+          emailLibDir=$(find /build -maxdepth 3 -name 'email-lib-*' -type d | head -1)
+          patch -p2 -d "$emailLibDir" < ${threadingPatch}
+        '';
+      });
     neverest = inputs.neverest.packages.${final.stdenv.hostPlatform.system}.default;
     zjstatus = inputs.zjstatus.packages.${final.stdenv.hostPlatform.system}.default;
 
