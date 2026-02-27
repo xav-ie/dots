@@ -56,8 +56,8 @@ def set_theme [theme, pids] {
   dconf write $THEME_PATH $theme
   try { kill --signal $SIGWINCH ...$pids }
   # Schedule another SIGWINCH after 30 seconds to handle rate-limited case
-  let pids_str = ($pids | each { |p| $"($p)" } | str join " ")
-  sh -c $"\(sleep 31 && kill -28 ($pids_str) 2>/dev/null\) &"
+  let pids_args = ($pids | each { |p| $p | into string })
+  ^sh -c '(sleep 31 && kill -28 "$@" 2>/dev/null) &' _ ...$pids_args
 }
 
 def get_toggle [] {

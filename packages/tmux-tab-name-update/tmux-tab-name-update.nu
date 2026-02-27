@@ -33,5 +33,5 @@ def main [] {
   }
 
   # Use sh to spawn completely detached process for maximum speed
-  exec sh -c $"tmux rename-window -t '($pane_id)' '($tab_name)' &"
+  exec sh -c 'tmux rename-window -t "$1" "$2" &' _ $pane_id $tab_name
 }
