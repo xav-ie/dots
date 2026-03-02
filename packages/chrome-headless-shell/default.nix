@@ -1,7 +1,8 @@
 {
   lib,
   stdenv,
-  fetchzip,
+  fetchurl,
+  unzip,
   autoPatchelfHook,
   glib,
   nspr,
@@ -17,19 +18,28 @@
   systemdLibs,
   xorg,
 }:
-stdenv.mkDerivation rec {
-  pname = "chrome-headless-shell";
+let
   version = "146.0.7680.31";
+in
+stdenv.mkDerivation {
+  pname = "chrome-headless-shell";
+  inherit version;
 
-  src = fetchzip {
+  src = fetchurl {
     url = "https://storage.googleapis.com/chrome-for-testing-public/${version}/linux64/chrome-headless-shell-linux64.zip";
-    hash = "sha256-2S0jxGjpV4FPyz12GCGfK1w14K0zdix/XKQNtZNwl5g=";
+    hash = "sha256-26ioTx8Ps1Vmz1jbMcLWzQO7wYTXC326Ec4D2/hFWFg=";
   };
+
+  nativeBuildInputs = [ unzip autoPatchelfHook ];
+
+  # fetchurl doesn't know how to unpack zips by default.
+  unpackPhase = ''
+    unzip $src
+    sourceRoot=chrome-headless-shell-linux64
+  '';
 
   dontBuild = true;
   dontStrip = true;
-
-  nativeBuildInputs = [ autoPatchelfHook ];
 
   # Runtime libraries needed by the prebuilt binary (same deps as chromium).
   buildInputs = [
