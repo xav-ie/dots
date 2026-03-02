@@ -1221,6 +1221,22 @@
         "type": "github"
       }
     },
+    "pimalaya-core": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1772395834,
+        "narHash": "sha256-+zp0WPMZ3Y9PgWWzNAAuUNKFUF7c2VrDijI82pA8GJk=",
+        "owner": "pimalaya",
+        "repo": "core",
+        "rev": "b3a9640a2b2e882f07655e711197b3dbd72ea176",
+        "type": "github"
+      },
+      "original": {
+        "owner": "pimalaya",
+        "repo": "core",
+        "type": "github"
+      }
+    },
     "pimalaya_2": {
       "flake": false,
       "locked": {
@@ -1456,6 +1472,7 @@
         "nuenv": "nuenv",
         "obs-backgroundremoval": "obs-backgroundremoval",
         "ollama-src": "ollama-src",
+        "pimalaya-core": "pimalaya-core",
         "plover-flake": "plover-flake",
         "quadlet-nix": "quadlet-nix",
         "ralph-src": "ralph-src",

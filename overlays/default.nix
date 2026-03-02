@@ -46,34 +46,13 @@ in
     himalaya =
       let
         base = inputs.himalaya-latest.packages.${final.stdenv.hostPlatform.system}.default;
-        # https://github.com/pimalaya/core/pull/44
-        threadingPatch = final.fetchpatch {
-          url = "https://github.com/pimalaya/core/pull/44.patch";
-          hash = "sha256-rc5ifhBo+AHhSia6LaQf9gCSPYn4dwUhlvTzuoZxKvc=";
-          includes = [ "email/src/email/envelope/thread/mod.rs" ];
-        };
-        # https://github.com/pimalaya/core/pull/49
-        paginationPatch = final.fetchpatch {
-          url = "https://github.com/pimalaya/core/pull/49.patch";
-          hash = "sha256-sqFj71KVJayx3UdsdhMmGQASwuvGHuEzHrDYH4EMYYk=";
-          includes = [ "email/src/email/envelope/list/imap.rs" ];
-        };
-        # https://github.com/pimalaya/core/pull/50
-        threadFlagsPatch = final.fetchpatch {
-          url = "https://github.com/pimalaya/core/pull/50.patch";
-          hash = "sha256-DXhf+UbEzHNoFvW09+R1yaHX9+DG0TQ1qzqZsXdlGr4=";
-          includes = [
-            "email/src/email/envelope/flag/mod.rs"
-            "email/src/email/envelope/mod.rs"
-          ];
-        };
       in
       base.overrideAttrs (old: {
         postPatch = (old.postPatch or "") + ''
           emailLibDir=$(find /build -maxdepth 3 -name 'email-lib-*' -type d | head -1)
-          patch -p2 -d "$emailLibDir" < ${threadingPatch}
-          patch -p2 -d "$emailLibDir" < ${paginationPatch}
-          patch -p2 -d "$emailLibDir" < ${threadFlagsPatch}
+          # Replace vendored email-lib src with pimalaya-core flake input.
+          # Remove this override once email-lib > 0.27.0 is released.
+          cp -rT ${inputs.pimalaya-core}/email/src "$emailLibDir/src"
         '';
       });
     neverest = inputs.neverest.packages.${final.stdenv.hostPlatform.system}.default;

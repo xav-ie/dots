@@ -13,6 +13,8 @@
     mcp-nixos.url = "github:utensils/mcp-nixos";
     morlana.url = "github:ryanccn/morlana";
     himalaya-latest.url = "github:pimalaya/himalaya";
+    pimalaya-core.url = "github:pimalaya/core";
+    pimalaya-core.flake = false;
     neverest.url = "github:pimalaya/neverest";
     nix-auto-follow.url = "github:xav-ie/nix-auto-follow/feat-consolidation";
     nix-darwin.url = "github:LnL7/nix-darwin";
