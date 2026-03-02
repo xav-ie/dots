@@ -69,6 +69,7 @@
           signal-desktop
         ])
         ++ (with pkgs.pkgs-mine; [
+          chrome-headless-shell
           move-active
           record
           record-section

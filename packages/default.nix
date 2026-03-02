@@ -25,6 +25,7 @@ rec {
   better-branch = pkgs.callPackage ./better-branch { inherit writeNuApplication; };
   cache-command = pkgs.callPackage ./cache-command { };
   # claude-code packages need allowUnfree, passed via pkgs-unfree
+  chrome-headless-shell = pkgs.callPackage ./chrome-headless-shell { };
   claude-code = pkgs-unfree.callPackage ./claude-code { };
   claude-code-npm = pkgs-unfree.callPackage ./claude-code/npm.nix { };
   claude-code-update = pkgs-unfree.callPackage ./claude-code/update.nix {
