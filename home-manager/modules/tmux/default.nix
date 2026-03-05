@@ -5,7 +5,7 @@
       enable = true;
       baseIndex = 1;
       keyMode = "vi";
-      # focusEvents = true; #?
+      focusEvents = true;
       mouse = true;
       newSession = true;
       plugins = with pkgs.tmuxPlugins; [
@@ -25,7 +25,9 @@
         ''
           # Allow OSC escape sequences to pass through to terminal
           # This enables programs like delta and neovim to detect theme changes
-          set-option -g allow-passthrough on
+          # "all" allows passthrough from inactive panes too, so image.nvim
+          # can clear Kitty graphics on FocusLost after tmux switches away.
+          set-option -g allow-passthrough all
 
           bind -n M-H previous-window
           bind -n M-L next-window
