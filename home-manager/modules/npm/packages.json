@@ -10,5 +10,6 @@
   "typescript": "5.9.3",
   "chrome-devtools-mcp": "0.16.0",
   "mcp-remote": "0.1.38",
-  "@shopify/cli": "3.91.1"
+  "@shopify/cli": "3.91.1",
+  "wrangler": "4.71.0"
 }
