@@ -63,6 +63,7 @@
           playerctl # play, pause, next
           pulseaudio # provides pactl for volume control
           # qutebrowser
+          zoom-us
         ])
         ++ (with pkgs.pkgs-bleeding; [
           # needs latest security releases
