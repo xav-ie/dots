@@ -71,6 +71,7 @@
         ])
         ++ (with pkgs.pkgs-mine; [
           chrome-headless-shell
+          mcp-atlassian
           move-active
           record
           record-section

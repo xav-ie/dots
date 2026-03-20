@@ -3,10 +3,12 @@
 {
   pkgs ? import <nixpkgs>,
   pkgs-unfree ? pkgs, # For packages needing allowUnfree (claude-code)
+  pkgs-bleeding ? pkgs, # For packages needing newer Python deps (mcp-atlassian)
   # Platform flags passed from caller to avoid pkgs.stdenv access here
   isDarwin ? pkgs.stdenv.isDarwin,
   isLinux ? pkgs.stdenv.isLinux,
   generate-kaomoji,
+  mcp-atlassian-src,
   nuenv,
   simulstreaming-src,
   slack-mcp-server-src,
@@ -39,6 +41,7 @@ rec {
   is-sshed = pkgs.callPackage ./is-sshed { inherit writeNuApplication; };
   lint-staged = pkgs.callPackage ./lint-staged { inherit writeNuApplication; };
   localip = pkgs.callPackage ./localip { inherit writeNuApplication; };
+  mcp-atlassian = pkgs.callPackage ./mcp-atlassian { inherit mcp-atlassian-src pkgs-bleeding; };
   mcp-sse-client = pkgs.callPackage ./mcp-sse-client { };
   log-pr = pkgs.callPackage ./log-pr { inherit writeNuApplication; };
   nix-flamegraph = pkgs.callPackage ./nix-flamegraph { inherit writeNuApplication; };
