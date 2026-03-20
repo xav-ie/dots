@@ -884,6 +884,23 @@
         "type": "github"
       }
     },
+    "mcp-atlassian-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1772425907,
+        "narHash": "sha256-mJxoo5XN8KR4KlZ/LeM1KzyhB/s9Qg1Zl2YwkuyKHnM=",
+        "owner": "sooperset",
+        "repo": "mcp-atlassian",
+        "rev": "c450a161ec630dd57f44a2b15d977debae19eba5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "sooperset",
+        "ref": "v0.21.0",
+        "repo": "mcp-atlassian",
+        "type": "github"
+      }
+    },
     "mcp-nixos": {
       "inputs": {
         "flake-parts": [
@@ -1456,6 +1473,7 @@
         "homebrew-core": "homebrew-core",
         "hyprland": "hyprland",
         "jj": "jj",
+        "mcp-atlassian-src": "mcp-atlassian-src",
         "mcp-nixos": "mcp-nixos",
         "morlana": "morlana",
         "neverest": "neverest",

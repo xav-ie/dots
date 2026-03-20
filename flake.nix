@@ -81,6 +81,8 @@
     ralph-src.flake = false;
     simulstreaming-src.url = "github:ufal/SimulStreaming";
     simulstreaming-src.flake = false;
+    mcp-atlassian-src.url = "github:sooperset/mcp-atlassian/v0.21.0";
+    mcp-atlassian-src.flake = false;
     slack-mcp-server.url = "github:korotovsky/slack-mcp-server/v1.2.2";
     slack-mcp-server.flake = false;
     zerobrew-src.url = "github:lucasgelfond/zerobrew";
@@ -210,8 +212,12 @@
             isLinux = lib.hasSuffix "-linux" system;
             # Memoized unfree pkgs (shared across evaluations)
             pkgs-unfree = pkgsUnfreeFor.${system};
+            pkgs-bleeding = import inputs.nixpkgs-bleeding {
+              inherit system;
+              config.allowUnfree = true;
+            };
             nuenv = inputs.nuenv.lib;
-            inherit (inputs) simulstreaming-src zerobrew-src;
+            inherit (inputs) mcp-atlassian-src simulstreaming-src zerobrew-src;
             slack-mcp-server-src = inputs.slack-mcp-server;
           };
 

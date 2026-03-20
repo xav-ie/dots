@@ -25,7 +25,7 @@ let
     export CONFLUENCE_URL="$_url/wiki"
     export CONFLUENCE_USERNAME="$(cat /run/secrets/jira/email)"
     export CONFLUENCE_API_TOKEN="$(cat /run/secrets/jira/api_token)"
-    exec ${config.home.homeDirectory}/.local/share/uv/tools/mcp-atlassian/bin/mcp-atlassian --transport stdio "$@"
+    exec ${pkgs.pkgs-mine.mcp-atlassian}/bin/mcp-atlassian --transport stdio "$@"
   '';
 
   jira-projects-wrapper = pkgs.writeShellScriptBin "jira-mcp-projects" ''
@@ -36,7 +36,7 @@ let
     export CONFLUENCE_URL="$_url/wiki"
     export CONFLUENCE_USERNAME="$(cat /run/secrets/jira/email)"
     export CONFLUENCE_API_TOKEN="$(cat /run/secrets/jira/api_token)"
-    exec ${config.home.homeDirectory}/.local/share/uv/tools/mcp-atlassian/bin/mcp-atlassian --transport stdio "$@"
+    exec ${pkgs.pkgs-mine.mcp-atlassian}/bin/mcp-atlassian --transport stdio "$@"
   '';
 
   # mcp-nixos package from flake input
