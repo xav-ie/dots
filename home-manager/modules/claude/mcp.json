@@ -2,11 +2,11 @@
   "mcpServers": {
     "slack": {
       "command": "mcp-sse-client",
-      "args": ["http://127.0.0.1:18199/servers/slack/sse"]
+      "args": ["https://mcp.lalala.casa/servers/slack/sse"]
     },
     "chrome-devtools": {
       "command": "mcp-sse-client",
-      "args": ["http://127.0.0.1:18199/servers/chrome-devtools/sse"]
+      "args": ["https://mcp.lalala.casa/servers/chrome-devtools/sse"]
     }
   }
 }

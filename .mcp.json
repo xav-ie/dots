@@ -2,7 +2,7 @@
   "mcpServers": {
     "nixos": {
       "command": "mcp-sse-client",
-      "args": ["http://127.0.0.1:18199/servers/nixos/sse"]
+      "args": ["https://mcp.lalala.casa/servers/nixos/sse"]
     }
   }
 }

@@ -64,6 +64,12 @@ in
         example = ''[ "dashboard" "media" ]'';
         description = "A list of subdomains to configure under the base domain for services and certificates.";
       };
+      caCertFile = lib.mkOption {
+        type = lib.types.path;
+        default = "${mkcertCA}/rootCA.pem";
+        readOnly = true;
+        description = "Path to the local mkcert CA certificate (for containers needing to trust *.lalala.casa TLS).";
+      };
     };
   };
 

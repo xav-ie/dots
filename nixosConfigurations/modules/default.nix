@@ -14,6 +14,7 @@
     ./jellyfin.nix
     ./lightrag.nix
     ./linux-home-manager.nix
+    ./mcp-proxy
     ./n8n.nix
     ./nginx.nix
     ./nix-config.nix

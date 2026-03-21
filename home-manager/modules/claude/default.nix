@@ -29,11 +29,6 @@ let
   findInputName =
     src: lib.findFirst (name: inputs.${name}.outPath or null == "${src}") null (lib.attrNames inputs);
 
-  # Wrapper for chrome-devtools-mcp with explicit node path
-  # (the npm-installed binary uses #!/usr/bin/env node which fails in systemd)
-  chrome-devtools-wrapper = pkgs.writeShellScriptBin "chrome-devtools-mcp-wrapped" ''
-    exec ${pkgs.nodejs}/bin/node ${config.home.homeDirectory}/.npm/lib/node_modules/chrome-devtools-mcp/build/src/index.js "$@"
-  '';
 in
 {
   options.programs.claude = {
@@ -172,19 +167,8 @@ in
       # Set the default for pluginSyncPackage (can be overridden by user)
       programs.claude.pluginSyncPackage = lib.mkDefault defaultPluginSyncPackage;
 
-      # Enable shared MCP servers behind persistent proxy for instant startup
-      programs.mcp.enableSlackWrapper = true;
-      programs.mcp.enableNixos = true;
+      # MCP SSE client for connecting to the containerized proxy
       programs.mcp.enableProxy = true;
-      programs.mcp.proxyServers.chrome-devtools = {
-        command = "${chrome-devtools-wrapper}/bin/chrome-devtools-mcp-wrapped";
-        args = [
-          "--browserUrl"
-          "https://chrome.lalala.casa"
-        ];
-      };
-      programs.mcp.enableJiraDelivery = true;
-      programs.mcp.enableJiraProjects = true;
 
       home.activation.claudePluginSync = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         echo "Syncing claude plugins (background)..."
@@ -200,7 +184,7 @@ in
           ''
             _override_plugin_mcp() {
               local cache_dir="${config.home.homeDirectory}/.claude/plugins/cache"
-              local proxy_port="${toString config.programs.mcp.proxyPort}"
+              local proxy_url="${config.programs.mcp.proxyUrl}"
 
               for dir in "$cache_dir"/outsmartly-plugins/dts/*/  "$cache_dir"/outsmartly-plugins/pts/*/ ; do
                 [ -d "$dir" ] || continue
@@ -222,7 +206,7 @@ in
               "mcpServers": {
                 "$proxy_name": {
                   "command": "mcp-sse-client",
-                  "args": ["http://127.0.0.1:$proxy_port/servers/$proxy_name/sse", "--strip-capabilities", "resources"]
+                  "args": ["$proxy_url/servers/$proxy_name/sse", "--strip-capabilities", "resources"]
                 }
               }
             }
