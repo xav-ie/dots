@@ -28,6 +28,12 @@ let
   # Find input name by matching src path against inputs (pure function, safe)
   findInputName =
     src: lib.findFirst (name: inputs.${name}.outPath or null == "${src}") null (lib.attrNames inputs);
+
+  # Wrapper for chrome-devtools-mcp with explicit node path
+  # (the npm-installed binary uses #!/usr/bin/env node which fails in systemd)
+  chrome-devtools-wrapper = pkgs.writeShellScriptBin "chrome-devtools-mcp-wrapped" ''
+    exec ${pkgs.nodejs}/bin/node ${config.home.homeDirectory}/.npm/lib/node_modules/chrome-devtools-mcp/build/src/index.js "$@"
+  '';
 in
 {
   options.programs.claude = {
@@ -171,13 +177,10 @@ in
       programs.mcp.enableNixos = true;
       programs.mcp.enableProxy = true;
       programs.mcp.proxyServers.chrome-devtools = {
-        command = "chrome-devtools-mcp";
+        command = "${chrome-devtools-wrapper}/bin/chrome-devtools-mcp-wrapped";
         args = [
-          "--executable-path=/etc/profiles/per-user/x/bin/google-chrome-stable"
-          "--userDataDir"
-          "${config.home.homeDirectory}/.config/google-chrome"
-          "--category-extensions"
-          "--ignore-default-chrome-arg=--disable-extensions"
+          "--browserUrl"
+          "https://chrome.lalala.casa"
         ];
       };
       programs.mcp.enableJiraDelivery = true;
@@ -227,18 +230,17 @@ in
         _override_plugin_mcp
       '';
 
-      home.packages =
-        [
-          claude-package
-          claude-native
-          claude-npm
-          cfg.pluginSyncPackage
-          updateMarketplacesPackage
-        ]
-        ++ lib.optionals pkgs.stdenv.isLinux [
-          pkgs.pkgs-mine.claude-yolo
-          pkgs.pkgs-mine.claude-overlay
-        ];
+      home.packages = [
+        claude-package
+        claude-native
+        claude-npm
+        cfg.pluginSyncPackage
+        updateMarketplacesPackage
+      ]
+      ++ lib.optionals pkgs.stdenv.isLinux [
+        pkgs.pkgs-mine.claude-yolo
+        pkgs.pkgs-mine.claude-overlay
+      ];
 
       home.file = {
         ".local/bin/claude".source = "${claude-package}/bin/claude";
