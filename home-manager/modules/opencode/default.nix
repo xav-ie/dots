@@ -20,13 +20,22 @@ let
     enabled = true;
   };
 
-  # Transform all MCP servers
+  # Transform all MCP servers from plugins
   pluginMcpServers = lib.mapAttrs transformMcpServer mergedMcpServers;
+
+  # Helper to define a containerized proxy MCP server
+  proxyServer = name: {
+    type = "local";
+    command = [
+      "mcp-sse-client"
+      "https://mcp.lalala.casa/servers/${name}/sse"
+    ];
+    enabled = true;
+  };
 in
 {
-  # Enable shared MCP servers (slack wrapper and mcp-nixos packages)
-  programs.mcp.enableSlackWrapper = true;
-  programs.mcp.enableNixos = true;
+  # MCP SSE client for connecting to the containerized proxy
+  programs.mcp.enableProxy = true;
 
   programs.opencode = {
     enable = true;
@@ -35,19 +44,15 @@ in
       provider = {
         anthropic = { };
       };
-      mcp = {
-        slack = {
-          type = "local";
-          command = [ "slack-mcp-server-wrapped" ];
-          enabled = true;
-        };
-        nixos = {
-          type = "local";
-          command = [ "mcp-nixos" ];
-          enabled = true;
-        };
-      }
-      // pluginMcpServers;
+      # Plugin MCP servers are merged first, then our containerized proxy
+      # definitions override any that share the same name (e.g. jira-d, jira-p)
+      mcp = pluginMcpServers // {
+        slack = proxyServer "slack";
+        nixos = proxyServer "nixos";
+        chrome-devtools = proxyServer "chrome-devtools";
+        jira-d = proxyServer "jira-d";
+        jira-p = proxyServer "jira-p";
+      };
     };
   };
 
