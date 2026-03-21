@@ -195,40 +195,42 @@ in
       # Override plugin MCP configs to use the persistent proxy for instant startup.
       # This runs after plugin sync and rewrites .mcp.json in cached plugins to use
       # mcp-sse-client → proxy instead of slow direct mcp-remote connections.
-      home.activation.claudePluginMcpOverride = lib.hm.dag.entryAfter [ "claudePluginSync" ] ''
-        _override_plugin_mcp() {
-          local cache_dir="${config.home.homeDirectory}/.claude/plugins/cache"
-          local proxy_port="${toString config.programs.mcp.proxyPort}"
+      home.activation.claudePluginMcpOverride =
+        lib.hm.dag.entryAfter [ "claudePluginSync" ] # sh
+          ''
+            _override_plugin_mcp() {
+              local cache_dir="${config.home.homeDirectory}/.claude/plugins/cache"
+              local proxy_port="${toString config.programs.mcp.proxyPort}"
 
-          for dir in "$cache_dir"/outsmartly-plugins/dts/*/  "$cache_dir"/outsmartly-plugins/pts/*/ ; do
-            [ -d "$dir" ] || continue
-            local mcp_file="$dir/.mcp.json"
-            local plugin_name=$(basename "$(dirname "$(dirname "$dir")")")
-            local server_name=$(basename "$(dirname "$dir")")
+              for dir in "$cache_dir"/outsmartly-plugins/dts/*/  "$cache_dir"/outsmartly-plugins/pts/*/ ; do
+                [ -d "$dir" ] || continue
+                local mcp_file="$dir/.mcp.json"
+                local plugin_name=$(basename "$(dirname "$(dirname "$dir")")")
+                local server_name=$(basename "$(dirname "$dir")")
 
-            # Map plugin directory name to proxy server name
-            local proxy_name=""
-            case "$server_name" in
-              dts) proxy_name="jira-d" ;;
-              pts) proxy_name="jira-p" ;;
-              *) continue ;;
-            esac
+                # Map plugin directory name to proxy server name
+                local proxy_name=""
+                case "$server_name" in
+                  dts) proxy_name="jira-d" ;;
+                  pts) proxy_name="jira-p" ;;
+                  *) continue ;;
+                esac
 
-            chmod u+w "$mcp_file" 2>/dev/null || true
-            cat > "$mcp_file" <<MCPEOF
-        {
-          "mcpServers": {
-            "$proxy_name": {
-              "command": "mcp-sse-client",
-              "args": ["http://127.0.0.1:$proxy_port/servers/$proxy_name/sse", "--strip-capabilities", "resources"]
+                chmod u+w "$mcp_file" 2>/dev/null || true
+                cat > "$mcp_file" <<MCPEOF
+            {
+              "mcpServers": {
+                "$proxy_name": {
+                  "command": "mcp-sse-client",
+                  "args": ["http://127.0.0.1:$proxy_port/servers/$proxy_name/sse", "--strip-capabilities", "resources"]
+                }
+              }
             }
-          }
-        }
-        MCPEOF
-          done
-        }
-        _override_plugin_mcp
-      '';
+            MCPEOF
+              done
+            }
+            _override_plugin_mcp
+          '';
 
       home.packages = [
         claude-package

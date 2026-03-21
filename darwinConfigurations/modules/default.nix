@@ -3,6 +3,7 @@ _: {
     ../../lib/common
     ./boot-args.nix
     ./certs.nix
+    ./claude.nix
     ./darwin-home-manager.nix
     ./defaults-optimization
     ./dnsmasq.nix
