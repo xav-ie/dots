@@ -3,17 +3,19 @@ let
   inherit (pkgs)
     lib
     stdenv
-    socat
     bubblewrap
     gopls
     rust-analyzer
+    socat
+    sox
     ;
 
   linuxBinPath = lib.makeBinPath [
-    socat
     bubblewrap
     gopls
     rust-analyzer
+    socat
+    sox
   ];
 
   # Keep .claude.json inside ~/.claude/ so all writes stay in one dir (enables bwrap sandboxing)
@@ -42,12 +44,6 @@ let
 in
 {
   inherit envVars configDirExport;
-
-  # Dependencies needed on Linux for sandboxing
-  linuxDeps = [
-    socat
-    bubblewrap
-  ];
 
   # Common wrapper arguments for wrapProgram (makeBinaryWrapper, no --run support)
   wrapperArgs = lib.concatStringsSep " " (
