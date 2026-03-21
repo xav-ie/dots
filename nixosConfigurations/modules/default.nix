@@ -5,6 +5,7 @@
     ./atop
     ./bluetooth.nix
     ./ccache.nix
+    ./chrome.nix
     ./cloudflared.nix
     ./dnsmasq.nix
     ./hardware-configuration.nix

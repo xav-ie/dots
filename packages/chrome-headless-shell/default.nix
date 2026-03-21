@@ -30,7 +30,10 @@ stdenv.mkDerivation {
     hash = "sha256-26ioTx8Ps1Vmz1jbMcLWzQO7wYTXC326Ec4D2/hFWFg=";
   };
 
-  nativeBuildInputs = [ unzip autoPatchelfHook ];
+  nativeBuildInputs = [
+    unzip
+    autoPatchelfHook
+  ];
 
   # fetchurl doesn't know how to unpack zips by default.
   unpackPhase = ''

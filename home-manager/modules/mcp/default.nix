@@ -8,34 +8,36 @@
 let
   cfg = config.programs.mcp;
 
+  cat = "${pkgs.coreutils}/bin/cat";
+
   # Slack MCP Server wrapper that injects secrets from sops
   slack-mcp-wrapper = pkgs.writeShellScriptBin "slack-mcp-server-wrapped" ''
-    export SLACK_MCP_XOXC_TOKEN="$(cat /run/secrets/slack/xoxc_token)"
-    export SLACK_MCP_XOXD_TOKEN="$(cat /run/secrets/slack/xoxd_token)"
+    export SLACK_MCP_XOXC_TOKEN="$(${cat} /run/secrets/slack/xoxc_token)"
+    export SLACK_MCP_XOXD_TOKEN="$(${cat} /run/secrets/slack/xoxd_token)"
     export SLACK_MCP_ADD_MESSAGE_TOOL=true
     exec ${pkgs.pkgs-mine.slack-mcp-server}/bin/slack-mcp-server "$@"
   '';
 
   # Jira/Confluence MCP wrappers (mcp-atlassian with API token auth)
   jira-delivery-wrapper = pkgs.writeShellScriptBin "jira-mcp-delivery" ''
-    _url="$(cat /run/secrets/jira/dts_url)"
+    _url="$(${cat} /run/secrets/jira/dts_url)"
     export JIRA_URL="$_url"
-    export JIRA_USERNAME="$(cat /run/secrets/jira/email)"
-    export JIRA_API_TOKEN="$(cat /run/secrets/jira/api_token)"
+    export JIRA_USERNAME="$(${cat} /run/secrets/jira/email)"
+    export JIRA_API_TOKEN="$(${cat} /run/secrets/jira/api_token)"
     export CONFLUENCE_URL="$_url/wiki"
-    export CONFLUENCE_USERNAME="$(cat /run/secrets/jira/email)"
-    export CONFLUENCE_API_TOKEN="$(cat /run/secrets/jira/api_token)"
+    export CONFLUENCE_USERNAME="$(${cat} /run/secrets/jira/email)"
+    export CONFLUENCE_API_TOKEN="$(${cat} /run/secrets/jira/api_token)"
     exec ${pkgs.pkgs-mine.mcp-atlassian}/bin/mcp-atlassian --transport stdio "$@"
   '';
 
   jira-projects-wrapper = pkgs.writeShellScriptBin "jira-mcp-projects" ''
-    _url="$(cat /run/secrets/jira/pts_url)"
+    _url="$(${cat} /run/secrets/jira/pts_url)"
     export JIRA_URL="$_url"
-    export JIRA_USERNAME="$(cat /run/secrets/jira/email)"
-    export JIRA_API_TOKEN="$(cat /run/secrets/jira/api_token)"
+    export JIRA_USERNAME="$(${cat} /run/secrets/jira/email)"
+    export JIRA_API_TOKEN="$(${cat} /run/secrets/jira/api_token)"
     export CONFLUENCE_URL="$_url/wiki"
-    export CONFLUENCE_USERNAME="$(cat /run/secrets/jira/email)"
-    export CONFLUENCE_API_TOKEN="$(cat /run/secrets/jira/api_token)"
+    export CONFLUENCE_USERNAME="$(${cat} /run/secrets/jira/email)"
+    export CONFLUENCE_API_TOKEN="$(${cat} /run/secrets/jira/api_token)"
     exec ${pkgs.pkgs-mine.mcp-atlassian}/bin/mcp-atlassian --transport stdio "$@"
   '';
 
