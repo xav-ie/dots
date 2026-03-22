@@ -17,6 +17,7 @@
     ./mcp-proxy
     ./n8n.nix
     ./nginx.nix
+    ./opencode.nix
     ./nix-config.nix
     ./noisetorch
     ./plover.nix
