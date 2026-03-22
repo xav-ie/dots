@@ -45,7 +45,6 @@ lock:
     nix flake lock
     nom-run ../nix-auto-follow -- -i --consolidate
     nom-run ../nix-auto-follow -- -c
-    nom-run ../nix-auto-follow -- --suggest
     direnv allow
 
 # update all inputs

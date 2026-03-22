@@ -41,14 +41,19 @@ let
 
     dependencies = with python3Packages; [
       lxml
-      types-lxml
       markdown
-      types-markdown
       pymdown-extensions
       pyyaml
-      types-pyyaml
       requests
-      types-requests
+    ];
+
+    # v0.3.5 wheel on PyPI still lists type stubs as runtime deps even
+    # though upstream has since moved them to optional dev deps
+    pythonRemoveDeps = [
+      "types-lxml"
+      "types-markdown"
+      "types-PyYAML"
+      "types-requests"
     ];
 
     pythonImportsCheck = [ "md2conf" ];

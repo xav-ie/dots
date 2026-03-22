@@ -40,10 +40,15 @@
 
     # transitive deps that are used by multiple inputs
     crane.url = "github:ipetkov/crane";
+    fenix-neverest.url = "github:soywod/fenix";
     flake-compat.url = "github:edolstra/flake-compat";
     flake-utils.url = "github:numtide/flake-utils";
     gitignore.url = "github:hercules-ci/gitignore.nix";
     nixpkgs-lib.url = "github:nix-community/nixpkgs.lib";
+    pimalaya-neverest.url = "github:pimalaya/nix/be23e0deeb014c6be5232322b892c9bee25dee77";
+    pimalaya-neverest.flake = false;
+    rust-analyzer-src.url = "github:rust-lang/rust-analyzer/nightly";
+    rust-analyzer-src.flake = false;
     rust-overlay.url = "github:oxalica/rust-overlay";
 
     # overrides
@@ -107,7 +112,11 @@
     jj.inputs.rust-overlay.follows = "rust-overlay";
     mcp-nixos.inputs.flake-parts.follows = "flake-parts";
     mcp-nixos.inputs.nixpkgs.follows = "nixpkgs";
+    fenix-neverest.inputs.nixpkgs.follows = "nixpkgs";
+    fenix-neverest.inputs.rust-analyzer-src.follows = "rust-analyzer-src";
     morlana.inputs.nixpkgs.follows = "nixpkgs";
+    neverest.inputs.fenix.follows = "fenix-neverest";
+    neverest.inputs.pimalaya.follows = "pimalaya-neverest";
     nix-auto-follow.inputs.nixpkgs.follows = "nixpkgs";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
     nuenv.inputs.nixpkgs.follows = "nixpkgs";
