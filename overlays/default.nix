@@ -62,8 +62,18 @@ in
       let
         base = inputs.atuin.packages.${final.stdenv.hostPlatform.system}.default;
       in
-      base.overrideAttrs (_old: {
+      base.overrideAttrs (old: {
         version = "18.13.3";
+        patches = (old.patches or [ ]) ++ [
+          (final.fetchpatch {
+            url = "https://github.com/atuinsh/atuin/pull/3327.patch";
+            hash = "sha256-JJr8ccR8ST1d+hoQzyUsYC69oi6M1vJYa398NakOshY=";
+          })
+          (final.fetchpatch {
+            url = "https://github.com/atuinsh/atuin/pull/3330.patch";
+            hash = "sha256-Syq79z3OTIyKtHvF8vfrP14AutORRSuWkqUKBdQKzpo=";
+          })
+        ];
       });
 
     inherit (final.pkgs-mine)

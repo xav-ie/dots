@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 {
   config = {
     programs.atuin = {
@@ -13,5 +13,18 @@
         workspaces = true;
       };
     };
+
+    # Source hex init before all other nushell config
+    programs.nushell.extraConfig = lib.mkOrder 50 ''
+      source ${
+        pkgs.runCommand "atuin-hex-nushell-config.nu"
+          {
+            nativeBuildInputs = [ pkgs.writableTmpDirAsHomeHook ];
+          }
+          ''
+            ${pkgs.atuin}/bin/atuin hex init nu >> "$out"
+          ''
+      }
+    '';
   };
 }
