@@ -1,4 +1,9 @@
-{ inputs, lib, ... }:
+{
+  inputs,
+  lib,
+  pkgs,
+  ...
+}:
 let
   claude-plugins-src = inputs.claude-marketplace-outsmartly;
 
@@ -27,7 +32,7 @@ let
   proxyServer = name: {
     type = "local";
     command = [
-      "mcp-sse-client"
+      "${pkgs.pkgs-mine.mcp-sse-client}/bin/mcp-sse-client"
       "https://mcp.lalala.casa/servers/${name}/sse"
     ];
     enabled = true;
