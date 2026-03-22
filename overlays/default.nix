@@ -57,6 +57,14 @@ in
       });
     neverest = inputs.neverest.packages.${final.stdenv.hostPlatform.system}.default;
     zjstatus = inputs.zjstatus.packages.${final.stdenv.hostPlatform.system}.default;
+    # atuin version (matches flake URL: github:atuinsh/atuin/v18.13.3)
+    atuin =
+      let
+        base = inputs.atuin.packages.${final.stdenv.hostPlatform.system}.default;
+      in
+      base.overrideAttrs (_old: {
+        version = "18.13.3";
+      });
 
     inherit (final.pkgs-mine)
       nix-output-monitor

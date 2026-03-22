@@ -2,6 +2,7 @@
   description = "Xavier's NixOS";
   inputs = {
     alacritty-theme.url = "github:alexghr/alacritty-theme.nix";
+    atuin.url = "github:atuinsh/atuin/v18.13.3";
     beads.url = "github:steveyegge/beads";
     ctpv.url = "github:xav-ie/ctpv-nix";
     flake-parts.url = "github:hercules-ci/flake-parts";
@@ -40,6 +41,7 @@
 
     # transitive deps that are used by multiple inputs
     crane.url = "github:ipetkov/crane";
+    fenix.url = "github:nix-community/fenix";
     fenix-neverest.url = "github:soywod/fenix";
     flake-compat.url = "github:edolstra/flake-compat";
     flake-utils.url = "github:numtide/flake-utils";
