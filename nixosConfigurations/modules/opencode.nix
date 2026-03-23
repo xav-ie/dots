@@ -8,6 +8,7 @@ let
   inherit (config) defaultUser;
   cfg = config.services.opencode;
   userHome = "/home/${defaultUser}";
+  cfgSecret = config.sops.placeholder;
 in
 {
   options.services.opencode = {
@@ -24,6 +25,18 @@ in
   };
 
   config = {
+    sops = {
+      secrets."opencode/password" = { };
+      templates."opencode.env" = {
+        owner = defaultUser;
+        content = ''
+          OPENCODE_SERVER_USERNAME=opencode
+          OPENCODE_SERVER_PASSWORD=${cfgSecret."opencode/password"}
+        '';
+        restartUnits = [ "opencode-serve.service" ];
+      };
+    };
+
     services.local-networking.subdomains = [ cfg.subdomain ];
 
     # Runs as the default user so it has access to ~/.config/opencode,
@@ -48,6 +61,7 @@ in
       serviceConfig = {
         User = defaultUser;
         ExecStart = "${userHome}/.npm/bin/opencode serve --hostname 127.0.0.1 --port ${toString cfg.port}";
+        EnvironmentFile = config.sops.templates."opencode.env".path;
         Restart = "on-failure";
         RestartSec = 5;
         StandardOutput = "journal";
