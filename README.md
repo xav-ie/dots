@@ -70,7 +70,7 @@ I want to configure secrets the "right way".
       because what if I want to change my manager?? I might also want to
       just completely forgo Bitwarden and just use good old encryption...
       There has to be someone else who thought of this
-- [ ] Look into these secret solutions others have worked on:
+- [x] Look into these secret solutions others have worked on:
   - [Secrets Management with SOPS-NIX by Vimjoyer](https://youtube.com/watch?v=G5f6GC7SnhU)
   - [NixOS Secrets Management by Emergent Mind](https://youtube.com/watch?v=G5f6GC7SnhU)
   - [Encrypted Secrets with NixOS](https://xeiaso.net/blog/nixos-encrypted-secrets-2021-01-20/)
@@ -107,7 +107,7 @@ This should also mean I get keyboard access!
 
 - [ ] I need to just make my Firefox configured more through Nix. A
       lot of my plugins and settings are not 100% synced properly.
-- [ ] I also need to find an RSS reader that can read/sync with a filesystem. I
+- [x] I also need to find an RSS reader that can read/sync with a filesystem. I
     am currently using FeedBro, but it does not sync between
     my desktop and laptop.
 </details>

@@ -8,6 +8,7 @@
     ./chrome.nix
     ./cloudflared.nix
     ./dnsmasq.nix
+    ./fusion.nix
     ./hardware-configuration.nix
     ./home-assistant.nix
     ./hyprland.nix
