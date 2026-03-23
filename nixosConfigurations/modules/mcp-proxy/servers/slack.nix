@@ -1,5 +1,12 @@
 { pkgs, ... }:
+let
+  dataDir = "/var/lib/slack-mcp";
+in
 {
+  systemd.tmpfiles.rules = [
+    "d ${dataDir} 0700 root root -"
+  ];
+
   services.mcp-proxy.servers.slack = {
     command = "${pkgs.pkgs-mine.slack-mcp-server}/bin/slack-mcp-server";
     packages = [ pkgs.pkgs-mine.slack-mcp-server ];
@@ -9,6 +16,12 @@
     };
     envVars = {
       SLACK_MCP_ADD_MESSAGE_TOOL = "true";
+      SLACK_MCP_MARK_TOOL = "true";
+      SLACK_MCP_CHANNELS_CACHE = "${dataDir}/channels.cache";
+      SLACK_MCP_USERS_CACHE = "${dataDir}/users.cache";
     };
+    volumes = [
+      "${dataDir}:${dataDir}"
+    ];
   };
 }

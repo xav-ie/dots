@@ -11,7 +11,6 @@ let
   fullHostName = "${subdomain}.${baseDomain}";
   containerPort = 18199;
 
-  # ── Submodule type for individual MCP servers ────────────────────────
   serverOpts = {
     options = {
       command = lib.mkOption {
@@ -46,10 +45,14 @@ let
         default = { };
         description = "Plain (non-secret) env vars for this server";
       };
+      volumes = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = "Host volume mounts for this server (e.g. '/host/path:/container/path')";
+      };
     };
   };
 
-  # ── Collect from all server submodules ───────────────────────────────
   allServers = cfg.servers;
   serverValues = lib.attrValues allServers;
 
@@ -57,15 +60,14 @@ let
   allExtraHosts = lib.unique (lib.concatMap (s: s.extraHosts) serverValues);
   allSecretEnvVars = lib.foldl (a: s: a // s.secretEnvVars) { } serverValues;
   allEnvVars = lib.foldl (a: s: a // s.envVars) { } serverValues;
+  allVolumes = lib.unique (lib.concatMap (s: s.volumes) serverValues);
 
-  # ── Combined CA bundle ──────────────────────────────────────────────
   combinedCACert = pkgs.runCommand "combined-ca-certs" { } ''
     mkdir -p $out/etc/ssl/certs
     cat ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt ${caCertFile} \
       > $out/etc/ssl/certs/ca-bundle.crt
   '';
 
-  # ── mcp-proxy server configuration JSON ─────────────────────────────
   proxyServersConfig = pkgs.writeText "mcp-proxy-servers.json" (
     builtins.toJSON {
       mcpServers = lib.mapAttrs (_: s: {
@@ -74,7 +76,6 @@ let
     }
   );
 
-  # ── OCI image ───────────────────────────────────────────────────────
   mcp-proxy-image = pkgs.dockerTools.buildLayeredImage {
     name = "mcp-proxy";
     tag = "latest";
@@ -111,7 +112,6 @@ let
     };
   };
 
-  # ── Sops env file content ───────────────────────────────────────────
   envFileContent =
     let
       secretLines = lib.mapAttrsToList (
@@ -141,18 +141,17 @@ in
   config = {
     services.local-networking.subdomains = [ subdomain ];
 
-    # ── Sops secrets → container env file ──────────────────────────────
     sops.templates."mcp-proxy-env" = {
       content = envFileContent;
       mode = "0400";
       restartUnits = [ "podman-${subdomain}.service" ];
     };
 
-    # ── Container definition ───────────────────────────────────────────
     virtualisation.oci-containers.containers.${subdomain} = {
       autoStart = true;
       imageFile = mcp-proxy-image;
       image = "mcp-proxy:latest";
+      volumes = allVolumes;
       environmentFiles = [
         config.sops.templates."mcp-proxy-env".path
       ];
