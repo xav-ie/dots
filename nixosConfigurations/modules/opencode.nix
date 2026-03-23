@@ -31,8 +31,12 @@ in
     # Binds to 127.0.0.1 only -- Traefik handles external routing.
     systemd.services.opencode-serve = {
       description = "OpenCode web server";
-      after = [ "network.target" ];
+      after = [
+        "network.target"
+        "podman-mcp.service"
+      ];
       wantedBy = [ "multi-user.target" ];
+      partOf = [ "podman-mcp.service" ];
       path = [
         pkgs.nodejs
         pkgs.pkgs-mine.mcp-sse-client
