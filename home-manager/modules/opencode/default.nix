@@ -58,6 +58,7 @@ in
         jira-d = proxyServer "jira-d";
         jira-p = proxyServer "jira-p";
       };
+      plugin = [ "@ex-machina/opencode-anthropic-auth" ];
     };
   };
 
