@@ -57,6 +57,11 @@ in
         chrome-devtools = proxyServer "chrome-devtools";
         jira-d = proxyServer "jira-d";
         jira-p = proxyServer "jira-p";
+        outsmartly = {
+          type = "remote";
+          url = "http://localhost:3000/api/mcp";
+          enabled = true;
+        };
       };
       plugin = [ "@ex-machina/opencode-anthropic-auth" ];
     };
