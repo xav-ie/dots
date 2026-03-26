@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "discord-mcp"
+version = "0.1.0"
+description = "Discord MCP Server using discord.py-self for accessibility"
+authors = [{ name = "Xavier", email = "github@xav.ie" }]
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "discord.py-self>=2.1.0",
+  "fastmcp>=0.2.0",
+  "mcp>=1.0.0",
+  "pydantic>=2.0.0",
+  "python-dotenv>=1.0.0",
+]
+
+[project.scripts]
+discord-mcp = "discord_mcp.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/discord_mcp"]
