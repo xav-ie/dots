@@ -11,5 +11,6 @@
   "chrome-devtools-mcp": "0.16.0",
   "mcp-remote": "0.1.38",
   "@shopify/cli": "3.91.1",
-  "wrangler": "4.71.0"
+  "wrangler": "4.71.0",
+  "executor": "1.2.6"
 }

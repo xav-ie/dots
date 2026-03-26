@@ -78,6 +78,11 @@ in
                   service = "opencode-service";
                   tls.certResolver = "cloudflare";
                 };
+                executor = {
+                  rule = "Host(`${config.services.executor.subdomain}.${baseDomain}`)";
+                  service = "executor-service";
+                  tls.certResolver = "cloudflare";
+                };
               }
               // lib.optionalAttrs cfg.enable {
                 ${cfg.name} = {
@@ -112,6 +117,13 @@ in
                   loadBalancer = {
                     servers = [
                       { url = "http://127.0.0.1:${toString config.services.opencode.port}"; }
+                    ];
+                  };
+                };
+                executor-service = {
+                  loadBalancer = {
+                    servers = [
+                      { url = "http://127.0.0.1:${toString config.services.executor.port}"; }
                     ];
                   };
                 };
