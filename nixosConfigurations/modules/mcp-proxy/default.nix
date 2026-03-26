@@ -128,6 +128,7 @@ in
     ./servers/chrome-devtools.nix
     ./servers/jira-delivery.nix
     ./servers/jira-projects.nix
+    ./servers/discord.nix
   ];
 
   options.services.mcp-proxy = {

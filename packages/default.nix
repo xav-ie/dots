@@ -26,6 +26,7 @@ rec {
   base-ref = pkgs.callPackage ./base-ref { inherit writeNuApplication; };
   better-branch = pkgs.callPackage ./better-branch { inherit writeNuApplication; };
   cache-command = pkgs.callPackage ./cache-command { };
+  discord-mcp = pkgs.callPackage ./discord-mcp { };
   # claude-code packages need allowUnfree, passed via pkgs-unfree
   chrome-headless-shell = pkgs.callPackage ./chrome-headless-shell { };
   claude-code = pkgs-unfree.callPackage ./claude-code { };

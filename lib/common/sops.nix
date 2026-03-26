@@ -41,6 +41,14 @@
         mode = "0400";
       };
 
+      # Discord web user token
+      # See: https://discordpy-self.readthedocs.io/en/latest/authenticating.html
+      # For how to obtain
+      secrets."discord/user_token" = {
+        owner = config.defaultUser;
+        mode = "0400";
+      };
+
       # Jira/Confluence API token auth (mcp-atlassian)
       secrets."jira/email" = {
         owner = config.defaultUser;
