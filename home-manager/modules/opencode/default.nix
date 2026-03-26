@@ -5,6 +5,8 @@
   ...
 }:
 let
+  useExecutor = true;
+
   claude-plugins-src = inputs.claude-marketplace-outsmartly;
 
   # Find all .mcp.json files in claude-plugins repo and merge their mcpServers
@@ -37,10 +39,36 @@ let
     ];
     enabled = true;
   };
+
+  mcpConfig =
+    if useExecutor then
+      {
+        executor = {
+          type = "remote";
+          url = "https://executor.lalala.casa/mcp";
+          enabled = true;
+        };
+      }
+    else
+      (
+        pluginMcpServers
+        // {
+          slack = proxyServer "slack";
+          nixos = proxyServer "nixos";
+          chrome-devtools = proxyServer "chrome-devtools";
+          jira-d = proxyServer "jira-d";
+          jira-p = proxyServer "jira-p";
+          discord = proxyServer "discord";
+          outsmartly = {
+            type = "remote";
+            url = "http://localhost:3000/api/mcp";
+            enabled = true;
+          };
+        }
+      );
 in
 {
-  # MCP SSE client for connecting to the containerized proxy
-  programs.mcp.enableProxy = true;
+  programs.mcp.enableProxy = lib.mkForce (!useExecutor);
 
   programs.opencode = {
     enable = true;
@@ -49,23 +77,34 @@ in
       provider = {
         anthropic = { };
       };
-      # Plugin MCP servers are merged first, then our containerized proxy
-      # definitions override any that share the same name (e.g. jira-d, jira-p)
-      mcp = pluginMcpServers // {
-        slack = proxyServer "slack";
-        nixos = proxyServer "nixos";
-        chrome-devtools = proxyServer "chrome-devtools";
-        jira-d = proxyServer "jira-d";
-        jira-p = proxyServer "jira-p";
-        discord = proxyServer "discord";
-        outsmartly = {
-          type = "remote";
-          url = "http://localhost:3000/api/mcp";
-          enabled = true;
-        };
-      };
+      mcp = mcpConfig;
       plugin = [ "@ex-machina/opencode-anthropic-auth" ];
     };
+    rules = # markdown
+      ''
+        # Xavier's Development Environment Rules
+        ${lib.optionalString useExecutor ''
+          ## MCP Executor Limitations
+
+          **IMPORTANT**: When using the executor MCP endpoint, be aware that:
+          - The executor MCP **only returns data** from function calls
+          - `console.log()` and other console output **does NOT work**
+          - Debug information, logs, and print statements will not be visible
+          - Only the final return value/result will be available
+          - Plan your debugging and information gathering accordingly
+        ''}
+
+        ## System Context
+        - **praesidium**: Desktop tower (x86_64-linux, NVIDIA GPU)
+        - **nox**: MacBook Air M3 (aarch64-darwin)
+        - Uses Nix flakes with flake-parts, home-manager, and nix-darwin
+
+        ## Development Guidelines
+        - Always use `#!/usr/bin/env INTERPRETER` for script shebangs (required for NixOS)
+        - Use `gh` CLI for GitHub access instead of fetch tools
+        - Custom packages go in `packages/` with entry in `packages/default.nix`
+        - Home-manager modules go in `home-manager/modules/`
+      '';
   };
 
   # Skills from claude-plugins repo (relative symlinks resolve within nix store)
