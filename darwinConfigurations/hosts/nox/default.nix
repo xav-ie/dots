@@ -90,6 +90,45 @@ in
       };
     };
 
+    # Grant TCC permissions to apps that fail to register properly
+    # (common with Electron apps and some others)
+    security.tcc = {
+      enable = true;
+      apps = [
+        {
+          bundleId = "org.whispersystems.signal-desktop";
+          services = [
+            "Camera"
+            "Microphone"
+            "ScreenCapture"
+          ];
+        }
+        {
+          bundleId = "org.mozilla.firefox";
+          services = [
+            "Camera"
+            "Microphone"
+            "ScreenCapture"
+          ];
+        }
+        {
+          bundleId = "us.zoom.xos";
+          services = [
+            "Camera"
+            "Microphone"
+            "ScreenCapture"
+          ];
+        }
+        {
+          bundleId = "com.brnbw.Tuna";
+          services = [
+            "Microphone"
+            "SpeechRecognition"
+          ];
+        }
+      ];
+    };
+
     launchd.user.agents.yabai.serviceConfig = {
       StandardOutPath = "/tmp/yabai_${config.defaultUser}.out.log";
       StandardErrorPath = "/tmp/yabai_${config.defaultUser}.err.log";

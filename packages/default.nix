@@ -76,6 +76,7 @@ rec {
   move-pip = pkgs.callPackage ./move-pip { inherit writeNuApplication; };
   sketchybar-battery = pkgs.callPackage ./sketchybar-battery { inherit writeNuApplication; };
   zerobrew = pkgs.callPackage ./zerobrew { src = zerobrew-src; };
+  tcc-grant = pkgs.callPackage ./tcc-grant { inherit writeNuApplication; };
 })
 // (optionalAttrs isLinux {
   claude-overlay = pkgs.callPackage ./claude-overlay { };
