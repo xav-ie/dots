@@ -18,5 +18,6 @@ _: {
     ./settings.nix
     ./sops.nix
     ./tailscale.nix
+    ./tcc-permissions.nix
   ];
 }
