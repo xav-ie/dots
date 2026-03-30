@@ -16,6 +16,11 @@ in
     system.activationScripts.homebrew.text =
       lib.mkForce # sh
         ''
+          # Install Homebrew if not present
+          if [ ! -f "${cfg.brewPrefix}/brew" ]; then
+            ${config.system.activationScripts.setup-homebrew.text}
+          fi
+
           # Homebrew Bundle (with caching)
           echo >&2 "Homebrew bundle..."
 
