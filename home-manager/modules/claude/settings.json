@@ -23,17 +23,17 @@
     "padding": 0
   },
   "enabledPlugins": {
-    "dts@outsmartly-plugins": true,
-    "pts@outsmartly-plugins": true,
     "mgrep@Mixedbread-Grep": false,
     "vtsls@claude-code-lsps": false,
     "vscode-langservers@claude-code-lsps": false,
-    "typescript-lsp@claude-plugins-official": true,
-    "plugin-dev@claude-plugins-official": true,
-    "hookify@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true
+    "typescript-lsp@claude-plugins-official": false,
+    "plugin-dev@claude-plugins-official": false,
+    "hookify@claude-plugins-official": false,
+    "superpowers@claude-plugins-official": false,
+    "dts@outsmartly-plugins": true,
+    "pts@outsmartly-plugins": true
   },
   "alwaysThinkingEnabled": true,
-  "skipDangerousModePermissionPrompt": true,
-  "voiceEnabled": true
+  "voiceEnabled": true,
+  "skipDangerousModePermissionPrompt": true
 }
