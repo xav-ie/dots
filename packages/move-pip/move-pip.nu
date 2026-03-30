@@ -65,3 +65,23 @@ export def "main bottom-left" []: nothing -> nothing {
   let moveY = $pipInfo.screenHeight - $pipInfo.h
   yabai -m window $"($pipInfo.id)" --move $"abs:0:($moveY)"
 }
+
+export def "main top-middle" []: nothing -> nothing {
+  let pipInfo = (get-pip-info-full)
+  let moveX = ($pipInfo.screenWidth - $pipInfo.w) / 2
+  yabai -m window $"($pipInfo.id)" --move $"abs:($moveX):0"
+}
+
+export def "main middle-middle" []: nothing -> nothing {
+  let pipInfo = (get-pip-info-full)
+  let moveX = ($pipInfo.screenWidth - $pipInfo.w) / 2
+  let moveY = ($pipInfo.screenHeight - $pipInfo.h) / 2
+  yabai -m window $"($pipInfo.id)" --move $"abs:($moveX):($moveY)"
+}
+
+export def "main bottom-middle" []: nothing -> nothing {
+  let pipInfo = (get-pip-info-full)
+  let moveX = ($pipInfo.screenWidth - $pipInfo.w) / 2
+  let moveY = $pipInfo.screenHeight - $pipInfo.h
+  yabai -m window $"($pipInfo.id)" --move $"abs:($moveX):($moveY)"
+}
