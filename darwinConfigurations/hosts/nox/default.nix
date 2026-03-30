@@ -169,6 +169,9 @@ in
             cmd + alt - 2 : ${move-pip} top-right
             cmd + alt - 3 : ${move-pip} bottom-right
             cmd + alt - 4 : ${move-pip} bottom-left
+            cmd + alt - 5 : ${move-pip} top-middle
+            cmd + alt - 6 : ${move-pip} middle-middle
+            cmd + alt - 7 : ${move-pip} bottom-middle
 
             ctrl + alt - q : yabai -m window --space prev
             ctrl + alt - w : yabai -m space --focus prev
