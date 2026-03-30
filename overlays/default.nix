@@ -28,7 +28,7 @@ in
       patches = (old.patches or [ ]) ++ [
         (final.fetchpatch {
           url = "https://github.com/metent/uair/pull/31.patch";
-          hash = "sha256-p96z3vfsOT9Rz4GDQ8P+hZTJ7QdEGRooOmidfSHT8aI=";
+          hash = "sha256-sxvuq3B/3vb46LgTg+geHaCwkDYTHUxmUT7EIpEda8o=";
         })
       ];
     });
@@ -67,11 +67,11 @@ in
         patches = (old.patches or [ ]) ++ [
           (final.fetchpatch {
             url = "https://github.com/atuinsh/atuin/pull/3327.patch";
-            hash = "sha256-JJr8ccR8ST1d+hoQzyUsYC69oi6M1vJYa398NakOshY=";
+            hash = "sha256-lj+sE9lBAYMGE6dkt0mtyIAdoRt8zHJoBif5a9P91eQ=";
           })
           (final.fetchpatch {
             url = "https://github.com/atuinsh/atuin/pull/3330.patch";
-            hash = "sha256-Syq79z3OTIyKtHvF8vfrP14AutORRSuWkqUKBdQKzpo=";
+            hash = "sha256-CUFv036TwJI/a0KUGhQZl5Rt/buqG8FrdZtNaTyyky8=";
           })
         ];
       });
