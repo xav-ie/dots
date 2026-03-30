@@ -3,6 +3,7 @@
   imports = [
     ./cliphist
     ./dconf
+    ./email
     ./firefox
     ./google-chrome
     ./gtk
