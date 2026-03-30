@@ -78,7 +78,11 @@ in
         anthropic = { };
       };
       mcp = mcpConfig;
-      plugin = [ "@ex-machina/opencode-anthropic-auth" ];
+      plugin = [
+        # "@ex-machina/opencode-anthropic-auth"
+        # has auto-token refresh with keychain support
+        "opencode-claude-auth"
+      ];
     };
     rules = # markdown
       ''
