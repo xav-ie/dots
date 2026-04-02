@@ -14,6 +14,15 @@ in
   config = {
     programs.git = {
       enable = true;
+      ignores = [
+        "**/.claude/settings.local.json"
+        ".devenv*"
+        ".direnv"
+        ".pi"
+        ".pre-commit-config.yaml"
+        "CLAUDE.md"
+        "devenv.local.nix"
+      ];
       settings = {
         user.name = "Xavier Ruiz";
         # user.email = defined below...

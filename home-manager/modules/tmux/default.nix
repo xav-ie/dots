@@ -46,6 +46,8 @@
           set-option -g escape-time 5 # ms
           set-option -g history-limit 50000
           set-option -g renumber-windows on
+          set-option -g extended-keys on
+          set-option -g extended-keys-format csi-u
 
           set -s set-clipboard on
           unbind r
