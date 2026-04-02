@@ -65,6 +65,9 @@ rec {
   update-package-lock = pkgs.callPackage ./update-package-lock { inherit writeNuApplication; };
   update-pr = pkgs.callPackage ./update-pr { inherit pr-summary writeNuApplication; };
   whisper-transcribe = pkgs.callPackage ./whisper-transcribe { inherit writeNuApplication; };
+  pi-executor = pkgs.callPackage ./pi-executor { };
+  pi-readcache = pkgs.callPackage ./pi-readcache { };
+  pi-show-diffs = pkgs.callPackage ./pi-show-diffs { };
   zellij-tab-name-update = pkgs.callPackage ./zellij-tab-name-update { };
 
 }

@@ -30,6 +30,15 @@
       orca-slicer.enable = true;
       # A user-friendly VCS
       jujutsu.enable = true;
+      # pi coding agent
+      pi = {
+        enable = true;
+        extensions = with pkgs.pkgs-mine; [
+          pi-executor
+          pi-readcache
+          pi-show-diffs
+        ];
+      };
       # automatic merge conflicts resolver
       mergiraf.enable = true;
       # f

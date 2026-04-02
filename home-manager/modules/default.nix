@@ -29,6 +29,7 @@ _: {
     ./opencode
     ./orca-slicer
     ./ov
+    ./pi
     ./pijul
     ./plover
     ./pueue
