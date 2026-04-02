@@ -6,8 +6,8 @@
     settings = {
       # Use Firefox cookies for YouTube authentication (fixes 403 errors and enables Premium)
       cookies-from-browser = "firefox";
-      # Workaround for YouTube 403 errors - use web_safari client with actual player JS
-      extractor-args = "youtube:player_client=default,web_safari;player_js_version=actual";
+      # Use web client with main player JS variant (TV variant breaks Deno/Node n-challenge solver)
+      extractor-args = "youtube:player_client=web;player_js_variant=main";
     };
   };
 }
