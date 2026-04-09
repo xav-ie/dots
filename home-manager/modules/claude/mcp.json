@@ -1,12 +1,8 @@
 {
   "mcpServers": {
-    "slack": {
-      "command": "mcp-sse-client",
-      "args": ["https://mcp.lalala.casa/servers/slack/sse"]
-    },
-    "chrome-devtools": {
-      "command": "mcp-sse-client",
-      "args": ["https://mcp.lalala.casa/servers/chrome-devtools/sse"]
+    "executor": {
+      "command": "mcp-remote",
+      "args": ["https://executor.lalala.casa/mcp"]
     }
   }
 }

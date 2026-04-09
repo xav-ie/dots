@@ -11,6 +11,7 @@ _: {
     ./direnv
     ./dotfiles-dir
     ./eza
+    ./gemini
     ./gh-dash
     ./ghostty
     ./git

@@ -25,6 +25,7 @@
       fzf.enable = true;
       # json processor
       jq.enable = true;
+      gemini.enable = true;
       # nodejs + declarative npm global package sync
       npm.enable = true;
       orca-slicer.enable = true;
