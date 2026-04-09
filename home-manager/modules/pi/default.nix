@@ -45,7 +45,7 @@ in
 
     lastChangelogVersion = lib.mkOption {
       type = lib.types.str;
-      default = "0.64.0";
+      default = "0.66.1";
       description = "Last seen changelog version (prevents changelog popup on launch)";
     };
 
