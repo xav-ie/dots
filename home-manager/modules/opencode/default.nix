@@ -81,7 +81,7 @@ in
       plugin = [
         # "@ex-machina/opencode-anthropic-auth"
         # has auto-token refresh with keychain support
-        "opencode-claude-auth"
+        "opencode-claude-auth@latest"
       ];
     };
     rules = # markdown
