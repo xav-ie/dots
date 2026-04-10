@@ -27,13 +27,13 @@ in
 
     defaultProvider = lib.mkOption {
       type = lib.types.str;
-      default = "anthropic";
+      default = "openrouter";
       description = "Default LLM provider";
     };
 
     defaultModel = lib.mkOption {
       type = lib.types.str;
-      default = "claude-opus-4-6";
+      default = "anthropic/claude-3.7-sonnet";
       description = "Default model ID";
     };
 
