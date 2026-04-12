@@ -43,7 +43,9 @@ in
       };
       casks = [
         "android-studio"
+        "blender"
         "chromium"
+        "dockdoor"
         "ente"
         "firefox"
         "ghostty"
@@ -124,6 +126,13 @@ in
           services = [
             "Microphone"
             "SpeechRecognition"
+          ];
+        }
+        {
+          bundleId = "com.typewhisper.mac";
+          services = [
+            "Microphone"
+            "Accessibility"
           ];
         }
       ];
