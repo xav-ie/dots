@@ -30,8 +30,8 @@
     "plugin-dev@claude-plugins-official": false,
     "hookify@claude-plugins-official": false,
     "superpowers@claude-plugins-official": false,
-    "dts@outsmartly-plugins": true,
-    "pts@outsmartly-plugins": true
+    "dts@outsmartly-plugins": false,
+    "pts@outsmartly-plugins": false
   },
   "alwaysThinkingEnabled": true,
   "voiceEnabled": true,
