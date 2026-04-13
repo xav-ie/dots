@@ -43,6 +43,7 @@ _: {
     ./transmission
     ./uair
     ./uv
+    ./voxtype
     # ./wezterm
     ./yt-dlp
     # ./zellij
