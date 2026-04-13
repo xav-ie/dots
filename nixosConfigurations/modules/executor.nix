@@ -48,18 +48,14 @@ in
       wantedBy = [ "multi-user.target" ];
       partOf = [ "podman-mcp.service" ];
 
-      path = [ pkgs.nodejs ];
-
       environment = {
         HOME = userHome;
-        # Executor manages its own secrets natively
-        # No additional environment variables needed
       };
 
       serviceConfig = {
         User = defaultUser;
         WorkingDirectory = executorWorkspace;
-        ExecStart = "${userHome}/.npm/bin/executor web --port ${toString cfg.port}";
+        ExecStart = "${pkgs.pkgs-mine.executor}/bin/executor web --port ${toString cfg.port}";
         Restart = "on-failure";
         RestartSec = 5;
         StandardOutput = "journal";

@@ -7,6 +7,7 @@
   # Platform flags passed from caller to avoid pkgs.stdenv access here
   isDarwin ? pkgs.stdenv.isDarwin,
   isLinux ? pkgs.stdenv.isLinux,
+  executor-src,
   generate-kaomoji,
   mcp-atlassian-src,
   nuenv,
@@ -27,6 +28,7 @@ rec {
   better-branch = pkgs.callPackage ./better-branch { inherit writeNuApplication; };
   cache-command = pkgs.callPackage ./cache-command { };
   discord-mcp = pkgs.callPackage ./discord-mcp { };
+  executor = pkgs.callPackage ./executor { inherit executor-src; };
   # claude-code packages need allowUnfree, passed via pkgs-unfree
   chrome-headless-shell = pkgs.callPackage ./chrome-headless-shell { };
   claude-code = pkgs-unfree.callPackage ./claude-code { };
