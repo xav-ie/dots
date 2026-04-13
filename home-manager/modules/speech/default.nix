@@ -4,6 +4,7 @@
 }:
 {
   imports = [
+    ./hyprwhspr
     ./voquill
     ./voxtype
   ];
@@ -11,10 +12,11 @@
   options.speech = {
     app = lib.mkOption {
       type = lib.types.enum [
+        "hyprwhspr"
         "voxtype"
         "voquill"
       ];
-      default = "voquill";
+      default = "hyprwhspr";
       description = "Which speech-to-text application to use.";
     };
 
