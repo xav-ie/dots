@@ -92,6 +92,13 @@ in
       # The update script package (in overlay)
       inherit (pkgs) claude-code-update;
 
+      # Wrap mcp-remote so it always uses a compatible Node runtime,
+      # regardless of what devshell puts on PATH.
+      mcp-remote-wrapped = pkgs.writeShellScriptBin "mcp-remote" ''
+        export PATH="${pkgs.nodejs}/bin:$PATH"
+        exec mcp-remote "$@"
+      '';
+
       marketplaceInputNames = lib.filter (x: x != null) (
         lib.mapAttrsToList (_: m: findInputName m.src) cfg.marketplaces
       );
@@ -240,8 +247,14 @@ in
           config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/marketplaces.json";
         ".claude/setup-plugins.nu".source =
           config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/setup-plugins.nu";
-        ".mcp.json".source =
-          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/mcp.json";
+        ".mcp.json".text = builtins.toJSON {
+          mcpServers = {
+            executor = {
+              command = "${mcp-remote-wrapped}/bin/mcp-remote";
+              args = [ "https://executor.lalala.casa/mcp" ];
+            };
+          };
+        };
         ".claude/agents".source =
           config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/agents";
         ".claude/CLAUDE.md".source =
