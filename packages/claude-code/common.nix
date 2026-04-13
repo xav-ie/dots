@@ -40,6 +40,8 @@ let
     ENABLE_LSP_TOOL = "true";
     ENABLE_TOOL_SEARCH = "true";
     NODE_COMPILE_CACHE = "/tmp/claude-code-compile-cache"; # ~3x faster Node.js startup (395ms→120ms)
+    SSL_CERT_DIR = "${pkgs.cacert}/etc/ssl/certs"; # silence OpenSSL "Cannot open directory" warning
+    SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
   };
 in
 {
