@@ -7,7 +7,10 @@
   config = {
     environment.systemPackages = [ pkgs.tailscale ];
 
-    services.tailscale.enable = true;
+    services.tailscale = {
+      enable = true;
+      extraSetFlags = [ "--accept-dns=false" ];
+    };
 
     networking.firewall = {
       trustedInterfaces = [ "tailscale0" ];
