@@ -7,19 +7,38 @@ def main [] {
   print "  stream          Live transcription from microphone"
   print "  list-tracks     List audio tracks in a video file"
   print ""
+  print "  list-devices    List available audio capture devices"
+  print ""
   print "Run 'whisper-transcribe <command> --help' for more info"
+}
+
+# List available audio capture devices and their IDs (for use with --capture)
+def "main list-devices" [] {
+  python3 -m sounddevice
 }
 
 # Live transcription from microphone/audio input in real-time
 def "main stream" [
   --model: string = "large-v3"                  # Whisper model (tiny, base, small, medium, large-v2, large-v3, turbo)
   --language: string = "en"                     # Language code (en, es, fr) or "auto" for detection
-  --capture: int = -1                           # Audio capture device ID (-1 = default)
-  --volume-threshold: float = 0.2               # Minimum volume to trigger transcription
+  --capture: int = -1                           # Audio capture device ID (-1 = default, see list-devices)
+  --sample-rate: int = 0                        # Input device sample rate (0 = auto-detect from device)
+  --volume-threshold: float = 0.01               # Minimum volume to trigger transcription
   --device: string = "auto"                     # Compute device: auto, cpu, or cuda
   --compute-type: string = "auto"               # Quantization: auto, float16, int8, etc.
   --word-timestamps                             # Enable word-level timestamps
 ] {
+  # Pre-download and warm up model
+  print $"Loading model ($model)..."
+  let silent = (mktemp -t whisper-XXXX --suffix .wav)
+  ffmpeg -f lavfi -i anullsrc=r=16000:cl=mono -t 0.1 -y $silent err> /dev/null
+  let result = (whisper-ctranslate2 --model $model --device $device --compute_type $compute_type --language $language $silent | complete)
+  rm -f $silent
+  if $result.exit_code != 0 {
+    print -e $result.stderr
+    exit $result.exit_code
+  }
+
   print $"Starting real-time transcription \(model: ($model), device: ($device)\)..."
   print "Press Ctrl+C to stop"
 
@@ -37,6 +56,24 @@ def "main stream" [
 
   if $capture != -1 {
     $args = ($args | append [--live_input_device $capture])
+
+    # Auto-detect sample rate from the device if not explicitly set
+    let rate = if $sample_rate == 0 {
+      let result = (python3 -c $"import sounddevice; print\(int\(sounddevice.query_devices\(($capture)\)['default_samplerate']\)\)" | complete)
+      if $result.exit_code != 0 {
+        print -e $"Error: Invalid capture device ID ($capture)"
+        print -e ""
+        print -e "Available devices:"
+        python3 -m sounddevice
+        exit 1
+      }
+      $result.stdout | str trim | into int
+    } else {
+      $sample_rate
+    }
+    $args = ($args | append [--live_input_device_sample_rate $rate])
+  } else if $sample_rate != 0 {
+    $args = ($args | append [--live_input_device_sample_rate $sample_rate])
   }
 
   if $word_timestamps {

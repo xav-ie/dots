@@ -66,7 +66,9 @@ rec {
   uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
   update-package-lock = pkgs.callPackage ./update-package-lock { inherit writeNuApplication; };
   update-pr = pkgs.callPackage ./update-pr { inherit pr-summary writeNuApplication; };
-  whisper-transcribe = pkgs.callPackage ./whisper-transcribe { inherit writeNuApplication; };
+  whisper-transcribe = pkgs.callPackage ./whisper-transcribe {
+    inherit pkgs-unfree writeNuApplication;
+  };
   pi-executor = pkgs.callPackage ./pi-executor { };
   pi-readcache = pkgs.callPackage ./pi-readcache { };
   pi-show-diffs = pkgs.callPackage ./pi-show-diffs { };
