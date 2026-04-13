@@ -76,6 +76,40 @@ in
         ];
       });
 
+    voxtype =
+      let
+        voxtype-src = final.fetchFromGitHub {
+          owner = "peteonrails";
+          repo = "voxtype";
+          tag = "v0.6.5";
+          hash = "sha256-gY5gP+F3SbCZsG/jaOHnEu291q6akg1M5c4BebRSpvI=";
+        };
+      in
+      final.pkgs-bleeding.voxtype.overrideAttrs (old: {
+        version = "0.6.5";
+        src = voxtype-src;
+        cargoBuildFeatures = [ "gpu-vulkan" ];
+        cargoCheckFeatures = [ "gpu-vulkan" ];
+        nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
+          final.shaderc
+          final.vulkan-headers
+        ];
+        buildInputs = (old.buildInputs or [ ]) ++ [
+          final.vulkan-loader
+          final.vulkan-headers
+        ];
+        cargoDeps = final.rustPlatform.fetchCargoVendor {
+          src = voxtype-src;
+          name = "voxtype-0.6.5-vendor";
+          hash = "sha256-X6TYlmHjLvsUYlxz4WbzHptKyQZHIBt8u1lLqrS/nz0=";
+        };
+        postInstall = (old.postInstall or "") + ''
+          wrapProgram $out/bin/voxtype \
+            --prefix LD_LIBRARY_PATH : "${final.vulkan-loader}/lib" \
+            --set VK_ICD_FILENAMES "/run/opengl-driver/share/vulkan/icd.d/nvidia_icd.x86_64.json"
+        '';
+      });
+
     inherit (final.pkgs-mine)
       nix-output-monitor
       claude-code
