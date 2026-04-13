@@ -37,13 +37,13 @@ _: {
     ./ralph
     ./scheduled-services
     ./scripts
+    ./speech
     ./ssh
     ./starship
     ./tmux
     ./transmission
     ./uair
     ./uv
-    ./voxtype
     # ./wezterm
     ./yt-dlp
     # ./zellij

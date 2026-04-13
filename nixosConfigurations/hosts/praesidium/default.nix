@@ -142,6 +142,7 @@ in
           "networkmanager"
           "video"
           "wheel"
+          "ydotool"
         ];
         # packages = with pkgs; [];
         useDefaultShell = true;
@@ -232,6 +233,7 @@ in
         clean.extraArgs = "--keep-since 7d --keep 20";
         flake = "/home/${config.defaultUser}/Projects/dots";
       };
+      ydotool.enable = true;
       nix-ld = {
         enable = true;
         package = pkgs.nix-ld;
