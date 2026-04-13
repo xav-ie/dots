@@ -12,6 +12,5 @@
   "mcp-remote": "0.1.38",
   "@shopify/cli": "3.91.1",
   "wrangler": "4.71.0",
-  "executor": "1.2.6",
   "@mariozechner/pi-coding-agent": "0.64.0"
 }

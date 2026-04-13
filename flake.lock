@@ -239,6 +239,23 @@
         "type": "github"
       }
     },
+    "executor-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1775870261,
+        "narHash": "sha256-Cq5LMTPxEwa8SrZE/dvkil0XXWVY1xUQiqPAheXTZLA=",
+        "owner": "RhysSullivan",
+        "repo": "executor",
+        "rev": "b77887f9b0791ad6348c77cd8b4f7ec9b8b66c51",
+        "type": "github"
+      },
+      "original": {
+        "owner": "RhysSullivan",
+        "ref": "v1.4.5",
+        "repo": "executor",
+        "type": "github"
+      }
+    },
     "fenix": {
       "inputs": {
         "nixpkgs": [
@@ -1595,6 +1612,7 @@
         "claude-marketplace-outsmartly": "claude-marketplace-outsmartly",
         "crane": "crane",
         "ctpv": "ctpv",
+        "executor-src": "executor-src",
         "fenix": "fenix_2",
         "fenix-neverest": "fenix-neverest",
         "flake-compat": "flake-compat_2",

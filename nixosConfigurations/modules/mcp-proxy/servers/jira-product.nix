@@ -1,6 +1,6 @@
 { pkgs, ... }:
 let
-  wrapper = pkgs.writeShellScriptBin "jira-mcp-projects" ''
+  wrapper = pkgs.writeShellScriptBin "jira-mcp-product" ''
     export JIRA_URL="$JIRA_PTS_URL"
     export JIRA_USERNAME="$JIRA_EMAIL"
     export CONFLUENCE_URL="$JIRA_PTS_URL/wiki"
@@ -11,7 +11,7 @@ let
 in
 {
   services.mcp-proxy.servers.jira-p = {
-    command = "${wrapper}/bin/jira-mcp-projects";
+    command = "${wrapper}/bin/jira-mcp-product";
     packages = [
       wrapper
       pkgs.pkgs-mine.mcp-atlassian

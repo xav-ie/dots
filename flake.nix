@@ -92,6 +92,8 @@
     mcp-atlassian-src.flake = false;
     slack-mcp-server.url = "github:korotovsky/slack-mcp-server/v1.2.2";
     slack-mcp-server.flake = false;
+    executor-src.url = "github:RhysSullivan/executor/v1.4.5";
+    executor-src.flake = false;
     zerobrew-src.url = "github:lucasgelfond/zerobrew";
     zerobrew-src.flake = false;
 
@@ -228,7 +230,12 @@
               config.allowUnfree = true;
             };
             nuenv = inputs.nuenv.lib;
-            inherit (inputs) mcp-atlassian-src simulstreaming-src zerobrew-src;
+            inherit (inputs)
+              executor-src
+              mcp-atlassian-src
+              simulstreaming-src
+              zerobrew-src
+              ;
             slack-mcp-server-src = inputs.slack-mcp-server;
           };
 

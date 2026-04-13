@@ -127,7 +127,7 @@ in
     ./servers/nixos.nix
     ./servers/chrome-devtools.nix
     ./servers/jira-delivery.nix
-    ./servers/jira-projects.nix
+    ./servers/jira-product.nix
     ./servers/discord.nix
   ];
 
