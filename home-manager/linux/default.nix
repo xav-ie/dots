@@ -11,7 +11,9 @@
     ./nemo
     ./obs
     ./orca-slicer.nix
+    ./qt
     ./rofi
+    ./screencast-dnd
     ./sioyek
     ./swaynotificationcenter
     ./systemd

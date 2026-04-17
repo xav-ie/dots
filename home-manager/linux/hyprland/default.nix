@@ -395,6 +395,11 @@ in
 
             # zenity
             "match:title zenity, pin on"
+
+            # xdph screenshare picker (hyprland-share-picker)
+            "match:title Select what to share, float on"
+            "match:title Select what to share, size 500 700"
+            "match:title Select what to share, center on"
           ];
 
           # See https://wiki.hyprland.org/Configuring/Monitors/
