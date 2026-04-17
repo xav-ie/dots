@@ -50,6 +50,18 @@ let
       cli.js
   '';
 
+  # Guard the permission-prompt useEffect against a missing getAppState.
+  # Regression in 2.1.111–2.1.113: when a teammate (agent-teams) triggers a
+  # permission prompt, the teammate's toolUseContext arrives at the lead's UI
+  # without getAppState, crashing the render with:
+  #   "q.toolUseContext.getAppState is not a function"
+  # Upstream issue: https://github.com/anthropics/claude-code/issues/50051
+  # The value is only used for analytics (tengu_tool_use_show_permission_request),
+  # so optional-chaining it is safe — worst case the event reports mode=undefined.
+  fixGetAppStatePatch = ''
+    sed -i 's|toolUseContext\.getAppState()\.toolPermissionContext\.mode|toolUseContext.getAppState?.()?.toolPermissionContext?.mode|g' cli.js
+  '';
+
   # Stub out the npm-view update checker that polls every 30s.
   # The setInterval runs even with CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC set.
   # Replace "npm" with "/bin/true" in the two c4("npm",["view",...) calls so
@@ -111,6 +123,9 @@ buildNpmPackage {
     # Stub out npm view update check — runs every 30s despite
     # CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC being set
     ${disableNpmViewPatch}
+
+    # Fix agent-teams permission-prompt crash (2.1.111–2.1.113 regression)
+    ${fixGetAppStatePatch}
 
   '';
 
