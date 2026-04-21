@@ -85,16 +85,12 @@
       # The state version is required and should stay at the version you
       # originally installed.
       stateVersion = "23.11";
+      # NVIDIA/Wayland env vars live in the hyprland module — they're only
+      # relevant under that graphical session.
       sessionVariables = {
-        # va-api driver to use 'nvidia', '', ...
-        GBM_BACKEND = "nvidia-drm";
-        LIBVA_DRIVER_NAME = "nvidia";
         NH_ELEVATION_PROGRAM = "/run/wrappers/bin/sudo-askpass";
-        NIXOS_OZONE_WL = "1";
         SUDO_ASKPASS = "${pkgs.pkgs-mine.zenity-askpass}/bin/zenity-askpass";
-        WLR_NO_HARDWARE_CURSORS = "1";
         XDG_CONFIG_HOME = "/home/x/.config";
-        __GLX_VENDOR_LIBRARY_NAME = "nvidia";
       };
     };
     programs = {
