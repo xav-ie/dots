@@ -53,12 +53,23 @@ in
       # implementation has expected support
       xdg.portal =
         let
-          inherit (inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}) xdg-desktop-portal-hyprland;
+          inherit (inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system})
+            hyprland
+            xdg-desktop-portal-hyprland
+            ;
         in
         {
           enable = true;
           extraPortals = [
             xdg-desktop-portal-hyprland
+            pkgs.xdg-desktop-portal-gnome
+          ];
+          # Our xdg.portal.config below writes to /etc/xdg/xdg-desktop-portal/,
+          # which per portals.conf(5) takes precedence over configs shipped by
+          # configPackages in $XDG_DATA_DIRS. So including the shipped configs
+          # here is safe and keeps introspection tools (door-knocker) accurate.
+          configPackages = [
+            hyprland
             pkgs.xdg-desktop-portal-gnome
           ];
           config =
@@ -76,12 +87,6 @@ in
               inherit common;
               hyprland = common;
             };
-          # NOTE: configPackages is NOT set here because Hyprland's built-in
-          # config overrides our explicit config above. Hyprland's config says
-          # "default=hyprland;gtk" which doesn't properly route the Settings
-          # interface to GNOME portal. By omitting configPackages, NixOS uses
-          # our config which properly routes Settings to gnome.
-          # See: GHOSTTY_DARK_MODE_RESEARCH.md
         };
     })
   ];
