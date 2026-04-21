@@ -37,7 +37,6 @@ _: {
     ./ralph
     ./scheduled-services
     ./scripts
-    ./speech
     ./ssh
     ./starship
     ./tmux
