@@ -94,6 +94,8 @@
     slack-mcp-server.flake = false;
     executor-src.url = "github:RhysSullivan/executor/v1.4.5";
     executor-src.flake = false;
+    bun-demincer-src.url = "github:xav-ie/bun-demincer/fix/linux-dataStart-byte-count";
+    bun-demincer-src.flake = false;
     zerobrew-src.url = "github:lucasgelfond/zerobrew";
     zerobrew-src.flake = false;
 
@@ -231,6 +233,7 @@
             };
             nuenv = inputs.nuenv.lib;
             inherit (inputs)
+              bun-demincer-src
               executor-src
               mcp-atlassian-src
               simulstreaming-src

@@ -7,6 +7,7 @@
   # Platform flags passed from caller to avoid pkgs.stdenv access here
   isDarwin ? pkgs.stdenv.isDarwin,
   isLinux ? pkgs.stdenv.isLinux,
+  bun-demincer-src,
   executor-src,
   generate-kaomoji,
   mcp-atlassian-src,
@@ -32,7 +33,12 @@ rec {
   # claude-code packages need allowUnfree, passed via pkgs-unfree
   chrome-headless-shell = pkgs.callPackage ./chrome-headless-shell { };
   claude-code = pkgs-unfree.callPackage ./claude-code { };
-  claude-code-npm = pkgs-unfree.callPackage ./claude-code/npm.nix { };
+  claude-code-extract = pkgs-unfree.callPackage ./claude-code/extract.nix {
+    inherit bun-demincer-src;
+  };
+  claude-code-npm = pkgs-unfree.callPackage ./claude-code/npm.nix {
+    inherit bun-demincer-src;
+  };
   claude-code-update = pkgs-unfree.callPackage ./claude-code/update.nix {
     inherit writeNuApplication;
   };
