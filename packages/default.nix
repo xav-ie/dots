@@ -19,6 +19,7 @@
 let
   optionalAttrs = bool: attrSet: if bool then attrSet else { };
   writeNuApplication = nuenv.mkNushellScriptApplication pkgs.nushell pkgs.writeTextFile pkgs.lib;
+
   notify = pkgs.callPackage ./notify { inherit generate-kaomoji writeNuApplication; };
 in
 rec {
@@ -34,10 +35,10 @@ rec {
   chrome-headless-shell = pkgs.callPackage ./chrome-headless-shell { };
   claude-code = pkgs-unfree.callPackage ./claude-code { };
   claude-code-extract = pkgs-unfree.callPackage ./claude-code/extract.nix {
-    inherit bun-demincer-src;
+    inherit bun-demincer-src nodejs_25;
   };
   claude-code-npm = pkgs-unfree.callPackage ./claude-code/npm.nix {
-    inherit bun-demincer-src;
+    inherit bun-demincer-src nodejs_25;
   };
   claude-code-update = pkgs-unfree.callPackage ./claude-code/update.nix {
     inherit writeNuApplication;
@@ -54,6 +55,7 @@ rec {
   mcp-sse-client = pkgs.callPackage ./mcp-sse-client { };
   log-pr = pkgs.callPackage ./log-pr { inherit writeNuApplication; };
   nix-flamegraph = pkgs.callPackage ./nix-flamegraph { inherit writeNuApplication; };
+  nodejs_25 = pkgs.callPackage ./nodejs_25 { };
   nix-output-monitor = pkgs.callPackage ./nix-output-monitor { };
   nix-repl = pkgs.callPackage ./nix-repl { inherit writeNuApplication; };
   nom-run = pkgs.callPackage ./nom-run { inherit nix-output-monitor writeNuApplication; };
