@@ -1,33 +1,38 @@
 {
   pkgs,
   lib,
-  buildNpmPackage,
+  stdenv,
   fetchurl,
-  writeText,
+  autoPatchelfHook,
   makeBinaryWrapper,
   nodejs_25,
+  nushell,
+  bun-demincer-src,
 }:
 let
   common = import ./common.nix { inherit pkgs; };
 
-  # Read version and hashes from sources.json to stay in sync with native package
   sourcesData = builtins.fromJSON (builtins.readFile ./sources.json);
-  inherit (sourcesData.npm)
-    version
-    hash
-    npmDepsHash
-    packageLockJson
-    ;
+  inherit (sourcesData.npm) version sources;
 
-  # Write the package-lock.json to a file
-  packageLockFile = writeText "package-lock.json" packageLockJson;
+  sourceInfo =
+    sources.${stdenv.hostPlatform.system}
+      or (throw "Unsupported system: ${stdenv.hostPlatform.system}");
+
+  # npm publishes one tarball per platform; the native binary is at `package/claude`.
+  src = fetchurl {
+    url = "https://registry.npmjs.org/@anthropic-ai/claude-code-${sourceInfo.platform}/-/claude-code-${sourceInfo.platform}-${version}.tgz";
+    inherit (sourceInfo) hash;
+  };
+
+  splicer = ./splice.nu;
 
   # How to fix agent tmux panes when default-shell is non-POSIX (e.g. nushell)
   #   "split-window" - patch split-window to use a POSIX shell wrapper (fast, cleanest)
   #   "nushell"      - patch shell syntax for nushell compatibility (fragile)
   patchMethod = "split-window";
 
-  # "split-window": force agent panes to use a POSIX shell with env vars pre-set
+  # Force agent panes to use a POSIX shell with env vars pre-set.
   splitWindowPatch = ''
     sed -i 's|"split-window",\([^]]*\)"#{pane_id}"\]|"split-window",\1"#{pane_id}","${common.spawnWrapper}"]|g' cli.js
   '';
@@ -40,8 +45,8 @@ let
     sed -i 's|let \([^=]\+\)=await(\([^?]\+\)?\([^:]\+\):\([^)]\+\))(\["send-keys","-t",\([^,]\+\),\([^,]\+\),"Enter"\])|var _p="/tmp/cc-"+\5.replace(/%/g,"")+".sh";(await import("fs")).writeFileSync(_p,\6+"; rm "+_p);let \1=await(\2?\3:\4)(["send-keys","-t",\5,". "+_p,"Enter"])|g' cli.js
   '';
 
-  # Disable pane border cosmetics (saves 6 tmux round-trips per spawn)
-  # Method names are class properties so they survive minification
+  # Disable pane border cosmetics (saves 6 tmux round-trips per spawn).
+  # Method names are class properties so they survive minification.
   disablePaneBordersPatch = ''
     sed -i \
       -e 's|async setPaneBorderColor([^{]*{|&return;|g' \
@@ -50,95 +55,78 @@ let
       cli.js
   '';
 
-  # Guard the permission-prompt useEffect against a missing getAppState.
-  # Regression in 2.1.111–2.1.113: when a teammate (agent-teams) triggers a
-  # permission prompt, the teammate's toolUseContext arrives at the lead's UI
-  # without getAppState, crashing the render with:
-  #   "q.toolUseContext.getAppState is not a function"
-  # Upstream issue: https://github.com/anthropics/claude-code/issues/50051
-  # The value is only used for analytics (tengu_tool_use_show_permission_request),
-  # so optional-chaining it is safe — worst case the event reports mode=undefined.
-  fixGetAppStatePatch = ''
-    sed -i 's|toolUseContext\.getAppState()\.toolPermissionContext\.mode|toolUseContext.getAppState?.()?.toolPermissionContext?.mode|g' cli.js
-  '';
-
   # Stub out the npm-view update checker that polls every 30s.
-  # The setInterval runs even with CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC set.
-  # Replace "npm" with "/bin/true" in the two c4("npm",["view",...) calls so
-  # /bin/true runs instead (instant exit 0, empty stdout, no node/npm overhead).
-  # The callers handle empty/failed responses gracefully (return null).
+  # Replace "npm" with "/bin/true" so it exits 0 immediately with empty stdout.
   disableNpmViewPatch = ''
     sed -i 's|"npm",\["view"|"/bin/true",["view"|g' cli.js
   '';
 
-  # Eliminate the 200ms post-split-window sleep (no longer needed with paste-buffer)
-  # Only matches parameterless functions: function <name>(){return new Promise(...setTimeout...)}
-  # This avoids clobbering the general-purpose sleep(ms) utility
-  disableSleepPatch = ''
-    sed -i 's|function \([^(]*\)(){return new Promise((\([^)]\+\))=>setTimeout(\2,\([^)]\+\)))}|function \1(){return Promise.resolve()}|g' cli.js
-  '';
-
-  # "nushell": patch POSIX syntax that nushell doesn't handle
+  # "nushell": patch POSIX syntax that nushell doesn't handle.
   nushellPatch = ''
-    # Replace && with ; on agent spawn lines (identified by CLAUDECODE=1)
     sed -i '/CLAUDECODE=1/s| && | ; |g' cli.js
-    # Fix shell-quote escaping @ as \@ (nushell doesn't recognize \@)
     sed -i 's|;<=>?@\[|;<=>?\[|g' cli.js
   '';
+
+  # Patches that became obsolete with claude-code 2.1.114:
+  #   #!/bin/bash shebang — upstream removed the Chrome native-host wrapper
+  #   disableSleepPatch — upstream inlined/restructured the sleep helper
+  #   fixGetAppStatePatch — upstream merged the optional-chain fix
 in
-buildNpmPackage {
+stdenv.mkDerivation {
   pname = "claude-code";
-  inherit version;
+  inherit version src;
 
-  # Must match nodejs version used to build the V8 snapshot in common.nix
-  nodejs = nodejs_25;
+  # The npm tarball unpacks to ./package/claude — let stdenv handle unpacking.
+  dontBuild = true;
+  dontStrip = true;
 
-  src = fetchurl {
-    url = "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-${version}.tgz";
-    inherit hash;
-  };
+  nativeBuildInputs = [
+    makeBinaryWrapper
+    nodejs_25
+    nushell
+  ]
+  ++ lib.optionals stdenv.isLinux [ autoPatchelfHook ];
 
-  inherit npmDepsHash;
+  installPhase = ''
+    runHook preInstall
 
-  postPatch = ''
-    cp ${packageLockFile} package-lock.json
+    # Stdenv unpacked the tarball to ./package/. Copy out the native binary.
+    cp claude claude-original
+    chmod +w claude-original
 
-    # Remove the prepare script that blocks installation
-    sed -i '/"prepare":/d' package.json
+    # 1. Extract cli.js + native modules from the Bun-compiled binary.
+    mkdir extracted
+    node ${bun-demincer-src}/src/extract.mjs claude-original extracted
+    cp extracted/src/entrypoints/cli.js cli.js
+    chmod +w cli.js
 
-    # Fix non-portable shebang for NixOS (Chrome native host wrapper)
-    # Claude Code hardcodes #!/bin/bash which doesn't exist on NixOS
-    sed -i 's|#!/bin/bash|#!/usr/bin/env bash|g' cli.js
-
-    # Fix agent tmux panes for non-POSIX default-shell
+    # 2. Apply patches in-place.
     ${if patchMethod == "split-window" then splitWindowPatch else nushellPatch}
-
-    # Speed up agent spawn by pasting commands instead of typing them
     ${sendKeysPatch}
-
-    # Skip pane border decoration and post-creation sleep
     ${disablePaneBordersPatch}
-    ${disableSleepPatch}
-
-    # Stub out npm view update check — runs every 30s despite
-    # CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC being set
     ${disableNpmViewPatch}
 
-    # Fix agent-teams permission-prompt crash (2.1.111–2.1.113 regression)
-    ${fixGetAppStatePatch}
+    # 3. Splice patched cli.js back into the Bun binary (drops the JSC
+    #    bytecode cache — Bun re-parses at startup, ~100 ms slower).
+    mkdir -p "$out/bin"
+    nu ${splicer} claude-original cli.js "$out/bin/.claude-wrapped"
+    chmod +x "$out/bin/.claude-wrapped"
 
+    # 4. Wrap with env vars and PATH (shared with the native package).
+    wrapProgram "$out/bin/.claude-wrapped" \
+      ${common.wrapperArgs} \
+      --argv0 claude
+    mv "$out/bin/.claude-wrapped" "$out/bin/claude"
+
+    runHook postInstall
   '';
 
-  dontNpmBuild = true;
-
-  nativeBuildInputs = [ makeBinaryWrapper ];
-
-  postFixup = ''
-    wrapProgram $out/bin/claude \
-      ${common.wrapperArgs}
-  '';
-
-  meta = common.meta "Claude Code - Anthropic's AI-powered coding assistant CLI (NPM version)" // {
-    platforms = lib.platforms.all;
+  meta = common.meta "Claude Code - patched Bun binary (tmux spawn perf, no auto-update polling)" // {
+    platforms = [
+      "x86_64-linux"
+      "aarch64-linux"
+      "x86_64-darwin"
+      "aarch64-darwin"
+    ];
   };
 }

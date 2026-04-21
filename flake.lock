@@ -137,6 +137,23 @@
         "type": "github"
       }
     },
+    "bun-demincer-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1776725876,
+        "narHash": "sha256-iJHKoFTVGElp+TM+QaLwmTfCvxQgNxA3f26fEDnR8I0=",
+        "owner": "xav-ie",
+        "repo": "bun-demincer",
+        "rev": "b5fd9d58f5ba2d8e2fd126f8039a82bb8addb817",
+        "type": "github"
+      },
+      "original": {
+        "owner": "xav-ie",
+        "ref": "fix/linux-dataStart-byte-count",
+        "repo": "bun-demincer",
+        "type": "github"
+      }
+    },
     "claude-marketplace-lsps": {
       "flake": false,
       "locked": {
@@ -1606,6 +1623,7 @@
         "alacritty-theme-themes": "alacritty-theme-themes",
         "atuin": "atuin",
         "beads": "beads",
+        "bun-demincer-src": "bun-demincer-src",
         "claude-marketplace-lsps": "claude-marketplace-lsps",
         "claude-marketplace-mgrep": "claude-marketplace-mgrep",
         "claude-marketplace-official": "claude-marketplace-official",

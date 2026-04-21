@@ -51,89 +51,44 @@ def fetch_native [
   }
 }
 
-# Fetch and compute hashes for npm package
+# Fetch and compute per-platform tarball hashes for the npm registry.
+# Since @anthropic-ai/claude-code 2.1.113, each platform ships its own tarball
+# containing a prebuilt Bun binary at `package/claude` (same binary as GCS).
 def fetch_npm [
   existing?: record
   --unchanged = false
 ] {
-  # Get latest npm version
   print "  [NPM] Fetching latest version..."
   let npm_version = (npm view @anthropic-ai/claude-code version | str trim)
 
   if $unchanged {
-    print "  [NPM] Reusing hashes (version unchanged)"
-    return {
-      version: $existing.npm.version
-      hash: $existing.npm.hash
-      npmDepsHash: $existing.npm.npmDepsHash
-      packageLockJson: $existing.npm.packageLockJson
-    }
-  }
-
-  print $"  [NPM] Computing hashes for version ($npm_version)..."
-  let npm_url = $"https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-($npm_version).tgz"
-  print $"  [NPM] Downloading from ($npm_url)..."
-
-  let npm_tmp = (mktemp -t claude-npm-XXXX --suffix .tgz)
-  http get $npm_url | save -f $npm_tmp
-  let npm_hash = (nix hash file $npm_tmp --sri | str trim)
-  print $"  [NPM] Package hash: ($npm_hash)"
-
-  print "  [NPM] Computing npmDepsHash..."
-  let extract_dir = (mktemp -d -t claude-extract-XXXX)
-  tar -xzf $npm_tmp -C $extract_dir
-  let package_dir = (ls $extract_dir | get name | first)
-
-  # Check if package-lock.json exists
-  let lock_file = $"($package_dir)/package-lock.json"
-
-  # Generate or use existing package-lock.json
-  if (not ($lock_file | path exists)) {
-    print $"  [NPM] No package-lock.json found, generating from package.json..."
-    let original_dir = $env.PWD
-    cd $package_dir
-    npm install --package-lock-only --ignore-scripts | complete
-    cd $original_dir
-  }
-
-  if (not ($lock_file | path exists)) {
-    print $"  [NPM] Error: Failed to generate package-lock.json"
-    rm -rf $extract_dir
-    rm $npm_tmp
+    print "  [NPM] Reusing platform hashes (version unchanged)"
     return {
       version: $npm_version
-      hash: $npm_hash
-      npmDepsHash: ""
-      packageLockJson: ""
+      sources: $existing.npm.sources
     }
   }
 
-  print $"  [NPM] Running prefetch-npm-deps on ($lock_file)"
-  let prefetch_result = (do {
-    nix run nixpkgs#prefetch-npm-deps $lock_file
-  } | complete)
-
-  let npm_deps_hash = if ($prefetch_result.exit_code == 0) {
-    $prefetch_result.stdout | str trim
-  } else {
-    print $"  [NPM] Error running prefetch-npm-deps: ($prefetch_result.stderr)"
-    ""
-  }
-
-  print $"  [NPM] npmDepsHash: ($npm_deps_hash)"
-
-  # Read package-lock.json as raw text to preserve exact formatting
-  print $"  [NPM] Reading package-lock.json..."
-  let lock_content = (open --raw $lock_file)
-
-  rm -rf $extract_dir
-  rm $npm_tmp
+  print $"  [NPM] Computing per-platform tarball hashes for ($npm_version)..."
+  let sources = ($PLATFORMS | par-each { |p|
+    let url = $"https://registry.npmjs.org/@anthropic-ai/claude-code-($p.platform)/-/claude-code-($p.platform)-($npm_version).tgz"
+    print $"  [NPM] Computing hash for ($p.platform)..."
+    let tmp_file = (mktemp -t claude-npm-XXXX --suffix .tgz)
+    http get $url | save -f $tmp_file
+    let hash = (nix hash file $tmp_file --sri | str trim)
+    rm $tmp_file
+    {
+      key: $p.nix
+      value: {
+        platform: $p.platform
+        hash: $hash
+      }
+    }
+  } | transpose -r -d)
 
   {
     version: $npm_version
-    hash: $npm_hash
-    npmDepsHash: $npm_deps_hash
-    packageLockJson: $lock_content
+    sources: $sources
   }
 }
 
