@@ -14,6 +14,7 @@
     ./qt
     ./rofi
     ./screencast-dnd
+    ./speech
     ./sioyek
     ./swaynotificationcenter
     ./systemd
