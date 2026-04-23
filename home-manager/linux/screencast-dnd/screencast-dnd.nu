@@ -1,24 +1,8 @@
 #!/usr/bin/env nu
 
-# Detect any active xdg-desktop-portal-hyprland screencast PipeWire node.
-# xdph creates streams with media.class "Video/Source" and names them
-# "xdph-streaming-<rand>" — see xdph src/portals/Screencopy.cpp. On NixOS the
-# node.name gets hijacked by the wrapped binary's process name, but the
-# intended name lands in media.name, so we filter on that.
-def is-casting []: nothing -> bool {
-  pw-dump
-  | from json
-  | where {|n| ($n.type? | default "") == "PipeWire:Interface:Node" }
-  | any {|n|
-    let class = ($n.info?.props?."media.class"? | default "")
-    let media_name = ($n.info?.props?."media.name"? | default "")
-    $class == "Video/Source" and ($media_name | str starts-with "xdph-streaming-")
-  }
-}
-
-def safe-casting [] {
-  try { is-casting } catch { false }
-}
+# Detect xdg-desktop-portal-hyprland screencasts by parsing pw-mon's event
+# stream directly. xdph creates streams with media.class "Video/Source" and
+# media.name "xdph-streaming-<rand>" — see xdph src/portals/Screencopy.cpp.
 
 def dnd-get []: nothing -> bool {
   let result = try { ^swaync-client --get-dnd --skip-wait | str trim } catch { "" }
@@ -31,26 +15,62 @@ def dnd-set [on: bool] {
 }
 
 def main [] {
-  mut casting = (safe-casting)
-  # Remember the user's DND preference so we can restore it after casting.
-  # On startup-during-cast we can't know the pre-cast value, so we just
-  # use whatever DND is currently set to as our best guess.
+  mut active: list<int> = []
   mut pre_cast_dnd = (dnd-get)
-  if $casting { dnd-set true }
 
-  # pw-mon streams PipeWire events; --print-separator emits a blank line
-  # after each, so we re-query only on actual changes — zero polling.
-  for line in (pw-mon --no-colors --hide-props --hide-params --print-separator | lines) {
-    if $line != "" { continue }
-    let current = (safe-casting)
-    if $current == $casting { continue }
+  # Per-block parse state — reset on each blank-line separator.
+  mut action = ""
+  mut id = -1
+  mut is_node = false
+  mut is_video_source = false
+  mut is_xdph_stream = false
 
-    if $current {
-      $pre_cast_dnd = (dnd-get)
-      dnd-set true
-    } else {
-      dnd-set $pre_cast_dnd
+  for line in (pw-mon --no-colors --hide-params --print-separator | lines) {
+    if $line == "" {
+      let was_casting = (not ($active | is-empty))
+
+      if ($action == "added" or $action == "changed") and $is_node and $is_video_source and $is_xdph_stream and $id >= 0 {
+        if not ($id in $active) {
+          $active = ($active | append $id)
+        }
+      } else if $action == "removed" and $id >= 0 and ($id in $active) {
+        $active = ($active | where {|x| $x != $id })
+      }
+
+      let now_casting = (not ($active | is-empty))
+      if $now_casting and not $was_casting {
+        $pre_cast_dnd = (dnd-get)
+        dnd-set true
+      } else if not $now_casting and $was_casting {
+        dnd-set $pre_cast_dnd
+      }
+
+      $action = ""
+      $id = -1
+      $is_node = false
+      $is_video_source = false
+      $is_xdph_stream = false
+      continue
     }
-    $casting = $current
+
+    let t = ($line | str trim)
+    if $t == "added:" {
+      $action = "added"
+    } else if $t == "removed:" {
+      $action = "removed"
+    } else if $t == "changed:" {
+      $action = "changed"
+    } else if ($t | str starts-with "id:") {
+      let parts = ($t | split row " " | where {|p| $p != "" })
+      if ($parts | length) >= 2 {
+        $id = (try { $parts | get 1 | into int } catch { -1 })
+      }
+    } else if ($t | str starts-with "type:") {
+      $is_node = ($t | str contains "PipeWire:Interface:Node")
+    } else if ($t | str starts-with "media.class") {
+      $is_video_source = ($t | str contains '"Video/Source"')
+    } else if ($t | str starts-with "media.name") {
+      $is_xdph_stream = ($t | str contains '"xdph-streaming-')
+    }
   }
 }
