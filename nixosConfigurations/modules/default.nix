@@ -13,7 +13,7 @@
     ./hardware-configuration.nix
     ./home-assistant.nix
     ./hyprland.nix
-    ./jellyfin.nix
+    # ./jellyfin.nix
     ./lightrag.nix
     ./linux-home-manager.nix
     ./mcp-proxy
