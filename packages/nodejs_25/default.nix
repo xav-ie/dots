@@ -19,8 +19,9 @@ let
       hash = "sha256-ufapfoHImp30VSa0+G2v3MrxK4IpX3vzW9srD15odE8=";
     };
   };
-  info = platformMap.${stdenv.hostPlatform.system}
-    or (throw "nodejs_25: unsupported system ${stdenv.hostPlatform.system}");
+  info =
+    platformMap.${stdenv.hostPlatform.system}
+      or (throw "nodejs_25: unsupported system ${stdenv.hostPlatform.system}");
 in
 stdenv.mkDerivation {
   pname = "nodejs";
