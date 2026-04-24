@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xav.ie/schemas/edit-hooks.schema.json",
+  "title": "Edit hooks config",
+  "description": "Per-project overrides for ~/.claude/format-and-lint.nu. Lives at the repo root and is picked up by walking up from the edited file. Typecheck rules are matched in order; the first matching rule runs. Commands receive the edited file's absolute path in the $FILE environment variable.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Path or URL to this schema."
+    },
+    "typecheck": {
+      "type": "array",
+      "description": "Ordered list of typecheck rules. First matching rule wins; files that match no rule are not typechecked.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["match", "command"],
+        "properties": {
+          "match": {
+            "type": "string",
+            "description": "Glob relative to this config file's directory. Supported syntax: **, *, ?, {alt1,alt2}.",
+            "examples": [
+              "**",
+              "src-scripts/**",
+              "**/*.{ts,tsx}",
+              "packages/foo/**"
+            ]
+          },
+          "command": {
+            "type": "string",
+            "description": "Shell command to run. $FILE is the edited file's absolute path. Non-zero exit = failure. stdout+stderr are filtered to lines referencing the edited file (by relative path from cwd). Use \"true\" as a no-op to explicitly opt out of typechecking files matched by this rule.",
+            "examples": [
+              "tsc-filter --config tsconfig-ui.json \"$FILE\"",
+              "./node_modules/.bin/tsc -p tsconfig-ui.json --noEmit",
+              "true"
+            ]
+          },
+          "cwd": {
+            "type": "string",
+            "description": "Working directory for the command, relative to this config file's directory. Default: '.'",
+            "default": "."
+          }
+        }
+      }
+    }
+  }
+}

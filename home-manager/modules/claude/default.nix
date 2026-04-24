@@ -243,6 +243,10 @@ in
           config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/notify.nu";
         ".claude/statusline.nu".source =
           config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/statusline.nu";
+        ".claude/format-and-lint.nu".source =
+          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/format-and-lint.nu";
+        ".claude/schemas/edit-hooks.schema.json".source =
+          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/edit-hooks.schema.json";
         ".claude/marketplaces.json".source =
           config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/marketplaces.json";
         ".claude/setup-plugins.nu".source =

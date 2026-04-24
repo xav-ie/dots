@@ -15,6 +15,17 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/format-and-lint.nu"
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
@@ -34,6 +45,20 @@
     "pts@outsmartly-plugins": false
   },
   "alwaysThinkingEnabled": true,
+  "tui": "fullscreen",
+  "voice": {
+    "enabled": true,
+    "mode": "hold"
+  },
+  "skipDangerousModePermissionPrompt": true,
   "voiceEnabled": true,
-  "skipDangerousModePermissionPrompt": true
+  "autoMemory": {
+    "enabled": true,
+    "scope": "user"
+  },
+  "autoDream": {
+    "enabled": true,
+    "intervalHours": 24
+  },
+  "editorMode": "vim"
 }
