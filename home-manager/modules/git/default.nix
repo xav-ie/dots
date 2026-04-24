@@ -16,6 +16,7 @@ in
       enable = true;
       ignores = [
         "**/.claude/settings.local.json"
+        ".edit-hooks.json"
         ".devenv*"
         ".direnv"
         ".pi"
