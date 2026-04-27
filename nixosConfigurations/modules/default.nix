@@ -4,6 +4,8 @@
     ../../lib/common
     ./atop
     ./bluetooth.nix
+    ./browser-session-listener.nix
+    ./browser-session-reaper.nix
     ./ccache.nix
     ./chrome.nix
     ./cloudflared.nix

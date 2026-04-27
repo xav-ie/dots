@@ -1,23 +1,23 @@
 {
   "native": {
-    "version": "2.1.109",
+    "version": "2.1.112",
     "gcs_bucket": "https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases",
     "sources": {
       "x86_64-linux": {
         "platform": "linux-x64",
-        "hash": "sha256-1A1Mnv8iS+a6NYb9GwWsw8izJmmY1nSIolndy4Kmvl8="
+        "hash": "sha256-V76UBtPlyuJZVSeQv3KI3WSWZ1Qw7JPb7XajOldYDT0="
       },
       "aarch64-linux": {
         "platform": "linux-arm64",
-        "hash": "sha256-argKEeWQVTrYzbjV2T35P7ocquMptI9FOxr5yUtEk9s="
+        "hash": "sha256-EBXvV0d2fNrFg3beTsmQJT3KxJMU1U4ZdQ1VEvp0IvY="
       },
       "x86_64-darwin": {
         "platform": "darwin-x64",
-        "hash": "sha256-UzwINEdKEjr5mJV21zPU4dUfZ+vsqCjUJvJdDq4o8xc="
+        "hash": "sha256-oqf+pBrO5MiJswEy3UkKwAscuGxuJXVaIk2RscupdzQ="
       },
       "aarch64-darwin": {
         "platform": "darwin-arm64",
-        "hash": "sha256-zH4m6whSGlMVCUpSJ3XH8Xve7y1tjZBAIFr20ube5ZU="
+        "hash": "sha256-sFOB84J1QBK5WYQBYAD3BiovEnpqOoQ6/Dfr19RnI0A="
       }
     }
   },
