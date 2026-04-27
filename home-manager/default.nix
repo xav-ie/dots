@@ -91,6 +91,7 @@
           magic-wormhole-rs # send files easily
           neovide
           nix-output-monitor # better nix build
+          pnpm
           tldr
           tree
           (ueberzugpp.override {
