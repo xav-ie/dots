@@ -113,6 +113,7 @@
     };
 
     services = {
+      blanket.enable = true;
       # Disabled - causes excessive CPU usage from continuous device discovery
       # Use `bluetoothctl` or `bluetuith` for manual Bluetooth management instead
       # blueman-applet.enable = true;
