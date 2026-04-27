@@ -342,6 +342,7 @@
                   # no standard formatter for AppleScript
                   "*.scpt"
                   ".git-blame-ignore-revs"
+                  "**/.gitignore"
                   ".gitignore"
                   "flake.lock"
                   # sops has its own formatter

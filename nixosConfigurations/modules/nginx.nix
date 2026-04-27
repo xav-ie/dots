@@ -83,6 +83,14 @@ in
                   service = "executor-service";
                   tls.certResolver = "cloudflare";
                 };
+                chrome = {
+                  rule = "Host(`${config.services.chrome-headless.subdomain}.${baseDomain}`)";
+                  service = "chrome-service";
+                  tls.certResolver = "cloudflare";
+                  # Chrome's DevTools HTTP handler rejects non-loopback Host
+                  # headers (DNS-rebinding protection). Rewrite to `localhost`.
+                  middlewares = [ "chrome-localhost-host" ];
+                };
               }
               // lib.optionalAttrs cfg.enable {
                 ${cfg.name} = {
@@ -126,6 +134,21 @@ in
                       { url = "http://127.0.0.1:${toString config.services.executor.port}"; }
                     ];
                   };
+                };
+                chrome-service = {
+                  loadBalancer = {
+                    # `passHostHeader = false` stops Traefik from copying the
+                    # public Host; the middleware below then sets it to localhost.
+                    passHostHeader = false;
+                    servers = [
+                      { url = "http://127.0.0.1:${toString config.services.chrome-headless.port}"; }
+                    ];
+                  };
+                };
+              };
+              middlewares = {
+                chrome-localhost-host = {
+                  headers.customRequestHeaders.Host = "localhost";
                 };
               };
             }

@@ -1,54 +1,79 @@
 {
   config,
+  lib,
+  pkgs,
   ...
 }:
 let
+  cfg = config.services.chrome-headless;
   inherit (config.services.local-networking) baseDomain;
-  subdomain = "chrome";
-  fullHostName = "${subdomain}.${baseDomain}";
-  containerPort = 3000; # browserless internal port
-  chromeDataDir = "/var/lib/chrome";
 in
 {
-  config = {
-    services.local-networking.subdomains = [ subdomain ];
-
-    virtualisation.oci-containers.containers.${subdomain} = {
-      autoStart = true;
-      image = "browserless/chrome:latest";
-      environment = {
-        # Timeout for each browser session (ms). 0 = no timeout.
-        TIMEOUT = "0";
-        # Max parallel browser sessions
-        CONCURRENT = "10";
-        # Enable the DevTools debugger UI
-        ENABLE_DEBUGGER = "true";
-        # Enable health endpoint
-        HEALTH = "true";
-        # Persist browser profile data (cookies, sessions, etc.)
-        DATA_DIR = "/data";
-      };
-      volumes = [
-        "/dev/shm:/dev/shm"
-        "${chromeDataDir}:/data"
-      ];
-      extraOptions = [ "--shm-size=2g" ];
-      labels = {
-        # Expose the container to traefik
-        "traefik.enable" = "true";
-        # --- Router for HTTPS ---
-        "traefik.http.routers.${subdomain}-secure.entrypoints" = "websecure";
-        "traefik.http.routers.${subdomain}-secure.rule" = "Host(`${fullHostName}`)";
-        "traefik.http.routers.${subdomain}-secure.tls" = "true";
-        "traefik.http.routers.${subdomain}-secure.tls.certResolver" = "cloudflare";
-        "traefik.http.routers.${subdomain}-secure.service" = "${subdomain}-svc";
-        # --- Service Definition ---
-        "traefik.http.services.${subdomain}-svc.loadbalancer.server.port" = toString containerPort;
-      };
+  options.services.chrome-headless = {
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Run a persistent headless Chrome exposing the DevTools Protocol.";
     };
+    subdomain = lib.mkOption {
+      type = lib.types.str;
+      default = "chrome";
+      description = "Subdomain for the DevTools HTTP/WS endpoint (under services.local-networking.baseDomain).";
+    };
+    port = lib.mkOption {
+      type = lib.types.port;
+      default = 9222;
+      description = "Local DevTools port bound to 127.0.0.1.";
+    };
+    dataDir = lib.mkOption {
+      type = lib.types.path;
+      default = "/var/lib/chrome";
+      description = "Chrome user-data-dir. Persists cookies/storage across Chrome restarts.";
+    };
+  };
+
+  config = lib.mkIf cfg.enable {
+    services.local-networking.subdomains = [ cfg.subdomain ];
+
+    users.users.chrome-headless = {
+      isSystemUser = true;
+      group = "chrome-headless";
+      home = cfg.dataDir;
+      createHome = false;
+    };
+    users.groups.chrome-headless = { };
 
     systemd.tmpfiles.rules = [
-      "d ${chromeDataDir} 0755 root root -"
+      "d ${cfg.dataDir} 0750 chrome-headless chrome-headless - -"
     ];
+
+    # Chrome binds DevTools to 127.0.0.1 only — Chrome rejects non-loopback
+    # Host headers as DNS-rebinding protection. Traefik (see nginx.nix) rewrites
+    # the public Host header to `localhost` before forwarding here.
+    systemd.services.chrome-headless = {
+      description = "Persistent headless Chrome for automation";
+      after = [ "network.target" ];
+      wantedBy = [ "multi-user.target" ];
+
+      serviceConfig = {
+        Type = "simple";
+        User = "chrome-headless";
+        Group = "chrome-headless";
+        WorkingDirectory = cfg.dataDir;
+        Restart = "on-failure";
+        RestartSec = 5;
+        ExecStart = lib.concatStringsSep " " [
+          "${pkgs.pkgs-mine.chrome-headless-shell}/bin/chrome-headless-shell"
+          "--no-sandbox"
+          "--disable-gpu"
+          "--disable-dev-shm-usage"
+          "--user-data-dir=${cfg.dataDir}"
+          "--remote-debugging-address=127.0.0.1"
+          "--remote-debugging-port=${toString cfg.port}"
+          # Pass Chrome's Origin check for WebSocket upgrades from Traefik.
+          "--remote-allow-origins=*"
+        ];
+      };
+    };
   };
 }
