@@ -118,7 +118,6 @@
       # Use `bluetoothctl` or `bluetuith` for manual Bluetooth management instead
       # blueman-applet.enable = true;
       network-manager-applet.enable = true;
-      udiskie.enable = true;
       hyprpaper = {
         enable = true;
         settings = {
@@ -126,6 +125,12 @@
           preload = [ "~/Pictures/desktop.jpg" ];
           wallpaper = [ ",~/Pictures/desktop.jpg" ];
         };
+      };
+      udiskie = {
+        enable = true;
+        # Tray icon isn't shown in waybar; disabling stops the SNI
+        # registration race that waybar logs as "already registered."
+        tray = "never";
       };
     };
 
