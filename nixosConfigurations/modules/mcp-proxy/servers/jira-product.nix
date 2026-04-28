@@ -6,6 +6,7 @@ let
     export CONFLUENCE_URL="$JIRA_PTS_URL/wiki"
     export CONFLUENCE_USERNAME="$JIRA_EMAIL"
     export CONFLUENCE_API_TOKEN="$JIRA_API_TOKEN"
+    export TOOLSETS=all
     exec ${pkgs.pkgs-mine.mcp-atlassian}/bin/mcp-atlassian --transport stdio "$@"
   '';
 in
