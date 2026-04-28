@@ -21,8 +21,6 @@ let
   writeNuApplication = nuenv.mkNushellScriptApplication pkgs.nushell pkgs.writeTextFile pkgs.lib;
 
   notify = pkgs.callPackage ./notify { inherit generate-kaomoji writeNuApplication; };
-
-  fastmcp-v3 = pkgs.callPackage ./fastmcp-v3 { inherit pkgs-bleeding; };
 in
 rec {
   inherit notify;
@@ -32,10 +30,7 @@ rec {
   better-branch = pkgs.callPackage ./better-branch { inherit writeNuApplication; };
   browser-session-mcp = pkgs.callPackage ./browser-session-mcp { };
   cache-command = pkgs.callPackage ./cache-command { };
-  discord-mcp = pkgs.callPackage ./discord-mcp {
-    inherit pkgs-bleeding;
-    inherit (fastmcp-v3) fastmcp;
-  };
+  discord-mcp = pkgs.callPackage ./discord-mcp { };
   executor = pkgs.callPackage ./executor { inherit executor-src; };
   # claude-code packages need allowUnfree, passed via pkgs-unfree
   chrome-headless-shell = pkgs.callPackage ./chrome-headless-shell { };
@@ -57,10 +52,7 @@ rec {
   is-sshed = pkgs.callPackage ./is-sshed { inherit writeNuApplication; };
   lint-staged = pkgs.callPackage ./lint-staged { inherit writeNuApplication; };
   localip = pkgs.callPackage ./localip { inherit writeNuApplication; };
-  mcp-atlassian = pkgs.callPackage ./mcp-atlassian {
-    inherit mcp-atlassian-src pkgs-bleeding;
-    inherit (fastmcp-v3) fastmcp;
-  };
+  mcp-atlassian = pkgs.callPackage ./mcp-atlassian { inherit mcp-atlassian-src pkgs-bleeding; };
   mcp-sse-client = pkgs.callPackage ./mcp-sse-client { };
   log-pr = pkgs.callPackage ./log-pr { inherit writeNuApplication; };
   nix-flamegraph = pkgs.callPackage ./nix-flamegraph { inherit writeNuApplication; };
