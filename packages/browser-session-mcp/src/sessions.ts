@@ -1,5 +1,6 @@
 import type { Browser, BrowserContext, Page } from "puppeteer-core";
 import type { StateStore } from "./state.ts";
+import { resolveUA } from "./userAgent.ts";
 
 export type SessionInfo = {
   readonly sessionId: string;
@@ -32,11 +33,14 @@ export class SessionManager {
     private readonly state: StateStore,
   ) {}
 
-  async open(viewport?: {
-    width: number;
-    height: number;
-  }): Promise<SessionInfo> {
+  async open(
+    opts: {
+      viewport?: { width: number; height: number };
+      useMobileUA?: boolean;
+    } = {},
+  ): Promise<SessionInfo> {
     const browser = await this.getBrowser();
+    const override = await resolveUA(browser, opts);
     const context = await browser.createBrowserContext();
     const id = context.id;
     if (!id) {
@@ -44,12 +48,25 @@ export class SessionManager {
       throw new Error("Chrome did not return a browser context id");
     }
 
+    this.state.setUserAgentOverride(id, override);
+
     const page = await context.newPage();
-    await page.setViewport(viewport ?? { width: 1280, height: 800 });
+    // setUserAgent before any navigation so even about:blank's load uses the
+    // override — Puppeteer's setUserAgent maps to Network.setUserAgentOverride.
+    await page.setUserAgent(override.userAgent, override.userAgentMetadata);
+    await page.setViewport(opts.viewport ?? { width: 1280, height: 800 });
     await page.goto("about:blank");
 
     this.state.touch(id);
     return { sessionId: id, pageCount: 1, activeUrl: "about:blank" };
+  }
+
+  private async applyUA(sessionId: string, page: Page): Promise<void> {
+    // Sessions opened before this feature have no override stored — leave them
+    // alone rather than retroactively masking only newly-opened tabs.
+    const override = this.state.getUserAgentOverride(sessionId);
+    if (!override) return;
+    await page.setUserAgent(override.userAgent, override.userAgentMetadata);
   }
 
   async close(sessionId: string): Promise<void> {
@@ -89,14 +106,18 @@ export class SessionManager {
     const ctx = await this.findContext(sessionId);
     const pages = await ctx.pages();
     if (pages.length === 0) {
-      return await ctx.newPage();
+      const page = await ctx.newPage();
+      await this.applyUA(sessionId, page);
+      return page;
     }
     return pages[pages.length - 1]!;
   }
 
   async newPage(sessionId: string): Promise<Page> {
     const ctx = await this.findContext(sessionId);
-    return await ctx.newPage();
+    const page = await ctx.newPage();
+    await this.applyUA(sessionId, page);
+    return page;
   }
 
   async pages(sessionId: string): Promise<Page[]> {

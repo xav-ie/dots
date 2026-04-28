@@ -104,10 +104,20 @@ export function registerTools(
           })
           .optional()
           .describe("Initial viewport. Defaults to 1280x800."),
+        useMobileUA: z
+          .boolean()
+          .optional()
+          .describe(
+            "Pretend to be Chrome on Android (Pixel 8). Sets UA + Client Hints " +
+              "only — viewport, touch, and DPR are unchanged. Pass `viewport` " +
+              "separately if you want a phone-sized canvas too. Default sessions " +
+              "still spoof a Chrome-on-Linux desktop UA so `HeadlessChrome` " +
+              "never leaks.",
+          ),
       },
     },
-    guard(async ({ viewport }) => {
-      const info = await sessions.open(viewport);
+    guard(async ({ viewport, useMobileUA }) => {
+      const info = await sessions.open({ viewport, useMobileUA });
       return ok(`Opened session ${info.sessionId}`, { ...info });
     }),
   );

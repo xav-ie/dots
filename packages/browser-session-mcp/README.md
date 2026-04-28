@@ -95,9 +95,17 @@ The package ships two companion binaries:
 
 **Session lifecycle**
 
-- `open_browser_session({ viewport? })` → `{ sessionId, pageCount, activeUrl }`
+- `open_browser_session({ viewport?, useMobileUA? })` → `{ sessionId, pageCount, activeUrl }`
 - `close_browser_session({ sessionId })`
 - `list_browser_sessions()`
+
+Every session gets an auto-applied UA + matching `Sec-CH-UA-*` Client Hints, so
+`HeadlessChrome` never leaks to sites. The default spoof is Chrome on Linux
+desktop; pass `useMobileUA: true` to get Chrome on Android (Pixel 8) instead.
+This is UA-only — viewport, touch, and DPR are unchanged, so combine with the
+`viewport` arg if you also want a phone-sized canvas. The override applies to
+every page in the session (initial + later `new_page`) and survives MCP
+subprocess restarts.
 
 **Tabs**
 

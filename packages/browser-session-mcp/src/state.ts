@@ -1,10 +1,15 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import type { Protocol } from "devtools-protocol";
+
+import type { UAOverride } from "./userAgent.ts";
 
 export const DEFAULT_STATE_FILE = "/var/lib/browser-session-mcp/state.json";
 
 export type SessionRecord = {
   readonly lastUsedAt: string;
+  readonly userAgent?: string;
+  readonly userAgentMetadata?: Protocol.Emulation.UserAgentMetadata;
 };
 
 type StateData = {
@@ -50,8 +55,31 @@ export class StateStore {
   }
 
   touch(sessionId: string): void {
-    this.state.sessions[sessionId] = { lastUsedAt: new Date().toISOString() };
+    const existing = this.state.sessions[sessionId];
+    this.state.sessions[sessionId] = {
+      ...existing,
+      lastUsedAt: new Date().toISOString(),
+    };
     this.markDirty();
+  }
+
+  setUserAgentOverride(sessionId: string, override: UAOverride): void {
+    const existing = this.state.sessions[sessionId];
+    this.state.sessions[sessionId] = {
+      lastUsedAt: existing?.lastUsedAt ?? new Date().toISOString(),
+      userAgent: override.userAgent,
+      userAgentMetadata: override.userAgentMetadata,
+    };
+    this.markDirty();
+  }
+
+  getUserAgentOverride(sessionId: string): UAOverride | undefined {
+    const rec = this.state.sessions[sessionId];
+    if (!rec?.userAgent || !rec.userAgentMetadata) return undefined;
+    return {
+      userAgent: rec.userAgent,
+      userAgentMetadata: rec.userAgentMetadata,
+    };
   }
 
   forget(sessionId: string): void {
