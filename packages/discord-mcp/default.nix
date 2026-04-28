@@ -1,6 +1,10 @@
-{ pkgs }:
+{
+  pkgs,
+  pkgs-bleeding,
+  fastmcp,
+}:
 let
-  python3Packages = pkgs.python313Packages;
+  python3Packages = pkgs-bleeding.python313Packages;
 
   # nixpkgs curl-impersonate-chrome 1.2.0 doesn't support chrome142;
   # patch curl_cffi to default to chrome136 which is the latest supported
@@ -22,6 +26,9 @@ let
     };
 
     dependencies = with python3Packages; [ protobuf ];
+    # The wheel lists mypy-protobuf in runtime deps but it's only used
+    # for .pyi stub generation at build time.
+    pythonRemoveDeps = [ "mypy-protobuf" ];
     pythonImportsCheck = [ "discord_protos" ];
   };
 
@@ -68,7 +75,7 @@ python3Packages.buildPythonApplication rec {
 
   dependencies = [
     discord-py-self
-    python3Packages.fastmcp
+    fastmcp
     python3Packages.mcp
     python3Packages.pydantic
     python3Packages.python-dotenv
