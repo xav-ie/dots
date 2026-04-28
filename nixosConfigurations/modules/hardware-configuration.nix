@@ -29,6 +29,14 @@
   fileSystems."/boot" = {
     device = "/dev/disk/by-uuid/B0A7-312A";
     fsType = "vfat";
+    # Default vfat masks (fmask=0022,dmask=0022) make /boot world-readable,
+    # which leaks the systemd-boot random-seed file. Tighten to root-only;
+    # systemd-boot runs pre-OS so OS perms don't gate it, and rebuild
+    # tooling (nh, nixos-rebuild) already runs as root.
+    options = [
+      "fmask=0077"
+      "dmask=0077"
+    ];
   };
 
   swapDevices = [
