@@ -6,7 +6,6 @@
 }:
 let
   cfg = config.services.chrome-headless;
-  inherit (config.services.local-networking) baseDomain;
 in
 {
   options.services.chrome-headless = {
