@@ -34,6 +34,16 @@ in
   config = {
     home.packages = [ config.services.swaync.package ];
 
+    # swaync calls gtk_layer_set_*() and gtk_native_get_surface()
+    # unconditionally during render setup, even when layer-shell=false.
+    # Those calls assert against the layer-shell flag and log noisily on
+    # every notification, but the toast still renders. Drop the two
+    # known patterns from the journal.
+    systemd.user.services.swaync.Service.LogFilterPatterns = [
+      "~GtkWindow is not a layer surface"
+      "~gtk_native_get_surface: assertion .GTK_IS_NATIVE"
+    ];
+
     services.swaync =
       let
         timeout = 10;
@@ -145,6 +155,7 @@ in
               image-size = 96;
               image-radius = 12;
             };
+            notifications = { };
           };
         };
 
@@ -171,7 +182,7 @@ in
             @define-color noti-close-bg rgba(255, 255, 255, 0.1);
             @define-color noti-close-bg-hover rgba(255, 255, 255, 0.15);
 
-            @define-color bg-selected rgb(19,6,10,1);
+            @define-color bg-selected rgba(19,6,10,1);
 
             .notification-row {
               outline: none;
@@ -275,7 +286,6 @@ in
 
             .notification-default-action:hover,
             .notification-action:hover {
-              -gtk-icon-effect: none;
               background-color: transparent;
             }
 
