@@ -205,8 +205,5 @@ in
         ${hostEntries}
       '';
 
-    systemd.tmpfiles.rules = [
-      "d ${config.services.traefik.dataDir} 0755 traefik ${config.services.traefik.group} - -"
-    ];
   };
 }
