@@ -114,6 +114,7 @@ let
         # each variant only honors its own variable.
         "FASTMCP_SHOW_SERVER_BANNER=false"
         "FASTMCP_SHOW_CLI_BANNER=false"
+        "FASTMCP_CHECK_FOR_UPDATES=off"
       ];
     };
   };
