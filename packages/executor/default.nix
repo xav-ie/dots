@@ -8,17 +8,7 @@
   executor-src,
 }:
 let
-  version = "1.4.5";
-
-  # Hosts the executor web server will accept connections from.
-  allowedHosts = [
-    "localhost"
-    "127.0.0.1"
-    "[::1]"
-    "::1"
-    "executor.lalala.casa"
-  ];
-  allowedHostsJs = lib.concatMapStringsSep ", " (h: ''"${h}"'') allowedHosts;
+  version = (lib.importJSON "${executor-src}/apps/cli/package.json").version;
 
   # Fixed-output derivation for bun install (needs network access).
   # Follows the OpenCode pattern (github:sst/opencode/nix/node_modules.nix).
@@ -61,7 +51,7 @@ let
 
     outputHashAlgo = "sha256";
     outputHashMode = "recursive";
-    outputHash = "sha256-RpprUaDcexj/JEKOKHFNtJZ0WldgjtQ54SRNTTHJiok=";
+    outputHash = "sha256-2xpDHSbDfZU0RtfqLsTOFHuZqIZC5rx/SgxMSbSHpwM=";
   };
 in
 stdenv.mkDerivation {
@@ -98,12 +88,6 @@ stdenv.mkDerivation {
   '';
 
   postPatch = ''
-    # Patch allowed hosts
-    substituteInPlace apps/local/src/serve.ts \
-      --replace-fail \
-        'const ALLOWED_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]", "::1"])' \
-        'const ALLOWED_HOSTS = new Set([${allowedHostsJs}])'
-
     # bunx tries to resolve from the registry even in sandbox.
     # Use bun --bun to invoke vite with Bun's runtime (needed for TS resolution).
     substituteInPlace apps/local/package.json \

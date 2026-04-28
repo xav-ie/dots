@@ -55,7 +55,7 @@ in
       serviceConfig = {
         User = defaultUser;
         WorkingDirectory = executorWorkspace;
-        ExecStart = "${pkgs.pkgs-mine.executor}/bin/executor web --port ${toString cfg.port}";
+        ExecStart = "${pkgs.pkgs-mine.executor}/bin/executor web --port ${toString cfg.port} --allowed-host ${cfg.subdomain}.${config.services.local-networking.baseDomain}";
         Restart = "on-failure";
         RestartSec = 5;
         StandardOutput = "journal";
