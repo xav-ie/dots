@@ -134,6 +134,16 @@
       };
     };
 
+    # nm-applet's GTK3 status icon code path on Wayland calls
+    # gtk_widget_get_scale_factor() before the widget is fully a
+    # GtkWidget; GTK fails the runtime type check, falls back to
+    # scale=1, and the icon renders fine. Upstream-known, no fix.
+    # Drop the assertion line from journald rather than have it
+    # spam every state change.
+    systemd.user.services.network-manager-applet.Service.LogFilterPatterns = [
+      "~assertion .GTK_IS_WIDGET .widget.. failed"
+    ];
+
     # TODO: somehow make mac support this
     xdg.mimeApps.enable = true;
 
