@@ -10,7 +10,7 @@ in
     services.local-networking.subdomains = [ subdomain ];
 
     virtualisation.oci-containers.containers.${subdomain} = {
-      image = "louislam/uptime-kuma:2";
+      image = "docker.io/louislam/uptime-kuma:2";
       volumes = [
         "${dataDir}:/app/data"
       ];

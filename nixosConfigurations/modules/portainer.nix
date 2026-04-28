@@ -11,7 +11,7 @@ in
 
     virtualisation.oci-containers.containers.${subdomain} = {
       autoStart = false; # Only start when needed to reduce excessive API polling/logging
-      image = "portainer/portainer-ce:latest";
+      image = "docker.io/portainer/portainer-ce:latest";
       # You must access through traefik
       # ports = [ "9000:9000" "9443:9443" ];
       volumes = [
