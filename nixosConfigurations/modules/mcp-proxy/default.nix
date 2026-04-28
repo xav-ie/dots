@@ -131,7 +131,7 @@ in
   imports = [
     ./servers/slack.nix
     ./servers/nixos.nix
-    ./servers/chrome-devtools.nix
+    # ./servers/chrome-devtools.nix
     ./servers/browser-session.nix
     ./servers/jira-delivery.nix
     ./servers/jira-product.nix

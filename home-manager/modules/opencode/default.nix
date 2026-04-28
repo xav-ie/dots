@@ -55,7 +55,7 @@ let
         // {
           slack = proxyServer "slack";
           nixos = proxyServer "nixos";
-          chrome-devtools = proxyServer "chrome-devtools";
+          # chrome-devtools = proxyServer "chrome-devtools";
           jira-d = proxyServer "jira-d";
           jira-p = proxyServer "jira-p";
           discord = proxyServer "discord";
