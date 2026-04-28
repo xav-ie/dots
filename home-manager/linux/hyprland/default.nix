@@ -57,7 +57,6 @@ in
       libva
       libva-utils # hardware video acceleration
       polkit_gnome # just a GUI askpass
-      swww
       waypipe
       wl-clipboard
     ];
@@ -312,9 +311,10 @@ in
             # damage_tracking = false
           };
 
-          # Execute your favorite apps at launch
+          # Execute your favorite apps at launch.
+          # hyprpaper is started via its own home-manager systemd user service —
+          # no need to launch it here.
           exec-once = [
-            (lib.optionalString config.services.swww.enable "${pkgs.swww}/bin/swww img ~/Pictures/desktop.gif")
             "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type text --watch cliphist store"
             "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type image --watch cliphist store"
             "[workspace 2 silent] ${config.programs.firefox.package}/bin/firefox"
