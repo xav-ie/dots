@@ -12,6 +12,7 @@
     ./dnsmasq.nix
     ./executor.nix
     ./fusion.nix
+    ./greetd.nix
     ./hardware-configuration.nix
     ./home-assistant.nix
     ./hyprland.nix
