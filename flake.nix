@@ -97,7 +97,7 @@
     mcp-atlassian-src.flake = false;
     slack-mcp-server.url = "github:korotovsky/slack-mcp-server/v1.2.2";
     slack-mcp-server.flake = false;
-    executor-src.url = "github:RhysSullivan/executor/v1.4.5";
+    executor-src.url = "github:RhysSullivan/executor/v1.4.9";
     executor-src.flake = false;
     bun-demincer-src.url = "github:xav-ie/bun-demincer/fix/linux-dataStart-byte-count";
     bun-demincer-src.flake = false;
