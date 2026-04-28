@@ -31,7 +31,7 @@
     ./podman.nix
     ./polkit.nix
     ./portainer.nix
-    ./postiz.nix
+    ./postiz
     # ./power-save
     ./quadlet.nix
     ./quartz.nix

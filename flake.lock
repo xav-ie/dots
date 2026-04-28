@@ -1546,6 +1546,23 @@
         "type": "github"
       }
     },
+    "postiz-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1777322176,
+        "narHash": "sha256-75mjnFBZDMp/uN0Q0TWgwBODBB4GM7tYTqIAA0HC82Y=",
+        "owner": "xav-ie",
+        "repo": "postiz-app",
+        "rev": "c71286755ce69ba91e795e6f6003d3df169a1016",
+        "type": "github"
+      },
+      "original": {
+        "owner": "xav-ie",
+        "ref": "fix/skip-db-push-on-restart",
+        "repo": "postiz-app",
+        "type": "github"
+      }
+    },
     "pre-commit-hooks": {
       "inputs": {
         "flake-compat": "flake-compat_3",
@@ -1667,6 +1684,7 @@
         "pimalaya-core": "pimalaya-core",
         "pimalaya-neverest": "pimalaya-neverest",
         "plover-flake": "plover-flake",
+        "postiz-src": "postiz-src",
         "quadlet-nix": "quadlet-nix",
         "ralph-src": "ralph-src",
         "rust-analyzer-src": "rust-analyzer-src_4",

@@ -49,6 +49,11 @@
     nixpkgs-lib.url = "github:nix-community/nixpkgs.lib";
     pimalaya-neverest.url = "github:pimalaya/nix/be23e0deeb014c6be5232322b892c9bee25dee77";
     pimalaya-neverest.flake = false;
+    # Fork carrying the `fix(mastra): use dedicated postgres schema`
+    # change. Revert to `github:gitroomhq/postiz-app/v2.21.6` (or
+    # whatever release ships the fix) once it lands upstream.
+    postiz-src.flake = false;
+    postiz-src.url = "github:xav-ie/postiz-app/fix/skip-db-push-on-restart";
     rust-analyzer-src.url = "github:rust-lang/rust-analyzer/nightly";
     rust-analyzer-src.flake = false;
     rust-overlay.url = "github:oxalica/rust-overlay";
