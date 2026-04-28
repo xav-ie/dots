@@ -42,6 +42,7 @@
     ./traefik.nix
     ./udisks.nix
     ./uptime-kuma.nix
+    ./upower.nix
     ./vllm.nix
     # not currently routing correctly...
     # ./twingate.nix
