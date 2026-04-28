@@ -8,7 +8,7 @@
   executor-src,
 }:
 let
-  version = (lib.importJSON "${executor-src}/apps/cli/package.json").version;
+  inherit ((lib.importJSON "${executor-src}/apps/cli/package.json")) version;
 
   # Fixed-output derivation for bun install (needs network access).
   # Follows the OpenCode pattern (github:sst/opencode/nix/node_modules.nix).
