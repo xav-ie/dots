@@ -17,77 +17,42 @@ in
       security.pam.services.hyprlock = { };
     })
 
-    # Service to start Hyprland remotely via SSH
-    # Usage: sudo systemctl start hyprland-remote
+    # Enable Hyprland system-wide so its session entry, portal, and PAM
+    # integration are available regardless of how we log in.
     (lib.mkIf hyprlandEnabled {
-      systemd.services.hyprland-remote = {
-        description = "Hyprland on TTY1 (for remote start)";
-        after = [ "systemd-user-sessions.service" ];
-        conflicts = [ "getty@tty1.service" ];
-        serviceConfig = {
-          Type = "simple";
-          User = config.defaultUser;
-          PAMName = "login";
-          TTYPath = "/dev/tty1";
-          StandardInput = "tty";
-          StandardOutput = "tty";
-          StandardError = "tty";
-          TTYVHangup = true;
-          TTYReset = true;
-          ExecStart = "${pkgs.writeShellScript "start-hyprland-tty" ''
-            # Ensure we're on TTY1
-            chvt 1
-            exec start-hyprland
-          ''}";
-          Restart = "no";
-        };
+      programs.hyprland = {
+        enable = true;
+        package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
       };
-
-      # Unlock GNOME Keyring when using this service
-      security.pam.services.login.enableGnomeKeyring = true;
     })
 
-    # XDG portal configuration for hyprland
+    # XDG portal configuration for hyprland.
+    # NOTE: the hyprland portal package and its config are added by
+    # `programs.hyprland.enable = true` above. We only layer on the gnome
+    # portal here for keyring/secret/file-chooser support.
     (lib.mkIf hyprlandEnabled {
       # TIP: run `nix run nixpkgs#door-knocker` and check that portal
       # implementation has expected support
-      xdg.portal =
-        let
-          inherit (inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system})
-            hyprland
-            xdg-desktop-portal-hyprland
-            ;
-        in
-        {
-          enable = true;
-          extraPortals = [
-            xdg-desktop-portal-hyprland
-            pkgs.xdg-desktop-portal-gnome
-          ];
-          # Our xdg.portal.config below writes to /etc/xdg/xdg-desktop-portal/,
-          # which per portals.conf(5) takes precedence over configs shipped by
-          # configPackages in $XDG_DATA_DIRS. So including the shipped configs
-          # here is safe and keeps introspection tools (door-knocker) accurate.
-          configPackages = [
-            hyprland
-            pkgs.xdg-desktop-portal-gnome
-          ];
-          config =
-            let
-              common = {
-                default = [
-                  "hyprland"
-                  "gnome"
-                ];
-                # TODO: what kinds of other useful settings can I set?
-                # "org.freedesktop.impl.portal.Secret" = [ "gnome-keyring" ];
-              };
-            in
-            {
-              inherit common;
-              hyprland = common;
+      xdg.portal = {
+        enable = true;
+        extraPortals = [ pkgs.xdg-desktop-portal-gnome ];
+        configPackages = [ pkgs.xdg-desktop-portal-gnome ];
+        config =
+          let
+            common = {
+              default = [
+                "hyprland"
+                "gnome"
+              ];
+              # TODO: what kinds of other useful settings can I set?
+              # "org.freedesktop.impl.portal.Secret" = [ "gnome-keyring" ];
             };
-        };
+          in
+          {
+            inherit common;
+            hyprland = common;
+          };
+      };
     })
   ];
 }
