@@ -77,7 +77,7 @@ let
   );
 
   mcp-proxy-image = pkgs.dockerTools.buildLayeredImage {
-    name = "mcp-proxy";
+    name = "localhost/mcp-proxy";
     tag = "latest";
 
     contents = [
@@ -108,6 +108,12 @@ let
         "HOME=/tmp"
         "SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt"
         "NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-bundle.crt"
+        # Suppress fastmcp's ASCII server banner on every MCP startup.
+        # mcp-proxy --pass-environment propagates these to all child
+        # Python MCPs. The two names cover both fastmcp 2.x and 3.x —
+        # each variant only honors its own variable.
+        "FASTMCP_SHOW_SERVER_BANNER=false"
+        "FASTMCP_SHOW_CLI_BANNER=false"
       ];
     };
   };
@@ -152,7 +158,7 @@ in
     virtualisation.oci-containers.containers.${subdomain} = {
       autoStart = true;
       imageFile = mcp-proxy-image;
-      image = "mcp-proxy:latest";
+      image = "localhost/mcp-proxy:latest";
       volumes = allVolumes;
       environmentFiles = [
         config.sops.templates."mcp-proxy-env".path
