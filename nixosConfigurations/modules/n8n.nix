@@ -9,22 +9,39 @@ let
   port = 5678;
   inherit (config.services.local-networking) baseDomain;
 
-  n8n = pkgs.pkgs-bleeding.n8n.overrideAttrs (old: rec {
-    version = "2.3.0";
-    src = pkgs.fetchFromGitHub {
-      owner = "n8n-io";
-      repo = "n8n";
-      tag = "n8n@${version}";
-      hash = "sha256-6VfoT8Rw2c46ugSpW1IHJPSHTWnphNn0MG1XDhrPeBg=";
-    };
-    pnpmDeps = pkgs.pkgs-bleeding.fetchPnpmDeps {
-      inherit (old) pname;
-      inherit version src;
-      pnpm = pkgs.pkgs-bleeding.pnpm_10;
-      fetcherVersion = 3;
-      hash = "sha256-wSKxoxWys3gf++yTDr/XBadW9bq/w/NKPGUZpbAPe+I=";
-    };
-  });
+  # Python interpreter exposed to n8n's task runner. Must include `websockets`
+  # (the only runtime dep declared in task-runner-python's pyproject.toml).
+  n8nPython = pkgs.python3.withPackages (ps: with ps; [ websockets ]);
+
+  n8n =
+    (pkgs.pkgs-bleeding.n8n.overrideAttrs (old: rec {
+      version = "2.3.0";
+      src = pkgs.fetchFromGitHub {
+        owner = "n8n-io";
+        repo = "n8n";
+        tag = "n8n@${version}";
+        hash = "sha256-6VfoT8Rw2c46ugSpW1IHJPSHTWnphNn0MG1XDhrPeBg=";
+      };
+      pnpmDeps = pkgs.pkgs-bleeding.fetchPnpmDeps {
+        inherit (old) pname;
+        inherit version src;
+        pnpm = pkgs.pkgs-bleeding.pnpm_10;
+        fetcherVersion = 3;
+        hash = "sha256-wSKxoxWys3gf++yTDr/XBadW9bq/w/NKPGUZpbAPe+I=";
+      };
+    })).overrideAttrs
+      (old: {
+        # n8n's CLI hardcodes the Python task-runner venv path to
+        #   <cli>/dist/task-runners/../../../@n8n/task-runner-python/.venv/bin/python
+        # nixpkgs builds the runner sources but never lays down that venv, so the
+        # internal-mode requirements check fails ("its virtual environment is
+        # missing"). Symlink in a usable python so the check passes.
+        postInstall = (old.postInstall or "") + ''
+          venvBin=$out/lib/n8n/packages/@n8n/task-runner-python/.venv/bin
+          mkdir -p "$venvBin"
+          ln -s ${n8nPython}/bin/python "$venvBin/python"
+        '';
+      });
   # Private URL for UI access (via Tailscale)
   editorBaseUrl = "https://${config.services.n8n.subdomain}.${baseDomain}";
   # Public URL for webhooks (via Cloudflare Tunnel)
@@ -88,5 +105,9 @@ in
       User = "n8n";
       Group = "n8n";
     };
+
+    # n8n's internal Python task runner needs python3 on PATH for its
+    # `python3 --version` check before launching the runner.
+    systemd.services.n8n.path = [ n8nPython ];
   };
 }
