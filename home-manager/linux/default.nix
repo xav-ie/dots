@@ -118,8 +118,15 @@
       # Use `bluetoothctl` or `bluetuith` for manual Bluetooth management instead
       # blueman-applet.enable = true;
       network-manager-applet.enable = true;
-      swww.enable = true; # wallpaper
       udiskie.enable = true;
+      hyprpaper = {
+        enable = true;
+        settings = {
+          ipc = "on";
+          preload = [ "~/Pictures/desktop.jpg" ];
+          wallpaper = [ ",~/Pictures/desktop.jpg" ];
+        };
+      };
     };
 
     # TODO: somehow make mac support this
