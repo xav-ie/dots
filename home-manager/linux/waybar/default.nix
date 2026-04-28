@@ -46,6 +46,32 @@ in
     xdg.configFile."waybar/style-dynamic.css".source =
       config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/linux/waybar/style-dynamic.css";
 
+    # systemd's `After=wireplumber.service` only waits for wireplumber to
+    # be `started`, not for it to have selected a default audio sink. The
+    # window between the two is enough for waybar's first `wpctl` call to
+    # get back uint32_max (-1) and log "'4294967295' is not a valid
+    # 'Audio/Sink' node ID". Block waybar startup until wpctl reports a
+    # real default sink. Capped at ~30s so a session with no audio at all
+    # (e.g. broken pipewire / no devices) still gets a working bar.
+    systemd.user.services.waybar = {
+      Unit.After = [
+        "graphical-session.target"
+        "wireplumber.service"
+        "pipewire.service"
+      ];
+      Service.ExecStartPre = pkgs.writeShellScript "waybar-wait-default-sink" ''
+        for _ in $(seq 1 150); do
+          if ${pkgs.wireplumber}/bin/wpctl get-volume @DEFAULT_AUDIO_SINK@ >/dev/null 2>&1; then
+            exit 0
+          fi
+          sleep 0.2
+        done
+        # Fail-open: if no default sink ever appears, let waybar start
+        # anyway. One warning line is better than no status bar at all.
+        exit 0
+      '';
+    };
+
     programs.waybar = {
       # https://github.com/elythh/nixdots/blob/58db47f160c219c3e2a9630651dfd9aab0408b1a/modules/home/opt/wayland/services/swaync/default.nix
       enable = true;
