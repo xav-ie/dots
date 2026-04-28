@@ -9,6 +9,7 @@
     ./ccache.nix
     ./chrome.nix
     ./cloudflared.nix
+    ./dns-online.nix
     ./dnsmasq.nix
     ./executor.nix
     ./fusion.nix

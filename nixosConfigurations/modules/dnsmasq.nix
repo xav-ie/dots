@@ -21,15 +21,20 @@
       all-servers = true; # Query all servers, use fastest response
       no-poll = true; # Don't poll for upstream changes
 
+      # listen-address alone is enough to keep dnsmasq off the wildcard
+      # (and out of aardvark-dns's container interfaces) per dnsmasq's
+      # own docs: "If no --interface or --listen-address options are
+      # given dnsmasq listens on all available interfaces." Restricting
+      # to lo's IPs means local apps (which query 127.0.0.1 / ::1 from
+      # /etc/resolv.conf) work, and there's no `interface tailscale0
+      # does not currently exist` warning on boot.
       bind-dynamic = true;
-      # bind-interfaces = true;
-      interface = [
-        "lo"
-        "wlp4s0"
-        "tailscale0"
+      listen-address = [
+        "127.0.0.1"
+        "::1"
       ];
 
-      cache-size = 50000;
+      cache-size = 10000;
       min-cache-ttl = 300;
       max-cache-ttl = 3600;
 

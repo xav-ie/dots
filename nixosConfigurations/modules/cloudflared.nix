@@ -24,8 +24,17 @@ in
 
     systemd.services.cloudflared-tunnel-praesidium = {
       description = "Cloudflare Tunnel for praesidium";
-      after = [ "network-online.target" ];
-      wants = [ "network-online.target" ];
+      # cloudflared queries the system resolver at startup; gate on
+      # dns-online.target (defined in dns-online.nix) so the lookup hits
+      # a *responsive* resolver rather than racing the socket bind.
+      after = [
+        "network-online.target"
+        "dns-online.target"
+      ];
+      wants = [
+        "network-online.target"
+        "dns-online.target"
+      ];
       wantedBy = [ "multi-user.target" ];
 
       script = ''
