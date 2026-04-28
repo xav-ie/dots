@@ -23,6 +23,7 @@
     ./mcp-proxy
     ./n8n.nix
     ./nginx.nix
+    ./nvidia-fixes.nix
     ./opencode.nix
     ./nix-config.nix
     ./noisetorch
