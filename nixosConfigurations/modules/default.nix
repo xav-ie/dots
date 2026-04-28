@@ -29,7 +29,7 @@
     ./podman.nix
     ./portainer.nix
     ./postiz.nix
-    ./power-save
+    # ./power-save
     ./quadlet.nix
     ./quartz.nix
     ./remote-builder.nix
