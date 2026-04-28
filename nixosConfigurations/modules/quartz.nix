@@ -35,7 +35,7 @@ in
     };
 
     virtualisation.oci-containers.containers.${subdomain} = {
-      image = "node:22";
+      image = "docker.io/library/node:22";
       volumes = [
         "${quartzRepoPath}:/quartz"
       ];
