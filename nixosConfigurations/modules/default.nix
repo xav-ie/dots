@@ -29,6 +29,7 @@
     ./noisetorch
     ./plover.nix
     ./podman.nix
+    ./polkit.nix
     ./portainer.nix
     ./postiz.nix
     # ./power-save

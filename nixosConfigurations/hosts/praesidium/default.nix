@@ -502,10 +502,7 @@ in
       latitude = 90.0;
     };
 
-    security = {
-      polkit.enable = true;
-      rtkit.enable = true;
-    };
+    security.rtkit.enable = true;
 
     # Ensure proper suspend-to-RAM (keeps RAM powered, fast resume)
     systemd.sleep.extraConfig = ''
