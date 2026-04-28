@@ -101,6 +101,9 @@
           wget
           zip
         ])
+        ++ (with pkgs.pkgs-bleeding; [
+          worktrunk
+        ])
         # custom packages
         ++ (with pkgs.pkgs-mine; [
           apple-emoji-linux
