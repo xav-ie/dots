@@ -68,6 +68,11 @@ in
     {
       hardware.bluetooth = {
         enable = true;
+        # BAP (LE Audio) needs ISO sockets behind KernelExperimental;
+        # we have no LE Audio devices that work cleanly over Linux/BlueZ
+        # so skip the plugin to avoid the "BAP requires ISO Socket"
+        # warning. NixOS turns this into `--noplugin=bap` on bluetoothd.
+        disabledPlugins = [ "bap" ];
         settings = {
           General = {
             # Short discoverable window (seconds) — limits how long this
@@ -80,17 +85,39 @@ in
         };
       };
 
-      # Block bluetooth by default on boot to prevent discovery/CPU drain
-      # Use Waybar bluetooth toggle to enable when needed
+      # systemd-rfkill restores the persistent rfkill state from the previous
+      # session at boot, which means BT comes up soft-blocked from the
+      # rfkill-bluetooth.timer's previous run. bluetoothd then races against
+      # rfkill during init and logs "Failed to set mode (0x03)", and HA's BT
+      # MGMT probe gets "Not Powered" → misleading NET_ADMIN warning.
+      # Force-unblock before bluetoothd touches the adapter, so it inits
+      # cleanly. The rfkill-bluetooth.timer below re-blocks 10min later.
+      systemd.services.bluetooth.serviceConfig.ExecStartPre = [
+        "${lib.getExe' pkgs.util-linux "rfkill"} unblock bluetooth"
+      ];
+
+      # Block bluetooth by default to prevent discovery/CPU drain.
+      # Delayed 10min after boot so home-assistant has time to do its initial
+      # BT MGMT probe before the adapter goes "Not Powered" — habluetooth
+      # otherwise logs a misleading "missing NET_ADMIN/NET_RAW" error every boot.
+      # Use Waybar bluetooth toggle to enable manually after this.
       systemd.services.rfkill-bluetooth = {
-        description = "Block Bluetooth on boot";
-        wantedBy = [ "multi-user.target" ];
+        description = "Block Bluetooth";
         after = [ "bluetooth.service" ];
         path = [ pkgs.util-linux ];
         serviceConfig = {
           Type = "oneshot";
           ExecStart = "${lib.getExe' pkgs.util-linux "rfkill"} block bluetooth";
           RemainAfterExit = true;
+        };
+      };
+
+      systemd.timers.rfkill-bluetooth = {
+        description = "Block Bluetooth 10min after boot";
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnBootSec = "10min";
+          Unit = "rfkill-bluetooth.service";
         };
       };
 
