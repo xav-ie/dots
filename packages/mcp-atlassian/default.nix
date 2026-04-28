@@ -1,6 +1,7 @@
 {
   pkgs-bleeding,
   mcp-atlassian-src,
+  fastmcp,
 }:
 let
   # Use Python 3.13 — python314Packages.fastmcp is broken in nixpkgs
@@ -75,39 +76,47 @@ python3Packages.buildPythonApplication rec {
     uv-dynamic-versioning
   ];
 
-  dependencies = with python3Packages; [
-    atlassian-python-api
-    beautifulsoup4
-    cachetools
-    click
-    fastmcp
-    httpx
-    keyring
-    markdown
-    markdown-to-confluence
-    markdownify
-    mcp
-    pydantic
-    python-dateutil
-    python-dotenv
-    requests
-    starlette
-    thefuzz
-    trio
-    truststore
-    types-cachetools
-    types-python-dateutil
-    unidecode
-    urllib3
-    uvicorn
-  ];
+  dependencies =
+    with python3Packages;
+    [
+      atlassian-python-api
+      beautifulsoup4
+      cachetools
+      click
+      httpx
+      keyring
+      markdown
+      markdown-to-confluence
+      markdownify
+      mcp
+      pydantic
+      python-dateutil
+      python-dotenv
+      requests
+      starlette
+      thefuzz
+      trio
+      truststore
+      types-cachetools
+      types-python-dateutil
+      unidecode
+      urllib3
+      uvicorn
+    ]
+    ++ [ fastmcp ];
 
   # No tests in the source tree without fixtures
   doCheck = false;
 
   # nixpkgs-bleeding has urllib3 2.6.0 but mcp-atlassian wants >=2.6.3;
-  # the difference is trivial bugfixes, safe to relax
-  pythonRelaxDeps = [ "urllib3" ];
+  # the difference is trivial bugfixes, safe to relax. fastmcp gets
+  # relaxed too because we vendor 3.2.4 while mcp-atlassian still pins
+  # to 2.13.x–2.14.x; runtime API surface they use is small enough to
+  # work across the major.
+  pythonRelaxDeps = [
+    "urllib3"
+    "fastmcp"
+  ];
 
   pythonImportsCheck = [ "mcp_atlassian" ];
 
