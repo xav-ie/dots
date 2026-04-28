@@ -32,12 +32,20 @@ in
       loader.systemd-boot.enable = true;
       loader.efi.canTouchEfiVariables = true;
       supportedFilesystems = [ "ntfs" ];
+      tmp.cleanOnBoot = true;
       # https://wiki.archlinux.org/title/NVIDIA
       kernelParams = [
         # creates nvidia framebuffer device at boot; it takes over simpledrm at
         # boot
         "nvidia-drm.fbdev=1"
+        # Reduce kernel boot chatter so it doesn't paint over greetd on TTY1.
+        # Logs still go to the journal — see them with `journalctl -kb`.
+        "quiet"
       ];
+      # Print warnings and worse (priority < 5: emerg/alert/crit/err/warn) to
+      # the console at runtime; notice/info/debug remain in the journal only.
+      # See them with `journalctl -kb`.
+      consoleLogLevel = 5;
       kernelModules = [
         # Virtual Camera
         "v4l2loopback"
