@@ -94,6 +94,19 @@ in
         enable = true;
         # rely on dnsmasq service
         dns = "none";
+        # Stop NM from trying to set sysctls on Wi-Fi Direct virtual devices —
+        # the kernel doesn't expose IPv4 forwarding for them, so NM logs an
+        # EINVAL warning every boot.
+        # Tailscale and ProtonVPN manage their own routes and policy
+        # tables; let NM stay out of their way. p2p-dev-* are the
+        # Wi-Fi Direct virtual devices the kernel doesn't expose
+        # IPv4 forwarding for.
+        unmanaged = [
+          "interface-name:p2p-dev-*"
+          "interface-name:tailscale*"
+          "interface-name:proton-*"
+          "interface-name:ipv6leakintrf*"
+        ];
       };
 
       # Open ports in the firewall.
