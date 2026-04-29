@@ -7,6 +7,7 @@
   makeBinaryWrapper,
   nodejs_25,
   nushell,
+  rcodesign,
   bun-demincer-src,
 }:
 let
@@ -85,7 +86,8 @@ stdenv.mkDerivation {
     nodejs_25
     nushell
   ]
-  ++ lib.optionals stdenv.isLinux [ autoPatchelfHook ];
+  ++ lib.optionals stdenv.isLinux [ autoPatchelfHook ]
+  ++ lib.optionals stdenv.isDarwin [ rcodesign ];
 
   installPhase = ''
     runHook preInstall
@@ -111,6 +113,13 @@ stdenv.mkDerivation {
     mkdir -p "$out/bin"
     nu ${splicer} claude-original cli.js "$out/bin/.claude-wrapped"
     chmod +x "$out/bin/.claude-wrapped"
+
+    # splice.nu patches the __BUN segment in-place, so segment offsets stay
+    # valid but the original adhoc signature now covers stale bytes. macOS
+    # arm64 SIGKILLs binaries with broken signatures, so re-sign with rcodesign.
+    ${lib.optionalString stdenv.isDarwin ''
+      rcodesign sign "$out/bin/.claude-wrapped"
+    ''}
 
     # 4. Wrap with env vars and PATH (shared with the native package).
     wrapProgram "$out/bin/.claude-wrapped" \

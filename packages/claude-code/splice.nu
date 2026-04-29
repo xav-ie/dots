@@ -2,7 +2,7 @@
 
 # Splice a patched cli.js back into a Bun-compiled standalone binary.
 #
-# Layout of a `bun build --compile` Linux binary:
+# Layout of a `bun build --compile` Linux ELF binary:
 #
 #     [Bun runtime ELF ...]
 #     [u64 payload_len]              <- appended right after the runtime
@@ -12,6 +12,15 @@
 #       [Offsets struct: 32 bytes]
 #       [trailer: "\n---- Bun! ----\n" (16 bytes)]
 #     [optional zero padding]
+#
+# Layout of a Mach-O Bun binary (macOS): same payload, but it lives inside
+# a dedicated `__BUN` segment in the middle of the Mach-O image, with
+# `__LINKEDIT` (containing the code signature) following it. To keep the
+# Mach-O structurally valid for code-signing tools, we preserve the
+# original file byte-for-byte and overwrite only the bytes within the
+# `__BUN` region — the original payload was much larger than ours, so the
+# tail of `__BUN` keeps original junk, which Bun never reads (it stops at
+# payload_len). The Nix derivation re-signs the result with rcodesign.
 #
 # We drop the JSC bytecode cache, sourcemaps, module_info, and
 # bytecode_origin_path — those are tied to the original source hash and
@@ -24,6 +33,8 @@
 const TRAILER = 0x[0A 2D 2D 2D 2D 20 42 75 6E 21 20 2D 2D 2D 2D 0A] # "\n---- Bun! ----\n"
 const OFFSETS_SIZE = 32
 const MODULE_STRUCT_SIZE = 52
+
+const MACHO_MAGIC_64 = 0xfeedfacf
 
 # --- fixed-width integer read/pack helpers ---
 
@@ -104,7 +115,7 @@ def parse-binary [binary: binary] {
   })
 
   {
-    runtime: ($binary | bytes at 0..<($raw_start - 8))
+    raw_start: $raw_start
     modules: $modules
     entry_id: $off.entry_id
     flags: $off.flags
@@ -130,7 +141,10 @@ def build-module-entry [m: record, name_off: int, cont_off: int]: nothing -> bin
   ] | bytes collect
 }
 
-def build-output [parsed: record, entry_content: binary]: nothing -> binary {
+# Construct the new Bun payload (u64 payload_len followed by raw_bytes)
+# that the runtime expects to find at __BUN.fileoff (Mach-O) or right
+# after the ELF runtime (Linux).
+def build-bun-payload [parsed: record, entry_content: binary]: nothing -> binary {
   let modules = ($parsed.modules | enumerate | each { |it|
     if $it.index == $parsed.entry_id {
       $it.item | upsert content $entry_content
@@ -174,7 +188,7 @@ def build-output [parsed: record, entry_content: binary]: nothing -> binary {
 
   let raw = [$names_blob $contents_blob $mod_table $offsets $TRAILER] | bytes collect
   let payload_len = $raw | bytes length
-  [$parsed.runtime (pack-u64 $payload_len) $raw] | bytes collect
+  [(pack-u64 $payload_len) $raw] | bytes collect
 }
 
 def main [original: path, patched: path, output: path] {
@@ -185,7 +199,33 @@ def main [original: path, patched: path, output: path] {
   let orig_len = $entry.content | bytes length
   let patch_len = $patched_content | bytes length
   print $"Replacing entry module #($parsed.entry_id) \(($entry.name | decode utf-8)\): ($orig_len) -> ($patch_len) bytes"
-  let spliced = build-output $parsed $patched_content
-  $spliced | save -f $output
-  print $"Wrote (($spliced | bytes length)) bytes to ($output)"
+
+  let bun_payload = build-bun-payload $parsed $patched_content
+  let bun_fileoff = $parsed.raw_start - 8
+
+  if (read-u32 $binary 0) == $MACHO_MAGIC_64 {
+    # Mach-O: copy original verbatim, then patch the __BUN region in place.
+    # All segment offsets — including __LINKEDIT and the original (now
+    # invalid) code signature — stay at the same byte positions, so the
+    # Mach-O remains structurally valid and rcodesign can replace the
+    # signature in the Nix derivation. Bytes after `bun_payload` inside
+    # __BUN keep the original junk; Bun stops at payload_len at runtime.
+    cp $original $output
+    chmod u+w $output
+    let tmp = $"($output).bun-payload"
+    $bun_payload | save -f $tmp
+    if ($bun_fileoff mod 4096) != 0 {
+      error make { msg: $"__BUN fileoff not 4K-aligned: ($bun_fileoff)" }
+    }
+    ^dd if=$tmp of=$output bs=4096 seek=($bun_fileoff // 4096) conv=notrunc err>| ignore
+    rm $tmp
+    let final_size = (ls $output | get 0.size | into int)
+    print $"Patched __BUN at offset ($bun_fileoff); file size unchanged \(($final_size) bytes\)"
+  } else {
+    # ELF (Linux): original truncate-and-append behavior.
+    let runtime = $binary | bytes at 0..<$bun_fileoff
+    let spliced = [$runtime $bun_payload] | bytes collect
+    $spliced | save -f $output
+    print $"Wrote (($spliced | bytes length)) bytes to ($output)"
+  }
 }
