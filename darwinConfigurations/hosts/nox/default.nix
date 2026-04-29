@@ -165,7 +165,7 @@ in
             lcmd - 2 : ${focus} Firefox
             lcmd - 3 : ${focus} zoom.us
             lcmd - 4 : ${focus} Finder
-            lcmd - 5 : ${focus} Messages
+            lcmd - 5 : ${focus} Messages Signal
             lcmd - 6 : ${focus} Chromium
             lcmd - 7 : ${focus} Safari
 
@@ -313,6 +313,10 @@ in
             # Signal should not ever be full-width
             yabai -m rule --add app="^Signal$" \
               manage=off grid=1:3:2:0:1:1
+
+            # Messages mirrors Signal's layout, pinned to the left third
+            yabai -m rule --add app="^Messages$" \
+              manage=off grid=1:3:0:0:1:1
 
             # Fix PiP not always floating
             yabai -m rule --add title="^Picture-in-Picture$" \
