@@ -95,7 +95,7 @@
     simulstreaming-src.flake = false;
     mcp-atlassian-src.url = "github:sooperset/mcp-atlassian/v0.21.0";
     mcp-atlassian-src.flake = false;
-    slack-mcp-server.url = "github:korotovsky/slack-mcp-server/v1.2.2";
+    slack-mcp-server.url = "github:korotovsky/slack-mcp-server/v1.2.3";
     slack-mcp-server.flake = false;
     executor-src.url = "github:RhysSullivan/executor/v1.4.9";
     executor-src.flake = false;
