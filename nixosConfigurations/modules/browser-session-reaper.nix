@@ -17,12 +17,12 @@ in
     };
     interval = lib.mkOption {
       type = lib.types.str;
-      default = "12h";
+      default = "1h";
       description = "How often to run the reaper (systemd OnUnitActiveSec).";
     };
     maxIdleHours = lib.mkOption {
       type = lib.types.ints.positive;
-      default = 24;
+      default = 2;
       description = "Sessions idle longer than this many hours are closed.";
     };
   };
