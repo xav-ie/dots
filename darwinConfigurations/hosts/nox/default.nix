@@ -322,6 +322,10 @@ in
             yabai -m rule --add title="^Picture-in-Picture$" \
               sticky=on manage=off sub-layer=above
 
+            # iPhone Mirroring: float as a PiP-style overlay
+            yabai -m rule --add app="^iPhone Mirroring$" \
+              sticky=on manage=off sub-layer=above
+
             # Do not resize Safari "Web Inspector.*" windows
             yabai -m rule --add title="^Web Inspector.*" \
               manage=off
@@ -334,6 +338,11 @@ in
             yabai -m rule --add \
               app="^Firefox$" title="^(Firefox -.*|Extension:.*|.*Bitwarden)$" \
               manage=off sticky=on sub-layer=above grid=5:4:3:1:1:3
+
+            # Center the Firefox profile launcher (more specific than above)
+            yabai -m rule --add \
+              app="^Firefox$" title="^Firefox - Choose a profile$" \
+              manage=off sticky=on sub-layer=above grid=33:17:4:2:9:29
             # Auto re-open the Firefox window
             yabai -m signal --add event=window_created \
               app="^Firefox$" title="^(Firefox -.*|Extension:.*|.*Bitwarden)$" \

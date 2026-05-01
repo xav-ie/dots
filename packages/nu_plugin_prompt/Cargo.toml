@@ -1,0 +1,32 @@
+[package]
+name = "nu_plugin_prompt"
+version = "0.0.1"
+edition = "2024"
+publish = false
+
+# Plugin must be named `nu_plugin_<name>` so nushell discovers it.
+[[bin]]
+name = "nu_plugin_prompt"
+path = "src/main.rs"
+
+[dependencies]
+nu-plugin = "0.112"
+nu-protocol = "0.112"
+gix = { version = "0.83", default-features = false, features = [
+  "max-performance-safe",
+  "revision",
+  "zlib-rs",
+  "status",
+  "sha1"
+] }
+
+[profile.release]
+lto = true
+codegen-units = 1
+# panic=unwind so a panic in gix internals fails the single prompt-render
+# call (returned to nushell as a LabeledError) instead of tearing down the
+# whole plugin process and losing the prompt for the rest of the shell.
+# strip=false so panic backtraces stay debuggable — the plugin is in the
+# hot path; we want stack traces if it ever does panic.
+panic = "unwind"
+strip = false

@@ -6,7 +6,32 @@ let
   # Use Python 3.13 — python314Packages.fastmcp is broken in nixpkgs
   # due to py-key-value-aio pulling in aioboto3 → moto → cfn-lint →
   # aws-sam-translator which doesn't support 3.14
-  python3Packages = pkgs-bleeding.python313Packages;
+  python3Packages = pkgs-bleeding.python313Packages.overrideScope (
+    _final: prev: {
+      # nixpkgs-bleeding's lupa 2.8 build only produces a combined
+      # lua.cpython-*.so. py-key-value-aio's memory backend does
+      # `import lupa.lua51`, which fails with ModuleNotFoundError and
+      # crashes mcp-atlassian on startup. Build the 2.5 recipe instead;
+      # it lays out the per-Lua-version submodules (lua51, lua52, …).
+      lupa = prev.buildPythonPackage rec {
+        pname = "lupa";
+        version = "2.5";
+        pyproject = true;
+        src = prev.fetchPypi {
+          inherit pname version;
+          hash = "sha256-acaonyt7CKMEDX7Soe7MujejHdyS+hmTOcU6KuPEjDQ=";
+        };
+        build-system = [
+          prev.cython
+          prev.setuptools
+        ];
+        pythonImportsCheck = [
+          "lupa"
+          "lupa.lua51"
+        ];
+      };
+    }
+  );
 
   # Type stubs for cachetools — not in nixpkgs.
   # Must use wheel because the sdist has a hyphenated package-data key

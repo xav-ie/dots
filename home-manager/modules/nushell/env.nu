@@ -1,18 +1,9 @@
 # Nushell Environment Config File
 
-$env.STARSHIP_SHELL = "nu"
 $env.SHELL = "nu"
 
 def get_time []: nothing -> string {
   date now | format date '%m/%d %H:%M'
-}
-
-def create_left_prompt []: nothing -> string {
-  starship prompt --cmd-duration $env.CMD_DURATION_MS $'--status=($env.LAST_EXIT_CODE)'
-}
-
-def create_left_prompt_transient []: nothing -> string {
-  create_left_prompt | str replace -r "\n$" $"(ansi wi)(get_time)(ansi reset)\n"
 }
 
 def make_prompt_indicator [symbol: string]: nothing -> string {
@@ -28,9 +19,12 @@ $env.PROMPT_INDICATOR = ""
 # ↓ implied from ↑
 # $env.TRANSIENT_PROMPT_INDICATOR = ""
 
-$env.PROMPT_COMMAND = { || create_left_prompt }
-# timestamps the prompts after running
-$env.TRANSIENT_PROMPT_COMMAND = { || create_left_prompt_transient }
+# prompt-render comes from nu_plugin_prompt — in-process, no subprocess
+$env.PROMPT_COMMAND = { || prompt-render }
+# timestamps the prompt line after running
+$env.TRANSIENT_PROMPT_COMMAND = { ||
+  prompt-render | str replace -r "\n$" $" (ansi wi)(get_time)(ansi reset)\n"
+}
 
 $env.PROMPT_INDICATOR_VI_INSERT = { || make_prompt_indicator "" }
 # mantain the same prompt
