@@ -2,7 +2,7 @@
   description = "Xavier's NixOS";
   inputs = {
     alacritty-theme.url = "github:alexghr/alacritty-theme.nix";
-    atuin.url = "github:atuinsh/atuin/v18.13.3";
+    atuin.url = "github:xav-ie/atuin/feat/osc7-helper";
     beads.url = "github:steveyegge/beads";
     ctpv.url = "github:xav-ie/ctpv-nix";
     flake-parts.url = "github:hercules-ci/flake-parts";
@@ -223,6 +223,7 @@
           };
 
           packages = import ./packages {
+            atuin = inputs.atuin.packages.${system}.default;
             generate-kaomoji = inputs.generate-kaomoji.packages.${system}.default;
             # Use regular nixpkgs - most packages are writeNuApplication wrappers
             # that don't need bleeding-edge.
@@ -235,6 +236,20 @@
             pkgs-bleeding = import inputs.nixpkgs-bleeding {
               inherit system;
               config.allowUnfree = true;
+              overlays = [
+                (_: bleedPrev: {
+                  pythonPackagesExtensions = bleedPrev.pythonPackagesExtensions ++ [
+                    (_: pyPrev: {
+                      # fastmcp's pytest suite hangs in the sandbox on async tests.
+                      # pytest-check-hook registers pytestCheckPhase unconditionally,
+                      # so dontUsePytestCheck is the only way to skip it.
+                      fastmcp = pyPrev.fastmcp.overridePythonAttrs (_: {
+                        dontUsePytestCheck = true;
+                      });
+                    })
+                  ];
+                })
+              ];
             };
             nuenv = inputs.nuenv.lib;
             inherit (inputs)
@@ -327,6 +342,7 @@
                   includes = options.programs.prettier.includes.default ++ [ "*.toml" ];
                 };
                 ruff.enable = true;
+                rustfmt.enable = true;
                 shfmt.enable = true;
                 statix.enable = true;
                 swift-format = {
@@ -349,6 +365,7 @@
                   ".git-blame-ignore-revs"
                   "**/.gitignore"
                   ".gitignore"
+                  "**/Cargo.lock"
                   "flake.lock"
                   # sops has its own formatter
                   "secrets/*.yaml"

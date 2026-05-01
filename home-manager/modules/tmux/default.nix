@@ -17,7 +17,9 @@
         # https://github.com/tmux-plugins/tmux-copycat
         copycat
       ];
-      shell = "${pkgs.pkgs-bleeding.nushell}/bin/nu";
+      # tmux-shell C shim execs `atuin hex --shell nu`.  Direct exec
+      # (~0.3 ms) instead of a bash wrapper (~2 ms).
+      shell = "${pkgs.pkgs-mine.tmux-shell}/bin/tmux-shell";
       shortcut = "Space";
       # inherit from previous shell
       terminal = "$TERM";

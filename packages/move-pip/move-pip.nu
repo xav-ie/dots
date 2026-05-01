@@ -1,7 +1,7 @@
 def get-pip-info []: nothing -> record<w: float, h: float, x: float, y: float, id: int, display: int> {
   try {
     yabai -m query --windows
-    | jq -r '[.[] | select(.title=="Picture-in-Picture")][0]'
+    | jq -r '[.[] | select(.title=="Picture-in-Picture" or .app=="iPhone Mirroring")][0]'
     | from json
     | {
         w: $in.frame.w,
@@ -13,7 +13,7 @@ def get-pip-info []: nothing -> record<w: float, h: float, x: float, y: float, i
       }
   } catch {
     error make --unspanned {
-      msg: "Could not find any PiP windows."
+      msg: "Could not find any PiP or iPhone Mirroring windows."
     }
   }
 }

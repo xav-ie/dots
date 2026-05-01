@@ -7,6 +7,9 @@
   # Platform flags passed from caller to avoid pkgs.stdenv access here
   isDarwin ? pkgs.stdenv.isDarwin,
   isLinux ? pkgs.stdenv.isLinux,
+  # User's atuin fork, pulled from inputs at the flake level since the
+  # overlay isn't applied to top-level `pkgs` here.
+  atuin,
   bun-demincer-src,
   executor-src,
   generate-kaomoji,
@@ -31,9 +34,7 @@ rec {
   browser-session-mcp = pkgs.callPackage ./browser-session-mcp { };
   cache-command = pkgs.callPackage ./cache-command { };
   discord-mcp = pkgs.callPackage ./discord-mcp { };
-  executor = pkgs.callPackage ./executor { inherit executor-src; };
   # claude-code packages need allowUnfree, passed via pkgs-unfree
-  chrome-headless-shell = pkgs.callPackage ./chrome-headless-shell { };
   claude-code = pkgs-unfree.callPackage ./claude-code { };
   claude-code-extract = pkgs-unfree.callPackage ./claude-code/extract.nix {
     inherit bun-demincer-src nodejs_25;
@@ -65,11 +66,13 @@ rec {
   pr-summary = pkgs.callPackage ./pr-summary { inherit base-ref writeNuApplication; };
   prettier-plugin-toml = pkgs.callPackage ./prettier-plugin-toml { };
   prettier-with-toml = pkgs.callPackage ./prettier-with-toml { inherit prettier-plugin-toml; };
+  nu_plugin_prompt = pkgs.callPackage ./nu_plugin_prompt { inherit pkgs-bleeding; };
   prs = pkgs.callPackage ./prs { inherit writeNuApplication; };
   review = pkgs.callPackage ./review { inherit writeNuApplication; };
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
   slack-mcp-server = pkgs.callPackage ./slack-mcp-server { src = slack-mcp-server-src; };
   tmux-move-window = pkgs.callPackage ./tmux-move-window { inherit writeNuApplication; };
+  tmux-shell = pkgs.callPackage ./tmux-shell { inherit atuin pkgs-bleeding; };
   tmux-tab-name-update = pkgs.callPackage ./tmux-tab-name-update { };
   toggle-theme = pkgs.callPackage ./toggle-theme { inherit writeNuApplication; };
   tsc-filter = pkgs.callPackage ./tsc-filter { inherit writeNuApplication; };
@@ -96,8 +99,10 @@ rec {
   tcc-grant = pkgs.callPackage ./tcc-grant { inherit writeNuApplication; };
 })
 // (optionalAttrs isLinux {
+  chrome-headless-shell = pkgs.callPackage ./chrome-headless-shell { };
   claude-overlay = pkgs.callPackage ./claude-overlay { };
   claude-yolo = pkgs.callPackage ./claude-yolo { };
+  executor = pkgs.callPackage ./executor { inherit executor-src; };
   move-active = pkgs.callPackage ./move-active { inherit writeNuApplication; };
   openrgb-appimage = pkgs.callPackage ./openrgb-appimage { };
   simulstreaming = pkgs.callPackage ./simulstreaming { src = simulstreaming-src; };

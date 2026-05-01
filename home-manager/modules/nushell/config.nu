@@ -54,9 +54,19 @@ $env.config.hooks.pre_execution = [
   { || if 'TMUX_PANE' in $env { $env.TMUX_TAB_UPDATE_PANE = $env.TMUX_PANE } }
 ]
 
-$env.config.hooks.pre_prompt = [
-  { || tmux-tab-name-update }
-]
+
+# tmux-tab-name-update only matters when $PWD changes (tab name is derived
+# from directory + git branch).  Move from pre_prompt (every prompt) to
+# env_change.PWD (only on cd) — saves ~2ms per non-cd prompt.
+#
+# Tradeoff: if you `git checkout other-branch` without cd, the tab name
+# keeps showing the old branch until the next cd.  `cd .` refreshes.
+$env.config.hooks.env_change = ($env.config.hooks.env_change? | default {})
+$env.config.hooks.env_change.PWD = (
+    $env.config.hooks.env_change.PWD?
+    | default []
+    | append { |_before, _after| tmux-tab-name-update }
+)
 
 $env.config.keybindings ++= [
   {
@@ -73,12 +83,6 @@ $env.config.keybindings ++= [
 $env.config.render_right_prompt_on_last_line = false
 
 $env.config.show_banner = false
-
-$env.config.plugin_gc.plugins = {
-  gstat: {
-    enabled: true
-  }
-}
 
 $env.config.table = {
   # basic, compact, compact_double, light, thin, with_love, rounded,
@@ -104,3 +108,4 @@ $env.config.table = {
   # # limit data rows from top and bottom after reaching a set point
   # abbreviated_row_count: 10
 }
+

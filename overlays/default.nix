@@ -57,24 +57,10 @@ in
       });
     neverest = inputs.neverest.packages.${final.stdenv.hostPlatform.system}.default;
     zjstatus = inputs.zjstatus.packages.${final.stdenv.hostPlatform.system}.default;
-    # atuin version (matches flake URL: github:atuinsh/atuin/v18.13.3)
-    atuin =
-      let
-        base = inputs.atuin.packages.${final.stdenv.hostPlatform.system}.default;
-      in
-      base.overrideAttrs (old: {
-        version = "18.13.3";
-        patches = (old.patches or [ ]) ++ [
-          (final.fetchpatch {
-            url = "https://github.com/atuinsh/atuin/pull/3327.patch";
-            hash = "sha256-lj+sE9lBAYMGE6dkt0mtyIAdoRt8zHJoBif5a9P91eQ=";
-          })
-          (final.fetchpatch {
-            url = "https://github.com/atuinsh/atuin/pull/3330.patch";
-            hash = "sha256-CUFv036TwJI/a0KUGhQZl5Rt/buqG8FrdZtNaTyyky8=";
-          })
-        ];
-      });
+    atuin = inputs.atuin.packages.${final.stdenv.hostPlatform.system}.default.overrideAttrs (_: {
+      pname = "atuin";
+      version = "18.16.0";
+    });
 
     voquill =
       let

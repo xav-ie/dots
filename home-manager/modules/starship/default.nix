@@ -2,12 +2,17 @@ _: {
   config = {
     programs.starship = {
       enable = true;
+      enableNushellIntegration = false;
       settings = {
         "$schema" = "https://starship.rs/config-schema.json";
         add_newline = true;
-        format = "$all\n";
+        # Explicit module list — `$all` triggers ~20 language probes (Cargo.toml,
+        # package.json, Dockerfile, kube/aws/gcp/terraform context, ...) on every
+        # prompt that we never use.
+        format = "$username$directory$git_branch$git_status$nix_shell$cmd_duration$line_break$character\n";
         aws.disabled = true;
         gcloud.disabled = true;
+        git_status.ignore_submodules = true;
         fill.symbol = "-";
         line_break.enabled = true;
         character = {
