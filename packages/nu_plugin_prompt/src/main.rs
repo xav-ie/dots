@@ -74,6 +74,7 @@ fn render(pwd: &Path) -> String {
     let repo = gix::discover(pwd).ok();
     let dir = render_dir(pwd, repo.as_ref());
     let branch = repo.as_ref().and_then(git_branch);
+    let state = repo.as_ref().and_then(git_state);
     let dirty = repo.as_ref().and_then(compute_git_status);
 
     let mut s = String::with_capacity(96);
@@ -84,6 +85,11 @@ fn render(pwd: &Path) -> String {
         s.push_str(" \x1b[1;35mon \u{e0a0} ");
         s.push_str(&b);
         s.push_str("\x1b[0m");
+        if let Some(st) = state {
+            s.push_str(" \x1b[1;33m(");
+            s.push_str(&st);
+            s.push_str(")\x1b[0m");
+        }
         if let Some(d) = dirty {
             s.push_str(" \x1b[1;31m[");
             s.push_str(&d);
@@ -148,6 +154,55 @@ fn git_branch(repo: &gix::Repository) -> Option<String> {
     }
     let id = repo.head_id().ok()?;
     Some(id.to_hex_with_len(7).to_string())
+}
+
+/// In-progress git operation (REBASING/CHERRY-PICKING/etc.), with `N/M`
+/// progress for rebases. Labels match starship's `git_state` defaults.
+fn git_state(repo: &gix::Repository) -> Option<String> {
+    use gix::state::InProgress;
+    let state = repo.state()?;
+    let label = match state {
+        InProgress::ApplyMailbox => "AM",
+        InProgress::ApplyMailboxRebase => "AM/REBASE",
+        InProgress::Bisect => "BISECTING",
+        InProgress::CherryPick | InProgress::CherryPickSequence => "CHERRY-PICKING",
+        InProgress::Merge => "MERGING",
+        InProgress::Rebase | InProgress::RebaseInteractive => "REBASING",
+        InProgress::Revert | InProgress::RevertSequence => "REVERTING",
+    };
+    let progress = matches!(state, InProgress::Rebase | InProgress::RebaseInteractive)
+        .then(|| rebase_progress(repo))
+        .flatten();
+    Some(match progress {
+        Some((cur, tot)) => format!("{label} {cur}/{tot}"),
+        None => label.to_string(),
+    })
+}
+
+/// Rebase progress isn't exposed by gix yet, so peek at the same files
+/// starship and bash-git-prompt read.
+fn rebase_progress(repo: &gix::Repository) -> Option<(usize, usize)> {
+    let git_dir = repo.path();
+    let read_usize = |rel: &str| -> Option<usize> {
+        std::fs::read_to_string(git_dir.join(rel))
+            .ok()?
+            .trim()
+            .parse()
+            .ok()
+    };
+    if git_dir.join("rebase-merge/msgnum").is_file() {
+        Some((
+            read_usize("rebase-merge/msgnum")?,
+            read_usize("rebase-merge/end")?,
+        ))
+    } else if git_dir.join("rebase-apply").is_dir() {
+        Some((
+            read_usize("rebase-apply/next")?,
+            read_usize("rebase-apply/last")?,
+        ))
+    } else {
+        None
+    }
 }
 
 fn compute_git_status(repo: &gix::Repository) -> Option<String> {
