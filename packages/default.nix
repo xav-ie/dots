@@ -105,6 +105,7 @@ rec {
   executor = pkgs.callPackage ./executor { inherit executor-src; };
   move-active = pkgs.callPackage ./move-active { inherit writeNuApplication; };
   openrgb-appimage = pkgs.callPackage ./openrgb-appimage { };
+  pinentry-auto = pkgs.callPackage ./pinentry-auto { };
   simulstreaming = pkgs.callPackage ./simulstreaming { src = simulstreaming-src; };
   record = pkgs.callPackage ./record { };
   record-section = pkgs.callPackage ./record-section { };
