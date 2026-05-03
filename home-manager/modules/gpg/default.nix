@@ -12,11 +12,10 @@ in
     enableSshSupport = true;
   }
   // lib.optionalAttrs isLinux {
-    pinentry.package = pkgs.pinentry-gnome3;
+    pinentry.package = pkgs.pkgs-mine.pinentry-auto;
   };
 
-  # Add pinentry-gnome3 to packages on Linux
   home.packages = lib.optionals isLinux [
-    pkgs.pinentry-gnome3
+    pkgs.pkgs-mine.pinentry-auto
   ];
 }

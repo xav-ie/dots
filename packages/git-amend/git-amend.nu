@@ -40,7 +40,7 @@ def main [
 
   # Create a fixup commit - Git will automatically know to squash this
   # into the target commit during rebase --autosquash
-  let fixup = (git commit --fixup $full_commit -S | complete)
+  let fixup = (git commit --fixup $full_commit | complete)
   if $fixup.exit_code != 0 {
     print "Error: Failed to create fixup commit"
     print $fixup.stderr
