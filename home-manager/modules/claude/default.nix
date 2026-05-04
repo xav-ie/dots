@@ -92,13 +92,6 @@ in
       # The update script package (in overlay)
       inherit (pkgs) claude-code-update;
 
-      # Wrap mcp-remote so it always uses a compatible Node runtime,
-      # regardless of what devshell puts on PATH.
-      mcp-remote-wrapped = pkgs.writeShellScriptBin "mcp-remote" ''
-        export PATH="${pkgs.nodejs}/bin:$PATH"
-        exec mcp-remote "$@"
-      '';
-
       marketplaceInputNames = lib.filter (x: x != null) (
         lib.mapAttrsToList (_: m: findInputName m.src) cfg.marketplaces
       );
@@ -185,7 +178,7 @@ in
 
       # Override plugin MCP configs to use the persistent proxy for instant startup.
       # This runs after plugin sync and rewrites .mcp.json in cached plugins to use
-      # mcp-sse-client → proxy instead of slow direct mcp-remote connections.
+      # mcp-sse-client → proxy instead of slow direct remote connections.
       home.activation.claudePluginMcpOverride =
         lib.hm.dag.entryAfter [ "claudePluginSync" ] # sh
           ''
@@ -254,8 +247,8 @@ in
         ".mcp.json".text = builtins.toJSON {
           mcpServers = {
             executor = {
-              command = "${mcp-remote-wrapped}/bin/mcp-remote";
-              args = [ "https://executor.lalala.casa/mcp" ];
+              type = "http";
+              url = "https://executor.lalala.casa/mcp";
             };
           };
         };
