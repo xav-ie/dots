@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "executor": {
-      "command": "mcp-remote",
-      "args": ["https://executor.lalala.casa/mcp"]
-    }
-  }
-}
