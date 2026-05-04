@@ -1,0 +1,18 @@
+/* Firefox userChrome.css.
+ *
+ * Requires `toolkit.legacyUserProfileCustomizations.stylesheets = true`
+ * (set by user.js in this same directory).
+ */
+
+@media (-moz-platform: macos) {
+  /* Hide the OS traffic-light buttons (close / minimize / zoom). */
+  #titlebar-buttonbox-container,
+  .titlebar-buttonbox-container,
+  .titlebar-buttonbox {
+    display: none !important;
+  }
+  /* And the spacer Firefox reserves for them in the tab strip. */
+  .titlebar-spacer[type="pre-tabs"] {
+    display: none !important;
+  }
+}
