@@ -4,6 +4,7 @@ _: {
     ./boot-args.nix
     ./certs.nix
     ./claude.nix
+    ./square-corners
     ./darwin-home-manager.nix
     ./defaults-optimization
     ./dnsmasq.nix

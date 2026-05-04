@@ -1,0 +1,5 @@
+module CoreUIBridge {
+  header "CoreUIBridge.h"
+  link framework "CoreUI"
+  export *
+}
