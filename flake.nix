@@ -101,6 +101,8 @@
     executor-src.flake = false;
     bun-demincer-src.url = "github:xav-ie/bun-demincer/fix/linux-dataStart-byte-count";
     bun-demincer-src.flake = false;
+    macos-corner-fix-src.url = "github:m4rkw/macos-corner-fix/147f2708cb468475567139acbad7d714859a4b67";
+    macos-corner-fix-src.flake = false;
     zerobrew-src.url = "github:lucasgelfond/zerobrew";
     zerobrew-src.flake = false;
 
@@ -323,6 +325,11 @@
                 # nufmt.enable = true;
                 clang-format = {
                   enable = true;
+                  # Default `includes` is C/C++/headers only; opt Objective-C in.
+                  includes = options.programs.clang-format.includes.default ++ [
+                    "*.m"
+                    "*.mm"
+                  ];
                   # Exclude GLSL files - they have special comment syntax that clang-format mangles
                   excludes = [ "*.glsl" ];
                 };
@@ -353,22 +360,20 @@
               settings = {
                 on-unmatched = "fatal";
                 excludes = [
+                  "**/.gitignore"
                   "**/.inputrc"
+                  "**/*.modulemap"
                   "**/.npmrc"
+                  "**/Cargo.lock"
                   "*.awk"
                   "*.conf"
-                  # formatter is borked
-                  "*.nu"
+                  "*.nu" # formatter is borked
                   "*.patch"
-                  # no standard formatter for AppleScript
-                  "*.scpt"
+                  "*.scpt" # no standard formatter for AppleScript
                   ".git-blame-ignore-revs"
-                  "**/.gitignore"
                   ".gitignore"
-                  "**/Cargo.lock"
                   "flake.lock"
-                  # sops has its own formatter
-                  "secrets/*.yaml"
+                  "secrets/*.yaml" # sops has its own formatter
                 ];
               };
             };

@@ -1015,6 +1015,23 @@
         "type": "github"
       }
     },
+    "macos-corner-fix-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1776518462,
+        "narHash": "sha256-cbHXtGyR4hDpdgXNZZ6DHtxU1GRJQ74sYiVJa88IGeI=",
+        "owner": "m4rkw",
+        "repo": "macos-corner-fix",
+        "rev": "147f2708cb468475567139acbad7d714859a4b67",
+        "type": "github"
+      },
+      "original": {
+        "owner": "m4rkw",
+        "repo": "macos-corner-fix",
+        "rev": "147f2708cb468475567139acbad7d714859a4b67",
+        "type": "github"
+      }
+    },
     "mcp-atlassian-src": {
       "flake": false,
       "locked": {
@@ -1664,6 +1681,7 @@
         "homebrew-core": "homebrew-core",
         "hyprland": "hyprland",
         "jj": "jj",
+        "macos-corner-fix-src": "macos-corner-fix-src",
         "mcp-atlassian-src": "mcp-atlassian-src",
         "mcp-nixos": "mcp-nixos",
         "morlana": "morlana",

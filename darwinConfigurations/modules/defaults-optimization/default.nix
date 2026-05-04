@@ -69,19 +69,23 @@ let
   hashPlistBuddyValue = value: builtins.hashString "sha256" (toPlistBuddyOutput 0 value + "\n");
 
   # Generate check command - use raw for simple types, PlistBuddy for complex
-  # Runs in background, writes to $mismatch_file on mismatch
+  # Runs in background, writes to $mismatch_file on mismatch and appends a
+  # diagnostic line to $drift_log so the activation can name what drifted.
   mkKeyCheckCmd =
     plistPath: key: value:
+    let
+      where = lib.escapeShellArg "${plistPath} :: ${key}";
+    in
     if isSimple value then
       let
         expected = toRawValue value;
       in
-      "(actual=$(plutil -extract ${lib.escapeShellArg key} raw -o - ${lib.escapeShellArg plistPath} 2>/dev/null); [[ \"$actual\" != ${lib.escapeShellArg expected} ]] && echo 1 > \"$mismatch_file\") &"
+      "(actual=$(plutil -extract ${lib.escapeShellArg key} raw -o - ${lib.escapeShellArg plistPath} 2>/dev/null); [[ \"$actual\" != ${lib.escapeShellArg expected} ]] && { echo 1 > \"$mismatch_file\"; printf '  drift: %s  expected=%s actual=%s\\n' ${where} ${lib.escapeShellArg expected} \"$actual\" >> \"$drift_log\"; }) &"
     else
       let
         expectedHash = hashPlistBuddyValue value;
       in
-      "(actual=$(/usr/libexec/PlistBuddy -c \"Print :${key}\" ${lib.escapeShellArg plistPath} 2>/dev/null | shasum -a 256 | cut -d' ' -f1); [[ \"$actual\" != \"${expectedHash}\" ]] && echo 1 > \"$mismatch_file\") &";
+      "(actual=$(/usr/libexec/PlistBuddy -c \"Print :${key}\" ${lib.escapeShellArg plistPath} 2>/dev/null | shasum -a 256 | cut -d' ' -f1); [[ \"$actual\" != \"${expectedHash}\" ]] && { echo 1 > \"$mismatch_file\"; printf '  drift: %s  (complex value, expected hash=%s actual hash=%s)\\n' ${where} ${lib.escapeShellArg expectedHash} \"$actual\" >> \"$drift_log\"; }) &";
 
   # Collect all check commands as a list
   mkDomainCheckCmds =
@@ -126,15 +130,18 @@ in
           # Check if defaults match expected state (pure bash parallel)
           echo "checking defaults..." >&2
           mismatch_file=$(mktemp)
+          drift_log=$(mktemp)
           echo 0 > "$mismatch_file"
           ${allCheckCmds}
           wait
           if [[ "$(cat "$mismatch_file")" == "0" ]]; then
             echo "user defaults unchanged, skipping..." >&2
           else
+            echo "user defaults drifted — re-applying. Drifted keys:" >&2
+            cat "$drift_log" >&2
             _nix_darwin_user_defaults
           fi
-          rm -f "$mismatch_file"
+          rm -f "$mismatch_file" "$drift_log"
         ''
       )
     ];
