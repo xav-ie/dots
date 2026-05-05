@@ -73,9 +73,12 @@ impl SimplePluginCommand for PromptRender {
 fn render(pwd: &Path) -> String {
     let repo = gix::discover(pwd).ok();
     let dir = render_dir(pwd, repo.as_ref());
-    let branch = repo.as_ref().and_then(git_branch);
-    let state = repo.as_ref().and_then(git_state);
-    let dirty = repo.as_ref().and_then(compute_git_status);
+    // Bare repos have no workdir — branch/status would describe the bare HEAD,
+    // not anything you can act on (`git pull` etc. will refuse).
+    let workdir_repo = repo.as_ref().filter(|r| r.workdir().is_some());
+    let branch = workdir_repo.and_then(git_branch);
+    let state = workdir_repo.and_then(git_state);
+    let dirty = workdir_repo.and_then(compute_git_status);
 
     let mut s = String::with_capacity(96);
     s.push_str("\x1b[1;36m"); // bold cyan
