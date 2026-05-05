@@ -285,6 +285,11 @@ in
                 NEXT_PUBLIC_UPLOAD_DIRECTORY = "/uploads";
                 PRISMA_HIDE_UPDATE_MESSAGE = "true";
               };
+              # Cap the CPU set the Temporal TS SDK sees at startup. Its Rust
+              # core sizes the Tokio thread pool from `nproc`, so on a 32-thread
+              # host it spawns 32 schedulers that each burn ~0.3% CPU even at
+              # idle (~10% baseline). 4 cores is plenty for our throughput.
+              podmanArgs = [ "--cpuset-cpus=0-3" ];
               # No container-level healthcheck:
               #
               # - Podman fires the first healthcheck immediately when the
