@@ -60,6 +60,7 @@
       zoxide.enable = true;
       # file manager
       yazi.enable = true;
+      worktrunk.enable = true;
     };
     home = {
       packages =
@@ -100,9 +101,6 @@
           unzip
           wget
           zip
-        ])
-        ++ (with pkgs.pkgs-bleeding; [
-          worktrunk
         ])
         # custom packages
         ++ (with pkgs.pkgs-mine; [
