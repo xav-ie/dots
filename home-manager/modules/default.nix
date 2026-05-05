@@ -44,6 +44,7 @@ _: {
     ./uair
     ./uv
     # ./wezterm
+    ./worktrunk
     ./yt-dlp
     # ./zellij
     ./zsh
