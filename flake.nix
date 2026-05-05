@@ -175,6 +175,7 @@
         # inputs.git-hooks.flakeModule
         inputs.treefmt-nix.flakeModule
         (import ./home-manager/modules/git/flake-check.nix toplevel)
+        (import ./packages/clippy-checks.nix inputs)
         ./lib/nix-multiline-lint
       ];
 
