@@ -20,6 +20,16 @@
 //     dispatch_once block is autoreleased (we build without ARC), so
 //     the static pointer dangles after the calling thread's autorelease
 //     pool drains. Fix is `[@[...] retain]` — see below.
+//   • Constructor without an @autoreleasepool wrapper crashed
+//     fileproviderd (and any non-AppKit daemon launchd injected the
+//     dylib into): dyld runs constructors before main, and daemons have
+//     no NSApplicationMain to install a thread autorelease pool, so the
+//     first autoreleased object inside +[NSBundle mainBundle] trips
+//     _objc_fatal ("autorelease pool push without a thread default
+//     autorelease pool") → SIGABRT. launchd throttled retries to 20min,
+//     which broke NSOpenPanel sidebars (Firefox/Chrome file pickers
+//     hung) and the Apple Account settings pane. Fix: wrap the entire
+//     constructor in @autoreleasepool.
 //
 // `___CORNER_RADIUS___` is substituted by our Nix package at build time
 // from the `services.squareCorners.cornerRadius` option.
@@ -90,29 +100,31 @@ static void hookIfPresent(Class cls, SEL sel, IMP impl) {
 }
 
 __attribute__((constructor)) static void init(void) {
-  if (![[NSBundle mainBundle] bundleIdentifier])
-    return;
+  @autoreleasepool {
+    if (![[NSBundle mainBundle] bundleIdentifier])
+      return;
 
-  Class themeFrame = NSClassFromString(@"NSThemeFrame");
-  if (themeFrame) {
-    hookIfPresent(themeFrame, @selector(_cornerRadius),
-                  (IMP)swizzled_cornerRadius);
-    hookIfPresent(themeFrame, @selector(_getCachedWindowCornerRadius),
-                  (IMP)swizzled_getCachedCornerRadius);
-    hookIfPresent(themeFrame, @selector(_topCornerSize),
-                  (IMP)swizzled_topCornerSize);
-    hookIfPresent(themeFrame, @selector(_bottomCornerSize),
-                  (IMP)swizzled_bottomCornerSize);
-  }
+    Class themeFrame = NSClassFromString(@"NSThemeFrame");
+    if (themeFrame) {
+      hookIfPresent(themeFrame, @selector(_cornerRadius),
+                    (IMP)swizzled_cornerRadius);
+      hookIfPresent(themeFrame, @selector(_getCachedWindowCornerRadius),
+                    (IMP)swizzled_getCachedCornerRadius);
+      hookIfPresent(themeFrame, @selector(_topCornerSize),
+                    (IMP)swizzled_topCornerSize);
+      hookIfPresent(themeFrame, @selector(_bottomCornerSize),
+                    (IMP)swizzled_bottomCornerSize);
+    }
 
-  Class win = NSClassFromString(@"NSWindow");
-  if (win) {
-    SEL sel = @selector(shadowParameters);
-    Method m = class_getInstanceMethod(win, sel);
-    if (m) {
-      orig_shadowParameters =
-          (orig_shadowParameters_t)method_getImplementation(m);
-      method_setImplementation(m, (IMP)swizzled_shadowParameters);
+    Class win = NSClassFromString(@"NSWindow");
+    if (win) {
+      SEL sel = @selector(shadowParameters);
+      Method m = class_getInstanceMethod(win, sel);
+      if (m) {
+        orig_shadowParameters =
+            (orig_shadowParameters_t)method_getImplementation(m);
+        method_setImplementation(m, (IMP)swizzled_shadowParameters);
+      }
     }
   }
 }
