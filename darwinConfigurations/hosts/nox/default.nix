@@ -45,12 +45,13 @@ in
         "android-studio"
         "blender"
         "chromium"
+        "claude"
         "dockdoor"
         "ente"
+        "figma"
         "firefox"
         "ghostty"
         "google-chrome"
-        # "little-snitch"
         "loom"
         "microsoft-edge"
         "openvpn-connect"
@@ -61,6 +62,7 @@ in
         "vlc"
         "vnc-viewer"
         "zoom"
+        # "little-snitch"
       ];
       brews = [ "mas" ];
     };
