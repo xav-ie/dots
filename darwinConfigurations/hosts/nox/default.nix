@@ -182,6 +182,9 @@ in
             cmd + alt - 6 : ${move-pip} middle-middle
             cmd + alt - 7 : ${move-pip} bottom-middle
 
+            lcmd + alt - 0x1B : ${move-pip} shrink
+            lcmd + alt - 0x18 : ${move-pip} grow
+
             ctrl + alt - q : yabai -m window --space prev
             ctrl + alt - w : yabai -m space --focus prev
             ctrl + alt - e : yabai -m space --focus next
