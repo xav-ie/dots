@@ -1,27 +1,16 @@
-# square-corners: kills macOS Tahoe's rounded window corners and the 1px
-# gray rim that gets drawn around every window.
+# square-corners: kill macOS Tahoe's rounded window corners.
 #
-# Tahoe draws the corner curve and the rim through two unrelated
-# pipelines, so we patch both:
+# Tahoe rounds window corners through two unrelated pipelines, so we
+# patch both:
 #
 #   1. Per-app dylib (./pkgs/macos-corner-fix)
-#      One small dylib injected into every AppKit process via
-#      DYLD_INSERT_LIBRARIES. It does two unrelated swizzles:
-#        a) NSThemeFrame `_cornerRadius` / `_topCornerSize` /
-#           `_bottomCornerSize` → return the configured radius (default
-#           0). This is the upstream m4rkw fix; AppKit asks NSThemeFrame
-#           "what corner should I round to?" and we answer 0.
-#        b) NSWindow `shadowParameters` → zero the rim keys in the
-#           returned dict (`com.apple.WindowShadowRimRadiusActive`,
-#           `…RimDensityActive`, `…InnerRim*`, both Active and Inactive).
-#           AppKit reads those keys and pushes the values to WindowServer
-#           via CGS. With them zeroed, no rim is drawn — and because
-#           every AppKit process answers 0 from its own swizzled getter,
-#           Dock restarts (which trigger AppKit to re-push shadow params
-#           in long-lived processes) don't reintroduce the rim.
-#      How it gets loaded: home-manager LaunchAgent below sets
-#      DYLD_INSERT_LIBRARIES so dyld pulls the dylib into every
-#      launchd-spawned GUI process.
+#      A small dylib injected into every AppKit process via the shared
+#      services.dyldInject.libraries mechanism (see ../default.nix).
+#      It swizzles NSThemeFrame's `_cornerRadius` /
+#      `_getCachedWindowCornerRadius` / `_topCornerSize` /
+#      `_bottomCornerSize` to return the configured radius (default 0).
+#      AppKit asks NSThemeFrame "what corner should I round to?" and
+#      our swizzled getters answer 0.
 #
 #   2. System-wide .car patch (./pkgs/car-edit + ./pkgs/aqua-patcher)
 #      Even with the dylib running, AppKit still asks WindowServer to
@@ -29,18 +18,22 @@
 #      in /System/…/Aqua.car (light) and DarkAqua.car (dark). The
 #      `car-edit` Swift CLI rewrites the WindowShapeEdges renditions in
 #      those files so the corner mask becomes a uniform rectangle —
-#      WindowServer then clips windows to a hard rectangle.
-#      How it gets installed: postActivation script below detects when
-#      the on-disk .car files differ from the patched version we'd
-#      produce (this happens after every macOS point update, which
-#      reseals the system snapshot back to Apple's originals), then
-#      mounts the system volume read-write, copies the patched files
-#      in, and creates a new bootable APFS snapshot via `bless`.
+#      WindowServer then clips windows to a hard rectangle. The
+#      postActivation script below detects when the on-disk .car files
+#      differ from the patched version we'd produce (this happens after
+#      every macOS point update, which reseals the system snapshot back
+#      to Apple's originals), then mounts the system volume read-write,
+#      copies the patched files in, and creates a new bootable APFS
+#      snapshot via `bless`.
+#
+# Note: window *border* (the 1px Liquid-Glass rim) is a separate
+# concern handled by ../remove-window-rim/. You can enable square
+# corners without removing the rim, or vice versa.
 #
 # Required system state (all set elsewhere — this module assumes them):
 #   • SIP disabled                (Recovery: csrutil disable)
 #   • Authenticated Root disabled (Recovery: csrutil authenticated-root disable)
-#   • amfi_get_out_of_my_way=1 in nvram boot-args (set by ./boot-args.nix)
+#   • amfi_get_out_of_my_way=1 in nvram boot-args (set by ../../boot-args.nix)
 #     — without this, dyld silently strips DYLD_INSERT_LIBRARIES from
 #     hardened-runtime apps like Safari, so the dylib never loads.
 #
@@ -50,7 +43,9 @@
 #   aqua-patcher restore  — restore originals from backup, bless, reboot
 #   aqua-patcher apply    — same install flow that activation runs
 #
-# Enabled by default (set `services.squareCorners.enable = false;` to opt out).
+# Enabled by default. To opt out:
+#   services.dyldInject.squareCorners.enable = false;
+#
 # After macOS updates you'll need to `sudo shutdown -r now` once activation
 # reapplies the patch (it'll print "REBOOT to apply" when that happens).
 {
@@ -61,7 +56,7 @@
   ...
 }:
 let
-  cfg = config.services.squareCorners;
+  cfg = config.services.dyldInject.squareCorners;
 
   # Match how packages/default.nix constructs writeNuApplication so the
   # nu-script wrapping is identical to the rest of the repo.
@@ -80,11 +75,11 @@ let
   targetsArg = lib.escapeShellArgs cfg.targets;
 in
 {
-  options.services.squareCorners = {
+  options.services.dyldInject.squareCorners = {
     enable = lib.mkOption {
       type = lib.types.bool;
       default = true;
-      description = "Enable the macOS Tahoe square-corner / no-rim mod.";
+      description = "Enable the macOS Tahoe square-corner mod (NSThemeFrame swizzles + Aqua.car patch).";
     };
 
     targets = lib.mkOption {
@@ -117,23 +112,12 @@ in
       car-edit
     ];
 
-    # Inject the dylib into every GUI session via launchctl setenv. macOS
-    # strips DYLD_INSERT_LIBRARIES from terminal-spawned hardened-runtime apps,
-    # but launchd-spawned ones (Spotlight, Dock, login items) honor the env
-    # var that the launchd domain holds. Requires
-    # `amfi_get_out_of_my_way=1` in nvram boot-args (set by ./boot-args.nix).
-    home-manager.users.${config.defaultUser}.launchd.agents.macos-corner-fix = {
-      enable = true;
-      config = {
-        ProgramArguments = [
-          "/bin/launchctl"
-          "setenv"
-          "DYLD_INSERT_LIBRARIES"
-          "${macos-corner-fix}/lib/SafariCornerTweak.dylib"
-        ];
-        RunAtLoad = true;
-      };
-    };
+    # Contribute the corner-fix dylib to the shared injection list.
+    # The single launchd agent owned by ../default.nix collects every
+    # contributor and does one `launchctl setenv DYLD_INSERT_LIBRARIES`.
+    services.dyldInject.libraries = [
+      "${macos-corner-fix}/lib/SafariCornerTweak.dylib"
+    ];
 
     # Runs as root every `darwin-rebuild activate`. Idempotent — if the
     # patched-from-current md5 equals the system md5, nothing happens. After

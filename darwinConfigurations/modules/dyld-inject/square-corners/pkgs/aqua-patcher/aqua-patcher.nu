@@ -2,11 +2,13 @@
 # corner shape mask. The actual rendition replacement is done by `car-edit`
 # (a Swift CLI linking against private CoreUI). This script handles backup,
 # install via system-volume mount + bless, and restore. The 1px window rim
-# itself is suppressed by the macos-corner-fix dylib, not by this patch.
+# itself is suppressed by the separate `remove-window-rim` dylib (see
+# ../../../remove-window-rim/), not by this patch.
 #
 # After macOS point updates the system snapshot is resealed; the
-# `services.aqua-patch` darwin module re-runs `aqua-patcher apply` on every
-# `darwin-rebuild activate` so the patch is reapplied automatically.
+# `services.dyldInject.squareCorners` darwin module's postActivation
+# script reapplies the patch on every `darwin-rebuild activate` (the
+# logic is inlined there rather than going through this CLI).
 
 const BACKUP_PRIMARY   = "~/Documents/aqua-car-backup"
 const BACKUP_SECONDARY = "~/Desktop"
