@@ -78,32 +78,48 @@ def windowInfo [
                            | select width height x y)
   let screen_height = $screen_dimensions.height
   let screen_width = $screen_dimensions.width
-  let screen_center = {
-    x: ($screen_dimensions.x + $screen_dimensions.width / 2),
-    y: ($screen_dimensions.y + $screen_dimensions.height / 2),
-  }
 
   let window_height = $window_dimensions.height
   let window_width = $window_dimensions.width
-  let window_center = {
-    x: ($window_dimensions.x + $window_dimensions.width / 2),
-    y: ($window_dimensions.y + $window_dimensions.height / 2),
-  }
-  let window_quadrant = {
-    top: ($window_center.y < $screen_center.y),
-    left: ($window_center.x < $screen_center.x),
-  }
 
   let window_left = $gap_left + $border_size
   let window_top = $gap_top + $border_size + $waybar_height + $border_size + $gap_top
   let window_right = $screen_width - $window_width - $gap_right - $border_size
   let window_bottom = $screen_height - $window_height - $gap_bottom - $border_size
+  let window_h_middle = ($screen_width - $window_width) / 2
+  let window_v_middle = ($window_top
+                        + ($window_bottom - $window_top) / 2)
+
+  # Pick the anchor (left/middle/right, top/middle/bottom) the window is
+  # currently closest to so resize can preserve it.
+  let window_quadrant = {
+    v: ([
+        { name: "top", pos: $window_top },
+        { name: "middle", pos: $window_v_middle },
+        { name: "bottom", pos: $window_bottom },
+      ]
+      | each {|c| { name: $c.name, dist: ($c.pos - $window_dimensions.y | math abs) } }
+      | sort-by dist
+      | first
+      | get name),
+    h: ([
+        { name: "left", pos: $window_left },
+        { name: "middle", pos: $window_h_middle },
+        { name: "right", pos: $window_right },
+      ]
+      | each {|c| { name: $c.name, dist: ($c.pos - $window_dimensions.x | math abs) } }
+      | sort-by dist
+      | first
+      | get name),
+  }
 
   {
     window_left: $window_left,
     window_right: $window_right,
     window_bottom: $window_bottom,
     window_top: $window_top,
+    window_h_middle: $window_h_middle,
+    window_v_middle: $window_v_middle,
     window_dimensions: $window_dimensions,
     window_quadrant: $window_quadrant,
     address: $window_dimensions.address,
@@ -115,7 +131,7 @@ def reset_position [] {
 }
 
 def move_position [
-  position: record<top: bool, left: bool>,
+  position: record<v: string, h: string>,
   use_active = false,
   selector = "",
   window_dimensions_override?:
@@ -123,17 +139,17 @@ def move_position [
 ] {
   let window_info = windowInfo ($window_dimensions_override | default
                                 (windowDimensions $use_active $selector))
-  let top = $window_info.window_top | math round
-  let bottom = $window_info.window_bottom | math round
-  let left = $window_info.window_left | math round
-  let right = $window_info.window_right | math round
-
-  let resize_params = match $position {
-    { top: true, left: true } => $"exact ($left) ($top)"
-    { top: true, left: false } => $"exact ($right) ($top)"
-    { top: false, left: false } => $"exact ($right) ($bottom)"
-    { top: false, left: true } => $"exact ($left) ($bottom)"
-  }
+  let y = match $position.v {
+    "top" => $window_info.window_top
+    "middle" => $window_info.window_v_middle
+    "bottom" => $window_info.window_bottom
+  } | math round
+  let x = match $position.h {
+    "left" => $window_info.window_left
+    "middle" => $window_info.window_h_middle
+    "right" => $window_info.window_right
+  } | math round
+  let resize_params = $"exact ($x) ($y)"
 
   let command = if $use_active {
     $"moveactive ($resize_params)"
@@ -145,28 +161,43 @@ def move_position [
   $command
 }
 
-def move_window [position: record<top: bool, left: bool>, selector = ""] {
+def move_window [position: record<v: string, h: string>, selector = ""] {
   hyprctl dispatch (move_position $position false $selector)
 }
 
 # Move window to top left
 export def "main topLeft" [selector = ""] {
-  move_window { top: true, left: true } $selector
+  move_window { v: "top", h: "left" } $selector
 }
 
 # Move window to top right
 export def "main topRight" [selector = ""] {
-  move_window { top: true, left: false } $selector
+  move_window { v: "top", h: "right" } $selector
 }
 
 # Move window to bottom right
 export def "main bottomRight" [selector = ""] {
-  move_window { top: false, left: false } $selector
+  move_window { v: "bottom", h: "right" } $selector
 }
 
 # Move window to bottom left
 export def "main bottomLeft" [selector = ""] {
-  move_window { top: false, left: true } $selector
+  move_window { v: "bottom", h: "left" } $selector
+}
+
+# Move window to top middle
+export def "main topMiddle" [selector = ""] {
+  move_window { v: "top", h: "middle" } $selector
+}
+
+# Move window to middle middle (center)
+export def "main middleMiddle" [selector = ""] {
+  move_window { v: "middle", h: "middle" } $selector
+}
+
+# Move window to bottom middle
+export def "main bottomMiddle" [selector = ""] {
+  move_window { v: "bottom", h: "middle" } $selector
 }
 
 # If the active window cannot be grown or shrunk, then don't use it!
