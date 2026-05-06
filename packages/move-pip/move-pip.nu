@@ -85,3 +85,51 @@ export def "main bottom-middle" []: nothing -> nothing {
   let moveY = $pipInfo.screenHeight - $pipInfo.h
   yabai -m window $"($pipInfo.id)" --move $"abs:($moveX):($moveY)"
 }
+
+def smart-resize [factor: float]: nothing -> nothing {
+  let info = (get-pip-info-full)
+  let centerX = $info.x + $info.w / 2
+  let centerY = $info.y + $info.h / 2
+  let newW = ($info.w * (1 + $factor) | math round)
+  let newH = ($info.h * (1 + $factor) | math round)
+  let anchorX = if $centerX < ($info.screenWidth / 3) {
+    "left"
+  } else if $centerX > ($info.screenWidth * 2 / 3) {
+    "right"
+  } else {
+    "middle"
+  }
+  let anchorY = if $centerY < ($info.screenHeight / 3) {
+    "top"
+  } else if $centerY > ($info.screenHeight * 2 / 3) {
+    "bottom"
+  } else {
+    "middle"
+  }
+  let newX = if $anchorX == "left" {
+    $info.x | math round
+  } else if $anchorX == "right" {
+    ($info.x + $info.w - $newW) | math round
+  } else {
+    ($info.x + ($info.w - $newW) / 2) | math round
+  }
+  let newY = if $anchorY == "top" {
+    $info.y | math round
+  } else if $anchorY == "bottom" {
+    ($info.y + $info.h - $newH) | math round
+  } else {
+    ($info.y + ($info.h - $newH) / 2) | math round
+  }
+  yabai -m window $"($info.id)" --resize $"abs:($newW):($newH)"
+  yabai -m window $"($info.id)" --move $"abs:($newX):($newY)"
+}
+
+# Shrink the PiP window by 10%, keeping its current corner anchored.
+export def "main shrink" []: nothing -> nothing {
+  smart-resize -0.1
+}
+
+# Grow the PiP window by 10%, keeping its current corner anchored.
+export def "main grow" []: nothing -> nothing {
+  smart-resize 0.1
+}
