@@ -1,14 +1,21 @@
-// Override NSThemeFrame's corner-rounding methods (the upstream m4rkw
-// recipe) AND zero out the rim parameters in -[NSWindow shadowParameters]
-// so Tahoe's 1px Liquid-Glass rim never gets pushed to WindowServer.
+// Zero out the rim parameters in -[NSWindow shadowParameters] so
+// macOS Tahoe's 1px Liquid-Glass window border never gets pushed to
+// WindowServer.
 //
 // The rim is configured per-window via the dictionary returned by
 // `-[NSWindow shadowParameters]`. AppKit reads keys like
-// `com.apple.WindowShadowRimRadiusActive`, `WindowShadowRimDensityActive`,
-// (+ Inactive variants and InnerRim* counterparts) and pushes the values
-// to WindowServer via CGS. On Tahoe these default to non-zero values
+// `com.apple.WindowShadowRimRadiusActive`, `WindowShadowRimDensityActive`
+// (+ Inactive variants and InnerRim* counterparts) and pushes the
+// values to WindowServer via CGS. On Tahoe these default to non-zero
 // (Radius=2, Density=0.95). Zeroing them in the returned dict before
-// AppKit reads it makes the CGS push paint no rim.
+// AppKit reads it makes the CGS push paint no rim — and because every
+// AppKit process answers from its own swizzled getter, Dock restarts
+// (which trigger AppKit to re-push shadow params in long-lived
+// processes) don't reintroduce the rim.
+//
+// Loaded into every launchd-spawned GUI process via the shared
+// services.dyldInject.libraries mechanism (see
+// darwinConfigurations/modules/dyld-inject/default.nix).
 //
 // History — what NOT to repeat:
 //   • CALayer setRim* setter no-ops (setRimWidth:, setRimOpacity:,
@@ -30,30 +37,8 @@
 //     which broke NSOpenPanel sidebars (Firefox/Chrome file pickers
 //     hung) and the Apple Account settings pane. Fix: wrap the entire
 //     constructor in @autoreleasepool.
-//
-// `___CORNER_RADIUS___` is substituted by our Nix package at build time
-// from the `services.squareCorners.cornerRadius` option.
 #import <AppKit/AppKit.h>
 #import <objc/runtime.h>
-
-static CGFloat kDesiredCornerRadius = ___CORNER_RADIUS___;
-
-// ---------- NSThemeFrame radius getters ----------
-
-static double swizzled_cornerRadius(id self, SEL _cmd) {
-  return kDesiredCornerRadius;
-}
-static double swizzled_getCachedCornerRadius(id self, SEL _cmd) {
-  return kDesiredCornerRadius;
-}
-static CGSize swizzled_topCornerSize(id self, SEL _cmd) {
-  return CGSizeMake(kDesiredCornerRadius, kDesiredCornerRadius);
-}
-static CGSize swizzled_bottomCornerSize(id self, SEL _cmd) {
-  return CGSizeMake(kDesiredCornerRadius, kDesiredCornerRadius);
-}
-
-// ---------- NSWindow.shadowParameters: zero rim keys in place ----------
 
 typedef id (*orig_shadowParameters_t)(id, SEL);
 static orig_shadowParameters_t orig_shadowParameters = NULL;
@@ -91,30 +76,10 @@ static id swizzled_shadowParameters(id self, SEL _cmd) {
   return m;
 }
 
-// ---------- install ----------
-
-static void hookIfPresent(Class cls, SEL sel, IMP impl) {
-  Method m = class_getInstanceMethod(cls, sel);
-  if (m)
-    method_setImplementation(m, impl);
-}
-
 __attribute__((constructor)) static void init(void) {
   @autoreleasepool {
     if (![[NSBundle mainBundle] bundleIdentifier])
       return;
-
-    Class themeFrame = NSClassFromString(@"NSThemeFrame");
-    if (themeFrame) {
-      hookIfPresent(themeFrame, @selector(_cornerRadius),
-                    (IMP)swizzled_cornerRadius);
-      hookIfPresent(themeFrame, @selector(_getCachedWindowCornerRadius),
-                    (IMP)swizzled_getCachedCornerRadius);
-      hookIfPresent(themeFrame, @selector(_topCornerSize),
-                    (IMP)swizzled_topCornerSize);
-      hookIfPresent(themeFrame, @selector(_bottomCornerSize),
-                    (IMP)swizzled_bottomCornerSize);
-    }
 
     Class win = NSClassFromString(@"NSWindow");
     if (win) {

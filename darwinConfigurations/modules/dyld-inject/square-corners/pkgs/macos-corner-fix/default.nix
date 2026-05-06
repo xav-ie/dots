@@ -15,8 +15,8 @@ stdenv.mkDerivation {
   buildInputs = [ apple-sdk ];
   nativeBuildInputs = [ darwin.sigtool ];
 
-  # Replace upstream SafariCornerTweak.m with our version that ALSO
-  # zeros Tahoe's per-window rim params via -[NSWindow shadowParameters].
+  # Replace upstream SafariCornerTweak.m with our version. (Rim handling
+  # split into the remove-window-rim module; this dylib is corners-only.)
   postPatch = ''
     cp ${./SafariCornerTweak.m} SafariCornerTweak.m
     substituteInPlace SafariCornerTweak.m \
@@ -38,7 +38,7 @@ stdenv.mkDerivation {
   '';
 
   meta = {
-    description = "Square macOS Tahoe windows by swizzling NSThemeFrame radius + NSWindow.shadowParameters rim";
+    description = "Square macOS Tahoe windows by swizzling NSThemeFrame radius getters";
     homepage = "https://github.com/m4rkw/macos-corner-fix";
     license = lib.licenses.mit;
     platforms = lib.platforms.darwin;

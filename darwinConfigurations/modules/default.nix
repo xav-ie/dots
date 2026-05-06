@@ -4,10 +4,10 @@ _: {
     ./boot-args.nix
     ./certs.nix
     ./claude.nix
-    ./square-corners
     ./darwin-home-manager.nix
     ./defaults-optimization
     ./dnsmasq.nix
+    ./dyld-inject
     ./homebrew-cache.nix
     # ./linux-builder.nix  # Disabled: using praesidium as remote builder instead
     ./nix-homebrew.nix
