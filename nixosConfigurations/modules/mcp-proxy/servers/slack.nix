@@ -18,6 +18,7 @@ in
       SLACK_MCP_ADD_MESSAGE_TOOL = "true";
       SLACK_MCP_EDIT_MESSAGE_TOOL = "true";
       SLACK_MCP_MARK_TOOL = "true";
+      SLACK_MCP_REACTION_TOOL = "true";
       SLACK_MCP_CHANNELS_CACHE = "${dataDir}/channels.cache";
       SLACK_MCP_USERS_CACHE = "${dataDir}/users.cache";
     };
