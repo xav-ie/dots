@@ -12,13 +12,13 @@ inputs: {
       ...
     }:
     let
-      inherit (inputs.nixpkgs-bleeding.legacyPackages.${system}) clippy;
+      defaultClippy = inputs.nixpkgs.legacyPackages.${system}.clippy;
 
       mkClippyCheck =
         pkg:
         pkg.overrideAttrs (old: {
           pname = "clippy-${old.pname}";
-          nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ clippy ];
+          nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ (pkg.passthru.clippy or defaultClippy) ];
           buildPhase = ''
             runHook preBuild
             cargo clippy --all-targets --all-features -- -D warnings
@@ -34,7 +34,7 @@ inputs: {
     in
     {
       checks = lib.mapAttrs' (name: pkg: lib.nameValuePair "clippy-${name}" (mkClippyCheck pkg)) (
-        lib.filterAttrs (_: pkg: pkg ? cargoDeps) config.packages
+        lib.filterAttrs (_: pkg: pkg ? cargoDeps && !(pkg.passthru.skipClippy or false)) config.packages
       );
     };
 }
