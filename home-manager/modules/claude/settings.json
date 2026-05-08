@@ -51,6 +51,8 @@
     "mode": "hold"
   },
   "skipDangerousModePermissionPrompt": true,
+  "editorMode": "vim",
+  "prefersReducedMotion": true,
   "voiceEnabled": true,
   "autoMemory": {
     "enabled": true,
@@ -59,6 +61,5 @@
   "autoDream": {
     "enabled": true,
     "intervalHours": 24
-  },
-  "editorMode": "vim"
+  }
 }
