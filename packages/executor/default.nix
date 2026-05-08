@@ -51,7 +51,7 @@ let
 
     outputHashAlgo = "sha256";
     outputHashMode = "recursive";
-    outputHash = "sha256-2xpDHSbDfZU0RtfqLsTOFHuZqIZC5rx/SgxMSbSHpwM=";
+    outputHash = "sha256-PeEZBnr876OElqvloIaDdMyK75twyh/9kc0rIftr/ds=";
   };
 in
 stdenv.mkDerivation {
@@ -109,8 +109,8 @@ stdenv.mkDerivation {
     mkdir -p $out/bin $out/lib/executor
     cp apps/cli/dist/executor-linux-x64/bin/executor $out/lib/executor/
     cp apps/cli/dist/executor-linux-x64/bin/emscripten-module.wasm $out/lib/executor/
-    cp apps/cli/dist/executor-linux-x64/bin/secure-exec-v8 $out/lib/executor/ 2>/dev/null || true
-    chmod +x $out/lib/executor/executor $out/lib/executor/secure-exec-v8 2>/dev/null || true
+    cp apps/cli/dist/executor-linux-x64/bin/keyring.node $out/lib/executor/
+    chmod +x $out/lib/executor/executor
 
     makeBinaryWrapper $out/lib/executor/executor $out/bin/executor
 
