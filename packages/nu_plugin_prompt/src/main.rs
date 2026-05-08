@@ -8,6 +8,8 @@
 
 use std::path::Path;
 
+use gix::bstr::ByteSlice;
+
 use nu_plugin::{
     EngineInterface, EvaluatedCall, MsgPackSerializer, Plugin, PluginCommand, SimplePluginCommand,
     serve_plugin,
@@ -254,7 +256,14 @@ fn compute_git_status(repo: &gix::Repository) -> Option<String> {
                         ..
                     } => modified = true,
                     IwItem::DirectoryContents { entry, .. } => {
-                        if matches!(entry.status, gix::dir::entry::Status::Untracked) {
+                        // gix emits a directory as Untracked even when it
+                        // recursively contains zero files (e.g. `.turbo/cache/`
+                        // left behind after a clean). git ignores empty
+                        // directory trees entirely, so verify there's at least
+                        // one regular file before counting it.
+                        if matches!(entry.status, gix::dir::entry::Status::Untracked)
+                            && entry_has_file(repo, &entry)
+                        {
                             untracked = true;
                         }
                     }
@@ -300,6 +309,40 @@ fn compute_git_status(repo: &gix::Repository) -> Option<String> {
         (false, false) => {}
     }
     if out.is_empty() { None } else { Some(out) }
+}
+
+/// True if the entry resolves to (or contains, for directories) at least one
+/// regular file or symlink. Bounded read_dir walk that short-circuits on the
+/// first match, so cost is ~one syscall for the common file case and one
+/// recursive descent for empty-directory false positives.
+fn entry_has_file(repo: &gix::Repository, entry: &gix::dir::Entry) -> bool {
+    match entry.disk_kind {
+        Some(gix::dir::entry::Kind::File | gix::dir::entry::Kind::Symlink) => true,
+        Some(gix::dir::entry::Kind::Directory) => {
+            let Some(workdir) = repo.workdir() else {
+                return true;
+            };
+            dir_contains_file(&workdir.join(gix::path::from_bstr(entry.rela_path.as_bstr())))
+        }
+        // Repository (nested git dir) or unknown — treat as untracked, matching git.
+        _ => true,
+    }
+}
+
+fn dir_contains_file(p: &std::path::Path) -> bool {
+    let Ok(rd) = std::fs::read_dir(p) else {
+        return false;
+    };
+    for e in rd.flatten() {
+        let Ok(ft) = e.file_type() else { continue };
+        if ft.is_file() || ft.is_symlink() {
+            return true;
+        }
+        if ft.is_dir() && dir_contains_file(&e.path()) {
+            return true;
+        }
+    }
+    false
 }
 
 /// Returns `(ahead, behind)` as booleans — we only need presence, not counts,
