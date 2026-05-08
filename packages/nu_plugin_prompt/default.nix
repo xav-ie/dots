@@ -14,6 +14,8 @@ pkgs-bleeding.rustPlatform.buildRustPackage {
     lockFile = ./Cargo.lock;
   };
 
+  passthru.clippy = pkgs-bleeding.clippy;
+
   meta = {
     description = "Nushell plugin that renders the prompt in-process";
     mainProgram = "nu_plugin_prompt";

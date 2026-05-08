@@ -18,6 +18,9 @@ rustPlatform.buildRustPackage {
     "--skip=install::tests::"
   ];
 
+  # External upstream code; don't gate our checks on its clippy hygiene.
+  passthru.skipClippy = true;
+
   meta = with lib; {
     description = "A drop-in, 5-20x faster, experimental Homebrew alternative";
     homepage = "https://github.com/lucasgelfond/zerobrew";
