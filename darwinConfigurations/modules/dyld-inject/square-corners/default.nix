@@ -58,14 +58,10 @@
 let
   cfg = config.services.dyldInject.squareCorners;
 
-  # Match how packages/default.nix constructs writeNuApplication so the
-  # nu-script wrapping is identical to the rest of the repo.
-  writeNuApplication =
-    inputs.nuenv.lib.mkNushellScriptApplication pkgs.nushell pkgs.writeTextFile
-      pkgs.lib;
-
+  # `writeNuApplication` comes from overlays/default.nix and is
+  # auto-resolved by callPackage from pkgs.
   car-edit = pkgs.callPackage ./pkgs/car-edit { };
-  aqua-patcher = pkgs.callPackage ./pkgs/aqua-patcher { inherit car-edit writeNuApplication; };
+  aqua-patcher = pkgs.callPackage ./pkgs/aqua-patcher { inherit car-edit; };
   macos-corner-fix = pkgs.callPackage ./pkgs/macos-corner-fix {
     inherit (inputs) macos-corner-fix-src;
     inherit (cfg) cornerRadius;
