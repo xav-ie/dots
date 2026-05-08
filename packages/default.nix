@@ -95,6 +95,7 @@ rec {
   };
   move-pip = pkgs.callPackage ./move-pip { inherit writeNuApplication; };
   sketchybar-battery = pkgs.callPackage ./sketchybar-battery { inherit writeNuApplication; };
+  sketchybar-hover = pkgs.callPackage ./sketchybar-hover { };
   zerobrew = pkgs.callPackage ./zerobrew { src = zerobrew-src; };
   tcc-grant = pkgs.callPackage ./tcc-grant { inherit writeNuApplication; };
 })

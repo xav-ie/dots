@@ -1,7 +1,5 @@
 #!/usr/bin/env nu --stdin
 
-use "../hover.nu" *
-
 def main [] {
   let item_props = [
     "alias.update_freq=0"
@@ -16,7 +14,7 @@ def main [] {
 
   match $env.SENDER {
     "forced" => {
-      sketchybar --set $"($env.NAME)" ...$item_props --subscribe $"($env.NAME)" battery_change mouse.entered mouse.exited
+      sketchybar --set $"($env.NAME)" ...$item_props
     }
     "battery_change" => {
       sketchybar --set $"($env.NAME)" $"alias.update_freq=1"
@@ -25,14 +23,8 @@ def main [] {
       # go back to not updating
       sketchybar --set $"($env.NAME)" $"alias.update_freq=0"
     }
-    "mouse.entered" => {
-      hover_item "battery"
-    }
-    "mouse.exited" => {
-      unhover_item "battery"
-    }
     _ => {
-      print $"Unknown event: ($env.SENDER)"
+      print $"battery_icon: ignoring event ($env.SENDER)"
     }
   }
 }

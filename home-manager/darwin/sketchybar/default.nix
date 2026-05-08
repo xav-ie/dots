@@ -7,6 +7,11 @@
 let
   inherit ((import ../../../lib/fonts.nix { inherit lib pkgs; })) fonts;
 
+  # Single source of truth for the bar height. Consumed by
+  # - `sketchybarrc.nu` via `(get_bar_height)` from nix-settings.nu
+  # - the sketchybar-hover daemon via the SKETCHYBAR_BAR_HEIGHT env var
+  barHeight = "32";
+
   # so that I don't have to hard-code $HOME
   sketchybarWrapper = pkgs.writeShellScript "sketchybar-wrapper" ''
     exec ${pkgs.sketchybar}/bin/sketchybar --config "$HOME/.config/sketchybar/sketchybarrc" "$@"
@@ -33,6 +38,9 @@ in
           def get_label_font [] {
             "${fonts.configs.sketchybar.label-font}"
           }
+          def get_bar_height [] {
+            ${barHeight}
+          }
         '';
       "sketchybar/sketchybarrc".source =
         config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/darwin/sketchybar/sketchybarrc.nu";
@@ -40,8 +48,6 @@ in
         config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/darwin/sketchybar/open_volume_control.scpt";
       "sketchybar/select_control_center.nu".source =
         config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/darwin/sketchybar/select_control_center.nu";
-      "sketchybar/hover.nu".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/darwin/sketchybar/hover.nu";
 
       "sketchybar/plugins/battery.nu".source =
         config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/darwin/sketchybar/plugins/battery.nu";
@@ -82,6 +88,7 @@ in
             pkgs.nushell
             pkgs.sketchybar
             pkgs.bash
+            pkgs.pkgs-mine.sketchybar-hover
           ]
         }:/usr/bin";
       };
@@ -97,6 +104,37 @@ in
         RunAtLoad = true;
         StandardOutPath = "/tmp/sketchybar-battery.log";
         StandardErrorPath = "/tmp/sketchybar-battery.err";
+      };
+    };
+
+    # Owns per-item hover state. Items invoke `sketchybar-hover` (the tiny
+    # client) on mouse events; this daemon receives those over a Unix socket
+    # and pushes batched `--set` updates back to sketchybar. Avoids the
+    # per-hover nushell fork-storm and self-heals dropped mouse.exited events.
+    launchd.agents.sketchybar-hover = {
+      inherit (config.launchd.agents.sketchybar) enable;
+      config = {
+        Debug = true;
+        Program = "${pkgs.pkgs-mine.sketchybar-hover}/bin/sketchybar-hoverd";
+        KeepAlive = true;
+        RunAtLoad = true;
+        StandardOutPath = "/tmp/sketchybar-hover.log";
+        StandardErrorPath = "/tmp/sketchybar-hover.err";
+        EnvironmentVariables = {
+          PATH = "${lib.makeBinPath [ pkgs.sketchybar ]}:/usr/bin";
+          # Set to "1" to log every event/state/sketchybar invocation to
+          # /tmp/sketchybar-hover.err. Off by default to keep the log file
+          # small in normal use.
+          SKETCHYBAR_HOVER_DEBUG = "0";
+          # Bar height used by the daemon's polling fallback to detect
+          # "cursor left the bar". Sourced from the same `barHeight` used by
+          # nix-settings.nu so all three places (Nix, Nu, Rust) stay in sync.
+          SKETCHYBAR_BAR_HEIGHT = barHeight;
+          # Stack traces in /tmp/sketchybar-hover.err when the daemon's
+          # panic hook fires. No overhead during normal operation since
+          # panics are the abort path.
+          RUST_BACKTRACE = "1";
+        };
       };
     };
 

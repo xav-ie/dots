@@ -1,7 +1,5 @@
 #!/usr/bin/env nu --stdin
 
-use "../hover.nu" *
-
 def main [] {
   let hour = (date now | format date "%-I" | into int)
 
@@ -39,19 +37,13 @@ def main [] {
 
   match $env.SENDER {
     "forced" => {
-      sketchybar --set $"($env.NAME)" ...$item_props --subscribe $"($env.NAME)" mouse.entered mouse.exited
-    }
-    "mouse.entered" => {
-      hover_item "clock"
-    }
-    "mouse.exited" => {
-      unhover_item "clock"
+      sketchybar --set $"($env.NAME)" ...$item_props
     }
     "routine" => {
       sketchybar --set $"($env.NAME)" ...$item_props
     }
     _ => {
-      print $"clock: ignoring event ($env.SENDER)"
+      print $"clock_icon: ignoring event ($env.SENDER)"
     }
   }
 }
