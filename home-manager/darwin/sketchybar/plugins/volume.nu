@@ -1,7 +1,5 @@
 #!/usr/bin/env nu --stdin
 
-use "../hover.nu" *
-
 # The volume_change event supplies a $INFO variable in which the current volume
 # percentage is passed to the script.
 def main [] {
@@ -21,21 +19,8 @@ def main [] {
       let volume = ($env.INFO | fill --alignment right --character ' ' --width 3)
       sketchybar --set $"($env.NAME)" $"label=($volume)%"
     }
-    "mouse.entered" => {
-      hover_item "volume"
-    }
-    "mouse.exited" => {
-      unhover_item "volume"
-    }
-    "volume_hover" => {
-      if ($env.HOVERED == "true") {
-        sketchybar --set $"($env.NAME)" "label.background.color=0x33ffffff"
-      } else {
-        sketchybar --set $"($env.NAME)" "label.background.color=0x00000000"
-      }
-    }
     "forced" => {
-      sketchybar --set $"($env.NAME)" ...$item_props --subscribe $"($env.NAME)" mouse.entered mouse.exited volume_change volume_hover
+      sketchybar --set $"($env.NAME)" ...$item_props
     }
   }
 }

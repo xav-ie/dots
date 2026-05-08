@@ -1,0 +1,20 @@
+[package]
+name = "sketchybar-hover"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "sketchybar-hover"
+path = "src/bin/sketchybar-hover.rs"
+
+[[bin]]
+name = "sketchybar-hoverd"
+path = "src/bin/sketchybar-hoverd.rs"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

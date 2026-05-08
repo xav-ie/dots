@@ -10,7 +10,7 @@ let PLUGIN_DIR = "plugins"
 # If you are looking for other colors, see the color picker:
 # https://felixkratz.github.io/SketchyBar/config/tricks#color-picker
 
-sketchybar --bar "position=top" "height=32" "blur_radius=30" "color=0x90000000"
+sketchybar --bar "position=top" $"height=(get_bar_height)" "blur_radius=30" "color=0x90000000"
 
 ##### Changing Defaults #####
 # We now change some default values, which are applied to all further items.
@@ -39,13 +39,17 @@ sketchybar --default ...$default_props
 sketchybar --bar "topmost=window"
 sketchybar --bar "font_smoothing=on"
 
+# Hover state for every interactive item is owned by `sketchybar-hoverd` (a
+# launchd-managed daemon). Items invoke `sketchybar-hover --plugin <path>` as
+# their script: mouse events get forwarded to the daemon over a Unix socket;
+# everything else (forced/data updates) execs the underlying nu plugin.
+
 ##### Adding Left Items #####
 # We add some regular items to the left side of the bar, where
 # only the properties deviating from the current defaults need to be set
-(sketchybar --add event front_app_hover)
 (sketchybar --add item front_app left
-  --set front_app $"script=($PLUGIN_DIR)/front_app.nu"
-  --subscribe front_app front_app_switched mouse.exited.global)
+  --set front_app $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/front_app.nu"
+  --subscribe front_app front_app_switched mouse.entered mouse.exited mouse.exited.global)
 
 ##### Adding Right Items #####
 # In the same way as the left items we can add items to the right side.
@@ -59,38 +63,41 @@ sketchybar --bar "font_smoothing=on"
 # https://felixkratz.github.io/SketchyBar/config/events
 
 # clock
-(sketchybar --add event clock_hover)
-(sketchybar --add item clock right --set clock $"script=($PLUGIN_DIR)/clock.nu")
-(sketchybar --add item clock_icon right --set clock_icon $"script=($PLUGIN_DIR)/clock_icon.nu")
+(sketchybar --add item clock right
+  --set clock $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/clock.nu"
+  --subscribe clock mouse.entered mouse.exited)
+(sketchybar --add item clock_icon right
+  --set clock_icon $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/clock_icon.nu"
+  --subscribe clock_icon mouse.entered mouse.exited)
 
 # wifi
-(sketchybar --add event wifi_hover)
 (sketchybar --add item wifi_background right --set wifi_background $"script=($PLUGIN_DIR)/wifi_background.nu")
 (sketchybar --add alias "Control Center,WiFi" right
-  --set "Control Center,WiFi" $"script=($PLUGIN_DIR)/wifi.nu")
+  --set "Control Center,WiFi" $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/wifi.nu"
+  --subscribe "Control Center,WiFi" mouse.entered mouse.exited)
 
 # control center
-(sketchybar --add event control_center_hover)
 (sketchybar --add item control_center right
-  --set control_center $"script=($PLUGIN_DIR)/control_center.nu")
+  --set control_center $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/control_center.nu"
+  --subscribe control_center mouse.entered mouse.exited)
 
 (sketchybar --add event battery_change)
-(sketchybar --add event battery_hover)
 # battery
 (sketchybar --add item battery right
-  --set battery $"script=($PLUGIN_DIR)/battery.nu")
+  --set battery $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/battery.nu"
+  --subscribe battery battery_change mouse.entered mouse.exited)
 # Control Center,Battery
 (sketchybar --add alias "Control Center,Battery" right
-  --set "Control Center,Battery" $"script=($PLUGIN_DIR)/battery_icon.nu")
+  --set "Control Center,Battery" $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/battery_icon.nu"
+  --subscribe "Control Center,Battery" battery_change mouse.entered mouse.exited)
 
 # volume
-(sketchybar --add event volume_hover)
 (sketchybar --add item volume right
-  --set volume $"script=($PLUGIN_DIR)/volume.nu"
-  --subscribe volume volume_change)
+  --set volume $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/volume.nu"
+  --subscribe volume volume_change mouse.entered mouse.exited)
 (sketchybar --add item volume_icon right
-  --set volume_icon $"script=($PLUGIN_DIR)/volume_icon.nu"
-  --subscribe volume_icon volume_change)
+  --set volume_icon $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/volume_icon.nu"
+  --subscribe volume_icon volume_change mouse.entered mouse.exited)
 
 ##### Force all scripts to run the first time (never do this in a script) #####
 sketchybar --update

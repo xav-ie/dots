@@ -1,7 +1,5 @@
 #!/usr/bin/env nu --stdin
 
-use "../hover.nu" *
-
 def main [] {
   let item_props = [
     "click_script=$HOME/.config/sketchybar/select_control_center.nu \"Battery\""
@@ -16,28 +14,19 @@ def main [] {
 
   match $env.SENDER {
     "forced" => {
-      let percentage = (pmset -g batt | lines | last
+      # pmset can append extra lines (e.g. "Battery Warning: Early") below the
+      # InternalBattery line, so don't rely on `lines | last`. Parse straight
+      # for the percent token instead.
+      let percentage = (pmset -g batt
                        | parse -r '(?<percent>\d?\d?\d)%'
-                       | first | get percent
+                       | get percent
+                       | first
                        | fill --alignment right --character ' ' --width 3)
 
-      sketchybar --set $"($env.NAME)" ...$item_props $"label=($percentage)%" --subscribe battery battery_change mouse.entered mouse.exited battery_hover
+      sketchybar --set $"($env.NAME)" ...$item_props $"label=($percentage)%"
     }
     "battery_change" => {
       sketchybar --set $"($env.NAME)" $"label=($env.BATTERY | fill --alignment right --character ' ' --width 3)%"
-    }
-    "mouse.entered" => {
-      hover_item "battery"
-    }
-    "mouse.exited" => {
-      unhover_item "battery"
-    }
-    "battery_hover" => {
-      if ($env.HOVERED == "true") {
-        sketchybar --set $"($env.NAME)" "label.background.color=0x33ffffff"
-      } else {
-        sketchybar --set $"($env.NAME)" "label.background.color=0x00000000"
-      }
     }
   }
 }
