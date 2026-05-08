@@ -20,6 +20,7 @@
     # ./jellyfin.nix
     ./lightrag.nix
     ./linux-home-manager.nix
+    ./llama-server.nix
     ./mcp-proxy
     ./n8n.nix
     ./nginx.nix
@@ -73,6 +74,22 @@
         lookupMax = 4;
         lookupMin = 2;
         numTokens = 8;
+      };
+    };
+
+    # llama.cpp server for local AI code completion (cursortab).
+    # Accessible at https://llama.lalala.casa via traefik. Sweep ships
+    # only as GGUF, which llama.cpp loads natively (vLLM cannot).
+    services.llama-server = {
+      enable = true;
+      model = "sweepai/sweep-next-edit-1.5B";
+      contextSize = 8192;
+      flashAttention = "on";
+      cacheReuse = 256;
+      kvCacheType = "q8_0";
+      speculation = {
+        enable = true;
+        type = "ngram-simple";
       };
     };
   };
