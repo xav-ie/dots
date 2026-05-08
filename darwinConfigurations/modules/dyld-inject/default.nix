@@ -12,13 +12,17 @@
 # process (Finder, Dock, Safari, Firefox, every daemon, etc.).
 #
 # Sub-modules that depend on this mechanism live alongside as nested
-# imports — both enabled by default and contributing one dylib each:
-#   • ./square-corners      — kill rounded corners (NSThemeFrame
-#                             swizzles + system Aqua.car patch). See
-#                             its default.nix for full docs.
-#   • ./remove-window-rim   — kill the 1px Liquid-Glass border
-#                             (NSWindow shadowParameters swizzle).
-#                             See its default.nix for full docs.
+# imports, all enabled by default and contributing one dylib each:
+#   • ./square-corners        — kill rounded corners (NSThemeFrame
+#                               swizzles + system Aqua.car patch).
+#                               See its default.nix for full docs.
+#   • ./remove-window-rim     — kill the 1px Liquid-Glass border
+#                               (NSWindow shadowParameters swizzle).
+#                               See its default.nix for full docs.
+#   • ./pin-iphone-mirroring  — pin iPhone Mirroring's window to
+#                               NSFloatingWindowLevel so it stays on
+#                               top. See its default.nix for full
+#                               docs.
 #
 # Required system state (set elsewhere, this module assumes it):
 #   • amfi_get_out_of_my_way=1 in nvram boot-args (../boot-args.nix)
@@ -55,6 +59,7 @@ in
   imports = [
     ./square-corners
     ./remove-window-rim
+    ./pin-iphone-mirroring
   ];
 
   options.services.dyldInject = {
