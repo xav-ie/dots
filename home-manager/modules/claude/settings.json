@@ -50,9 +50,9 @@
     "enabled": true,
     "mode": "hold"
   },
+  "prefersReducedMotion": true,
   "skipDangerousModePermissionPrompt": true,
   "editorMode": "vim",
-  "prefersReducedMotion": true,
   "voiceEnabled": true,
   "autoMemory": {
     "enabled": true,
