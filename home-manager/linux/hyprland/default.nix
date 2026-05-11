@@ -2,6 +2,7 @@
   config,
   inputs,
   lib,
+  osConfig,
   pkgs,
   ...
 }:
@@ -176,6 +177,8 @@ in
               on-timeout = "hyprctl dispatch dpms off";
               on-resume = "hyprctl dispatch dpms on";
             }
+          ]
+          ++ lib.optionals osConfig.services.power-save.enable [
             {
               # After 30 minutes idle, enter power save mode
               timeout = 1800;
