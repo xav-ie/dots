@@ -1,9 +1,11 @@
 {
   config,
+  lib,
   pkgs,
   ...
 }:
 let
+  cfg = config.services.power-save;
   power-save-enter-name = "power-save-enter";
   power-save-exit-name = "power-save-exit";
   power-save-enter-delayed-name = "power-save-enter-delayed";
@@ -81,7 +83,9 @@ let
   };
 in
 {
-  config = {
+  options.services.power-save.enable = lib.mkEnableOption "power-save mode (CPU + GPU minimum on idle, with hypridle integration)";
+
+  config = lib.mkIf cfg.enable {
     # CPU power management with SSH-aware boosting
     # Boots at full performance, only limits when explicitly triggered by idle timeout
 

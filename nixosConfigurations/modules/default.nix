@@ -33,7 +33,7 @@
     ./polkit.nix
     ./portainer.nix
     ./postiz
-    # ./power-save
+    ./power-save
     ./quadlet.nix
     ./quartz.nix
     ./remote-builder.nix
