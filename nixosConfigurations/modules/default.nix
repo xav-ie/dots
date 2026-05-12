@@ -26,6 +26,7 @@
     ./nginx.nix
     ./nvidia-fixes.nix
     ./opencode.nix
+    ./snippet-mcp.nix
     ./nix-config.nix
     ./noisetorch
     ./plover.nix

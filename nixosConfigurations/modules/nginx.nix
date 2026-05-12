@@ -83,6 +83,11 @@ in
                   service = "executor-service";
                   tls.certResolver = "cloudflare";
                 };
+                snippets = {
+                  rule = "Host(`${config.services.snippet-mcp.subdomain}.${baseDomain}`)";
+                  service = "snippets-service";
+                  tls.certResolver = "cloudflare";
+                };
                 chrome = {
                   rule = "Host(`${config.services.chrome-headless.subdomain}.${baseDomain}`)";
                   service = "chrome-service";
@@ -132,6 +137,13 @@ in
                   loadBalancer = {
                     servers = [
                       { url = "http://127.0.0.1:${toString config.services.executor.port}"; }
+                    ];
+                  };
+                };
+                snippets-service = {
+                  loadBalancer = {
+                    servers = [
+                      { url = "http://127.0.0.1:${toString config.services.snippet-mcp.port}"; }
                     ];
                   };
                 };
