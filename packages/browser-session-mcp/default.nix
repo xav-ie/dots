@@ -1,69 +1,50 @@
 {
   lib,
-  stdenv,
-  nodejs,
-  pnpm,
-  pnpmConfigHook,
-  fetchPnpmDeps,
-  makeBinaryWrapper,
+  rustPlatform,
+  cmake,
+  pkg-config,
 }:
-let
-  version = "0.1.0";
-  src = lib.fileset.toSource {
-    root = ./.;
-    fileset = lib.fileset.unions [
-      ./package.json
-      ./pnpm-lock.yaml
-      ./tsconfig.json
-      ./src
-      ./scripts
-    ];
-  };
-in
-stdenv.mkDerivation (finalAttrs: {
+rustPlatform.buildRustPackage {
   pname = "browser-session-mcp";
-  inherit version src;
+  version = "0.1.0";
 
-  pnpmDeps = fetchPnpmDeps {
-    inherit (finalAttrs) pname version src;
-    inherit pnpm;
-    fetcherVersion = 2;
-    hash = "sha256-Jturqhx4AwfYiBFcffDN44h/3FPhzE4ybzzrB8/Cl4A=";
+  src = lib.cleanSourceWith {
+    src = ./.;
+    filter =
+      path: _type:
+      let
+        base = baseNameOf path;
+      in
+      !(
+        base == "default.nix"
+        || base == "target"
+        || base == "result"
+        || base == ".direnv"
+        || lib.hasSuffix ".log" base
+      );
   };
 
+  cargoLock = {
+    lockFile = ./Cargo.lock;
+  };
+
+  # aws-lc-rs (pulled by reqwest's rustls-tls feature) needs cmake and a C
+  # toolchain at build time.
   nativeBuildInputs = [
-    nodejs
-    pnpm
-    pnpmConfigHook
-    makeBinaryWrapper
+    cmake
+    pkg-config
   ];
 
-  # pnpmConfigHook stages pnpmDeps into the offline store and runs
-  # `pnpm install --offline` during configurePhase.
+  # aws-lc-rs's build script invokes cmake which expects to manage its own
+  # build dir; nixpkgs' default cmake hook gets in the way.
+  dontUseCmakeConfigure = true;
 
-  buildPhase = ''
-    runHook preBuild
-    pnpm run build
-    runHook postBuild
-  '';
-
-  installPhase = ''
-    runHook preInstall
-    mkdir -p $out/lib/browser-session-mcp $out/bin
-    cp dist/index.js dist/reaper.js dist/listener.js $out/lib/browser-session-mcp/
-    makeBinaryWrapper ${nodejs}/bin/node $out/bin/browser-session-mcp \
-      --add-flags "$out/lib/browser-session-mcp/index.js"
-    makeBinaryWrapper ${nodejs}/bin/node $out/bin/browser-session-reaper \
-      --add-flags "$out/lib/browser-session-mcp/reaper.js"
-    makeBinaryWrapper ${nodejs}/bin/node $out/bin/browser-session-listener \
-      --add-flags "$out/lib/browser-session-mcp/listener.js"
-    runHook postInstall
-  '';
+  doCheck = false;
 
   meta = {
-    description = "MCP server giving each caller an isolated browser session against a shared persistent Chrome";
+    description = "MCP server giving each caller an isolated browser session against a shared persistent Chrome.";
     license = lib.licenses.mit;
+    platforms = lib.platforms.linux;
     mainProgram = "browser-session-mcp";
-    platforms = lib.platforms.unix;
   };
-})
+}
