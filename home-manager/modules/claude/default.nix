@@ -238,6 +238,8 @@ in
           config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/statusline.nu";
         ".claude/format-and-lint.nu".source =
           config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/format-and-lint.nu";
+        ".claude/tmux-claude-indicator.nu".source =
+          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/tmux-claude-indicator.nu";
         ".claude/schemas/edit-hooks.schema.json".source =
           config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/edit-hooks.schema.json";
         ".claude/marketplaces.json".source =
