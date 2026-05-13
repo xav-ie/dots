@@ -70,6 +70,7 @@ rec {
   review = pkgs.callPackage ./review { inherit writeNuApplication; };
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
   slack-mcp-server = pkgs.callPackage ./slack-mcp-server { src = slack-mcp-server-src; };
+  tm = pkgs.callPackage ./tm { };
   tmux-move-window = pkgs.callPackage ./tmux-move-window { inherit writeNuApplication; };
   tmux-shell = pkgs.callPackage ./tmux-shell { inherit atuin pkgs-bleeding; };
   tmux-tab-name-update = pkgs.callPackage ./tmux-tab-name-update { };

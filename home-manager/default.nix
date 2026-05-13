@@ -125,6 +125,7 @@
           prs
           review
           searcher
+          tm
           tmux-move-window
           tmux-tab-name-update
           toggle-theme
