@@ -37,7 +37,6 @@
           # I could not get man to respect pager width
           man = "c4 env man";
           # nvim = "~/Projects/xnixvim/result/bin/nvim";
-          tm = "tmux attach || tmux";
           w = "watson";
           zj = "zellij attach || zellij";
         };

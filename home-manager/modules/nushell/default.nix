@@ -28,7 +28,6 @@
         n = ''nu -e "$env.PATH = ($env.PATH | prepend '${pkgs.nodejs}/bin' | prepend '${pkgs.pnpm}/bin' | prepend '${pkgs.yarn}/bin')"'';
         s = "sudo -E";
         ss = "sudo -E !!";
-        tm = "try { tmux attach } catch { tmux }";
         vnc720 = "hyprctl keyword monitor HDMI-A-2,1280x720@30,auto,0.80";
         vnc1080 = "hyprctl keyword monitor HDMI-A-2,1920x1080@30,auto,1";
         w = "watson";
