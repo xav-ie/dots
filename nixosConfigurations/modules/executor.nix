@@ -46,7 +46,10 @@ in
         "podman-mcp.service"
       ];
       wantedBy = [ "multi-user.target" ];
-      partOf = [ "podman-mcp.service" ];
+      # Intentionally no `partOf`/`bindsTo` on podman-mcp: with stateless
+      # streamable HTTP, proxy restarts are transparent. Cascading a restart
+      # here would re-run config-sync before the new proxy is listening,
+      # leaving sources with empty tool manifests until a manual re-probe.
 
       environment = {
         HOME = userHome;
