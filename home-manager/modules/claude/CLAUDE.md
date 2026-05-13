@@ -17,6 +17,7 @@ source and will surface the match. Look at the top 2–3 results, use
 `tools.describe.tool({ path })` on the most plausible one, then call it.
 
 **Don't:**
+
 - `tools.executor.sources.list()` "to see what's available" — kilobytes of
   noise. Only useful when you specifically want source-level metadata.
 - `tools.search({ namespace, query })` when you don't already know the

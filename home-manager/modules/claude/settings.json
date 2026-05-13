@@ -14,6 +14,25 @@
             "command": "~/.claude/notify.nu"
           }
         ]
+      },
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/tmux-claude-indicator.nu notification"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/tmux-claude-indicator.nu stop"
+          }
+        ]
       }
     ],
     "PostToolUse": [
