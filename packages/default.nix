@@ -31,7 +31,6 @@ rec {
   apple-emoji-linux = pkgs.callPackage ./apple-emoji-linux { };
   base-ref = pkgs.callPackage ./base-ref { inherit writeNuApplication; };
   better-branch = pkgs.callPackage ./better-branch { inherit writeNuApplication; };
-  browser-session-mcp = pkgs.callPackage ./browser-session-mcp { };
   cache-command = pkgs.callPackage ./cache-command { };
   discord-mcp = pkgs.callPackage ./discord-mcp { };
   # claude-code packages need allowUnfree, passed via pkgs-unfree
@@ -71,7 +70,6 @@ rec {
   review = pkgs.callPackage ./review { inherit writeNuApplication; };
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
   slack-mcp-server = pkgs.callPackage ./slack-mcp-server { src = slack-mcp-server-src; };
-  snippet-mcp = pkgs.callPackage ./snippet-mcp { };
   tmux-move-window = pkgs.callPackage ./tmux-move-window { inherit writeNuApplication; };
   tmux-shell = pkgs.callPackage ./tmux-shell { inherit atuin pkgs-bleeding; };
   tmux-tab-name-update = pkgs.callPackage ./tmux-tab-name-update { };
@@ -101,6 +99,7 @@ rec {
   tcc-grant = pkgs.callPackage ./tcc-grant { inherit writeNuApplication; };
 })
 // (optionalAttrs isLinux {
+  browser-session-mcp = pkgs.callPackage ./browser-session-mcp { };
   chrome-headless-shell = pkgs.callPackage ./chrome-headless-shell { };
   claude-overlay = pkgs.callPackage ./claude-overlay { };
   claude-yolo = pkgs.callPackage ./claude-yolo { };
@@ -113,5 +112,6 @@ rec {
   record-section = pkgs.callPackage ./record-section { };
   rofi-cliphist = pkgs.callPackage ./rofi-cliphist { inherit writeNuApplication; };
   rofi-powermenu = pkgs.callPackage ./rofi-powermenu { inherit writeNuApplication; };
+  snippet-mcp = pkgs.callPackage ./snippet-mcp { };
   zenity-askpass = pkgs.callPackage ./zenity-askpass { inherit writeNuApplication; };
 })
