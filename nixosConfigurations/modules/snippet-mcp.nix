@@ -57,8 +57,6 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    services.local-networking.subdomains = [ cfg.subdomain ];
-
     users.groups.snippet-mcp = { };
     users.users.snippet-mcp = {
       isSystemUser = true;
@@ -130,7 +128,7 @@ in
           "--host"
           "127.0.0.1"
           "--allowed-host"
-          "${cfg.subdomain}.${config.services.local-networking.baseDomain}"
+          "mcp.${config.services.local-networking.baseDomain}"
         ];
         User = "snippet-mcp";
         Group = "snippet-mcp";

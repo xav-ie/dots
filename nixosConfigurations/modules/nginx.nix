@@ -8,6 +8,10 @@ let
   cfg = config.services.reverse-proxy;
   inherit (config.services.local-networking) baseDomain;
   cfgSecret = config.sops.placeholder;
+
+  # Shared between the router that references it and the spec that defines it.
+  chromeLocalhostHost = "chrome-localhost-host";
+  snippetsStripPrefix = "snippets-strip-prefix";
 in
 {
   options = {
@@ -83,9 +87,18 @@ in
                   service = "executor-service";
                   tls.certResolver = "cloudflare";
                 };
-                snippets = {
-                  rule = "Host(`${config.services.snippet-mcp.subdomain}.${baseDomain}`)";
+                # Snippets MCP rides on the shared mcp.<base> host alongside
+                # the containerised mcp-proxy. The PathPrefix rule has higher
+                # default priority (longer matcher) than the docker-provider
+                # router on Host(`mcp.<base>`), so /snippets/* lands here
+                # while everything else still goes to the proxy container.
+                snippets-via-mcp = {
+                  rule = "Host(`mcp.${baseDomain}`) && PathPrefix(`/snippets`)";
+                  # Beats the docker-provider router on bare Host(`mcp.<base>`)
+                  # regardless of rule-length math.
+                  priority = 100;
                   service = "snippets-service";
+                  middlewares = [ snippetsStripPrefix ];
                   tls.certResolver = "cloudflare";
                 };
                 chrome = {
@@ -94,7 +107,7 @@ in
                   tls.certResolver = "cloudflare";
                   # Chrome's DevTools HTTP handler rejects non-loopback Host
                   # headers (DNS-rebinding protection). Rewrite to `localhost`.
-                  middlewares = [ "chrome-localhost-host" ];
+                  middlewares = [ chromeLocalhostHost ];
                 };
               }
               // lib.optionalAttrs cfg.enable {
@@ -159,8 +172,11 @@ in
                 };
               };
               middlewares = {
-                chrome-localhost-host = {
+                ${chromeLocalhostHost} = {
                   headers.customRequestHeaders.Host = "localhost";
+                };
+                ${snippetsStripPrefix} = {
+                  stripPrefix.prefixes = [ "/snippets" ];
                 };
               };
             }
