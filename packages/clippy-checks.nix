@@ -27,7 +27,7 @@ inputs: {
           doCheck = false;
           installPhase = ''
             runHook preInstall
-            touch $out
+            mkdir -p $out
             runHook postInstall
           '';
         });
