@@ -100,6 +100,9 @@ let
         "--port"
         (toString containerPort)
         "--pass-environment"
+        # Clients must use /servers/<name>/mcp/ (streamable-http).
+        # Stateless = no per-session state, so restarts are invisible.
+        "--stateless"
         "--named-server-config"
         "/etc/mcp-proxy-servers.json"
       ];

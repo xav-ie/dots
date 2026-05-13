@@ -52,7 +52,7 @@ struct Cli {
 
     /// Additional host:port authorities to accept in the `Host` header.
     /// Loopback is allowed by default; add the public hostname when behind a
-    /// reverse proxy (e.g. `--allowed-host snippets.lalala.casa`). Repeatable.
+    /// reverse proxy (e.g. `--allowed-host mcp.lalala.casa`). Repeatable.
     #[arg(long = "allowed-host")]
     allowed_hosts: Vec<String>,
 }
