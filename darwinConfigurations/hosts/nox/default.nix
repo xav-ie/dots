@@ -54,6 +54,7 @@ in
         "google-chrome"
         "loom"
         "microsoft-edge"
+        "notion-calendar"
         "openvpn-connect"
         "protonvpn"
         "sf-symbols"
