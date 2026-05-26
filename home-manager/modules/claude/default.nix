@@ -259,6 +259,25 @@ in
         ".claude/CLAUDE.md".source =
           config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/CLAUDE.md";
         ".claude/plugins/known_marketplaces.json".text = knownMarketplacesJson;
+        # tmux-claude-resurrect Claude hooks: thin execs that point at the
+        # plugin's bash scripts.  Direct symlinks won't work because the
+        # hook scripts source a sibling `lib-claude-pid.sh` via
+        # `dirname "${BASH_SOURCE[0]}"`, so we need BASH_SOURCE[0] to resolve
+        # to the /nix/store hooks directory.
+        ".claude/tmux-assistant-claude-track.sh" = {
+          text = ''
+            #!/usr/bin/env bash
+            exec ${pkgs.pkgs-mine.tmux-claude-resurrect}/share/tmux-plugins/tmux-assistant-resurrect/hooks/claude-session-track.sh "$@"
+          '';
+          executable = true;
+        };
+        ".claude/tmux-assistant-claude-cleanup.sh" = {
+          text = ''
+            #!/usr/bin/env bash
+            exec ${pkgs.pkgs-mine.tmux-claude-resurrect}/share/tmux-plugins/tmux-assistant-resurrect/hooks/claude-session-cleanup.sh "$@"
+          '';
+          executable = true;
+        };
       }
       // marketplaceFiles;
 

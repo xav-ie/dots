@@ -9,13 +9,23 @@
       mouse = true;
       newSession = true;
       plugins = with pkgs.tmuxPlugins; [
+        # auto-save every 15 min + auto-restore on server start
+        # https://github.com/tmux-plugins/tmux-continuum
+        continuum
+        # adds helpful selection commands
+        # https://github.com/tmux-plugins/tmux-copycat
+        copycat
+        # save/restore sessions, windows, panes, layouts, working dirs
+        # https://github.com/tmux-plugins/tmux-resurrect
+        resurrect
+        # nushell-patched fork of timvw/tmux-assistant-resurrect; hooks into
+        # resurrect's post-save/post-restore to track Claude Code session IDs
+        # and replay `claude --resume <id>` per pane.  Must load after resurrect.
+        pkgs.pkgs-mine.tmux-claude-resurrect
         # allows seamless window/pane navigation with nvim
         # needs the accompanying vim plugin
         # https://github.com/christoomey/vim-tmux-navigator/
         vim-tmux-navigator
-        # adds helpful selection commands
-        # https://github.com/tmux-plugins/tmux-copycat
-        copycat
       ];
       # tmux-shell C shim execs `atuin hex --shell nu`.  Direct exec
       # (~0.3 ms) instead of a bash wrapper (~2 ms).
@@ -63,7 +73,9 @@
 
           set-option -g status-style bg=default,fg=default
           set-option -g status-left " "
-          set-option -g status-right "#{?client_prefix, PREFIX ,}#{?pane_in_mode, COPY ,}"
+          # #{continuum_status} is required for tmux-continuum's autosave loop;
+          # without it in status-right, the periodic save never ticks.
+          set-option -g status-right "#{?client_prefix, PREFIX ,}#{?pane_in_mode, COPY ,}#{continuum_status}"
           # Conditionally prepend a colored Claude "needs attention" dot. The
           # color lives in the per-window @claude-dot user option (set by
           # ~/.claude/tmux-claude-indicator.nu) rather than embedded in the
@@ -80,6 +92,17 @@
           bind-key -n C-. send-keys C-.
           bind-key -T copy-mode-vi v send-keys -X begin-selection
           bind-key -T copy-mode-vi y send-keys -X copy-selection
+
+          # tmux-resurrect: also snapshot the rendered scrollback per pane
+          set -g @resurrect-capture-pane-contents 'on'
+          set -g @resurrect-strategy-nvim 'session'
+          # Claude is intentionally NOT in @resurrect-processes; the
+          # tmux-claude-resurrect post-restore hook re-runs it with --resume.
+          set -g @resurrect-processes 'ssh'
+
+          # tmux-continuum: auto-save every 15 min, restore on server start
+          set -g @continuum-restore 'on'
+          set -g @continuum-save-interval '15'
         '';
     };
   };

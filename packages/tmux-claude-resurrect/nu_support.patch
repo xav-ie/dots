@@ -1,0 +1,49 @@
+diff --git a/scripts/restore-assistant-sessions.sh b/scripts/restore-assistant-sessions.sh
+index 854bdea..7ed4c8c 100755
+--- a/scripts/restore-assistant-sessions.sh
++++ b/scripts/restore-assistant-sessions.sh
+@@ -177,10 +177,13 @@ while read -r entry; do
+ 	resume_cmd=""
+ 	case "$tool" in
+ 	claude)
++		# Nushell-specific: `^claude` forces external-command resolution,
++		# bypassing any nu custom command/alias shadowing `claude`.
++		# Equivalent intent to POSIX `command claude` in bash/zsh.
+ 		if [ -n "$safe_cli_args" ] || [ -n "$safe_model_arg" ]; then
+-			resume_cmd="command claude${safe_cli_args}${safe_model_arg} --resume ${safe_sid}"
++			resume_cmd="^claude${safe_cli_args}${safe_model_arg} --resume ${safe_sid}"
+ 		else
+-			resume_cmd="command claude --resume ${safe_sid}"
++			resume_cmd="^claude --resume ${safe_sid}"
+ 		fi
+ 		;;
+ 	opencode)
+@@ -223,7 +226,7 @@ while read -r entry; do
+ 	# Use POSIX single-quote escaping (safe for bash, zsh, sh, dash, fish).
+ 	if [ -n "$cwd" ] && [ "$cwd" != "null" ]; then
+ 		safe_cwd=$(posix_quote "$cwd")
+-		tmux send-keys -t "$pane" "cd ${safe_cwd} 2>/dev/null; ${resume_cmd}" Enter
++		tmux send-keys -t "$pane" "cd ${safe_cwd}; ${resume_cmd}" Enter
+ 	else
+ 		tmux send-keys -t "$pane" "${resume_cmd}" Enter
+ 	fi
+diff --git a/tmux-assistant-resurrect.tmux b/tmux-assistant-resurrect.tmux
+index f32907d..09b2ec5 100755
+--- a/tmux-assistant-resurrect.tmux
++++ b/tmux-assistant-resurrect.tmux
+@@ -114,6 +114,12 @@ install_opencode_plugin() {
+ }
+ 
+ # --- Run assistant hook installation ---
+-
+-install_claude_hooks
+-install_opencode_plugin
++#
++# Disabled: in Nix/home-manager setups, ~/.claude/settings.json and
++# ~/.config/opencode/plugins/ are managed declaratively (often via read-only
++# /nix/store symlinks). Auto-mutating them either fails or corrupts the
++# managed source file. Add the Claude SessionStart/SessionEnd hooks via your
++# home-manager module instead.
++#
++# install_claude_hooks
++# install_opencode_plugin
