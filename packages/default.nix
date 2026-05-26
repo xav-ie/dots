@@ -11,6 +11,7 @@
   # overlay isn't applied to top-level `pkgs` here.
   atuin,
   bun-demincer-src,
+  clauhist-src,
   executor-src,
   generate-kaomoji,
   mcp-atlassian-src,
@@ -44,6 +45,7 @@ rec {
   claude-code-update = pkgs-unfree.callPackage ./claude-code/update.nix {
     inherit writeNuApplication;
   };
+  clauhist = pkgs.callPackage ./clauhist { inherit clauhist-src; };
   ff = pkgs.callPackage ./ff { };
   flint = pkgs.callPackage ./flint { inherit format-staged lint-staged writeNuApplication; };
   format-staged = pkgs.callPackage ./format-staged { inherit writeNuApplication; };

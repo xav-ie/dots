@@ -101,6 +101,8 @@
     executor-src.flake = false;
     bun-demincer-src.url = "github:xav-ie/bun-demincer/fix/linux-dataStart-byte-count";
     bun-demincer-src.flake = false;
+    clauhist-src.url = "github:lef237/clauhist";
+    clauhist-src.flake = false;
     macos-corner-fix-src.url = "github:m4rkw/macos-corner-fix/147f2708cb468475567139acbad7d714859a4b67";
     macos-corner-fix-src.flake = false;
     zerobrew-src.url = "github:lucasgelfond/zerobrew";
@@ -257,6 +259,7 @@
             nuenv = inputs.nuenv.lib;
             inherit (inputs)
               bun-demincer-src
+              clauhist-src
               executor-src
               mcp-atlassian-src
               simulstreaming-src
