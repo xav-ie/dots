@@ -218,6 +218,22 @@
         "url": "ssh://git@github.com/outsmartly/claude-plugins"
       }
     },
+    "clauhist-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1774782839,
+        "narHash": "sha256-kyPGF6Xig5tIBFqlsT8XjMQq//rw66Q1cehnKX9T8ng=",
+        "owner": "lef237",
+        "repo": "clauhist",
+        "rev": "c88d4817706a55bd5c8fee291ceda2d0d6be5264",
+        "type": "github"
+      },
+      "original": {
+        "owner": "lef237",
+        "repo": "clauhist",
+        "type": "github"
+      }
+    },
     "crane": {
       "locked": {
         "lastModified": 1766194365,
@@ -1662,6 +1678,7 @@
         "claude-marketplace-mgrep": "claude-marketplace-mgrep",
         "claude-marketplace-official": "claude-marketplace-official",
         "claude-marketplace-outsmartly": "claude-marketplace-outsmartly",
+        "clauhist-src": "clauhist-src",
         "crane": "crane",
         "ctpv": "ctpv",
         "executor-src": "executor-src",

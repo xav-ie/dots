@@ -108,6 +108,7 @@
           base-ref
           better-branch
           cache-command
+          clauhist
           ff
           flint
           format-staged
