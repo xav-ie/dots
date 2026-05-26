@@ -73,6 +73,7 @@ rec {
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
   slack-mcp-server = pkgs.callPackage ./slack-mcp-server { src = slack-mcp-server-src; };
   tm = pkgs.callPackage ./tm { };
+  tmux-claude-resurrect = pkgs.callPackage ./tmux-claude-resurrect { };
   tmux-move-window = pkgs.callPackage ./tmux-move-window { inherit writeNuApplication; };
   tmux-shell = pkgs.callPackage ./tmux-shell { inherit atuin pkgs-bleeding; };
   tmux-tab-name-update = pkgs.callPackage ./tmux-tab-name-update { };

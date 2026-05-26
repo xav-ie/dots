@@ -45,6 +45,28 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/tmux-assistant-claude-track.sh"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/tmux-assistant-claude-cleanup.sh"
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
