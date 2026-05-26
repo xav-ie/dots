@@ -87,7 +87,7 @@ impl LogWriter {
     }
 
     pub async fn open_visit(&self, session_id: &str, target_id: &str, url: &str) -> Result<u32> {
-        let dir = session_dir(&self.logs_dir, session_id);
+        let dir = session_dir(&self.logs_dir, session_id)?;
         fs::create_dir_all(&dir)
             .await
             .with_context(|| format!("mkdir -p {}", dir.display()))?;
@@ -99,7 +99,7 @@ impl LogWriter {
             opened_at: now_rfc3339(),
         };
         let line = serde_json::to_string(&LogLine::Visit(header))?;
-        let path = visit_file(&self.logs_dir, session_id, seq, target_id);
+        let path = visit_file(&self.logs_dir, session_id, seq, target_id)?;
         append_line(&path, &line).await?;
         Ok(seq)
     }
@@ -111,7 +111,7 @@ impl LogWriter {
         target_id: &str,
         entry: ConsoleEntry,
     ) -> Result<()> {
-        let path = visit_file(&self.logs_dir, session_id, seq, target_id);
+        let path = visit_file(&self.logs_dir, session_id, seq, target_id)?;
         let line = serde_json::to_string(&LogLine::Console(entry))?;
         append_line(&path, &line).await
     }
@@ -123,14 +123,14 @@ impl LogWriter {
         target_id: &str,
         entry: NetworkEntry,
     ) -> Result<()> {
-        let path = visit_file(&self.logs_dir, session_id, seq, target_id);
+        let path = visit_file(&self.logs_dir, session_id, seq, target_id)?;
         let line = serde_json::to_string(&LogLine::Network(entry))?;
         append_line(&path, &line).await
     }
 
     pub async fn close_session(&self, session_id: &str) -> Result<()> {
         self.next_seqs.lock().await.remove(session_id);
-        let dir = session_dir(&self.logs_dir, session_id);
+        let dir = session_dir(&self.logs_dir, session_id)?;
         match fs::remove_dir_all(&dir).await {
             Ok(()) => Ok(()),
             Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(()),
@@ -163,7 +163,7 @@ impl LogWriter {
 }
 
 pub async fn read_visits(logs_dir: &Path, session_id: &str) -> Result<Vec<VisitHeader>> {
-    let dir = session_dir(logs_dir, session_id);
+    let dir = session_dir(logs_dir, session_id)?;
     let files = ordered_files(&dir, None).await?;
     let mut out = Vec::new();
     for f in files {
@@ -202,7 +202,7 @@ pub async fn read_session_logs(
     session_id: &str,
     opts: ReadOpts,
 ) -> Result<Vec<SessionLogEntry>> {
-    let dir = session_dir(logs_dir, session_id);
+    let dir = session_dir(logs_dir, session_id)?;
     let files = ordered_files(&dir, opts.visit).await?;
     let mut out: Vec<SessionLogEntry> = Vec::new();
     for f in files {
@@ -259,17 +259,21 @@ fn sanitize(s: &str) -> String {
         .collect()
 }
 
-fn session_dir(logs_dir: &Path, session_id: &str) -> PathBuf {
-    logs_dir.join(sanitize(session_id))
+fn session_dir(logs_dir: &Path, session_id: &str) -> Result<PathBuf> {
+    let sanitized = sanitize(session_id);
+    if sanitized.is_empty() {
+        anyhow::bail!("invalid session id");
+    }
+    Ok(logs_dir.join(sanitized))
 }
 
-fn visit_file(logs_dir: &Path, session_id: &str, seq: u32, target_id: &str) -> PathBuf {
-    session_dir(logs_dir, session_id).join(format!(
+fn visit_file(logs_dir: &Path, session_id: &str, seq: u32, target_id: &str) -> Result<PathBuf> {
+    Ok(session_dir(logs_dir, session_id)?.join(format!(
         "{:0width$}-{}.ndjson",
         seq,
         sanitize(target_id),
         width = SEQ_PAD
-    ))
+    )))
 }
 
 fn seq_from_filename(name: &str) -> Option<u32> {

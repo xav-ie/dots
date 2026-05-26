@@ -16,3 +16,19 @@
     display: none !important;
   }
 }
+
+/* Enlarge tab favicons (default is 16px), nudge left + slightly down to
+ * position, and round the corners a touch. */
+.tab-icon-image,
+.tab-icon-overlay:not([pinned], [sharing], [crashed]) {
+  width: 21px !important;
+  height: 21px !important;
+  transform: translate(-2.6px, 0);
+  border-radius: 2px;
+}
+
+/* Pinned tabs center their favicon themselves, so the horizontal nudge above
+ * throws them off-center. Keep the size/radius, drop the translate. */
+.tabbrowser-tab[pinned] .tab-icon-image {
+  transform: none !important;
+}
