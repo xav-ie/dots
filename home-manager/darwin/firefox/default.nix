@@ -23,5 +23,19 @@ in
         ln -sfn "${src}/user.js"         "$profile/user.js"
       done
     '';
+
+    # Inject a Firefox autoconfig script into the app bundle (PDF tab favicons).
+    # autoconfig can only be bootstrapped from the app's defaults/pref dir — there
+    # is no profile-based entrypoint — so these symlinks land inside Firefox.app.
+    # Note: a Homebrew cask upgrade replaces the bundle and wipes them; re-running
+    # `just system` restores them.
+    home.activation.firefox-autoconfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      res="/Applications/Firefox.app/Contents/Resources"
+      [ -d "$res" ] || exit 0
+      mkdir -p "$res/defaults/pref"
+      ln -sfn "${src}/firefox.cfg"      "$res/firefox.cfg"
+      ln -sfn "${src}/favicon-icons.js" "$res/favicon-icons.js"
+      ln -sfn "${src}/autoconfig.js"    "$res/defaults/pref/autoconfig.js"
+    '';
   };
 }
