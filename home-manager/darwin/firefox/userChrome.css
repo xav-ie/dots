@@ -32,3 +32,11 @@
 .tabbrowser-tab[pinned] .tab-icon-image {
   transform: none !important;
 }
+
+/* Near-black favicons are invisible on the dark theme. The autoconfig script
+ * (firefox.cfg) samples each favicon and tags dark ones with [darkfavicon];
+ * invert just those. `hue-rotate(180deg)` keeps coloured logos roughly on-hue
+ * (black -> white; dark-blue -> light-blue). For a plain flip use `invert(1)`. */
+.tabbrowser-tab[darkfavicon="true"] .tab-icon-image {
+  filter: invert(1) hue-rotate(180deg) !important;
+}
