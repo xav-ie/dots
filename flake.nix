@@ -12,7 +12,7 @@
     hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
     mcp-nixos.url = "github:utensils/mcp-nixos";
     morlana.url = "github:ryanccn/morlana";
-    himalaya-latest.url = "github:pimalaya/himalaya";
+    himalaya-latest.url = "github:xav-ie/himalaya?ref=xav/fix-deprecation-warnings";
     pimalaya-core.url = "github:pimalaya/core";
     pimalaya-core.flake = false;
     neverest.url = "github:pimalaya/neverest";
@@ -46,7 +46,7 @@
     flake-utils.url = "github:numtide/flake-utils";
     gitignore.url = "github:hercules-ci/gitignore.nix";
     nixpkgs-lib.url = "github:nix-community/nixpkgs.lib";
-    pimalaya-neverest.url = "github:pimalaya/nix/be23e0deeb014c6be5232322b892c9bee25dee77";
+    pimalaya-neverest.url = "github:xav-ie/nix?ref=xav/fix-warnings-neverest-compat";
     pimalaya-neverest.flake = false;
     # Fork carrying the `fix(mastra): use dedicated postgres schema`
     # change. Revert to `github:gitroomhq/postiz-app/v2.21.6` (or
@@ -119,6 +119,7 @@
     generate-kaomoji.inputs.nixpkgs.follows = "nixpkgs";
     gitignore.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    himalaya-latest.inputs.nixpkgs.follows = "nixpkgs";
     hyprland.inputs.nixpkgs.follows = "nixpkgs";
     hyprland.inputs.systems.follows = "systems";
     mcp-nixos.inputs.flake-parts.follows = "flake-parts";

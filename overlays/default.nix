@@ -1,11 +1,82 @@
 toplevel:
 let
   inherit (toplevel) inputs;
+  # crates.io API returns 403 for curl's default User-Agent; route crate
+  # downloads via static.crates.io (CDN). Mirrors nixpkgs f830e611. Drop the
+  # whole `patchedImportCargoLockFor` mechanism once that commit reaches our
+  # nixos-unstable pin.
+  # Hashes for git-dep tarballs we can't reach via git fetch (orphan revs that
+  # got force-pushed off a branch but are still served via GitHub's archive
+  # endpoint). Keyed by commit SHA; values are `nix-prefetch-url --unpack`
+  # output for `https://github.com/<owner>/<repo>/archive/<sha>.tar.gz`.
+  knownOrphanTarballHashes = {
+    # soywod/imap-next — referenced by himalaya's Cargo.lock, no longer
+    # reachable from any ref since the alpha.7 bump rewrote history.
+    "e9d7db2eac281c0361fc21b92e3d3ed3a6e09f13" = "03hix28b40cisbxym5w67qr75rd3r0ypl8ipbygg5lbvpmcz8wm7";
+  };
+
+  # Patch nixpkgs's import-cargo-lock.nix to:
+  #   1. Use static.crates.io instead of the API server (mirrors nixpkgs
+  #      f830e611 — bypasses the 403 block on curl's default User-Agent).
+  #   2. Fall back to builtins.fetchTarball on GitHub's archive endpoint for
+  #      git deps, with a pre-baked hash table for known orphan revs so the
+  #      fetch is reproducible in pure eval mode (nh, flake check, etc.).
+  patchedImportCargoLockFor =
+    pkgs:
+    (pkgs.runCommand "import-cargo-lock-patched" { } ''
+      mkdir -p $out
+      cp -r ${pkgs.path}/pkgs/build-support/rust/. $out/
+      ${pkgs.gnused}/bin/sed -i \
+        -e 's|https://crates.io/api/v1/crates|https://static.crates.io/crates|g' \
+        -e '/else if allowBuiltinFetchGit then/,/missingHash;/c\
+          else if allowBuiltinFetchGit then\
+            (let\
+              m = builtins.match "https?://github.com/([^/]+)/([^/.]+)(\\.git)?/?" gitParts.url;\
+              knownHashes = { ${
+                  toString (
+                    builtins.map (k: ''"${k}" = "${knownOrphanTarballHashes.${k}}"; '')
+                      (builtins.attrNames knownOrphanTarballHashes)
+                  )
+                } };\
+            in\
+              if m != null && knownHashes ? ''${gitParts.sha} then\
+                builtins.fetchTarball {\
+                  url = "https://github.com/" + (builtins.elemAt m 0) + "/" + (builtins.elemAt m 1) + "/archive/" + gitParts.sha + ".tar.gz";\
+                  sha256 = knownHashes.''${gitParts.sha};\
+                }\
+              else\
+                fetchGit {\
+                  inherit (gitParts) url;\
+                  rev = gitParts.sha;\
+                  allRefs = true;\
+                  submodules = true;\
+                })\
+          else\
+            missingHash;' \
+        $out/import-cargo-lock.nix
+    '')
+    + "/import-cargo-lock.nix";
 in
 {
   nuenv = inputs.nuenv.overlays.default;
 
   modifications = final: prev: {
+    rustPlatform = prev.rustPlatform // {
+      importCargoLock = prev.buildPackages.callPackage (patchedImportCargoLockFor prev) {
+        inherit (prev) cargo;
+      };
+    };
+    makeRustPlatform =
+      args:
+      let
+        rp = prev.makeRustPlatform args;
+      in
+      rp
+      // {
+        importCargoLock = prev.buildPackages.callPackage (patchedImportCargoLockFor prev) {
+          cargo = args.cargo;
+        };
+      };
     alacritty-theme =
       if final.stdenv.isLinux then
         inputs.alacritty-theme.packages.${final.stdenv.hostPlatform.system}
