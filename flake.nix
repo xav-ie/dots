@@ -10,7 +10,6 @@
     hardware.url = "github:nixos/nixos-hardware";
     home-manager.url = "github:nix-community/home-manager";
     hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
-    jj.url = "github:martinvonz/jj";
     mcp-nixos.url = "github:utensils/mcp-nixos";
     morlana.url = "github:ryanccn/morlana";
     himalaya-latest.url = "github:pimalaya/himalaya";
@@ -122,9 +121,6 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     hyprland.inputs.nixpkgs.follows = "nixpkgs";
     hyprland.inputs.systems.follows = "systems";
-    jj.inputs.flake-utils.follows = "flake-utils";
-    jj.inputs.nixpkgs.follows = "nixpkgs";
-    jj.inputs.rust-overlay.follows = "rust-overlay";
     mcp-nixos.inputs.flake-parts.follows = "flake-parts";
     mcp-nixos.inputs.nixpkgs.follows = "nixpkgs";
     fenix-neverest.inputs.nixpkgs.follows = "nixpkgs";
