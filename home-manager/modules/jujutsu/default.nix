@@ -1,8 +1,4 @@
-{
-  inputs,
-  pkgs,
-  ...
-}:
+{ pkgs, ... }:
 let
   delta-jj = pkgs.writeNuApplication {
     name = "delta-jj";
@@ -18,13 +14,6 @@ in
 
     programs.jujutsu = {
       enable = true;
-      package =
-        inputs.jj.outputs.packages.${pkgs.stdenv.hostPlatform.system}.jujutsu.overrideAttrs
-          (_old: {
-            sandboxProfile = "";
-            # __sandboxProfile = null;
-            doCheck = false;
-          });
       settings = {
         "$schema" = "https://jj-vcs.github.io/jj/latest/config-schema.json";
         # https://jj-vcs.github.io/jj/latest/config/#commit-signing

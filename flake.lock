@@ -1005,32 +1005,6 @@
         "type": "github"
       }
     },
-    "jj": {
-      "inputs": {
-        "flake-utils": [
-          "flake-utils"
-        ],
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "rust-overlay": [
-          "rust-overlay"
-        ]
-      },
-      "locked": {
-        "lastModified": 1766697080,
-        "narHash": "sha256-s4hy6fbjg2XPY09TbUP/4BuA+nKLbjUke6JJTzJ1G2Q=",
-        "owner": "martinvonz",
-        "repo": "jj",
-        "rev": "cfdab565c18f77899ab52ebd11082a77ef5cce22",
-        "type": "github"
-      },
-      "original": {
-        "owner": "martinvonz",
-        "repo": "jj",
-        "type": "github"
-      }
-    },
     "macos-corner-fix-src": {
       "flake": false,
       "locked": {
@@ -1697,7 +1671,6 @@
         "homebrew-cask": "homebrew-cask",
         "homebrew-core": "homebrew-core",
         "hyprland": "hyprland",
-        "jj": "jj",
         "macos-corner-fix-src": "macos-corner-fix-src",
         "mcp-atlassian-src": "mcp-atlassian-src",
         "mcp-nixos": "mcp-nixos",
