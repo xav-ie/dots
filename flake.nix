@@ -350,7 +350,10 @@
                 prettier = {
                   enable = true;
                   package = config.packages.prettier-with-toml;
-                  includes = options.programs.prettier.includes.default ++ [ "*.toml" ];
+                  includes = options.programs.prettier.includes.default ++ [
+                    "*.cfg"
+                    "*.toml"
+                  ];
                 };
                 ruff.enable = true;
                 rustfmt.enable = true;
