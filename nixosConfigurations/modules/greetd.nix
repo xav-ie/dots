@@ -17,7 +17,7 @@ lib.mkIf hyprlandEnabled {
         # ~/.profile (where home.sessionVariables ends up — including the
         # NVIDIA env vars) get sourced before the compositor starts. This
         # mirrors the TTY login flow exactly.
-        command = "${lib.getExe pkgs.greetd.tuigreet} --time --remember --remember-session --cmd 'zsh -lc start-hyprland'";
+        command = "${lib.getExe pkgs.tuigreet} --time --remember --remember-session --cmd 'zsh -lc start-hyprland'";
         user = "greeter";
       };
     };
