@@ -9,7 +9,7 @@
 #     --image-name opensearchproject/opensearch \
 #     --image-tag <new-tag> --arch amd64 --os linux
 # and paste the new imageDigest + hash below. Also update the
-# matching `opensearchPatchedImageRef` string in postiz.nix.
+# matching `opensearchPatchedImageRef` string in instance.nix.
 let
   opensearchUpstreamImage = pkgs.dockerTools.pullImage {
     imageName = "opensearchproject/opensearch";
@@ -55,14 +55,15 @@ let
 in
 {
   # The patched OpenSearch image lives in the Nix store as a docker
-  # tarball. This service registers it with podman's storage so the
-  # postiz-temporal-opensearch.container unit can reference it by tag.
-  # `podman load` is idempotent — re-runs are no-ops once the image
-  # is present.
+  # tarball. This service registers it with podman's storage so each
+  # instance's *-temporal-opensearch.container unit can reference it by
+  # tag. `podman load` is idempotent — re-runs are no-ops once the image
+  # is present. Ordering lives on the consumers: every instance's
+  # opensearch container declares After/Requires on this unit, so we
+  # don't hardcode a single instance name here.
   systemd.services.load-postiz-temporal-opensearch-image = {
     description = "Load the patched OpenSearch image into podman storage";
     wantedBy = [ "multi-user.target" ];
-    before = [ "postiz-temporal-opensearch.service" ];
     path = [ pkgs.podman ];
     serviceConfig = {
       Type = "oneshot";
