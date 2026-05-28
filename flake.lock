@@ -362,15 +362,16 @@
         "rust-analyzer-src": "rust-analyzer-src_3"
       },
       "locked": {
-        "lastModified": 1774163246,
-        "narHash": "sha256-gzlqyLjP44LWraUd3Zn4xrQKOtK+zcBJ77pnsSUsxcM=",
+        "lastModified": 1767250179,
+        "narHash": "sha256-PnQdWvPZqHp+7yaHWDFX3NYSKaOy0fjkwpR+rIQC7AY=",
         "owner": "nix-community",
         "repo": "fenix",
-        "rev": "4cd28929c68cae521589bc21958d3793904ed1e2",
+        "rev": "a3eaf682db8800962943a77ab77c0aae966f9825",
         "type": "github"
       },
       "original": {
         "owner": "nix-community",
+        "ref": "monthly",
         "repo": "fenix",
         "type": "github"
       }
@@ -595,19 +596,22 @@
     "himalaya-latest": {
       "inputs": {
         "fenix": "fenix_3",
-        "nixpkgs": "nixpkgs_3",
+        "nixpkgs": [
+          "nixpkgs"
+        ],
         "pimalaya": "pimalaya"
       },
       "locked": {
-        "lastModified": 1771973819,
-        "narHash": "sha256-91P+AEIpzmhV7PCk4N3Dd5F+6eCSjwSGzNuMTV7pI8Q=",
-        "owner": "pimalaya",
+        "lastModified": 1779956622,
+        "narHash": "sha256-MGAOlRS2VipqveMpHDAev6/7JIsRkFYiQJ4Z44iwXyU=",
+        "owner": "xav-ie",
         "repo": "himalaya",
-        "rev": "f9bc426b8f157e4c10d8be4b8d8ff30be476e2e4",
+        "rev": "9c7a7c923e472ae02a3f74fb5e05cec229f6d214",
         "type": "github"
       },
       "original": {
-        "owner": "pimalaya",
+        "owner": "xav-ie",
+        "ref": "xav/fix-deprecation-warnings",
         "repo": "himalaya",
         "type": "github"
       }
@@ -1088,7 +1092,7 @@
         "fenix": [
           "fenix-neverest"
         ],
-        "nixpkgs": "nixpkgs_4",
+        "nixpkgs": "nixpkgs_3",
         "pimalaya": [
           "pimalaya-neverest"
         ]
@@ -1325,22 +1329,6 @@
         "type": "github"
       }
     },
-    "nixpkgs_5": {
-      "locked": {
-        "lastModified": 1766651565,
-        "narHash": "sha256-QEhk0eXgyIqTpJ/ehZKg9IKS7EtlWxF3N7DXy42zPfU=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "3e2499d5539c16d0d173ba53552a4ff8547f4539",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nuenv": {
       "inputs": {
         "nixpkgs": [
@@ -1400,15 +1388,16 @@
     "pimalaya": {
       "flake": false,
       "locked": {
-        "lastModified": 1770914484,
-        "narHash": "sha256-kPxdpg98/EVQKLkUdiFEYWWWI1uTLWfIewyCmb4ZfpE=",
-        "owner": "pimalaya",
+        "lastModified": 1779952233,
+        "narHash": "sha256-mtloN4LaAXzSR5M65mKNGN2hV2Y87SWF+qozj/iVDK8=",
+        "owner": "xav-ie",
         "repo": "nix",
-        "rev": "23454cd59e2a32199a67f36f3b13cd5145b5ffb3",
+        "rev": "8eb24b90aadd6a961a4d5f3b619c80db81eb5005",
         "type": "github"
       },
       "original": {
-        "owner": "pimalaya",
+        "owner": "xav-ie",
+        "ref": "xav/fix-deprecation-warnings",
         "repo": "nix",
         "type": "github"
       }
@@ -1432,17 +1421,17 @@
     "pimalaya-neverest": {
       "flake": false,
       "locked": {
-        "lastModified": 1732869386,
-        "narHash": "sha256-83tDRVfSBVZgIp6WOb6r/T6cHfP7lNsK1MUTdkGMi14=",
-        "owner": "pimalaya",
+        "lastModified": 1779952252,
+        "narHash": "sha256-qLU2seJntGnFxPHKabE8VTfOr81RAFcxq/uhRlDWLsE=",
+        "owner": "xav-ie",
         "repo": "nix",
-        "rev": "be23e0deeb014c6be5232322b892c9bee25dee77",
+        "rev": "73490f5bd45c8516076d85ab9e2a0ae3a016bc0e",
         "type": "github"
       },
       "original": {
-        "owner": "pimalaya",
+        "owner": "xav-ie",
+        "ref": "xav/fix-warnings-neverest-compat",
         "repo": "nix",
-        "rev": "be23e0deeb014c6be5232322b892c9bee25dee77",
         "type": "github"
       }
     },
@@ -1679,7 +1668,7 @@
         "nix-auto-follow": "nix-auto-follow",
         "nix-darwin": "nix-darwin",
         "nix-homebrew": "nix-homebrew",
-        "nixpkgs": "nixpkgs_5",
+        "nixpkgs": "nixpkgs_4",
         "nixpkgs-bleeding": "nixpkgs-bleeding",
         "nixpkgs-homeassistant": "nixpkgs-homeassistant",
         "nixpkgs-lib": "nixpkgs-lib",
@@ -1761,11 +1750,11 @@
     "rust-analyzer-src_3": {
       "flake": false,
       "locked": {
-        "lastModified": 1774097238,
-        "narHash": "sha256-hcujm/qEX4RUybdBCrQKdQNqTRYDItmnbjJRP5ky5vc=",
+        "lastModified": 1767191410,
+        "narHash": "sha256-cCZGjubgDWmstvFkS6eAw2qk2ihgWkycw55u2dtLd70=",
         "owner": "rust-lang",
         "repo": "rust-analyzer",
-        "rev": "76de1de27c0ca1329bc41324edab22c82d69e779",
+        "rev": "a9026e6d5068172bf5a0d52a260bb290961d1cb4",
         "type": "github"
       },
       "original": {
