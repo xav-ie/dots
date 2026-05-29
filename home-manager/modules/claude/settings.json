@@ -86,6 +86,7 @@
     "pts@outsmartly-plugins": false
   },
   "alwaysThinkingEnabled": true,
+  "effortLevel": "medium",
   "tui": "fullscreen",
   "voice": {
     "enabled": true,

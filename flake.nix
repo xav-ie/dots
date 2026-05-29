@@ -1,7 +1,12 @@
 {
   description = "Xavier's NixOS";
   inputs = {
+    ags.url = "github:aylur/ags";
+    ags.inputs.astal.follows = "astal";
+    ags.inputs.nixpkgs.follows = "nixpkgs";
     alacritty-theme.url = "github:alexghr/alacritty-theme.nix";
+    astal.url = "github:aylur/astal";
+    astal.inputs.nixpkgs.follows = "nixpkgs";
     atuin.url = "github:xav-ie/atuin/feat/osc7-helper";
     beads.url = "github:steveyegge/beads";
     ctpv.url = "github:xav-ie/ctpv-nix";
@@ -102,6 +107,8 @@
     bun-demincer-src.flake = false;
     clauhist-src.url = "github:lef237/clauhist";
     clauhist-src.flake = false;
+    notion-calendar-src.url = "github:czlabinger/notion-calendar-electron/7e01efb90361048b27220abb9b9e703ab705d05d";
+    notion-calendar-src.flake = false;
     macos-corner-fix-src.url = "github:m4rkw/macos-corner-fix/147f2708cb468475567139acbad7d714859a4b67";
     macos-corner-fix-src.flake = false;
     zerobrew-src.url = "github:lucasgelfond/zerobrew";
@@ -225,6 +232,8 @@
           };
 
           packages = import ./packages {
+            # ags only builds on linux; null on darwin, where it is unused.
+            agsPackages = inputs.ags.packages.${system} or null;
             atuin = inputs.atuin.packages.${system}.default;
             generate-kaomoji = inputs.generate-kaomoji.packages.${system}.default;
             # Use regular nixpkgs - most packages are writeNuApplication wrappers
@@ -259,6 +268,7 @@
               clauhist-src
               executor-src
               mcp-atlassian-src
+              notion-calendar-src
               simulstreaming-src
               zerobrew-src
               ;
