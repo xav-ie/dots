@@ -15,7 +15,7 @@
       # environment variables (and other configuration) using config.nu and the
       # autoload directories below.
       shellAliases = {
-        g = "nvim `+Git | only`";
+        g = "nvim -c Neogit -c `silent! bwipeout #`";
         gake = "do { git pull; make }";
         gitd = "git d";
         gits = "git s";
