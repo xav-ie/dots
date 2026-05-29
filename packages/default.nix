@@ -118,6 +118,10 @@ rec {
     inherit agsPackages;
     fontName = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
   };
+  emoji-picker = pkgs.callPackage ./emoji-picker {
+    inherit agsPackages;
+    fontName = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
+  };
   executor = pkgs.callPackage ./executor { inherit executor-src; };
   move-active = pkgs.callPackage ./move-active { inherit writeNuApplication; };
   notion-calendar = pkgs.callPackage ./notion-calendar { src = notion-calendar-src; };
