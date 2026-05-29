@@ -419,6 +419,8 @@ in
             "match:namespace bluetooth-picker, ignore_alpha 0.6"
             "match:namespace emoji-picker, blur on"
             "match:namespace emoji-picker, ignore_alpha 0.6"
+            "match:namespace power-picker, blur on"
+            "match:namespace power-picker, ignore_alpha 0.6"
             # No blur on clipboard-picker: blurring the layer blooms opaque image
             # thumbnails into the surrounding panel. The panel is near-opaque
             # (see style.scss) to compensate.
@@ -482,7 +484,7 @@ in
             "$mainMod ALT,6,exec,${move-active} middleMiddle"
             "$mainMod ALT,7,exec,${move-active} bottomMiddle"
             "$mainMod, P, pin,"
-            "$mainMod, Escape, exec, ${pkgs.pkgs-mine.rofi-powermenu}/bin/rofi-powermenu"
+            "$mainMod, Escape, exec, ${pkgs.pkgs-mine.power-picker}/bin/power-picker"
             "$mainMod, B, exec, ${pkgs.pkgs-mine.bluetooth-picker}/bin/bluetooth-picker"
             "$mainMod, E, exec, ${pkgs.pkgs-mine.emoji-picker}/bin/emoji-picker"
             "$mainMod, SPACE, exec, ${config.programs.rofi.package}/bin/rofi -show drun -show-icons"

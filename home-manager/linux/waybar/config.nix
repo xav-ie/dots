@@ -143,7 +143,7 @@ in
   "custom/arch" = {
     format = "";
     tooltip = false;
-    on-click = "${pkgs.pkgs-mine.rofi-powermenu}/bin/rofi-powermenu";
+    on-click = "${pkgs.pkgs-mine.power-picker}/bin/power-picker";
   };
   "hyprland/workspaces" = {
     format = "{icon}";
