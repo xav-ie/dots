@@ -7,6 +7,8 @@
   # Platform flags passed from caller to avoid pkgs.stdenv access here
   isDarwin ? pkgs.stdenv.isDarwin,
   isLinux ? pkgs.stdenv.isLinux,
+  # ags package set (inputs.ags.packages.<system>); null on darwin, unused there.
+  agsPackages ? null,
   # User's atuin fork, pulled from inputs at the flake level since the
   # overlay isn't applied to top-level `pkgs` here.
   atuin,
@@ -15,6 +17,7 @@
   executor-src,
   generate-kaomoji,
   mcp-atlassian-src,
+  notion-calendar-src,
   nuenv,
   simulstreaming-src,
   slack-mcp-server-src,
@@ -103,12 +106,17 @@ rec {
   tcc-grant = pkgs.callPackage ./tcc-grant { inherit writeNuApplication; };
 })
 // (optionalAttrs isLinux {
+  bluetooth-picker = pkgs.callPackage ./bluetooth-picker {
+    inherit agsPackages;
+    fontName = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
+  };
   browser-session-mcp = pkgs.callPackage ./browser-session-mcp { };
   chrome-headless-shell = pkgs.callPackage ./chrome-headless-shell { };
   claude-overlay = pkgs.callPackage ./claude-overlay { };
   claude-yolo = pkgs.callPackage ./claude-yolo { };
   executor = pkgs.callPackage ./executor { inherit executor-src; };
   move-active = pkgs.callPackage ./move-active { inherit writeNuApplication; };
+  notion-calendar = pkgs.callPackage ./notion-calendar { src = notion-calendar-src; };
   openrgb-appimage = pkgs.callPackage ./openrgb-appimage { };
   pinentry-auto = pkgs.callPackage ./pinentry-auto { };
   simulstreaming = pkgs.callPackage ./simulstreaming { src = simulstreaming-src; };

@@ -9,6 +9,7 @@
     ./gtk
     ./hyprland
     ./nemo
+    ./notion-calendar.nix
     ./obs
     ./orca-slicer.nix
     ./qt

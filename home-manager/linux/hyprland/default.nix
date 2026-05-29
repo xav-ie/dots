@@ -409,6 +409,10 @@ in
           monitor = ",preferred,auto,auto";
 
           layerrule = [
+            "match:namespace bluetooth-picker, blur on"
+            # Only blur where the panel is; the rest of the layer is the
+            # fully-transparent click-catcher and must stay unblurred.
+            "match:namespace bluetooth-picker, ignore_alpha 0.6"
             "match:namespace notifications, blur on"
             "match:namespace rofi, blur on"
             "match:namespace swaync, blur on"
@@ -470,7 +474,7 @@ in
             "$mainMod ALT,7,exec,${move-active} bottomMiddle"
             "$mainMod, P, pin,"
             "$mainMod, Escape, exec, ${pkgs.pkgs-mine.rofi-powermenu}/bin/rofi-powermenu"
-            "$mainMod, B, exec, ${pkgs.rofi-bluetooth}/bin/rofi-bluetooth -i"
+            "$mainMod, B, exec, ${pkgs.pkgs-mine.bluetooth-picker}/bin/bluetooth-picker"
             "$mainMod, E, exec, ${pkgs.rofimoji}/bin/rofimoji --use-icons --skin-tone neutral"
             "$mainMod, SPACE, exec, ${config.programs.rofi.package}/bin/rofi -show drun -show-icons"
             # "$mainMod, P, pseudo, # dwindle"

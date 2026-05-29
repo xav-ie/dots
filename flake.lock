@@ -1,5 +1,28 @@
 {
   "nodes": {
+    "ags": {
+      "inputs": {
+        "astal": [
+          "astal"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1775689345,
+        "narHash": "sha256-tM3s7CX+tgxlYW0Sk3nzVThg2MHn08foIuMxABupxIs=",
+        "owner": "aylur",
+        "repo": "ags",
+        "rev": "bbee2f18939f1ec7ff720e717cf305e73635628f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "aylur",
+        "repo": "ags",
+        "type": "github"
+      }
+    },
     "alacritty-theme": {
       "inputs": {
         "alacritty-theme": [
@@ -72,6 +95,26 @@
       "original": {
         "owner": "hyprwm",
         "repo": "aquamarine",
+        "type": "github"
+      }
+    },
+    "astal": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1779465550,
+        "narHash": "sha256-lsLyO08Gv9eLvUYd6I+UUuZeT4w5M1vU/ulo5QICoNo=",
+        "owner": "aylur",
+        "repo": "astal",
+        "rev": "d8738f97ed01f4d87f668df35fa7bbad795c9e49",
+        "type": "github"
+      },
+      "original": {
+        "owner": "aylur",
+        "repo": "astal",
         "type": "github"
       }
     },
@@ -1329,6 +1372,23 @@
         "type": "github"
       }
     },
+    "notion-calendar-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1764778294,
+        "narHash": "sha256-kYex7JjucpAMxOvLL9GbXxqgHcB4qhOMSE2VlNw7udI=",
+        "owner": "czlabinger",
+        "repo": "notion-calendar-electron",
+        "rev": "7e01efb90361048b27220abb9b9e703ab705d05d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "czlabinger",
+        "repo": "notion-calendar-electron",
+        "rev": "7e01efb90361048b27220abb9b9e703ab705d05d",
+        "type": "github"
+      }
+    },
     "nuenv": {
       "inputs": {
         "nixpkgs": [
@@ -1632,8 +1692,10 @@
     },
     "root": {
       "inputs": {
+        "ags": "ags",
         "alacritty-theme": "alacritty-theme",
         "alacritty-theme-themes": "alacritty-theme-themes",
+        "astal": "astal",
         "atuin": "atuin",
         "beads": "beads",
         "bun-demincer-src": "bun-demincer-src",
@@ -1675,6 +1737,7 @@
         "nixpkgs-lib-v1-merge": "nixpkgs-lib-v1-merge",
         "nixpkgs-stable": "nixpkgs-stable",
         "nixpkgs-swift": "nixpkgs-swift",
+        "notion-calendar-src": "notion-calendar-src",
         "nuenv": "nuenv",
         "obs-backgroundremoval": "obs-backgroundremoval",
         "ollama-src": "ollama-src",
