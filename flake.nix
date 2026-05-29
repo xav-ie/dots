@@ -384,6 +384,7 @@
                   "*.nu" # formatter is borked
                   "*.patch"
                   "*.scpt" # no standard formatter for AppleScript
+                  "*.svg" # no standard formatter
                   ".git-blame-ignore-revs"
                   ".gitignore"
                   "flake.lock"
