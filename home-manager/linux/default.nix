@@ -80,7 +80,6 @@
           move-active
           record
           record-section
-          rofi-powermenu
           zenity-askpass
         ]);
 

@@ -127,10 +127,13 @@ rec {
   notion-calendar = pkgs.callPackage ./notion-calendar { src = notion-calendar-src; };
   openrgb-appimage = pkgs.callPackage ./openrgb-appimage { };
   pinentry-auto = pkgs.callPackage ./pinentry-auto { };
+  power-picker = pkgs.callPackage ./power-picker {
+    inherit agsPackages;
+    fontName = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
+  };
   simulstreaming = pkgs.callPackage ./simulstreaming { src = simulstreaming-src; };
   record = pkgs.callPackage ./record { };
   record-section = pkgs.callPackage ./record-section { };
-  rofi-powermenu = pkgs.callPackage ./rofi-powermenu { inherit writeNuApplication; };
   snippet-mcp = pkgs.callPackage ./snippet-mcp { };
   zenity-askpass = pkgs.callPackage ./zenity-askpass { inherit writeNuApplication; };
 })
