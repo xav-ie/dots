@@ -34,9 +34,25 @@ stdenv.mkDerivation {
   ];
 
   installPhase = ''
-    runHook preInstall
-    mkdir -p $out/bin
-    ags bundle app.ts $out/bin/bluetooth-picker
-    runHook postInstall
+        runHook preInstall
+        mkdir -p $out/bin
+        ags bundle app.ts $out/bin/bluetooth-picker
+
+        install -Dm644 icon.svg $out/share/icons/hicolor/scalable/apps/bluetooth-picker.svg
+
+        mkdir -p $out/share/applications
+        cat > $out/share/applications/bluetooth-picker.desktop <<EOF
+    [Desktop Entry]
+    Type=Application
+    Name=Bluetooth Picker
+    Comment=Connect and manage Bluetooth devices
+    Exec=$out/bin/bluetooth-picker
+    Icon=bluetooth-picker
+    Terminal=false
+    Categories=Settings;HardwareSettings;
+    Keywords=bluetooth;bt;device;pair;connect;
+    EOF
+
+        runHook postInstall
   '';
 }
