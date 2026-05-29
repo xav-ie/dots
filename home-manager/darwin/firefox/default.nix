@@ -1,6 +1,9 @@
 { config, lib, ... }:
 let
   ffDir = "Library/Application Support/Firefox";
+  # Platform-agnostic assets (firefox.cfg, favicon-icons.js, userChrome.css,
+  # user.js) live in the shared dir; autoconfig.js below is macOS-specific.
+  shared = "${config.dotFilesDir}/home-manager/firefox";
   src = "${config.dotFilesDir}/home-manager/darwin/firefox";
 in
 {
@@ -19,8 +22,8 @@ in
       for profile in "$profilesRoot"/*/; do
         [ -d "$profile" ] || continue
         mkdir -p "$profile/chrome"
-        ln -sfn "${src}/userChrome.css" "$profile/chrome/userChrome.css"
-        ln -sfn "${src}/user.js"         "$profile/user.js"
+        ln -sfn "${shared}/userChrome.css" "$profile/chrome/userChrome.css"
+        ln -sfn "${shared}/user.js"         "$profile/user.js"
       done
     '';
 
@@ -33,9 +36,9 @@ in
       res="/Applications/Firefox.app/Contents/Resources"
       [ -d "$res" ] || exit 0
       mkdir -p "$res/defaults/pref"
-      ln -sfn "${src}/firefox.cfg"      "$res/firefox.cfg"
-      ln -sfn "${src}/favicon-icons.js" "$res/favicon-icons.js"
-      ln -sfn "${src}/autoconfig.js"    "$res/defaults/pref/autoconfig.js"
+      ln -sfn "${shared}/firefox.cfg"      "$res/firefox.cfg"
+      ln -sfn "${shared}/favicon-icons.js" "$res/favicon-icons.js"
+      ln -sfn "${src}/autoconfig.js"       "$res/defaults/pref/autoconfig.js"
     '';
   };
 }
