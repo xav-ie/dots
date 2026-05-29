@@ -1,0 +1,126 @@
+// Purple-tinted dark theme, matched to the bluetooth-picker. The font token
+// below is substituted at build time with the system `sans` font from
+// lib/fonts.nix (see default.nix).
+$bg: #1a1726; // purple-tinted near-black
+$fg: #f2eefb;
+$accent: #bb9af7; // lavender purple
+$dim: rgba(#f2eefb, 0.5);
+
+// Font set on the layer-shell window root (matched by the `name` prop -> #id)
+// so it inherits to every child; this is the pattern the upstream examples use.
+window#clipboard-picker {
+  font-family: "@FONT@", sans-serif;
+  font-size: 22px;
+  font-weight: 300; // Inter Light — 400 read as too heavy
+}
+
+window {
+  background: transparent;
+}
+
+.panel {
+  background-color: $bg; // opaque: this layer isn't blurred (image thumbnails
+  // would bloom otherwise)
+  border: 2px solid rgba($accent, 0.45);
+  border-radius: 14px;
+  padding: 18px;
+  min-width: 560px;
+  color: $fg;
+
+  label {
+    font-size: 22px;
+  }
+
+  .header .title {
+    font-size: 28px;
+    font-weight: 700; // bold title
+    color: $accent;
+  }
+
+  // Search field: tinted fill, purple border on focus, stock focus ring off.
+  entry {
+    background-color: rgba($accent, 0.1);
+    border: 2px solid transparent;
+    border-radius: 10px;
+    padding: 8px 12px;
+    color: $fg;
+    outline: none;
+
+    image {
+      color: $accent;
+    }
+
+    // :focus-within is the reliable one — GTK4 puts focus on the entry's inner
+    // text node, so :focus/:focus-visible can miss the programmatic grab at
+    // launch (the "no outline on launch" race).
+    &:focus,
+    &:focus-visible,
+    &:focus-within {
+      border-color: $accent;
+      background-color: rgba($accent, 0.16);
+    }
+  }
+
+  separator {
+    background-color: rgba($accent, 0.18);
+    min-height: 1px;
+  }
+
+  .dim {
+    color: $dim;
+    padding: 14px;
+  }
+
+  .row {
+    button {
+      background: transparent;
+      padding: 9px 11px;
+      border: 2px solid transparent;
+      border-radius: 10px;
+      outline: none;
+
+      // Buttons inherit a heavier weight from the theme; force entries light.
+      label {
+        font-weight: 300;
+      }
+
+      image {
+        color: $accent;
+      }
+
+      &:hover {
+        background-color: rgba($accent, 0.12);
+      }
+
+      &:focus,
+      &:focus-visible,
+      &:active {
+        background-color: rgba($accent, 0.18);
+        border-color: $accent;
+      }
+    }
+
+    // Trash button stays muted until the row is touched.
+    button.delete image {
+      color: $dim;
+    }
+
+    button.delete:hover image {
+      color: $accent;
+    }
+
+    // Thumbnail slot: keep it flat. The picture letterboxes inside a fixed-size
+    // box, so any stray background/border here reads as a halo around the image.
+    .thumb,
+    .thumb picture,
+    .thumb image {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+    }
+
+    .thumb {
+      border-radius: 6px;
+    }
+  }
+}

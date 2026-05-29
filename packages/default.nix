@@ -114,6 +114,10 @@ rec {
   chrome-headless-shell = pkgs.callPackage ./chrome-headless-shell { };
   claude-overlay = pkgs.callPackage ./claude-overlay { };
   claude-yolo = pkgs.callPackage ./claude-yolo { };
+  clipboard-picker = pkgs.callPackage ./clipboard-picker {
+    inherit agsPackages;
+    fontName = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
+  };
   executor = pkgs.callPackage ./executor { inherit executor-src; };
   move-active = pkgs.callPackage ./move-active { inherit writeNuApplication; };
   notion-calendar = pkgs.callPackage ./notion-calendar { src = notion-calendar-src; };
@@ -122,7 +126,6 @@ rec {
   simulstreaming = pkgs.callPackage ./simulstreaming { src = simulstreaming-src; };
   record = pkgs.callPackage ./record { };
   record-section = pkgs.callPackage ./record-section { };
-  rofi-cliphist = pkgs.callPackage ./rofi-cliphist { inherit writeNuApplication; };
   rofi-powermenu = pkgs.callPackage ./rofi-powermenu { inherit writeNuApplication; };
   snippet-mcp = pkgs.callPackage ./snippet-mcp { };
   zenity-askpass = pkgs.callPackage ./zenity-askpass { inherit writeNuApplication; };
