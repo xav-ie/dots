@@ -53,6 +53,7 @@ in
     };
 
     home.packages = with pkgs; [
+      pkgs-mine.bluetooth-picker
       hyprshot
       libnotify
       libva
@@ -320,6 +321,9 @@ in
           exec-once = [
             "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type text --watch cliphist store"
             "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type image --watch cliphist store"
+            # Pre-warm the clipboard picker so $mainMod+V opens instantly (it
+            # stays resident and just toggles its window thereafter).
+            "${pkgs.pkgs-mine.clipboard-picker}/bin/clipboard-picker --daemon"
             "[workspace 2 silent] ${config.programs.firefox.package}/bin/firefox"
             "[workspace 1 silent] ${config.programs.ghostty.package}/bin/ghostty"
           ];
@@ -413,6 +417,9 @@ in
             # Only blur where the panel is; the rest of the layer is the
             # fully-transparent click-catcher and must stay unblurred.
             "match:namespace bluetooth-picker, ignore_alpha 0.6"
+            # No blur on clipboard-picker: blurring the layer blooms opaque image
+            # thumbnails into the surrounding panel. The panel is near-opaque
+            # (see style.scss) to compensate.
             "match:namespace notifications, blur on"
             "match:namespace rofi, blur on"
             "match:namespace swaync, blur on"
@@ -479,8 +486,7 @@ in
             "$mainMod, SPACE, exec, ${config.programs.rofi.package}/bin/rofi -show drun -show-icons"
             # "$mainMod, P, pseudo, # dwindle"
             # "$mainMod, T, togglesplit, # dwindle"
-            "$mainMod, V, exec, ${pkgs.pkgs-mine.rofi-cliphist}/bin/rofi-cliphist"
-            "$mainMod SHIFT, V, exec, ${pkgs.pkgs-mine.rofi-cliphist}/bin/rofi-cliphist --images"
+            "$mainMod, V, exec, ${pkgs.pkgs-mine.clipboard-picker}/bin/clipboard-picker"
             "$mainMod, S, exec, ${pkgs.hyprshot}/bin/hyprshot -m region -z --clipboard-only"
             "$mainMod SHIFT, S, exec, ${pkgs.hyprshot}/bin/hyprshot -m region -z -o ~/Pictures"
             "$mainMod, N, exec, ${lib.getExe' config.services.swaync.package "swaync-client"} -t"
