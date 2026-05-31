@@ -57,6 +57,15 @@ let
           description = "Minute to run (0-59). Used for launchd on macOS.";
         };
 
+        interval = lib.mkOption {
+          type = lib.types.nullOr lib.types.int;
+          default = null;
+          description = ''
+            Run every N seconds (StartInterval on macOS, OnUnitActiveSec timer
+            on Linux). When set, takes precedence over calendar/hour/minute.
+          '';
+        };
+
         randomDelay = lib.mkOption {
           type = lib.types.str;
           default = "1h";
@@ -123,11 +132,18 @@ in
     systemd.user.timers = lib.mkIf isLinux (
       lib.mapAttrs (_name: svc: {
         Unit.Description = "${svc.description} timer";
-        Timer = {
-          OnCalendar = svc.calendar;
-          Persistent = svc.persistent;
-          RandomizedDelaySec = svc.randomDelay;
-        };
+        Timer =
+          if svc.interval != null then
+            {
+              OnBootSec = "${toString svc.interval}s";
+              OnUnitActiveSec = "${toString svc.interval}s";
+            }
+          else
+            {
+              OnCalendar = svc.calendar;
+              Persistent = svc.persistent;
+              RandomizedDelaySec = svc.randomDelay;
+            };
         Install.WantedBy = [ "timers.target" ];
       }) enabledServices
     );
@@ -139,10 +155,15 @@ in
         config = {
           Label = "com.user.${name}";
           ProgramArguments = [ svc.command ];
-          StartCalendarInterval = mkLaunchdInterval svc;
           StandardOutPath = "${config.home.homeDirectory}/Library/Logs/${name}.log";
           StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/${name}.log";
         }
+        // (
+          if svc.interval != null then
+            { StartInterval = svc.interval; }
+          else
+            { StartCalendarInterval = mkLaunchdInterval svc; }
+        )
         // lib.optionalAttrs (svc.workingDirectory != null) {
           WorkingDirectory = svc.workingDirectory;
         };

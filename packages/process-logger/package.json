@@ -1,0 +1,7 @@
+{
+  "name": "process-logger",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Log per-process CPU usage over time to SQLite (answers 'what used the most CPU this hour?')"
+}

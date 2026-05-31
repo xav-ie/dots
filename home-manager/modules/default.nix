@@ -33,6 +33,7 @@ _: {
     ./pi
     ./pijul
     ./plover
+    ./process-logger
     ./pueue
     ./ralph
     ./scheduled-services
