@@ -70,6 +70,7 @@ rec {
   log-pr = pkgs.callPackage ./log-pr { inherit writeNuApplication; };
   nix-flamegraph = pkgs.callPackage ./nix-flamegraph { inherit writeNuApplication; };
   nodejs_25 = pkgs.callPackage ./nodejs_25 { };
+  process-logger = pkgs.callPackage ./process-logger { inherit nodejs_25; };
   nix-output-monitor = pkgs.callPackage ./nix-output-monitor { };
   nix-repl = pkgs.callPackage ./nix-repl { inherit writeNuApplication; };
   nom-run = pkgs.callPackage ./nom-run { inherit nix-output-monitor writeNuApplication; };
