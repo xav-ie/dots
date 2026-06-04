@@ -28,10 +28,16 @@ in
           # which the build sandbox can't reliably read from a dirty checkout.
           cfg = pkgs.writeText "firefox-favicons.cfg" (builtins.readFile ../../firefox/firefox.cfg);
           icons = pkgs.writeText "favicon-icons.js" (builtins.readFile ../../firefox/favicon-icons.js);
+          # Linux-only prefs (UI scaling). Materialized like cfg so the build
+          # sandbox reads content at eval rather than a dirty-checkout subpath.
+          prefs = pkgs.writeText "firefox-linux-prefs.js" (builtins.readFile ./prefs.js);
         in
         (pkgs.pkgs-bleeding.firefox.override {
           # Appended (cat'd, no shell expansion) to the wrapper's mozilla.cfg.
-          extraPrefsFiles = [ cfg ];
+          extraPrefsFiles = [
+            cfg
+            prefs
+          ];
         }).overrideAttrs
           (old: {
             buildCommand = old.buildCommand + ''
