@@ -70,7 +70,6 @@
           deadnix # dead code linter
           devenv
           dig
-          ente-desktop # Ente Photos desktop client
           fd
           # a wrapper around ffmpeg that adds a progress bar and ETA
           ffpb

@@ -54,7 +54,9 @@ for (const base of [HOME + "/Work", HOME + "/Projects"]) {
 // mgrep-sync from the sops config, so "no roots" means that hasn't run yet (or
 // the secret is missing) — bail rather than wipe.
 if (roots.length === 0) {
-  console.log("reconcile: no allowlisted roots (.mgrepignore) found — aborting");
+  console.log(
+    "reconcile: no allowlisted roots (.mgrepignore) found — aborting",
+  );
   process.exit(0);
 }
 const filters = new Map();

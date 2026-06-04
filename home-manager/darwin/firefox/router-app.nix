@@ -36,8 +36,10 @@ in
     rm -rf "$tmp"
 
     # Identify the bundle and declare it an http/https handler so macOS lists
-    # it as a default-browser candidate.
-    $plistbuddy -c "Set :CFBundleIdentifier casa.lalala.firefox-router" "$plist"
+    # it as a default-browser candidate. Newer osacompile output may omit
+    # CFBundleIdentifier entirely, so Add it when Set can't find the key.
+    $plistbuddy -c "Set :CFBundleIdentifier casa.lalala.firefox-router" "$plist" 2>/dev/null \
+      || $plistbuddy -c "Add :CFBundleIdentifier string casa.lalala.firefox-router" "$plist"
     $plistbuddy -c "Add :LSUIElement bool true" "$plist" 2>/dev/null || true
     $plistbuddy -c "Add :CFBundleURLTypes array" "$plist" 2>/dev/null || true
     $plistbuddy -c "Add :CFBundleURLTypes:0 dict" "$plist" 2>/dev/null || true
