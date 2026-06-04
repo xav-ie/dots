@@ -1,0 +1,64 @@
+// Standalone SUDO_ASKPASS prompt, styled to match the pickers: purple-tinted
+// panel with a 4px border (= hyprland `border_size`, so it reads like a tiled
+// window). @FONT@ is substituted with the system `sans` font at build time
+// (see default.nix). Self-contained — it can't @use the pickers' shared theme
+// from a separate src tree, so the few tokens it needs are inlined.
+$bg: #1a1726; // purple-tinted near-black
+$fg: #f2eefb;
+$accent: #bb9af7; // lavender purple
+$dim: rgba(#f2eefb, 0.5);
+$border-width: 4px;
+$border-color: rgba($accent, 0.45);
+$font: "@FONT@", sans-serif;
+
+window#askpass {
+  background: transparent;
+  font-family: $font;
+  font-weight: 300;
+}
+
+.panel {
+  background-color: rgba($bg, 0.92);
+  border: $border-width solid $border-color;
+  border-radius: 16px;
+  padding: 28px 32px;
+  color: $fg;
+  min-width: 360px;
+}
+
+.header {
+  image {
+    color: $accent;
+  }
+
+  .title {
+    font-size: 18px;
+    font-weight: 600;
+    color: $fg;
+  }
+}
+
+entry.password {
+  background-color: rgba($accent, 0.1);
+  border: 2px solid transparent;
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: $fg;
+  outline: none;
+
+  image {
+    color: $accent;
+  }
+
+  &:focus,
+  &:focus-visible,
+  &:focus-within {
+    border-color: $accent;
+    background-color: rgba($accent, 0.16);
+  }
+}
+
+.hint {
+  font-size: 12px;
+  color: $dim;
+}
