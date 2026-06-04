@@ -21,7 +21,7 @@ let
       audio_feedback = true;
       start_sound_volume = 0.1;
       stop_sound_volume = 0.1;
-      auto_copy_clipboard = true;
+      auto_copy_clipboard = false;
       shift_paste = true;
       fast_vad = {
         enabled = true;
