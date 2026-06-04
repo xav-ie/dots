@@ -26,7 +26,7 @@
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
     nixpkgs-bleeding.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-homeassistant.url = "github:nixos/nixpkgs/master";
-    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.05";
+    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-26.05";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nuenv.url = "github:xav-ie/nuenv";
     plover-flake.url = "github:openstenoproject/plover-flake";
