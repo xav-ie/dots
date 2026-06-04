@@ -87,6 +87,7 @@ rec {
   tm = pkgs.callPackage ./tm { };
   tmux-claude-resurrect = pkgs.callPackage ./tmux-claude-resurrect { };
   tmux-move-window = pkgs.callPackage ./tmux-move-window { inherit writeNuApplication; };
+  tmux-is-vim-in-tree = pkgs.callPackage ./tmux-is-vim-in-tree { };
   tmux-shell = pkgs.callPackage ./tmux-shell { inherit atuin pkgs-bleeding; };
   tmux-tab-name-update = pkgs.callPackage ./tmux-tab-name-update { };
   toggle-theme = pkgs.callPackage ./toggle-theme { inherit writeNuApplication; };

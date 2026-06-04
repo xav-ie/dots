@@ -1,4 +1,15 @@
 { pkgs, ... }:
+let
+  # vim-tmux-navigator's default is_vim check is `ps -t <pane_tty>` +
+  # regex on `comm`. atuin hex (see ../atuin) owns each pane's tty and
+  # runs nu (and therefore nvim) on an inner pty — so the default check
+  # only ever sees `atuin` and tmux falls through to select-pane, making
+  # Ctrl+H/J/K/L skip vim splits entirely.  This Rust helper walks
+  # descendants past atuin to find nvim; it reads the whole process table
+  # in one pass (the bash port spawned ps/pgrep per BFS level and was too
+  # slow to run on every keypress).
+  isVimInTree = "${pkgs.pkgs-mine.tmux-is-vim-in-tree}/bin/tmux-is-vim-in-tree";
+in
 {
   config = {
     programs.tmux = {
@@ -29,7 +40,17 @@
         # allows seamless window/pane navigation with nvim
         # needs the accompanying vim plugin
         # https://github.com/christoomey/vim-tmux-navigator/
-        vim-tmux-navigator
+        {
+          plugin = vim-tmux-navigator;
+          # Per-plugin extraConfig is emitted BEFORE run-shell, so the
+          # plugin's main() reads this when binding C-h/j/k/l. Required
+          # because atuin hex (see ../atuin) owns each pane's tty — the
+          # default `ps -t` check only ever sees `atuin` and tmux falls
+          # through to select-pane, skipping vim splits entirely.
+          extraConfig = ''
+            set -g @vim_navigator_check "${isVimInTree} '#{pane_tty}'"
+          '';
+        }
       ];
       # tmux-shell C shim execs `atuin hex --shell nu`.  Direct exec
       # (~0.3 ms) instead of a bash wrapper (~2 ms).
