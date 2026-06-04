@@ -385,6 +385,10 @@ in
             "match:title Select what to share, float on"
             "match:title Select what to share, size 500 700"
             "match:title Select what to share, center on"
+
+            # gtk portal file picker (Save As / Open dialogs from Firefox/Chromium)
+            "match:class xdg-desktop-portal-gtk, float on"
+            "match:class xdg-desktop-portal-gtk, center on"
           ];
 
           # See https://wiki.hyprland.org/Configuring/Monitors/
