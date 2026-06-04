@@ -1,10 +1,13 @@
-//! browser-session-reaper — close idle Chrome BrowserContexts.
+//! browser-session-reaper — close idle Chrome BrowserContexts and orphan tabs.
 //!
 //! Reads the state file written by browser-session-mcp on each tool call,
 //! connects to Chrome, and disposes any context whose `lastUsedAt` is older
-//! than MAX_IDLE_HOURS. Prunes the state file afterwards.
+//! than MAX_IDLE_HOURS. It then closes any `page` target that belongs to no
+//! MCP-tracked context — these are orphans opened outside the MCP (a headless
+//! automation Chrome has no human browsing it) that otherwise accumulate and
+//! pin a CPU core via SwiftShader. Prunes the state file afterwards.
 //!
-//! Usage: invoked from a NixOS systemd timer (every 12h by default).
+//! Usage: invoked from a NixOS systemd timer.
 //!
 //! Environment:
 //!   BROWSER_URL       (default: http://127.0.0.1:9222)
@@ -13,7 +16,8 @@
 
 use anyhow::{Context, Result, anyhow};
 use chromiumoxide::cdp::browser_protocol::{
-    browser::BrowserContextId, target::GetBrowserContextsParams,
+    browser::BrowserContextId,
+    target::{CloseTargetParams, GetBrowserContextsParams, GetTargetsParams, TargetId},
 };
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
@@ -54,10 +58,9 @@ async fn main() -> Result<()> {
         .map(|(id, _)| id.clone())
         .collect();
 
-    if stale.is_empty() {
-        println!("No idle sessions to reap.");
-        return Ok(());
-    }
+    // Every context the MCP knows about — pages in these are legitimately in
+    // use and must be left alone by the orphan sweep below.
+    let tracked: std::collections::HashSet<String> = sessions.keys().cloned().collect();
 
     println!(
         "Found {} idle session(s); connecting to Chrome…",
@@ -103,11 +106,44 @@ async fn main() -> Result<()> {
         }
     }
 
+    // Sweep orphan tabs: page targets in no MCP-tracked context. These are
+    // opened outside the MCP (stray automation, redirect chains) and never land
+    // in the state file, so the context reaping above can't touch them.
+    let targets = browser
+        .execute(GetTargetsParams::default())
+        .await
+        .context("Target.getTargets")?;
+    let mut orphans = 0usize;
+    for info in &targets.result.target_infos {
+        if info.r#type != "page" {
+            continue;
+        }
+        let in_tracked = info
+            .browser_context_id
+            .as_ref()
+            .is_some_and(|id| tracked.contains(id.inner()));
+        if in_tracked {
+            continue;
+        }
+        let target_id = TargetId::new(info.target_id.inner());
+        match browser.execute(CloseTargetParams::new(target_id)).await {
+            Ok(_) => {
+                orphans += 1;
+                println!(
+                    "Closed orphan tab {} ({})",
+                    info.target_id.inner(),
+                    info.url
+                );
+            }
+            Err(err) => eprintln!("Failed to close orphan {}: {err}", info.target_id.inner()),
+        }
+    }
+
     write_state_file(&state_file, &sessions)
         .await
         .with_context(|| format!("writing {}", state_file.display()))?;
     println!(
-        "Done. reaped={reaped} already-gone={already_gone} remaining={}",
+        "Done. reaped={reaped} already-gone={already_gone} orphans={orphans} remaining={}",
         sessions.len()
     );
     Ok(())
