@@ -67,6 +67,16 @@
         mode = "0400";
       };
 
+      # Interactive-shell environment variables (formerly ~/.env), stored as a
+      # single opaque multi-line dotenv blob so the variable *names* stay
+      # encrypted too — sops leaves YAML keys in cleartext, so one secret per
+      # var would leak the names. Decrypted to /run/secrets/shell-env (tmpfs);
+      # zsh sources it under `set -a`, nushell loads it via `from env`.
+      secrets."shell-env" = {
+        owner = config.defaultUser;
+        mode = "0400";
+      };
+
     };
 
     # Ensure that no one may read my key file
