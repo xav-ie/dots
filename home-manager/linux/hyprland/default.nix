@@ -420,6 +420,10 @@ in
             # stay see-through instead of rendering as an opaque blurred band.
             # Must sit below the .bar background alpha so the pill itself blurs.
             "match:namespace bar, ignore_alpha 0.4"
+            # The screen-share frame is a solid red edge over an OVERLAY layer:
+            # keep it crisp (no blur) and don't animate the strips sliding in.
+            "match:namespace screencast-border, blur off"
+            "match:namespace screencast-border, no_anim on"
           ];
           # Move/resize windows with mainMod + LMB/RMB and dragging
           bindm = [

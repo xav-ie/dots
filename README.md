@@ -153,11 +153,11 @@ screenshot of it open and maybe even do some actions.
       be able to easily manage past and future reminders, a calendar. So I
       just have to set up a good and pretty system calendar
 - [ ] Pomodoro - Set up system pomodoro
-- [ ] Screen sharing - I would prefer some bindings and a bit more
+- [x] Screen sharing - I would prefer some bindings and a bit more
       chrome/indicators in my bar to show that I am sharing screen. I
       dislike that I could be screen sharing and not really be aware that I
       am.
-- [ ] Do Not Disturb - I would like to trigger DND when I am
+- [x] Do Not Disturb - I would like to trigger DND when I am
       screen sharing. I really dislike that notifications come through on
       screen share. Maybe I can still allow notifications, but hide them
       from screen share entirely??? That would be really cool.

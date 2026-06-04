@@ -158,6 +158,10 @@ rec {
   simulstreaming = pkgs.callPackage ./simulstreaming { src = simulstreaming-src; };
   record = pkgs.callPackage ./record { };
   record-section = pkgs.callPackage ./record-section { };
+  screencast-border = pkgs.callPackage ./screencast-border {
+    inherit agsPackages;
+    fontName = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
+  };
   snippet-mcp = pkgs.callPackage ./snippet-mcp { };
   zenity-askpass = pkgs.callPackage ./zenity-askpass { inherit writeNuApplication; };
 })

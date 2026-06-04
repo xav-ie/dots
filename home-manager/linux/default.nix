@@ -16,6 +16,7 @@
     ./obs
     ./orca-slicer.nix
     ./qt
+    ./screencast-border
     ./screencast-dnd
     ./speech
     ./sioyek

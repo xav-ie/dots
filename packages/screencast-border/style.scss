@@ -1,0 +1,46 @@
+// Screen-share border overlay. A solid red frame drawn as four thin layer-shell
+// strips (see Border.tsx) plus an inline "Stop sharing" pill at top-center. The
+// strip windows are otherwise transparent; only the 3px edge boxes carry colour.
+// @FONT@ is substituted with the system `sans` font at build time (default.nix).
+$record: #ff3b30; // iOS-style recording red
+$edge: 3px;
+$font: "@FONT@", sans-serif;
+
+// Every window in this app is a transparent layer surface; the colour lives on
+// the child boxes so the un-bordered interior never paints over the desktop.
+window {
+  background: transparent;
+}
+
+.edge {
+  background-color: $record;
+  min-width: $edge;
+  min-height: $edge;
+}
+
+// The "Stop sharing" pill, hanging just under the top edge and centered. Reset
+// Adwaita's native button chrome (gradient background-image, border, shadow,
+// min-height) so it paints as a flat red continuation of the frame.
+.stop {
+  background-image: none;
+  background-color: $record;
+  border: none;
+  box-shadow: none;
+  min-height: 0;
+  color: #ffffff;
+  font-family: $font;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 10px 2px;
+  // Square top so it reads as continuous with the top edge; rounded bottom.
+  border-radius: 0 0 8px 8px;
+
+  &:hover {
+    background-image: none;
+    background-color: lighten($record, 6%);
+  }
+
+  image {
+    color: #ffffff;
+  }
+}
