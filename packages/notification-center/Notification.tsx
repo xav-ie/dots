@@ -236,8 +236,9 @@ export default function Notification({
             <label
               class="summary"
               hexpand
-              halign={Gtk.Align.START}
+              halign={Gtk.Align.FILL}
               xalign={0}
+              maxWidthChars={1}
               ellipsize={Pango.EllipsizeMode.END}
               label={n.summary}
             />
@@ -255,7 +256,8 @@ export default function Notification({
               class="body"
               wrap
               useMarkup
-              halign={Gtk.Align.START}
+              maxWidthChars={1}
+              halign={Gtk.Align.FILL}
               xalign={0}
               label={n.body}
             />
