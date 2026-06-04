@@ -11,6 +11,8 @@
 # it; activity is then written to $TMUX_CLAUDE_INDICATOR_LOG (default:
 # `~/.cache/tmux-claude-indicator.log`).
 
+use ~/.claude/lib-transcript.nu last-assistant-text
+
 const LOG_DEFAULT = "~/.cache/tmux-claude-indicator.log"
 
 def log [path: string, msg: string] {
@@ -37,29 +39,10 @@ def stop_final_text [stdin_raw: string, log_path: string] {
 
   let transcript_path = ($payload | get -o transcript_path | default "")
   log $log_path $"stop_final_text: transcript_path=($transcript_path)"
-  if ($transcript_path | is-empty) { return "" }
 
-  let lines = try { open $transcript_path | lines } catch { |e|
-    log $log_path $"stop_final_text: open failed: ($e.msg)"
-    return ""
-  }
-  log $log_path $"stop_final_text: transcript has ($lines | length) lines"
-
-  # Walk backwards to find the last assistant message with text content.
-  for line in ($lines | reverse) {
-    let parsed = try { $line | from json } catch { continue }
-    let role = ($parsed | get -o message.role | default "")
-    if $role != "assistant" { continue }
-    let content = ($parsed | get -o message.content | default [])
-    let text_blocks = ($content | where type == "text" | get text)
-    if ($text_blocks | length) == 0 { continue }
-    let joined = ($text_blocks | str join " ")
-    log $log_path $"stop_final_text: matched assistant message, text len=($joined | str length), preview=($joined | str substring 0..120)"
-    return $joined
-  }
-
-  log $log_path "stop_final_text: no assistant text message found"
-  ""
+  let text = (last-assistant-text $transcript_path)
+  log $log_path $"stop_final_text: text len=($text | str length), preview=($text | str substring 0..120)"
+  $text
 }
 
 # Returns true if the user can already see this pane right now: its window is

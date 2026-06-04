@@ -249,6 +249,10 @@ in
           config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/settings.json";
         ".claude/notify.nu".source =
           config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/notify.nu";
+        ".claude/notify-if-question.nu".source =
+          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/notify-if-question.nu";
+        ".claude/lib-transcript.nu".source =
+          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/lib-transcript.nu";
         ".claude/statusline.nu".source =
           config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/statusline.nu";
         ".claude/format-and-lint.nu".source =
