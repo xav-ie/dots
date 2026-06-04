@@ -1,0 +1,15 @@
+{
+  "_comment": "Schema only. The REAL rules are private and live in sops (secrets/main.yaml, key firefox-router/rules), decrypted at runtime to /run/secrets/firefox-router/rules. First matching rule wins; unmatched URLs go to `default`. A glob with `/` matches `<host><path>` (e.g. github.com/org/*); a glob without `/` matches the host alone, so an apex needs a separate `*.` entry for subdomains.",
+  "default": "Personal",
+  "rules": [
+    {
+      "profile": "Work",
+      "match": [
+        "github.com/your-org",
+        "github.com/your-org/*",
+        "example.com",
+        "*.example.com"
+      ]
+    }
+  ]
+}

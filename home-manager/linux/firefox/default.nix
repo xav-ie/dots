@@ -94,7 +94,27 @@ in
       # };
     };
     home.sessionVariables = {
-      BROWSER = "firefox";
+      # Route $BROWSER-driven openers through the profile router too.
+      BROWSER = "firefox-router";
+    };
+
+    # Per-profile link router: https://github.com/outsmartly/* (and the rest of
+    # the Outsmartly footprint) open in the Work profile, everything else in
+    # Personal. Rules live in packages/firefox-router/rules.nix. This .desktop
+    # is the default http/https/html handler; it forwards the URL to the
+    # firefox-router binary, which resolves the target profile and launches it.
+    xdg.desktopEntries.firefox-router = {
+      name = "Firefox (profile router)";
+      genericName = "Web Browser";
+      exec = "firefox-router %U";
+      terminal = false;
+      type = "Application";
+      noDisplay = true;
+      mimeType = [
+        "text/html"
+        "x-scheme-handler/http"
+        "x-scheme-handler/https"
+      ];
     };
 
     # Drop userChrome.css + user.js into each Firefox profile: the dark-favicon
@@ -117,16 +137,19 @@ in
     xdg.mimeApps.defaultApplications =
       let
         browser = "firefox.desktop";
+        # Navigable web links go through the profile router; everything else
+        # (local files, images, ftp) opens Firefox directly.
+        router = "firefox-router.desktop";
       in
       {
         "application/xhtml+xml" = browser;
         "application/xml" = browser;
         "image/*" = browser;
-        "text/html" = browser;
+        "text/html" = router;
         "text/plain" = browser;
         "x-scheme-handler/ftp" = browser;
-        "x-scheme-handler/http" = browser;
-        "x-scheme-handler/https" = browser;
+        "x-scheme-handler/http" = router;
+        "x-scheme-handler/https" = router;
       };
   };
 }

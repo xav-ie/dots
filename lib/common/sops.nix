@@ -77,6 +77,15 @@
         mode = "0400";
       };
 
+      # Firefox per-profile link router rules (packages/firefox-router). One
+      # opaque JSON blob because the match list names private clients; keeping
+      # it in sops (not a committed rules.nix) keeps those out of the repo and
+      # the world-readable Nix store. Decrypts to /run/secrets/firefox-router/rules.
+      secrets."firefox-router/rules" = {
+        owner = config.defaultUser;
+        mode = "0400";
+      };
+
     };
 
     # Ensure that no one may read my key file

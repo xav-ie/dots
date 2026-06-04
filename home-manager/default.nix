@@ -111,6 +111,7 @@
           cache-command
           clauhist
           ff
+          firefox-router
           flint
           format-staged
           gp

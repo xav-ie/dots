@@ -57,6 +57,7 @@ rec {
   };
   clauhist = pkgs.callPackage ./clauhist { inherit clauhist-src; };
   ff = pkgs.callPackage ./ff { };
+  firefox-router = pkgs.callPackage ./firefox-router { };
   flint = pkgs.callPackage ./flint { inherit format-staged lint-staged writeNuApplication; };
   format-staged = pkgs.callPackage ./format-staged { inherit writeNuApplication; };
   git-amend = pkgs.callPackage ./git-amend { inherit writeNuApplication; };
