@@ -1,5 +1,4 @@
 {
-  config,
   lib,
   pkgs,
   ...
@@ -8,7 +7,7 @@ let
   screencast-dnd = pkgs.writeNuApplication {
     name = "screencast-dnd";
     runtimeInputs = [
-      config.services.swaync.package
+      pkgs.pkgs-mine.notification-center
       pkgs.pipewire
     ];
     text = builtins.readFile ./screencast-dnd.nu;
@@ -18,12 +17,12 @@ in
   config = {
     systemd.user.services.screencast-dnd = {
       Unit = {
-        Description = "Auto-toggle swaync DND during xdg-desktop-portal screencasts";
+        Description = "Auto-toggle notification DND during xdg-desktop-portal screencasts";
         PartOf = [ "graphical-session.target" ];
         After = [
           "graphical-session.target"
           "pipewire.service"
-          "swaync.service"
+          "notification-center.service"
         ];
       };
       Service = {

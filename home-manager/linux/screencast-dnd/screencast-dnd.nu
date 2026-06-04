@@ -5,13 +5,13 @@
 # media.name "xdph-streaming-<rand>" — see xdph src/portals/Screencopy.cpp.
 
 def dnd-get []: nothing -> bool {
-  let result = try { ^swaync-client --get-dnd --skip-wait | str trim } catch { "" }
+  let result = try { ^notifctl --get-dnd --skip-wait | str trim } catch { "" }
   $result == "true"
 }
 
 def dnd-set [on: bool] {
   let arg = if $on { "--dnd-on" } else { "--dnd-off" }
-  try { ^swaync-client $arg --skip-wait | ignore }
+  try { ^notifctl $arg --skip-wait | ignore }
 }
 
 def main [] {
