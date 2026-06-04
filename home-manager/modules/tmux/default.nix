@@ -9,9 +9,13 @@
       mouse = true;
       newSession = true;
       plugins = with pkgs.tmuxPlugins; [
-        # auto-save every 15 min + auto-restore on server start
-        # https://github.com/tmux-plugins/tmux-continuum
-        continuum
+        # NOTE: tmux-continuum is intentionally NOT listed here. It injects its
+        # auto-save trigger by prepending an interpolation onto status-right at
+        # load time, and home-manager always sources `plugins` before
+        # `extraConfig`. Listed here it would load before our status-right is
+        # set, then extraConfig's `set status-right` would overwrite (and
+        # discard) the save trigger -> nothing ever saves. Instead we run it by
+        # hand at the very end of extraConfig, after status-right exists.
         # adds helpful selection commands
         # https://github.com/tmux-plugins/tmux-copycat
         copycat
@@ -73,8 +77,10 @@
 
           set-option -g status-style bg=default,fg=default
           set-option -g status-left " "
-          # #{continuum_status} is required for tmux-continuum's autosave loop;
-          # without it in status-right, the periodic save never ticks.
+          # #{continuum_status} just renders continuum's state (running/off); it
+          # does not drive saving. The actual periodic-save trigger is a separate
+          # interpolation continuum prepends onto status-right when it loads, so
+          # continuum must run after this set-option (see end of extraConfig).
           set-option -g status-right "#{?client_prefix, PREFIX ,}#{?pane_in_mode, COPY ,}#{continuum_status}"
           # Conditionally prepend a colored Claude "needs attention" dot. The
           # color lives in the per-window @claude-dot user option (set by
@@ -103,6 +109,11 @@
           # tmux-continuum: auto-save every 15 min, restore on server start
           set -g @continuum-restore 'on'
           set -g @continuum-save-interval '15'
+
+          # Load continuum LAST, after status-right and the @continuum-* options
+          # above are set. continuum prepends its auto-save interpolation onto
+          # the current status-right at load, so it must run after we set it.
+          run-shell ${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/continuum.tmux
         '';
     };
   };

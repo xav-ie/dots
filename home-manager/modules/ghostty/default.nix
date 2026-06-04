@@ -30,6 +30,7 @@ in
               if pkgs.stdenv.isDarwin then "shaders/watersubtle-darwin.glsl" else "shaders/watersubtle-linux.glsl"
             }
             custom-shader-animation = ${if pkgs.stdenv.isDarwin then "true" else "false"}
+            ${lib.optionalString pkgs.stdenv.isLinux "background-opacity = 0.95"}
             font-family = "${fonts.configs.ghostty.font-family-1}"
             font-family = "${fonts.configs.ghostty.font-family-2}"
             font-family = "${fonts.configs.ghostty.font-family-3}"
