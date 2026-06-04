@@ -7,6 +7,8 @@ let
   src = "${config.dotFilesDir}/home-manager/darwin/firefox";
 in
 {
+  imports = [ ./router-app.nix ];
+
   config = {
     # Firefox creates profile dirs with random IDs (e.g. j7ttlvnx.default-release)
     # so we can't hardcode a path. This activation script discovers every
