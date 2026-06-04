@@ -1,4 +1,4 @@
-const waybar_height = 34
+const bar_height = 34
 
 def floatingWindowOrActive [use_active = false] {
   # first, try and get active window if it is floating
@@ -83,7 +83,7 @@ def windowInfo [
   let window_width = $window_dimensions.width
 
   let window_left = $gap_left + $border_size
-  let window_top = $gap_top + $border_size + $waybar_height + $border_size + $gap_top
+  let window_top = $gap_top + $border_size + $bar_height + $border_size + $gap_top
   let window_right = $screen_width - $window_width - $gap_right - $border_size
   let window_bottom = $screen_height - $window_height - $gap_bottom - $border_size
   let window_h_middle = ($screen_width - $window_width) / 2
