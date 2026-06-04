@@ -1130,6 +1130,30 @@
         "type": "github"
       }
     },
+    "morrow": {
+      "inputs": {
+        "ags": [
+          "ags"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "treefmt-nix": "treefmt-nix"
+      },
+      "locked": {
+        "lastModified": 1780549175,
+        "narHash": "sha256-7fJxhUwiIzNGVd+d84XCxehkaHwPCRjgJhjaIAcTTAQ=",
+        "ref": "refs/heads/main",
+        "rev": "e99c2a605eba3e5c4554c75d12e1ab604efec4f1",
+        "revCount": 4,
+        "type": "git",
+        "url": "ssh://git@github.com/xav-ie/morrow"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/xav-ie/morrow"
+      }
+    },
     "neverest": {
       "inputs": {
         "fenix": [
@@ -1726,6 +1750,7 @@
         "mcp-atlassian-src": "mcp-atlassian-src",
         "mcp-nixos": "mcp-nixos",
         "morlana": "morlana",
+        "morrow": "morrow",
         "neverest": "neverest",
         "nix-auto-follow": "nix-auto-follow",
         "nix-darwin": "nix-darwin",
@@ -1753,7 +1778,7 @@
         "slack-mcp-server": "slack-mcp-server",
         "sops-nix": "sops-nix",
         "systems": "systems_2",
-        "treefmt-nix": "treefmt-nix",
+        "treefmt-nix": "treefmt-nix_2",
         "virtual-headset": "virtual-headset",
         "zerobrew-src": "zerobrew-src",
         "zjstatus": "zjstatus"
@@ -1947,6 +1972,27 @@
       }
     },
     "treefmt-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "morrow",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1780220602,
+        "narHash": "sha256-eynAfOmbmxJnkp7YewvCEbShNnnYJ9gLLqkzsYtBPeM=",
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "rev": "db947814a175b7ca6ded66e21383d938df01c227",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "treefmt-nix_2": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"

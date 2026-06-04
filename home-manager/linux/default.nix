@@ -2,7 +2,6 @@
 {
   imports = [
     ./bar
-    ./calendar.nix
     ./cliphist
     ./dconf
     ./email
@@ -10,6 +9,7 @@
     ./google-chrome
     ./gtk
     ./hyprland
+    ./morrow.nix
     ./nemo
     ./notification-center
     ./notion-calendar.nix

@@ -63,13 +63,15 @@ other bits of config.
 <summary>Secrets</summary>
 I want to configure secrets the "right way".
 
-- [ ] Use `pass` or `age` to just store all my ENV variables, but
-      then it is another master password to remember, so I think I would
-      rather figure something out with the Bitwarden CLI, my manager of
-      choice. Honestly, I don't really know the best course of action,
-      because what if I want to change my manager?? I might also want to
-      just completely forgo Bitwarden and just use good old encryption...
-      There has to be someone else who thought of this
+- [x] Use `pass` or `age` to just store all my ENV variables — **solved with
+      sops-nix + age, no master password and no manager lock-in.** The age
+      _host_ key at `/etc/age/keys.txt` decrypts secrets automatically at
+      system activation, so there is nothing to type at runtime. Bitwarden's
+      only role is to hold a backup of that one age key; sops/age is
+      manager-agnostic, so switching managers later just means moving the key.
+      The old `~/.env` values now live in `secrets/main.yaml` under `env/*` and
+      are rendered to `/run/secrets/rendered/shell-env` (tmpfs), which zsh and
+      nushell source instead. See `lib/common/sops.nix`.
 - [x] Look into these secret solutions others have worked on:
   - [Secrets Management with SOPS-NIX by Vimjoyer](https://youtube.com/watch?v=G5f6GC7SnhU)
   - [NixOS Secrets Management by Emergent Mind](https://youtube.com/watch?v=G5f6GC7SnhU)
@@ -105,7 +107,7 @@ This should also mean I get keyboard access!
 <details>
 <summary>Firefox Sync</summary>
 
-- [ ] I need to just make my Firefox configured more through Nix. A
+- [x] I need to just make my Firefox configured more through Nix. A
       lot of my plugins and settings are not 100% synced properly.
 - [x] I also need to find an RSS reader that can read/sync with a filesystem. I
     am currently using FeedBro, but it does not sync between
@@ -147,7 +149,7 @@ screenshot of it open and maybe even do some actions.
       this really ugly one. I also want to fix the divide by zero errors
       that keep making it crash.
 - [ ] Email - just set up Himalaya email client in vim.
-- [ ] Reminders - I want my GCal to appear in my system and I want to
+- [x] Reminders - I want my GCal to appear in my system and I want to
       be able to easily manage past and future reminders, a calendar. So I
       just have to set up a good and pretty system calendar
 - [ ] Pomodoro - Set up system pomodoro
