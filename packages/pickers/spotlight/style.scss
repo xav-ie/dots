@@ -1,0 +1,225 @@
+@use "../lib/theme" as *;
+
+window#spotlight {
+  font-family: $font;
+  font-size: 24px;
+  font-weight: 300;
+}
+
+.panel {
+  // Same alpha as the bar's pills (.bar-section) so the frosted-glass blur
+  // reads consistently across the shell. Stays above the spotlight layerrule's
+  // ignore_alpha 0.6 threshold, so the panel still blurs.
+  background-color: rgba($bg, 0.72);
+  border-radius: 16px;
+  padding: 16px;
+  min-width: 600px;
+}
+
+// Mode tabs ------------------------------------------------------------------
+.tabs .tab {
+  @include cell(9px);
+  padding: 6px 12px;
+  color: $fg;
+
+  image {
+    color: $accent;
+  }
+
+  &.active {
+    background-color: rgba($accent, 0.22);
+    color: $accent;
+  }
+}
+
+// App mode -------------------------------------------------------------------
+.mode-app .row {
+  @include cell(10px);
+  padding: 8px 10px;
+
+  .app-name {
+    font-weight: 400;
+  }
+
+  .app-desc {
+    font-size: 20px;
+    color: $dim;
+  }
+
+  // Only symbolic fallback icons pick up the tint; real app icons keep theirs.
+  image {
+    color: $accent;
+  }
+}
+
+// Clipboard mode -------------------------------------------------------------
+.mode-clipboard .row {
+  button {
+    @include cell(10px);
+    padding: 9px 11px;
+
+    label {
+      font-weight: 300;
+    }
+
+    image {
+      color: $accent;
+    }
+  }
+
+  button.delete image {
+    color: $dim;
+  }
+
+  button.delete:hover image {
+    color: $accent;
+  }
+
+  // Thumbnail slot: keep it flat so the image has no halo.
+  .thumb,
+  .thumb picture,
+  .thumb image {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+
+  .thumb {
+    border-radius: 6px;
+  }
+}
+
+// Emoji mode -----------------------------------------------------------------
+.mode-emoji .grid .emoji {
+  @include cell(12px);
+  padding: 6px;
+
+  label {
+    font-size: 42px;
+  }
+}
+
+// Bluetooth mode -------------------------------------------------------------
+.mode-bluetooth {
+  .row {
+    @include cell(10px);
+    padding: 9px 11px;
+
+    label {
+      font-weight: 300;
+    }
+
+    image {
+      color: $accent;
+    }
+  }
+
+  .header .scan {
+    @include cell(9px);
+    padding: 6px 12px;
+    color: $accent;
+
+    image {
+      color: $accent;
+    }
+  }
+
+  // Power toggle: purple track in both states, a purple less-rounded knob.
+  // `background-image: none` overrides Adwaita's gradient so our colour shows.
+  switch {
+    border: $border-width solid transparent;
+    border-radius: 7px;
+    outline: none;
+    background-image: none;
+    background-color: rgba($accent, 0.25); // off
+
+    &:focus,
+    &:focus-visible {
+      border-color: $accent;
+    }
+
+    &:checked {
+      background-color: rgba($accent, 0.55); // on
+    }
+
+    slider {
+      background-image: none;
+      background-color: $accent;
+      border-radius: 5px;
+      border: none;
+      box-shadow: none;
+    }
+  }
+
+  spinner {
+    color: $accent;
+  }
+}
+
+// Power mode -----------------------------------------------------------------
+.mode-power {
+  // Vertical list of actions; each row fills the width and the column fills the
+  // clipboard-matching height (homogeneous, see PowerMode.tsx).
+  .actions .action {
+    @include cell(12px);
+    padding: 0 18px;
+
+    image {
+      color: $accent;
+    }
+
+    label {
+      font-size: 18px;
+    }
+  }
+
+  .confirm {
+    padding: 8px 4px;
+
+    image {
+      color: $danger;
+    }
+
+    .confirm-label {
+      font-size: 22px;
+      font-weight: 400;
+    }
+
+    button {
+      border: $border-width solid transparent;
+      border-radius: 12px;
+      padding: 10px 22px;
+      color: $fg;
+    }
+
+    .confirm-yes {
+      background-color: rgba($danger, 0.16);
+
+      &:hover {
+        background-color: rgba($danger, 0.24);
+      }
+
+      &:focus,
+      &:focus-visible,
+      &:active {
+        background-color: rgba($danger, 0.3);
+        border-color: $danger;
+      }
+    }
+
+    .confirm-no {
+      background-color: rgba($accent, 0.1);
+
+      &:hover {
+        background-color: rgba($accent, 0.16);
+      }
+
+      &:focus,
+      &:focus-visible,
+      &:active {
+        background-color: rgba($accent, 0.2);
+        border-color: $accent;
+      }
+    }
+  }
+}
