@@ -8,6 +8,12 @@ import Notification from "./Notification";
 
 const { TOP, RIGHT } = Astal.WindowAnchor;
 
+// Match the width a notification has in the center: the panel is 920px wide
+// (NotificationCenter.tsx WIDTH) with 16px padding each side, so the card spans
+// 888px. Pinning the toast stack to the same width keeps toasts from growing to
+// their content and reading wider than the same notification in the center.
+const WIDTH = 920 - 32;
+
 // Each toast slides down + fades in on arrival and slides up + fades out on
 // leave (popupStore plays the leave via the registered `revealed` setter before
 // removing the row). The growing/shrinking revealer smoothly pushes the rest of
@@ -50,7 +56,12 @@ export default function Popup(monitor: Gdk.Monitor) {
       marginTop={8}
       marginRight={8}
     >
-      <box class="popups" orientation={Gtk.Orientation.VERTICAL} spacing={8}>
+      <box
+        class="popups"
+        widthRequest={WIDTH}
+        orientation={Gtk.Orientation.VERTICAL}
+        spacing={8}
+      >
         <For each={popups}>{(n) => <Toast n={n} />}</For>
       </box>
     </window>
