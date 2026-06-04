@@ -1,0 +1,283 @@
+// Palette mirrors the pickers' shared theme (packages/pickers/lib/_theme.scss)
+// so the notification center and toasts read like the rest of the shell.
+$bg: #1a1726; // purple-tinted near-black
+$fg: #f2eefb;
+$accent: #bb9af7; // lavender purple
+$danger: #f7768e; // red (critical)
+$dim: rgba(#f2eefb, 0.5);
+
+// 4px frame matches the hyprland window border_size and color matches
+// `col.active_border`, like the pickers.
+$outline: #7c5cba; // hyprland general:col.active_border
+$border-width: 4px;
+$border-color: $outline;
+$radius: 16px;
+
+* {
+  font-family: "@FONT@", sans-serif;
+  font-weight: 300;
+  color: $fg;
+}
+
+// Transparent layer-shell surfaces — the chrome lives on the cards/panel.
+window#notification-center,
+window#notification-center-popups {
+  background: transparent;
+}
+
+@mixin card {
+  // Same alpha as the bar's pills (.bar-section) for a consistent frosted-glass
+  // blur. Stays above the notification-center layerrule's ignore_alpha 0.6, so
+  // the cards/panel still blur.
+  background-color: rgba($bg, 0.72);
+  border: $border-width solid $border-color;
+  border-radius: $radius;
+}
+
+// Flat interactive element with an accent tint on hover and a purple border on
+// focus — the pickers' `cell` pattern.
+@mixin cell($r: 10px) {
+  background: transparent;
+  border: $border-width solid transparent;
+  border-radius: $r;
+  outline: none;
+
+  &:hover {
+    background-color: rgba($accent, 0.12);
+  }
+
+  &:focus,
+  &:focus-visible,
+  &:active {
+    background-color: rgba($accent, 0.18);
+    border-color: $accent;
+  }
+}
+
+// ─── A single notification (toasts + center list) ──────────────────────────
+.notification {
+  @include card;
+  min-width: 380px;
+  padding: 12px 14px;
+
+  // Focused/selected row in the center (popups aren't focusable).
+  &:focus,
+  &:focus-within {
+    border-color: $accent;
+  }
+
+  &.critical {
+    border-color: rgba($danger, 0.7);
+  }
+
+  .content {
+    .title-row .time {
+      color: $dim;
+      margin-left: 8px;
+    }
+
+    .image,
+    .icon-image {
+      border-radius: 10px;
+      margin-right: 10px;
+      min-width: 56px;
+      min-height: 56px;
+      background-size: cover;
+      background-position: center;
+    }
+    .summary {
+      font-weight: 600;
+    }
+    .body {
+      color: rgba($fg, 0.8);
+    }
+  }
+
+  .actions {
+    margin-top: 10px;
+
+    button {
+      @include cell(10px);
+      background-color: rgba($accent, 0.1);
+      padding: 6px 10px;
+      margin: 0 3px;
+
+      &:first-child {
+        margin-left: 0;
+      }
+      &:last-child {
+        margin-right: 0;
+      }
+    }
+  }
+}
+
+// ─── Toast stack ───────────────────────────────────────────────────────────
+.popups .notification {
+  box-shadow: 2px 4px 14px 0 rgba(0, 0, 0, 0.45);
+}
+
+// Fade in/out, paired with the SLIDE_DOWN revealer in Popups.tsx. Each toast's
+// `revealed` state toggles `.shown`. CSS reads the transition from the target
+// state, so `.shown` controls the fade-IN and the base rule controls the fade-OUT
+// — letting the fade-in be slower while the fade-out stays at the slide's 450ms.
+.popups .toast-fade {
+  opacity: 0;
+  transition: opacity 450ms ease; // fade OUT
+}
+.popups .toast-fade.shown {
+  opacity: 1;
+  transition: opacity 750ms ease; // fade IN (slower)
+}
+
+// ─── Floating control center ───────────────────────────────────────────────
+.center-panel {
+  @include card;
+  // No bottom padding so the scroll container reaches the window's bottom edge;
+  // the last row tucks flush under the border instead of leaving a gap.
+  padding: 16px 16px 0;
+  min-width: 440px;
+
+  .dnd-row {
+    @include card;
+    background-color: transparent;
+    border-color: rgba($accent, 0.18);
+    border-width: $border-width;
+    padding: 10px 14px;
+  }
+
+  // Standalone button outside the DND card — same border treatment so the two
+  // read as a matching pair, with the pickers' accent hover/focus.
+  .clear-all {
+    @include card;
+    background-color: transparent;
+    border-color: rgba($accent, 0.18);
+    border-width: $border-width;
+    padding: 10px 16px;
+    outline: none;
+    // Kill Adwaita's gray button gradient/shadow so the card bg shows through.
+    background-image: none;
+    box-shadow: none;
+
+    // `*` paints every label $fg, so colour the inner label directly.
+    label {
+      color: $accent;
+    }
+    &:hover {
+      background-color: rgba($accent, 0.12);
+    }
+    &:focus,
+    &:focus-visible,
+    &:active {
+      border-color: $accent;
+      background-color: rgba($accent, 0.18);
+    }
+  }
+
+  .empty {
+    color: $dim;
+    margin: 24px 0;
+  }
+
+  // Notifications in the panel list blend into the panel card — only the toasts
+  // keep the frosted-glass background.
+  .notification {
+    background-color: transparent;
+  }
+}
+
+// DND switch — purple track, accent knob (matches the bluetooth picker toggle).
+switch {
+  border: $border-width solid transparent;
+  border-radius: 7px;
+  outline: none;
+  background-image: none;
+  background-color: rgba($accent, 0.25);
+
+  &:focus,
+  &:focus-visible {
+    border-color: $accent;
+  }
+
+  &:checked {
+    background-color: rgba($accent, 0.55);
+  }
+
+  slider {
+    background-image: none;
+    background-color: $accent;
+    border-radius: 5px;
+    border: none;
+    box-shadow: none;
+  }
+}
+
+// ─── MPRIS media widget ────────────────────────────────────────────────────
+.mpris .mpris-player {
+  @include card;
+  background-color: transparent;
+  border-color: rgba($accent, 0.18);
+  border-width: $border-width;
+  padding: 12px;
+  // Reserve the art height (ART_H in Mpris.tsx) so the card keeps a constant
+  // height whether or not art is present — no jitter on track change.
+  min-height: 120px;
+
+  .mpris-art {
+    border-radius: 10px;
+    margin-left: 12px;
+  }
+  .mpris-title {
+    font-weight: 600;
+  }
+  .mpris-artist {
+    color: $dim;
+  }
+  .mpris-controls {
+    margin-top: 6px;
+
+    button {
+      @include cell(100px);
+      min-width: 34px;
+      min-height: 34px;
+
+      image {
+        color: $accent;
+      }
+    }
+  }
+}
+
+// ─── Weather (today + tomorrow) ─────────────────────────────────────────────
+.weather {
+  .weather-day {
+    @include card;
+    background-color: transparent;
+    border-color: rgba($accent, 0.18);
+    border-width: $border-width;
+    padding: 10px 12px;
+
+    image {
+      color: $accent;
+    }
+  }
+  .weather-label {
+    color: $accent;
+    font-weight: 600;
+  }
+  .weather-hi {
+    font-weight: 600;
+    font-size: 1.1em;
+  }
+  .weather-lo {
+    color: $dim;
+  }
+  .weather-desc {
+    color: $dim;
+    font-size: 0.9em;
+  }
+  .weather-rain {
+    font-size: 1.1em;
+    font-weight: 600;
+  }
+}

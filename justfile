@@ -98,3 +98,35 @@ check-all:
     #!/usr/bin/env nu
     (NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1
       nix flake check --impure --all-systems)
+
+# Re-establish the systemd notification-center daemon as sole owner of the
+# org.freedesktop.Notifications bus. AstalNotifd proxies (e.g. the bar's
+# `notifctl -swb`) queue for the name, so a stray can squat it and make
+# `systemctl restart` a no-op. Stops the bar, kills every notification-center
+# package gjs process (single PIDs — never a process group, which would take
+# Hyprland down with it), starts the service, then brings the bar back.
+notifd-reset:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    echo "stopping bar + notification-center..."
+    systemctl --user stop bar notification-center 2>/dev/null || true
+    sleep 1.5
+    echo "killing notification-center-package gjs processes (single PIDs)..."
+    for g in $(pgrep -x gjs 2>/dev/null) $(pgrep -x gjs-console 2>/dev/null); do
+      pp=$(awk '/^PPid:/{print $2}' "/proc/$g/status" 2>/dev/null || true)
+      pcmd=$(tr '\0' ' ' < "/proc/$pp/cmdline" 2>/dev/null || true)
+      case "$pcmd" in
+        *-notification-center/bin/*) echo "  kill $g"; kill "$g" 2>/dev/null || true ;;
+      esac
+    done
+    sleep 1
+    echo "starting the systemd daemon..."
+    systemctl --user reset-failed notification-center 2>/dev/null || true
+    systemctl --user start notification-center
+    sleep 2
+    echo "notification-center: $(systemctl --user is-active notification-center)"
+    echo "restarting bar..."
+    systemctl --user reset-failed bar 2>/dev/null || true
+    systemctl --user start bar
+    echo "done — daemon owner:"
+    busctl --user status org.freedesktop.Notifications 2>/dev/null | grep -E '^(PID|Comm)=' || true
