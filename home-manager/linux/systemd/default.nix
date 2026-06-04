@@ -70,7 +70,10 @@ let
   };
 in
 {
-  imports = [ ./tailscale.nix ];
+  imports = [
+    ./mgrep-watch.nix
+    ./tailscale.nix
+  ];
   config = {
     systemd.user = {
       # Nicely reload system units when changing configs

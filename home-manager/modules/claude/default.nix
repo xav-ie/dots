@@ -216,6 +216,21 @@ in
             _override_plugin_mcp
           '';
 
+      # The mgrep plugin ships a SessionStart hook that runs `mgrep watch` in
+      # every session's cwd — a recursive inotify watcher that exhausts
+      # fs.inotify.max_user_watches across large repos and live-uploads
+      # transient temp files. We keep the plugin (for its search skill) but
+      # strip the hooks; indexing is handled by the mgrep-sync timer instead.
+      home.activation.claudeMgrepDisableWatch =
+        lib.hm.dag.entryAfter [ "claudePluginSync" ] # sh
+          ''
+            for hookfile in "${config.home.homeDirectory}"/.claude/plugins/cache/Mixedbread-Grep/mgrep/*/hooks/hook.json; do
+              [ -f "$hookfile" ] || continue
+              chmod u+w "$hookfile" 2>/dev/null || true
+              echo '{ "hooks": {} }' > "$hookfile"
+            done
+          '';
+
       home.packages = [
         claude-package
         claude-native
@@ -254,6 +269,12 @@ in
             };
           };
         };
+        # Global mgrep defaults. Per-repo .mgreprc.yaml overrides these.
+        # Raised from the 1000-file default so the dedicated worktrees
+        # (~1.4k tracked files) are not silently truncated on sync.
+        ".config/mgrep/config.yaml".text = ''
+          maxFileCount: 5000
+        '';
         ".claude/agents".source =
           config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/agents";
         ".claude/CLAUDE.md".source =
