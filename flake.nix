@@ -35,7 +35,6 @@
     virtual-headset.url = "github:xav-ie/virtual-headset";
     systems.url = "github:xav-ie/dots-systems";
     treefmt-nix.url = "github:numtide/treefmt-nix";
-    waybar.url = "github:Alexays/waybar";
     zjstatus.url = "github:dj95/zjstatus";
     # Swift is broken on Linux with GCC 14 (nixpkgs#462451), pin to last working version
     nixpkgs-swift.url = "github:nixos/nixpkgs/3c3988cce18bf31db263dd0374e34cb65e696def";
@@ -151,8 +150,6 @@
     virtual-headset.inputs.nuenv.follows = "nuenv";
     virtual-headset.inputs.systems.follows = "systems";
     virtual-headset.inputs.treefmt-nix.follows = "treefmt-nix";
-    waybar.inputs.flake-compat.follows = "flake-compat";
-    waybar.inputs.nixpkgs.follows = "nixpkgs";
     zjstatus.inputs.crane.follows = "crane";
     zjstatus.inputs.flake-utils.follows = "flake-utils";
     zjstatus.inputs.nixpkgs.follows = "nixpkgs";

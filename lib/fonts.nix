@@ -102,10 +102,6 @@ in
         icon-font = "${fontName "mono"}:Normal:24.0";
         label-font = "${fontName "mono"}:Normal:14.0";
       };
-      waybar = {
-        font-family = fontName "mono";
-        font-size = 18;
-      };
     };
   };
 }

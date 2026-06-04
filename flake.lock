@@ -1755,7 +1755,6 @@
         "systems": "systems_2",
         "treefmt-nix": "treefmt-nix",
         "virtual-headset": "virtual-headset",
-        "waybar": "waybar",
         "zerobrew-src": "zerobrew-src",
         "zjstatus": "zjstatus"
       }
@@ -2002,29 +2001,6 @@
       "original": {
         "owner": "xav-ie",
         "repo": "virtual-headset",
-        "type": "github"
-      }
-    },
-    "waybar": {
-      "inputs": {
-        "flake-compat": [
-          "flake-compat"
-        ],
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1766959964,
-        "narHash": "sha256-4wJqxX8VggW+nrXDvES0iHvLsZkyNZ6W6Z03sJXasXw=",
-        "owner": "Alexays",
-        "repo": "waybar",
-        "rev": "06484547d182057159c4bd58d14871c0b7a7f3dc",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Alexays",
-        "repo": "waybar",
         "type": "github"
       }
     },

@@ -1,0 +1,217 @@
+// Purple-tinted dark theme, matched to the power-, emoji-, clipboard- and
+// bluetooth-pickers. The font token is substituted at build time with the
+// system `sans` font from lib/fonts.nix (see default.nix).
+$bg: #1a1726; // purple-tinted near-black
+$fg: #f2eefb;
+$accent: #bb9af7; // lavender purple
+$outline: #7c5cba; // hyprland general:col.active_border
+$danger: #f7768e; // red (muted mic / disconnected)
+$ok: #9ece6a; // green (connected)
+$dim: rgba(#f2eefb, 0.5);
+
+// Font on the layer-shell window root (matched by the `name` prop -> #id) so it
+// inherits to every child. Transparency goes on the bare `window` node — the
+// same split the pickers use; folding it into `window#bar` leaves the GTK
+// window background opaque, which paints the bar's floating margins solid.
+window#bar {
+  font-family: "@FONT@", sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+window {
+  background: transparent;
+}
+
+// The layer surface spans the full width (so its exclusive zone reserves the
+// right amount of space) and is itself transparent — only the two side
+// sections below carry a background, leaving the middle see-through.
+//
+// No bottom margin: hyprland's gaps_out already spaces tiled windows below the
+// bar's exclusive zone, so a bottom margin here would stack into a double gap.
+// Top/left/right get the float inset.
+.bar {
+  margin: 6px 8px 0;
+  color: $fg;
+  min-height: 28px;
+}
+
+// Left/right pills. The translucent background lets hyprland's blur layerrule
+// (namespace "bar") show through — keep the alpha low enough to read as frosted
+// glass rather than a solid fill. The transparent gap between them is not
+// blurred (it falls below the layerrule's ignore_alpha threshold).
+.bar-section {
+  background-color: rgba($bg, 0.72);
+  border: 4px solid $outline;
+  border-radius: 12px;
+  min-height: 28px;
+}
+
+// Tighter padding on the outer edges so content hugs the screen sides, more on
+// the inner edges (toward the transparent gap) to clear the rounded corner.
+.bar-left {
+  padding: 0 6px 0 4px;
+}
+
+.bar-right {
+  padding: 0 4px 0 6px;
+}
+
+// Each module is a flat, hover-highlighting cell. The button carries the
+// horizontal padding and the rounded hover fill; the wrapper box only adds the
+// vertical margin and a small gap to its neighbours. Keeping the padding off the
+// box stops it doubling with the button's own, so icon (button) modules and
+// text (label) modules sit on the same rhythm.
+.module {
+  background: transparent;
+  border: none;
+  margin: 3px 1px;
+  color: $fg;
+
+  image {
+    color: $accent;
+  }
+}
+
+.module button {
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  padding: 2px 6px;
+  color: $fg;
+
+  image {
+    color: $accent;
+  }
+
+  &:hover {
+    background-color: rgba($accent, 0.12);
+  }
+
+  &:active {
+    background-color: rgba($accent, 0.2);
+  }
+}
+
+// Power: drop the wrapper box's padding so it isn't doubled with the button's
+// own, then size the button to a workspace pill so it reads as one more cell.
+.power {
+  padding: 0;
+}
+
+.power button {
+  min-width: 28px;
+  padding: 2px 6px;
+  margin-right: 5px;
+}
+
+// Workspaces: a row of pills; the focused one is filled with the accent. The
+// pills carry their own padding, so zero the wrapper box's (otherwise it adds a
+// stray gap after the last pill) and tuck the cluster against the power button.
+.workspaces {
+  padding: 0;
+  margin-left: 0;
+}
+
+.workspaces button {
+  min-width: 22px;
+  padding: 2px 6px;
+
+  &.active {
+    background-color: rgba($accent, 0.22);
+    color: $accent;
+    font-weight: 700;
+  }
+}
+
+// Label-only module: no button to carry the padding, so set it on the box.
+.clock {
+  padding: 2px 4px;
+  font-weight: 300;
+  letter-spacing: 0.3px;
+}
+
+// Match the clock's light weight. Target the label inside the button directly:
+// the button breaks weight inheritance, so a rule on `.volume` alone is
+// overridden by the theme's button label weight.
+.volume button label {
+  font-weight: 300;
+}
+
+.pomodoro {
+  color: $accent;
+}
+
+// Status icons that flip color with state.
+.network.disconnected image,
+.bluetooth.off image {
+  color: $dim;
+}
+
+.bluetooth.connected image {
+  color: $ok;
+}
+
+.volume.muted image {
+  color: $danger;
+}
+
+// Virtual-headset mic: red when live (unmuted), purple when muted. Selectors
+// include `button` so they outrank the base `.module button image` rule (the
+// icon lives inside a button); `.muted` then adds a class to win over unmuted.
+.virtual-headset button image {
+  color: $danger;
+}
+
+.virtual-headset.muted button image {
+  color: $accent;
+}
+
+// Voice dictation (hyprwhspr-rs): dim mic when idle, red while recording,
+// accent while transcribing, red when the daemon errors. Selectors include
+// `button` to outrank the base `.module button image` rule.
+.dictation button image {
+  color: $dim;
+}
+
+.dictation.active button image,
+.dictation.error button image {
+  color: $danger;
+}
+
+.dictation.processing button image {
+  color: $accent;
+}
+
+// Mic visualizer: a row of thin bars whose height is driven inline from the
+// cava levels (see CavaMic.tsx). The container reserves a fixed footprint so
+// the bar layout doesn't jiggle as levels move.
+.cava {
+  margin: 0 4px 4px;
+
+  .cava-col {
+    margin: 0 1px;
+  }
+
+  .cava-bar {
+    background-color: $accent;
+    border-radius: 2px;
+    min-width: 3px;
+  }
+}
+
+// System tray menu buttons sit flush in the bar.
+.tray button {
+  padding: 2px 4px;
+}
+
+// Unread-notification badge, overlaid on the bell's top-right corner.
+.notif-dot {
+  background-color: $danger;
+  border: 1px solid rgba($bg, 0.9);
+  border-radius: 9999px;
+  min-width: 7px;
+  min-height: 7px;
+  margin-top: -1px;
+  margin-right: -2px;
+}
