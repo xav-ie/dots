@@ -1,0 +1,89 @@
+// Shared picker theme — the one place to restyle every picker. The @FONT@ token
+// is substituted at build time with the system `sans` font from lib/fonts.nix
+// (see ../default.nix). Each picker's style.scss pulls this in with
+// `@use "../lib/theme" as *;` and adds only its own specifics.
+$bg: #1a1726; // purple-tinted near-black
+$fg: #f2eefb;
+$accent: #bb9af7; // lavender purple
+$danger: #f7768e; // red (destructive confirm / disconnected)
+$ok: #9ece6a; // green (connected)
+$dim: rgba(#f2eefb, 0.5);
+
+// Panel frame. 4px matches the hyprland window `border_size` and the color
+// matches `col.active_border`, so a floating picker reads like a normal focused
+// tiled window. Change it here and every picker follows.
+$outline: #7c5cba; // hyprland general:col.active_border
+$border-width: 4px;
+$border-color: $outline;
+
+$font: "@FONT@", sans-serif;
+
+// Every picker is a transparent layer surface holding a single centered .panel.
+window {
+  background: transparent;
+}
+
+.panel {
+  border: $border-width solid $border-color;
+  color: $fg;
+}
+
+// Section header title (Bluetooth, Clipboard …).
+.header .title {
+  font-size: 28px;
+  font-weight: 700;
+  color: $accent;
+}
+
+// Search field: tinted fill, purple border on focus, stock focus ring off.
+// :focus-within is the reliable selector — GTK4 puts focus on the entry's inner
+// text node, so :focus/:focus-visible can miss the programmatic grab at launch.
+entry {
+  background-color: rgba($accent, 0.1);
+  border: $border-width solid transparent;
+  border-radius: 10px;
+  padding: 8px 12px;
+  color: $fg;
+  outline: none;
+
+  image {
+    color: $accent;
+  }
+
+  &:focus,
+  &:focus-visible,
+  &:focus-within {
+    border-color: $accent;
+    background-color: rgba($accent, 0.16);
+  }
+}
+
+separator {
+  background-color: rgba($accent, 0.18);
+  min-height: 1px;
+}
+
+.dim {
+  color: $dim;
+  padding: 14px;
+}
+
+// Interactive tile (rows, action buttons, emoji cells): flat with an accent
+// tint on hover and a purple border on focus. $radius varies per call site.
+@mixin cell($radius: 10px) {
+  background: transparent;
+  border: $border-width solid transparent;
+  border-radius: $radius;
+  outline: none;
+
+  &:hover {
+    background-color: rgba($accent, 0.12);
+  }
+
+  &:focus,
+  &:focus-visible,
+  &:active {
+    background-color: rgba($accent, 0.18);
+    border-color: $accent;
+  }
+}
