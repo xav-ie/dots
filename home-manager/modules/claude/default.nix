@@ -251,6 +251,8 @@ in
           config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/notify.nu";
         ".claude/notify-if-question.nu".source =
           config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/notify-if-question.nu";
+        ".claude/record-pending-tool.nu".source =
+          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/record-pending-tool.nu";
         ".claude/lib-transcript.nu".source =
           config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/home-manager/modules/claude/lib-transcript.nu";
         ".claude/statusline.nu".source =
