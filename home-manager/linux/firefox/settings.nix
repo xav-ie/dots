@@ -76,6 +76,8 @@
   "gfx.webrender.compositor" = false;
   "gfx.webrender.compositor.force-enabled" = false;
 
+  # Scale the entire Firefox UI (chrome + content) 1.5x. Stored as a string pref.
+  "layout.css.devPixelsPerPx" = "1.5";
   "layout.css.osx-font-smoothing.enabled" = true;
   "layout.css.prefers-color-scheme.content-override" = 0;
   "layout.spellcheckDefault" = 0;
