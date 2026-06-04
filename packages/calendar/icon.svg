@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Minimal calendar glyph: a transparent-center rounded square outline whose
+       top edge is a thick solid header bar. A single accent color (#eb5757) is
+       the only paint, so the build's per-accent sed substitution (default.nix)
+       recolors the whole glyph into one dots-calendar-<name> variant per palette
+       color with a single find-replace. -->
+
+  <!-- square outline, transparent center -->
+  <rect x="80" y="120" width="352" height="312" rx="48" ry="48"
+        fill="none" stroke="#eb5757" stroke-width="34"/>
+
+  <!-- thick header bar, flush with the top edge (rounded top, square bottom) -->
+  <path d="M80 212 L80 152 A48 48 0 0 1 128 104 L384 104 A48 48 0 0 1 432 152 L432 212 Z"
+        fill="#eb5757"/>
+</svg>

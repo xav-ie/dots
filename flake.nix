@@ -228,6 +228,40 @@
             '';
           };
 
+          # Typecheck environment for the calendar app (ags TSX → tsgo). Carries
+          # the GTK4/Soup/astal GI typelibs — the gobject-introspection setup hook
+          # assembles GI_TYPELIB_PATH — plus node (one-time @girs/gnim generation
+          # via @ts-for-gir), the ags CLI, and tsgo. Driven by `just tc-setup` /
+          # `just tc`. Linux-only (astal); an empty shell on darwin so eval works.
+          devShells.calendar-types =
+            if lib.hasSuffix "-linux" system then
+              let
+                ags = inputs.ags.packages.${system};
+              in
+              pkgs.mkShell {
+                nativeBuildInputs = [ pkgs.gobject-introspection ];
+                buildInputs = [
+                  pkgs.glib
+                  pkgs.gtk4
+                  pkgs.graphene
+                  pkgs.gdk-pixbuf
+                  pkgs.pango
+                  pkgs.harfbuzz
+                  pkgs.cairo
+                  pkgs.libsoup_3
+                  pkgs.at-spi2-core
+                  ags.astal4
+                  ags.io
+                ];
+                packages = [
+                  pkgs.nodejs
+                  pkgs.typescript-go
+                  ags.default
+                ];
+              }
+            else
+              pkgs.mkShell { };
+
           packages = import ./packages {
             # ags only builds on linux; null on darwin, where it is unused.
             agsPackages = inputs.ags.packages.${system} or null;

@@ -1,0 +1,2130 @@
+// Notion Calendar dark theme. @FONT@ is substituted at build time with the
+// system `sans` font (see default.nix). Hour-line geometry must match
+// HOUR_HEIGHT in datetime.ts (48px).
+
+@use "sass:color";
+@use "sass:string";
+
+$hour: 64px; // must match HOUR_HEIGHT in datetime.ts
+$bg: #1f1f1e; // main grid
+$sidebar: #191918; // side panels, a touch darker
+$panel: #262625; // raised chips / inputs
+$fg: #e9e7e3;
+$muted: rgba(#e9e7e3, 0.42);
+$faint: rgba(#e9e7e3, 0.62);
+$border: rgba(#ffffff, 0.07);
+$line: rgba(#ffffff, 0.05);
+// The accent ("today", focus rings, selected states) is a runtime-overridable
+// GTK named color: theme.ts redefines @accent at a higher CSS priority when the
+// user picks one in the sidebar footer. The default lives here; derived shades
+// use GTK's own alpha()/mix() so they track a live override. $accent and the
+// helpers emit the @accent syntax via interpolation — a bare @accent at a value
+// position isn't valid SCSS.
+$accent-default: #eb5757; // coral "today"
+@define-color accent #{$accent-default};
+$accent: string.unquote("@accent");
+@function accent-alpha($a) {
+  @return string.unquote("alpha(@accent, #{$a})");
+}
+@function accent-mix($base, $p) {
+  @return string.unquote("mix(#{$base}, @accent, #{$p})");
+}
+
+// Event fill vibrance: how much of the calendar color shows over the dark grid
+// background (higher = more saturated/colorful). Tune to taste.
+$ev-fill: 62%;
+$ev-fill-hover: 75%;
+$allday-fill: 68%;
+$allday-fill-hover: 80%;
+
+// The $colors map (name → bold hex) is GENERATED from palette.ts at build time
+// (default.nix postPatch) so the 24-color palette is defined exactly once.
+// @COLORS@
+
+* {
+  font-family: "@FONT@", sans-serif;
+  font-size: 13px;
+}
+
+// Dates, times and numbers render in monospace for tidy alignment.
+.hour-label,
+.ev-time,
+.dh-date,
+.mini-day,
+.mini-day label,
+.now-pill,
+.result-time,
+.time-val,
+.time-edit,
+.time-row label,
+.m-time,
+.m-date {
+  font-family: "@MONO@", monospace;
+}
+
+window {
+  background: $bg;
+  color: $fg;
+}
+
+// Shared look for the event-editor dropdown rows (calendar / conferencing):
+// same padding / radius / position as the .suggest-field inputs so they line up
+// with the Location / Timezone / participant fields.
+@mixin dropdown-row {
+  padding: 9px 11px;
+  border-radius: 7px;
+  // Match the .suggest-field height (its GtkText content is taller than a label).
+  min-height: 20px;
+
+  &:hover {
+    background: rgba(#ffffff, 0.07);
+  }
+
+  // Ring the styled menubutton itself (its inner button is inset by the padding,
+  // so the inner ring wouldn't follow this rounded shape).
+  &:focus-within {
+    outline: 2px solid $accent;
+    outline-offset: 2px;
+  }
+}
+
+// Pink focus rings: plain buttons, every menubutton wrapper (its inner button
+// is inset, so we ring the wrapper and suppress the inner ring below), and the
+// description box.
+button:focus-visible,
+menubutton:focus-within,
+.desc-scroll:focus-within {
+  outline: 2px solid $accent;
+  outline-offset: 2px;
+}
+
+// Only the menubutton's own trigger button (direct child) — NOT the option
+// buttons inside its popover, which still need a focus ring for arrow-key nav.
+menubutton > button:focus-visible {
+  outline: none;
+}
+
+button {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: $fg;
+  padding: 0;
+  min-height: 0;
+}
+
+// Toggle switches: lighter track + borderless, light-gray knob.
+switch {
+  background: rgba(#ffffff, 0.16);
+  border: none;
+  box-shadow: none;
+  border-radius: 7px;
+  min-width: 40px;
+  min-height: 22px;
+
+  &:checked {
+    background: $accent;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $accent;
+    outline-offset: 2px;
+  }
+
+  > slider {
+    background: #d8d6d1;
+    border: none;
+    box-shadow: none;
+    outline: none;
+    border-radius: 5px;
+    min-width: 16px;
+    min-height: 16px;
+    margin: 2px;
+  }
+}
+
+.muted {
+  color: $muted;
+}
+
+.icon-btn {
+  padding: 4px;
+  border-radius: 6px;
+  color: $faint;
+
+  &:hover {
+    background: rgba(#ffffff, 0.07);
+  }
+
+  &.danger:hover {
+    background: rgba(#f8514950, 0.18);
+    color: #f85149;
+  }
+}
+
+// ── Sidebars ───────────────────────────────────────────────────────────────
+.sidebar {
+  background: $sidebar;
+
+  &.left {
+    min-width: 250px;
+    border-right: 1px solid $border;
+  }
+
+  &.right {
+    min-width: 256px;
+    border-left: 1px solid $border;
+  }
+}
+
+.side-top {
+  padding: 9px 12px;
+  min-height: 38px;
+}
+
+.side-foot {
+  padding: 6px 12px;
+  border-top: 1px solid $border;
+}
+
+.zoom-ctl {
+  // Group the −/%/+ controls together at the foot's right edge.
+  .zoom-level {
+    min-width: 42px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    color: $faint;
+    font-variant-numeric: tabular-nums;
+
+    // GtkButton centers its single child, so the percentage sits centered in the
+    // fixed-width slot without margins (GTK CSS has no `auto` margin).
+    &:hover {
+      background: rgba(#ffffff, 0.07);
+    }
+  }
+}
+
+// ── Mini month ───────────────────────────────────────────────────────────────
+.mini-month {
+  padding: 4px 12px 10px 12px;
+}
+
+.mini-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.mini-row {
+  min-height: 24px;
+  border-radius: 7px;
+}
+
+.mini-dow {
+  color: $muted;
+  font-size: 11px;
+}
+
+.mini-day {
+  font-size: 11px;
+  color: $fg;
+  border-radius: 7px;
+  min-width: 22px;
+  min-height: 22px;
+  padding: 0;
+
+  &:hover {
+    background: rgba(#ffffff, 0.08);
+  }
+
+  &:focus-visible {
+    outline-offset: -1px; // inset so the ring doesn't overlap neighbors
+  }
+
+  &.dim label {
+    color: rgba(#e9e7e3, 0.25);
+  }
+
+  // Current-period band (Day = 1 cell, Week = the week row, Month = the month).
+  // Square in the middle, rounded only at the band's ends within each row.
+  &.period {
+    background: accent-alpha(0.2);
+    border-radius: 0;
+  }
+
+  &.period.p-start {
+    border-top-left-radius: 7px;
+    border-bottom-left-radius: 7px;
+  }
+
+  &.period.p-end {
+    border-top-right-radius: 7px;
+    border-bottom-right-radius: 7px;
+  }
+
+  &.today {
+    background: $accent;
+    // Stay a rounded pill even when it falls inside the period band (which sets
+    // border-radius: 0).
+    border-radius: 7px;
+
+    label {
+      color: #fff;
+      font-weight: 700;
+    }
+  }
+}
+
+// Date-picker mini-calendar (scoped so the sidebar mini-month keeps its look):
+// the selected day is bold/solid red, today and hover are a light red wash.
+.date-cal .mini-day {
+  &:hover {
+    background: accent-alpha(0.16);
+  }
+
+  &.today {
+    background: accent-alpha(0.18);
+
+    label {
+      color: $accent;
+      font-weight: 700;
+    }
+  }
+
+  // After .today so a day that is both today and selected reads as selected.
+  &.sel {
+    background: $accent;
+
+    label {
+      color: #fff;
+      font-weight: 700;
+    }
+  }
+}
+
+// ── Sidebar lists ────────────────────────────────────────────────────────────
+.section-head {
+  padding: 8px 14px 2px 14px;
+  color: $muted;
+}
+
+.section-title,
+.account {
+  color: $muted;
+  font-size: 12px;
+}
+
+// Clickable account header that collapses/expands its calendars.
+.account-head {
+  padding: 9px 14px 2px 12px;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+
+  &:hover .account,
+  &:hover .account-caret {
+    color: $faint;
+  }
+}
+
+.account-caret {
+  color: $muted;
+}
+
+.eye {
+  color: $faint;
+}
+
+.add-row,
+.cal-row {
+  padding: 6px 14px;
+  border-radius: 0;
+
+  &:hover {
+    background: rgba(#ffffff, 0.05);
+  }
+}
+
+.cal-row:focus-visible {
+  outline: 2px solid $accent;
+  outline-offset: -2px;
+}
+
+.add-row {
+  color: $faint;
+}
+
+// Eye toggle: appears on row hover/focus when visible, always shown (so you can
+// un-hide it) while the calendar is hidden.
+.eye-btn {
+  padding: 2px;
+  border-radius: 5px;
+  color: $faint;
+  opacity: 0;
+
+  &.always {
+    opacity: 1;
+    color: $muted;
+  }
+
+  &:hover {
+    background: rgba(#ffffff, 0.1);
+  }
+}
+
+.cal-row:hover .eye-btn,
+.cal-row:focus-within .eye-btn {
+  opacity: 1;
+}
+
+// Default-calendar star: hidden unless hovering the row, or always if default.
+.star-btn {
+  padding: 2px;
+  border-radius: 5px;
+  opacity: 0;
+
+  &:hover {
+    background: rgba(#ffffff, 0.1);
+  }
+
+  &.is-default {
+    opacity: 1;
+  }
+
+  .star {
+    color: $faint;
+  }
+
+  &.is-default .star {
+    color: #e3b341;
+  }
+}
+
+.cal-row:hover .star-btn,
+.cal-row:focus-within .star-btn {
+  opacity: 1;
+}
+
+.swatch {
+  min-width: 13px;
+  min-height: 13px;
+  border-radius: 4px;
+
+  &.rss {
+    border-radius: 3px;
+    opacity: 0.85;
+  }
+
+  &.off {
+    opacity: 0.35;
+  }
+
+  // The "reset to default" swatch in the accent picker — always the built-in
+  // coral, independent of the live @accent.
+  &.accent-default {
+    background: $accent-default;
+  }
+}
+
+.cal-name {
+  font-size: 13px;
+
+  &.muted {
+    color: $muted;
+  }
+}
+
+// The calendar swatch is a color-picker menubutton; strip the button chrome so
+// it reads as just the colored dot (with a faint hover target).
+.swatch-pick {
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+
+  > button {
+    min-width: 0;
+    min-height: 0;
+    padding: 2px;
+    background: none;
+    border: none;
+    box-shadow: none;
+    border-radius: 4px;
+
+    &:hover {
+      background: rgba(#ffffff, 0.1);
+    }
+  }
+}
+
+// Accent-color picker in the sidebar footer: reuses .swatch-pick's chrome
+// stripping; its dot tracks the live @accent so it doubles as a current-color
+// indicator. The popover reuses .cal-pop / .color-row / .color-dot.
+.accent-pick .accent-cur {
+  min-width: 15px;
+  min-height: 15px;
+  border-radius: 999px;
+  background: $accent;
+}
+
+// Subscribed-feed (iCal/RSS) marker next to the calendar name.
+.cal-rss {
+  color: $faint;
+}
+
+// ── Notifications (top-center error/info toasts) ─────────────────────────────
+.notif-area {
+  margin-top: 12px;
+}
+
+.notif {
+  min-width: 320px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: $sidebar;
+  border: 1px solid $border;
+  box-shadow: 0 8px 28px rgba(#000000, 0.5);
+}
+
+.notif-error {
+  border-color: accent-alpha(0.55);
+  background: accent-mix($sidebar, 0.16);
+
+  > image {
+    color: $accent;
+  }
+}
+
+.notif-msg {
+  font-size: 12px;
+  color: $fg;
+}
+
+.notif-x {
+  min-width: 0;
+  min-height: 0;
+  padding: 3px;
+  border-radius: 6px;
+  color: $faint;
+
+  &:hover {
+    background: rgba(#ffffff, 0.1);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $accent;
+    outline-offset: 1px;
+  }
+}
+
+// Shared search field (meet-with, participants, location) + suggestion popover.
+.meet-with {
+  padding: 0 12px;
+}
+
+.suggest-field {
+  background: $panel;
+  border: none;
+  border-radius: 7px;
+  min-height: 0;
+  padding: 7px 11px;
+  color: $fg;
+
+  &:focus-within {
+    outline: 2px solid $accent;
+    outline-offset: 2px;
+  }
+}
+
+.suggest-scroll,
+.people-list {
+  min-width: 280px;
+}
+
+.suggest-row {
+  padding: 7px 10px;
+  border-radius: 7px;
+  min-height: 32px; // fixed so the popover height is predictable (ROW_H = 46)
+
+  &:hover,
+  &.sel {
+    background: rgba(#ffffff, 0.08);
+  }
+}
+
+.sg-primary {
+  font-size: 13px;
+}
+
+.sg-secondary {
+  font-size: 11px;
+  color: $muted;
+}
+
+.sg-recent {
+  color: $muted;
+}
+
+// Small color dot marking which connected account a contact came from.
+.sg-account-dot {
+  min-width: 8px;
+  min-height: 8px;
+  border-radius: 9999px;
+
+  &.hidden {
+    background: transparent;
+    min-width: 0;
+  }
+}
+
+// ── Week pane ────────────────────────────────────────────────────────────────
+.week {
+  background: $bg;
+}
+
+.topbar {
+  // Same horizontal padding + height as the side-tops so the collapse/reveal
+  // buttons don't shift when a pane is toggled.
+  padding: 9px 12px;
+  min-height: 38px;
+  border-bottom: 1px solid $border;
+}
+
+.month-title {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.avatar {
+  min-width: 28px;
+  min-height: 28px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, #d98c6a, #b5654a);
+
+  &image {
+    background: none;
+    border-radius: 7px;
+  }
+}
+
+.pill-btn {
+  padding: 5px 11px;
+  border-radius: 7px;
+  background: $panel;
+
+  &:hover {
+    background: color.adjust($panel, $lightness: 6%);
+  }
+}
+
+.view-menu {
+  min-width: 120px;
+
+  button {
+    padding: 6px 10px;
+    border-radius: 6px;
+
+    &:hover {
+      background: rgba(#ffffff, 0.08);
+    }
+  }
+}
+
+// Header + all-day rows share the day-column width with the grid below.
+.header-row {
+  border-bottom: 1px solid $border;
+}
+
+.gutter {
+  border-right: 2px solid $border;
+  // No horizontal padding so the gutter width matches the grid's time-axis
+  // and the day headers line up with their columns.
+  padding: 2px 0;
+}
+
+.tz-head {
+  padding: 0;
+}
+
+.tz-label {
+  font-size: 10px;
+  padding-bottom: 2px;
+  // Don't let a label's intrinsic min-width grow the gutter past gutterW (which
+  // would push the day headers out of line with the grid columns).
+  min-width: 0;
+
+  // The default/primary timezone stands out: brighter and bold.
+  &.default {
+    color: $fg;
+    font-weight: 700;
+  }
+
+  // Non-default columns are dim, normal-weight menubuttons (chrome stripped).
+  &:not(.default) {
+    background: none;
+    box-shadow: none;
+    border-radius: 4px;
+    padding: 1px 2px;
+    min-width: 0;
+    color: $muted;
+    font-weight: 400;
+
+    label {
+      color: $muted;
+      font-weight: 400;
+      font-size: 10px; // match the default label (the * rule forces 13px)
+    }
+  }
+
+  &:not(.default):hover {
+    background: rgba(#ffffff, 0.09);
+
+    label {
+      color: $faint;
+    }
+  }
+}
+
+.add-tz {
+  padding: 1px 3px;
+  border-radius: 5px;
+  color: $faint;
+  background: none;
+  box-shadow: none;
+  min-height: 0;
+  min-width: 0;
+
+  // Match the collapse/expand toggle's muted icon (menubuttons render brighter
+  // by default).
+  image {
+    color: $faint;
+  }
+
+  &:hover {
+    background: rgba(#ffffff, 0.07);
+  }
+}
+
+.tz-pop > contents {
+  background: $sidebar;
+  border: 1px solid $border;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(#000000, 0.45);
+  padding: 4px;
+}
+
+.tz-menu {
+  min-width: 150px;
+}
+
+.tz-item {
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: none;
+  box-shadow: none;
+
+  &:hover {
+    background: rgba(#ffffff, 0.07);
+  }
+}
+
+.tz-add-scroll {
+  min-width: 240px;
+}
+
+.tz-search {
+  min-height: 0;
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: $panel;
+  border: 1px solid $border;
+  color: $fg;
+}
+
+.day-head {
+  padding: 7px 10px;
+  border-right: 1px solid $border;
+
+  &.today .dh-dow {
+    color: $accent;
+  }
+}
+
+.dh-dow {
+  color: $muted;
+  font-size: 12px;
+}
+
+.dh-date {
+  font-size: 15px;
+  font-weight: 600;
+  // Extra vertical room so the monospace digits aren't clipped at the top
+  // (Maple Mono NF's ink box is taller than its reported metrics).
+  padding: 2px 0;
+
+  &.pill {
+    background: $accent;
+    color: #fff;
+    border-radius: 6px;
+    padding: 2px 6px;
+  }
+}
+
+.allday-row {
+  min-height: 26px;
+  border-bottom: 1px solid $border;
+
+  // When expanded, keep room for two chip rows even on days with 0–1 all-day
+  // events (≈ two ~18px chips + inter-chip spacing + the cell's vertical padding).
+  &.expanded {
+    min-height: 46px;
+  }
+}
+
+// No horizontal padding or divider, so chips reach the column edges and a
+// multi-day span reads as one continuous bar across days (the header/grid lines
+// still imply the columns).
+.allday-cell {
+  padding: 2px 0;
+}
+
+.allday {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+// Multi-day span continuity: square the inner edges so adjacent days read as one
+// bar, and drop the left accent on continuation days (week chips + month bars).
+.allday.span-start,
+.m-span-start {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.allday.span-end,
+.m-span-end {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.allday.span-mid,
+.m-span-mid {
+  border-radius: 0;
+}
+
+.allday.span-mid,
+.allday.span-end {
+  border-left: none;
+}
+
+// Drop the inner horizontal padding on connecting edges so the bars butt flush:
+// first day open on the right, last day open on the left, middle days both.
+.allday.span-start {
+  padding-right: 0;
+}
+
+.allday.span-end {
+  padding-left: 0;
+}
+
+.allday.span-mid {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.allday-toggle {
+  padding: 4px 8px;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 5px;
+  color: $faint;
+
+  &:hover {
+    background: rgba(#ffffff, 0.07);
+  }
+}
+
+// "+" add-timezone button sits above the default timezone label in the header.
+.tz-head-top {
+  padding: 1px 2px 0 2px;
+}
+
+.allday-count {
+  font-size: 11px;
+  color: $muted;
+}
+
+// ── Time grid ────────────────────────────────────────────────────────────────
+.grid-scroll {
+  background: $bg;
+}
+
+.time-axis {
+  border-right: 2px solid $border;
+}
+
+// Faint divider between timezone columns, but NOT on the last column — there it
+// would stack with the time-axis's 2px border and make the grid divider look
+// thicker than the all-day / tz-name gutters.
+.tz-col {
+  border-right: 1px solid $line;
+
+  &.last {
+    border-right: none;
+  }
+}
+
+// Header/all-day per-timezone cells contribute the SAME width as a grid tz-col
+// (column width + the 1px inter-column gap, none on the last) via margin, so the
+// gutters always match the time-axis exactly regardless of timezone count.
+.tz-cell {
+  margin-right: 1px;
+
+  &.last {
+    margin-right: 0;
+  }
+}
+
+.hour-label {
+  color: $muted;
+  font-size: 10px;
+}
+
+.day-col {
+  border-right: 1px solid $border;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent ($hour - 1),
+    $line ($hour - 1),
+    $line $hour
+  );
+}
+
+.now-line {
+  background: $accent;
+  border-radius: 1px;
+}
+
+.now-pill {
+  background: $accent;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+// ── Events ───────────────────────────────────────────────────────────────────
+.event {
+  border-radius: 5px;
+  padding: 2px 6px;
+  border-left: 3px solid transparent;
+  outline: none;
+
+  &.selected {
+    outline: 1.5px solid rgba(#ffffff, 0.55);
+    outline-offset: -1px;
+  }
+
+  // Brief pulse when jumped to from a search result.
+  &.flash {
+    animation: ev-flash 0.9s ease-in-out 2;
+  }
+}
+
+// Vimium-style event hints.
+.hint-label {
+  background: $accent;
+  color: #fff;
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 11px;
+  border-radius: 3px;
+  padding: 0 4px;
+  box-shadow: 0 1px 4px rgba(#000000, 0.6);
+}
+
+.hint-dim {
+  opacity: 0.3;
+}
+
+@keyframes ev-flash {
+  0% {
+    box-shadow: 0 0 0 0 rgba(#ffffff, 0);
+  }
+  45% {
+    box-shadow: 0 0 0 2px rgba(#ffffff, 0.85);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(#ffffff, 0);
+  }
+}
+
+// Drag: the original dims, a floating copy follows the cursor, an outline marks
+// the snapped drop slot.
+.event.ghost {
+  opacity: 0.4;
+}
+
+.event.floating {
+  box-shadow: 0 8px 20px rgba(#000000, 0.55);
+}
+
+.drag-outline {
+  border: 2px solid rgba(#ffffff, 0.7);
+  border-radius: 5px;
+}
+
+.ev-title {
+  font-size: 12px;
+  color: #f4f2ee;
+}
+
+.ev-time {
+  font-size: 10px;
+  color: rgba(#f4f2ee, 0.6);
+}
+
+@each $name, $c in $colors {
+  // Body fill = event color (opaque, mixed into the bg so hour lines don't bleed).
+  .event.ev-#{$name} {
+    background: color.mix($c, $bg, $ev-fill);
+
+    // .span-hover: lit from hovering a sibling segment of the same multi-day event.
+    &:hover,
+    &.span-hover {
+      background: color.mix($c, $bg, $ev-fill-hover);
+    }
+  }
+  // Left accent bar = the owning calendar's color (independent of event color).
+  // Full shorthand (not just -color) to override the base unambiguously in GTK.
+  .event.bar-#{$name} {
+    border-left: 3px solid $c;
+  }
+  // Not-yet-accepted (invited/maybe): no fill, dashed border in calendar color.
+  .event.invited.bar-#{$name},
+  .event.maybe.bar-#{$name} {
+    background: transparent;
+    border: 1px dashed $c;
+  }
+  // Drop outline takes the calendar's color.
+  .drag-outline.oc-#{$name} {
+    border-color: $c;
+  }
+  // Left accent bar on all-day chips = the owning calendar's color. Not on the
+  // continuation days of a multi-day span (only the first day carries it).
+  .allday.bar-#{$name}:not(.span-mid):not(.span-end) {
+    border-left: 3px solid $c;
+  }
+  .allday.ev-#{$name} {
+    background: color.mix($c, $bg, $allday-fill);
+    color: #f4f2ee; // match the regular event title (was a dimmer color tint)
+
+    // .span-hover: lit from hovering a sibling segment of the same multi-day event.
+    &:hover,
+    &.span-hover {
+      background: color.mix($c, $bg, $allday-fill-hover);
+    }
+  }
+  .swatch.ev-#{$name},
+  .m-dot.ev-#{$name},
+  .m-bar.ev-#{$name},
+  .sg-account-dot.ev-#{$name} {
+    background: $c;
+  }
+  .m-event.ev-#{$name} .m-title {
+    color: $fg;
+  }
+  // Multi-day span bar in the month grid = filled like an all-day chip.
+  .m-event.m-span.ev-#{$name} {
+    background: color.mix($c, $bg, $allday-fill);
+
+    &:hover {
+      background: color.mix($c, $bg, $allday-fill-hover);
+    }
+  }
+  .avatar.ring-#{$name} {
+    outline: 2px solid $c;
+    outline-offset: 2px;
+  }
+  // Per-person busy-preview block + diamond, tinted by personColor().
+  .busy-block.ev-#{$name} {
+    background: repeating-linear-gradient(
+      45deg,
+      rgba($c, 0.34) 0,
+      rgba($c, 0.34) 5px,
+      rgba($c, 0.14) 5px,
+      rgba($c, 0.14) 10px
+    );
+  }
+  .pending-diamond.ev-#{$name} {
+    color: $c;
+  }
+}
+
+.event.ev-graphite .ev-title,
+.event.ev-birch .ev-title,
+.allday.ev-graphite,
+.allday.ev-birch {
+  color: rgba(#f4f2ee, 0.75);
+}
+
+// ── Right detail panel ───────────────────────────────────────────────────────
+.search-box {
+  background: $panel;
+  border: none;
+  border-radius: 7px;
+  min-height: 0;
+  padding: 7px 11px;
+  color: $fg;
+
+  &:focus-within {
+    outline: 2px solid $accent;
+    outline-offset: 2px;
+  }
+}
+
+.detail-body {
+  padding: 0; // each section pads itself (avoids double padding on the card)
+}
+
+// Floating event editor (overlay card anchored next to the clicked event).
+.floating-editor-wrap {
+  margin-right: 12px;
+  margin-bottom: 10px;
+}
+
+.floating-editor {
+  background: $sidebar;
+  border: 1px solid $border;
+  border-radius: 14px;
+  box-shadow: 0 16px 48px rgba(#000000, 0.55);
+
+  .event-info {
+    padding: 12px 14px;
+  }
+}
+
+.detail {
+  padding: 14px;
+}
+
+.detail-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.detail-time {
+  font-size: 13px;
+}
+
+.meet-btn {
+  background: #2f6fed;
+  color: #fff;
+  border-radius: 8px;
+  padding: 9px 12px;
+
+  &:hover {
+    background: color.adjust(#2f6fed, $lightness: 5%);
+  }
+}
+
+.transcribe {
+  background: $panel;
+  border-radius: 8px;
+  padding: 9px 12px;
+
+  &:hover {
+    background: color.adjust($panel, $lightness: 5%);
+  }
+}
+
+.shortcuts {
+  margin-top: 6px;
+  padding: 12px 14px 0 14px;
+  border-top: 1px solid $border;
+}
+
+.shortcuts-title {
+  font-weight: 700;
+}
+
+.shortcut-name {
+  color: $faint;
+}
+
+.kbd {
+  background: $panel;
+  color: $muted;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 11px;
+
+  &.light {
+    background: rgba(#ffffff, 0.22);
+    color: #fff;
+  }
+}
+
+// ── Event info panel (right pane + click popover) ────────────────────────────
+.event-info {
+  padding: 10px 12px;
+}
+
+// Popover node stays transparent; only the themed `contents` bubble is styled,
+// otherwise GTK draws a second box around it.
+.event-pop,
+.people-pop {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.event-pop > contents,
+.people-pop > contents {
+  background: $sidebar;
+  border: 1px solid $border;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(#000000, 0.45);
+  padding: 0;
+}
+
+.people-pop > contents {
+  padding: 6px;
+}
+
+.event-pop .event-info {
+  min-width: 320px;
+}
+
+.info-head {
+  margin-bottom: 8px;
+
+  // Match the editor's input/dropdown height for the delete / close buttons.
+  .icon-btn {
+    padding: 9px;
+    min-height: 20px;
+  }
+}
+
+.info-head-title {
+  font-size: 13px;
+  color: $faint;
+}
+
+// Editable title: a wrapping label that swaps to an entry on click.
+.info-title-stack {
+  margin-bottom: 10px;
+}
+
+.info-title-btn {
+  padding: 2px 0;
+  background: transparent;
+
+  &:hover {
+    background: transparent;
+  }
+}
+
+.info-title {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.info-title-edit {
+  background: $panel;
+  border: none;
+  border-radius: 6px;
+  min-height: 0;
+  padding: 2px 6px;
+  font-size: 17px;
+  font-weight: 700;
+  color: $fg;
+}
+
+.info-emoji {
+  font-size: 15px;
+}
+
+.info-time {
+  margin-bottom: 6px;
+}
+
+// Editable start/end time fields (click a time to type a new one).
+// Inset so the start time aligns at 11px (1px here + the button's 10px) with the
+// dropdowns / fields, without the buttons overshooting to the left.
+.time-row {
+  padding-left: 1px;
+}
+
+.time-btn {
+  padding: 8px 10px;
+  border-radius: 6px;
+  min-height: 0;
+  background: none;
+  box-shadow: none;
+
+  &:hover {
+    background: rgba(#ffffff, 0.07);
+  }
+}
+
+.time-edit {
+  background: $panel;
+  border: none;
+  border-radius: 6px;
+  min-height: 0;
+  padding: 8px 10px;
+  color: $fg;
+}
+
+// Search results need their own padding now that the body has none.
+.results {
+  padding: 8px 14px;
+}
+
+.info-row {
+  // No per-row vertical padding: the .event-info box `spacing` is the single
+  // source of gaps between editor items.
+  padding: 0;
+
+  image {
+    color: $faint;
+  }
+
+  &.placeholder label,
+  &.placeholder image {
+    color: $muted;
+  }
+}
+
+.info-section {
+  color: $muted;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.info-row.busy {
+  // The mini-selects now carry the dropdown padding (11px), aligning "Busy"
+  // with the calendar dropdown's content; no extra row indent needed.
+  padding-left: 0;
+}
+
+// ── Right-pane search results ────────────────────────────────────────────────
+.results-date {
+  font-weight: 700;
+  font-size: 13px;
+  margin-top: 10px;
+  margin-bottom: 2px;
+}
+
+.result {
+  border-left: 3px solid transparent;
+  padding: 2px 0 2px 8px;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+
+  &:hover {
+    background: rgba(#ffffff, 0.05);
+  }
+}
+
+@each $name, $c in $colors {
+  .result.ev-#{$name} {
+    border-left-color: $c;
+  }
+}
+
+.result-title {
+  font-size: 13px;
+}
+
+.result-time {
+  font-size: 11px;
+}
+
+.no-results {
+  margin-top: 14px;
+}
+
+// ── Command palette ──────────────────────────────────────────────────────────
+.palette-backdrop {
+  background: rgba(#000000, 0.4);
+}
+
+.palette {
+  margin-top: 120px;
+  min-width: 560px;
+  background: $sidebar;
+  border: 1px solid $border;
+  border-radius: 14px;
+  padding: 4px;
+}
+
+.palette-search {
+  padding: 12px 14px;
+  border-bottom: 1px solid $border;
+
+  image {
+    color: $muted;
+  }
+
+  entry {
+    background: transparent;
+    border: none;
+    outline: none;
+    min-height: 0;
+    font-size: 15px;
+    color: $fg;
+  }
+}
+
+.palette-list {
+  padding: 6px 4px;
+}
+
+.palette-group {
+  color: $muted;
+  font-size: 12px;
+  padding: 8px 12px 4px 12px;
+}
+
+.cmd-row {
+  padding: 8px 12px;
+  border-radius: 7px;
+
+  &:hover {
+    background: rgba(#ffffff, 0.06);
+  }
+}
+
+.cmd-email {
+  color: #7ea6d8;
+}
+
+.palette-foot {
+  padding: 8px 14px;
+  border-top: 1px solid $border;
+  font-size: 11px;
+}
+
+// ── Month view ───────────────────────────────────────────────────────────────
+.month {
+  background: $bg;
+}
+
+.m-dow-row {
+  border-bottom: 1px solid $border;
+}
+
+.m-dow {
+  color: $muted;
+  font-size: 12px;
+  padding: 5px 0;
+}
+
+.m-row {
+  border-bottom: 1px solid $border;
+}
+
+.m-cell {
+  border-right: 1px solid $border;
+  padding: 3px 4px;
+
+  &.dim {
+    background: rgba(#000000, 0.18);
+
+    .m-date {
+      color: rgba(#e9e7e3, 0.3);
+    }
+  }
+}
+
+.m-cell-head {
+  padding: 1px 2px 2px 2px;
+}
+
+.m-month {
+  color: $faint;
+  font-size: 12px;
+}
+
+.m-date {
+  font-size: 12px;
+  color: $faint;
+  min-width: 20px;
+
+  &.today {
+    background: $accent;
+    color: #fff;
+    border-radius: 6px;
+    padding: 0 6px;
+  }
+}
+
+.m-event {
+  border-radius: 4px;
+  padding: 1px 4px;
+
+  &:hover {
+    background: rgba(#ffffff, 0.07);
+  }
+}
+
+.m-dot {
+  min-width: 7px;
+  min-height: 7px;
+  border-radius: 999px;
+}
+
+.m-bar {
+  min-width: 8px;
+  border-radius: 2px;
+}
+
+.m-time {
+  font-size: 11px;
+  color: $muted;
+}
+
+.m-title {
+  font-size: 11px;
+}
+
+.m-more {
+  font-size: 11px;
+  color: $muted;
+  padding: 1px 4px;
+  background: none;
+  box-shadow: none;
+  border-radius: 5px;
+
+  &:hover {
+    background: rgba(#ffffff, 0.07);
+    color: $faint;
+  }
+}
+
+// Small repeat glyph on recurring event chips / rows / month lines.
+.ev-recur,
+.m-recur {
+  color: $muted;
+  opacity: 0.8;
+}
+
+// ── Conferencing dropdown + description (event panel) ────────────────────────
+.conf {
+  @include dropdown-row;
+
+  image {
+    color: $faint;
+  }
+}
+
+.conf-link {
+  font-size: 0.82em;
+}
+
+.conf-pop > contents {
+  background: $sidebar;
+  border: 1px solid $border;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(#000000, 0.45);
+  padding: 4px;
+}
+
+.conf-menu {
+  min-width: 200px;
+}
+
+.conf-item {
+  padding: 7px 10px;
+  border-radius: 7px;
+
+  &:hover {
+    background: rgba(#ffffff, 0.07);
+  }
+}
+
+.desc-scroll {
+  min-height: 64px;
+  background: $panel;
+  border-radius: 7px;
+  margin-top: 4px;
+  padding: 6px 8px;
+}
+
+.desc-area {
+  background: transparent;
+  color: $fg;
+}
+
+// ── Calendar transfer dropdown (event panel) ─────────────────────────────────
+.cal-picker {
+  @include dropdown-row;
+}
+
+.cal-pop > contents {
+  background: $sidebar;
+  border: 1px solid $border;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(#000000, 0.45);
+  padding: 4px;
+}
+
+.cal-pop > contents {
+  padding: 6px;
+}
+
+.cal-menu {
+  min-width: 280px;
+}
+
+.cal-menu-acct {
+  color: $muted;
+  font-size: 11px;
+  padding: 8px 10px 3px 10px;
+}
+
+.cal-menu-item {
+  padding: 8px 12px;
+  border-radius: 6px;
+
+  &:hover {
+    background: rgba(#ffffff, 0.07);
+  }
+}
+
+// Inline Busy / visibility dropdowns.
+.mini-select {
+  @include dropdown-row;
+}
+
+.mini-label {
+  color: $faint;
+}
+
+// Shared Select dropdown.
+.select-label {
+  color: $faint;
+}
+
+.select-pop > contents {
+  background: $sidebar;
+  border: 1px solid $border;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(#000000, 0.45);
+  padding: 4px;
+}
+
+.select-menu {
+  min-width: 180px;
+}
+
+.select-item {
+  padding: 7px 10px;
+  border-radius: 6px;
+  background: none;
+  box-shadow: none;
+
+  &:hover {
+    background: rgba(#ffffff, 0.07);
+  }
+}
+
+.select-check {
+  min-width: 14px;
+
+  image {
+    color: $accent;
+  }
+}
+
+.mini-pop > contents {
+  background: $sidebar;
+  border: 1px solid $border;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(#000000, 0.45);
+  padding: 4px;
+}
+
+.mini-menu {
+  min-width: 160px;
+}
+
+.mini-item {
+  padding: 7px 10px;
+  border-radius: 6px;
+
+  &:hover {
+    background: rgba(#ffffff, 0.07);
+  }
+}
+
+.cal-check {
+  min-width: 16px;
+  color: $faint;
+}
+
+.color-row {
+  padding: 6px 8px 4px 8px;
+}
+
+.color-dot {
+  padding: 2px;
+  border-radius: 999px;
+  border: 2px solid transparent;
+
+  .swatch {
+    min-width: 16px;
+    min-height: 16px;
+    border-radius: 999px;
+  }
+
+  &.sel {
+    border-color: rgba(#ffffff, 0.6);
+  }
+}
+
+// Invisible edge resize strips.
+.resize-handle {
+  background: transparent;
+}
+
+// Declined events: faded + struck through.
+.event.declined {
+  opacity: 0.5;
+
+  .ev-title {
+    text-decoration-line: line-through;
+  }
+}
+
+// Participants list + RSVP segmented control.
+.participants {
+  margin: 4px 0;
+}
+
+.attachment {
+  padding: 3px 2px;
+
+  image {
+    color: $faint;
+  }
+
+  label {
+    font-size: 12px;
+  }
+}
+
+.attach-x {
+  padding: 2px;
+  border-radius: 5px;
+  color: $faint;
+  min-height: 0;
+  min-width: 0;
+
+  &:hover {
+    background: rgba(#ffffff, 0.07);
+  }
+}
+
+.participant {
+  padding: 4px 2px;
+
+  image {
+    color: $faint;
+  }
+}
+
+.participant-avatar {
+  border-radius: 9999px;
+}
+
+.participant-email {
+  font-size: 0.82em;
+}
+
+// Optional attendee: dimmed + italic to distinguish from required guests.
+.participant-name.optional {
+  color: $muted;
+  font-style: italic;
+}
+
+.rsvp-mark {
+  font-weight: 700;
+
+  &.accepted {
+    color: #3fb950;
+  }
+
+  &.declined {
+    color: #f85149;
+  }
+}
+
+.conflict-mark {
+  color: #f85149;
+  font-weight: 700;
+}
+
+.participant-localtime {
+  font-size: 0.82em;
+}
+
+.rsvp-row {
+  margin-top: 4px;
+  background: $panel;
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.rsvp {
+  padding: 5px 16px;
+  border-radius: 6px;
+  color: $faint;
+
+  &:hover {
+    background: rgba(#ffffff, 0.06);
+  }
+
+  &.sel {
+    background: color.adjust($panel, $lightness: 10%);
+    color: $fg;
+  }
+}
+
+// ── Draft invite flow ────────────────────────────────────────────────────────
+.send-invite {
+  margin: 6px 0 2px 0;
+  background: #2f6fed;
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 12px;
+
+  &:hover {
+    background: color.adjust(#2f6fed, $lightness: 5%);
+  }
+}
+
+.pending-diamond {
+  color: $accent;
+  font-size: 10px;
+}
+
+.dialog-backdrop {
+  background: rgba(#000000, 0.45);
+}
+
+.invite-dialog {
+  min-width: 420px;
+  background: $sidebar;
+  border: 1px solid $border;
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 16px 48px rgba(#000000, 0.55);
+}
+
+.shortcuts-dialog {
+  min-width: 520px;
+  background: $sidebar;
+  border: 1px solid $border;
+  border-radius: 14px;
+  padding: 20px 22px;
+  box-shadow: 0 16px 48px rgba(#000000, 0.55);
+}
+
+.shortcuts-group {
+  color: $muted;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+// ── Recurrence dropdown + Repeat dialog ──────────────────────────────────────
+.recur-field {
+  @include dropdown-row;
+}
+
+.recur-pop > contents {
+  background: $sidebar;
+  border: 1px solid $border;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(#000000, 0.45);
+  padding: 4px;
+}
+
+.recur-menu {
+  min-width: 250px;
+}
+
+.recur-item {
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: none;
+  box-shadow: none;
+
+  &:hover {
+    background: rgba(#ffffff, 0.07);
+  }
+}
+
+.recur-check {
+  min-width: 14px;
+
+  image {
+    color: $accent;
+  }
+}
+
+.recur-sec {
+  color: $muted;
+}
+
+.recur-dialog {
+  min-width: 420px;
+  background: $sidebar;
+  border: 1px solid $border;
+  border-radius: 14px;
+  padding: 20px 22px;
+  box-shadow: 0 16px 48px rgba(#000000, 0.55);
+}
+
+.recur-ends {
+  color: $muted;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+// ── Recurring edit/delete/move scope chooser ─────────────────────────────────
+.scope-list {
+  margin: 4px 0 6px 0;
+}
+
+.scope-opt {
+  padding: 6px 4px;
+  border-radius: 7px;
+
+  &:hover {
+    background: rgba(#ffffff, 0.05);
+  }
+}
+
+.scope-label {
+  font-size: 13px;
+}
+
+.scope-sub {
+  font-size: 11px;
+  margin-top: 1px;
+}
+
+.recur-until {
+  background: $panel;
+  border-radius: 6px;
+  padding: 5px 10px;
+  color: $muted;
+}
+
+.day-toggle {
+  min-width: 30px;
+  min-height: 30px;
+  border-radius: 999px;
+  background: $panel;
+  color: $faint;
+
+  &:checked {
+    background: $accent;
+    color: #fff;
+  }
+}
+
+.dialog-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.dialog-sub {
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.dialog-people {
+  padding: 10px 0;
+  margin: 4px 0 12px 0;
+  border-top: 1px solid $border;
+  border-bottom: 1px solid $border;
+}
+
+// Status / instruction line in the accounts modal — readable (not muted) and
+// boxed so a "create client.json" hint or an error actually stands out.
+.dialog-status {
+  font-size: 12px;
+  color: $fg;
+  background: accent-alpha(0.13);
+  border: 1px solid accent-alpha(0.35);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 2px 0 10px 0;
+}
+
+.dialog-discard {
+  color: $accent;
+  padding: 7px 12px;
+  border-radius: 7px;
+
+  &:hover {
+    background: accent-alpha(0.12);
+  }
+}
+
+.dialog-keep {
+  background: $panel;
+  padding: 7px 14px;
+  border-radius: 7px;
+
+  &:hover {
+    background: color.adjust($panel, $lightness: 6%);
+  }
+}
+
+.dialog-send {
+  background: #2f6fed;
+  color: #fff;
+  padding: 7px 14px;
+  border-radius: 7px;
+
+  &:hover {
+    background: color.adjust(#2f6fed, $lightness: 5%);
+  }
+}
+
+// Busy preview blocks (draft-invite mode): hatched, behind the events.
+.busy-block {
+  // Per-person striped fill comes from .busy-block.ev-<color> (personColor()).
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.busy-label {
+  font-size: 10px;
+  color: rgba(#f4f2ee, 0.7);
+}
+
+// Participant diamond toggle + three-dots menu.
+.diamond-btn {
+  padding: 2px 4px;
+  border-radius: 5px;
+
+  &:hover {
+    background: rgba(#ffffff, 0.08);
+  }
+}
+
+.part-menu {
+  padding: 2px;
+  border-radius: 5px;
+  color: $faint;
+  opacity: 0;
+
+  &:hover {
+    background: rgba(#ffffff, 0.08);
+  }
+}
+
+// Reveal on hover, or on keyboard focus so the dots and their focus ring are
+// visible while tabbing through participants.
+.participant:hover .part-menu,
+.participant:focus-within .part-menu,
+.part-menu:focus-within {
+  opacity: 1;
+}
+
+.part-pop > contents {
+  background: $sidebar;
+  border: 1px solid $border;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(#000000, 0.45);
+  padding: 4px;
+}
+
+.part-menu-box {
+  min-width: 150px;
+}
+
+.part-item {
+  padding: 7px 10px;
+  border-radius: 6px;
+
+  &:hover {
+    background: rgba(#ffffff, 0.07);
+  }
+}
+
+// ── Create / date picker / delete ────────────────────────────────────────────
+.create-preview {
+  background: rgba(#2f6fed, 0.3);
+  border: 1px solid #2f6fed;
+  border-radius: 5px;
+}
+
+.date-field {
+  @include dropdown-row;
+  background: transparent;
+}
+
+// Fixed-width "Start"/"End" labels so the date fields line up under each other.
+.date-lbl {
+  min-width: 38px;
+}
+
+.date-pop > contents {
+  background: $sidebar;
+  border: 1px solid $border;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(#000000, 0.45);
+  padding: 10px;
+}
+
+.date-cal {
+  min-width: 240px;
+}
+
+.part-item.danger {
+  color: $accent;
+}
+
+// First-load overlay (empty cache + sync in flight / failed).
+.load-overlay {
+  background: rgba(#000000, 0.35);
+  border-radius: 14px;
+  padding: 28px 36px;
+}
+
+.load-label {
+  font-size: 14px;
+}
+
+.load-retry {
+  background: $panel;
+  border: 1px solid $border;
+  border-radius: 8px;
+  padding: 6px 16px;
+
+  &:hover {
+    background: color.adjust($panel, $lightness: 5%);
+  }
+}
+
+// Inline delete confirmation in the event editor header.
+.icon-btn.confirm-del {
+  background: $accent;
+  border-radius: 8px;
+  padding: 0 10px;
+  color: #fff;
+  font-weight: 600;
+}
