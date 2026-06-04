@@ -76,49 +76,6 @@ show:
     (nom-run github:DeterminateSystems/nix-src/flake-schemas --
       flake show .)
 
-# typecheck the calendar app with tsgo (fast; run `just tc-setup` once first)
-tc:
-    #!/usr/bin/env nu
-    if not ("packages/calendar/@girs" | path exists) {
-      print "Calendar type env missing — run `just tc-setup` once (one-time, heavy)."
-      exit 1
-    }
-    # ags/gnim ship their lib as .ts, so tsgo also surfaces a few strict-mode
-    # quirks from *their* source under node_modules/@girs; gate only on our code.
-    let res = (do -i { nix shell nixpkgs#typescript-go -c tsgo --noEmit -p packages/calendar } | complete)
-    let errs = (
-      [$res.stdout $res.stderr] | str join "\n" | lines
-      | where ($it | str contains "error TS")
-      | where not ($it | str contains "/node_modules/")
-      | where not ($it | str contains "/@girs/")
-    )
-    if ($errs | is-empty) {
-      print "✓ calendar typecheck clean"
-    } else {
-      $errs | each {|e| print $e } | ignore
-      print $"($errs | length) type error\(s\) in calendar sources"
-      exit 1
-    }
-
-# one-time, HEAVY: build the calendar typecheck env (npm deps, ags pkg, @girs gen)
-tc-setup:
-    #!/usr/bin/env nu
-    # @ts-for-gir is memory-hungry; cap node's heap and de-prioritize it so the
-    # generation can't thrash the machine. Runs in the GI-typelib dev shell.
-    (nix develop .#calendar-types -c bash -c '
-      set -euo pipefail
-      AGS=$(nix eval --impure --raw --expr "(builtins.getFlake (toString ./.)).inputs.ags.outPath")
-      cd packages/calendar
-      npm install --no-audit --no-fund
-      # ags is not on npm: materialize it from the flake input so its internal
-      # `import "gnim"` resolves against our node_modules.
-      rm -rf node_modules/ags && mkdir -p node_modules/ags
-      cp -rL --no-preserve=mode "$AGS/package.json" "$AGS/lib" node_modules/ags/
-      NODE_OPTIONS=--max-old-space-size=4096 nice -n 19 \
-        node_modules/.bin/ts-for-gir generate -o @girs --ignoreVersionConflicts
-      echo "Type env ready. Run \`just tc\`."
-    ')
-
 # flake check current system
 check:
     #!/usr/bin/env nu
@@ -147,6 +104,7 @@ check-all:
 # `notifctl -swb`) queue for the name, so a stray can squat it and make
 # `systemctl restart` a no-op. Stops the bar, kills every notification-center
 # package gjs process (single PIDs — never a process group, which would take
+
 # Hyprland down with it), starts the service, then brings the bar back.
 notifd-reset:
     #!/usr/bin/env bash

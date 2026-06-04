@@ -12,6 +12,10 @@
   # virtual-headset mute control CLI (inputs.virtual-headset); linux-only, used
   # by the ags bar. null on darwin.
   virtual-headset-ctl ? null,
+  # The morrow calendar app (inputs.morrow.packages.<system>.default); built
+  # with default fonts, re-overridden below to track lib/fonts.nix. null on
+  # darwin, where morrow has no output and morrow.nix is not imported.
+  morrow-pkg ? null,
   # User's atuin fork, pulled from inputs at the flake level since the
   # overlay isn't applied to top-level `pkgs` here.
   atuin,
@@ -129,16 +133,17 @@ rec {
     fontName = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
   };
   browser-session-mcp = pkgs.callPackage ./browser-session-mcp { };
-  calendar = pkgs.callPackage ./calendar {
-    inherit agsPackages;
-    fontName = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
-    monoFont = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "mono";
-  };
   chrome-headless-shell = pkgs.callPackage ./chrome-headless-shell { };
   claude-overlay = pkgs.callPackage ./claude-overlay { };
   claude-yolo = pkgs.callPackage ./claude-yolo { };
   executor = pkgs.callPackage ./executor { inherit executor-src; };
   move-active = pkgs.callPackage ./move-active { inherit writeNuApplication; };
+  # Built upstream in the morrow flake; override only the fonts so it tracks the
+  # same lib/fonts.nix `sans`/`mono` families as the rest of the GTK config.
+  morrow = morrow-pkg.override {
+    fontName = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
+    monoFont = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "mono";
+  };
   notification-center = pkgs.callPackage ./notification-center {
     inherit agsPackages;
     fontName = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "sans";

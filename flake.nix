@@ -17,6 +17,9 @@
     hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
     mcp-nixos.url = "github:utensils/mcp-nixos";
     morlana.url = "github:ryanccn/morlana";
+    morrow.url = "git+ssh://git@github.com/xav-ie/morrow";
+    morrow.inputs.nixpkgs.follows = "nixpkgs";
+    morrow.inputs.ags.follows = "ags";
     himalaya-latest.url = "github:xav-ie/himalaya?ref=xav/fix-deprecation-warnings";
     pimalaya-core.url = "github:pimalaya/core";
     pimalaya-core.flake = false;
@@ -228,45 +231,13 @@
             '';
           };
 
-          # Typecheck environment for the calendar app (ags TSX → tsgo). Carries
-          # the GTK4/Soup/astal GI typelibs — the gobject-introspection setup hook
-          # assembles GI_TYPELIB_PATH — plus node (one-time @girs/gnim generation
-          # via @ts-for-gir), the ags CLI, and tsgo. Driven by `just tc-setup` /
-          # `just tc`. Linux-only (astal); an empty shell on darwin so eval works.
-          devShells.calendar-types =
-            if lib.hasSuffix "-linux" system then
-              let
-                ags = inputs.ags.packages.${system};
-              in
-              pkgs.mkShell {
-                nativeBuildInputs = [ pkgs.gobject-introspection ];
-                buildInputs = [
-                  pkgs.glib
-                  pkgs.gtk4
-                  pkgs.graphene
-                  pkgs.gdk-pixbuf
-                  pkgs.pango
-                  pkgs.harfbuzz
-                  pkgs.cairo
-                  pkgs.libsoup_3
-                  pkgs.at-spi2-core
-                  ags.astal4
-                  ags.io
-                ];
-                packages = [
-                  pkgs.nodejs
-                  pkgs.typescript-go
-                  ags.default
-                ];
-              }
-            else
-              pkgs.mkShell { };
-
           packages = import ./packages {
             # ags only builds on linux; null on darwin, where it is unused.
             agsPackages = inputs.ags.packages.${system} or null;
             # virtual-headset mute CLI for the ags bar; linux-only.
             virtual-headset-ctl = inputs.virtual-headset.packages.${system}.virtual-headset-ctl or null;
+            # morrow calendar app; linux-only, null on darwin (no output there).
+            morrow-pkg = inputs.morrow.packages.${system}.default or null;
             atuin = inputs.atuin.packages.${system}.default;
             generate-kaomoji = inputs.generate-kaomoji.packages.${system}.default;
             # Use regular nixpkgs - most packages are writeNuApplication wrappers
