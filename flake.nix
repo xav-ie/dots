@@ -265,6 +265,8 @@
           packages = import ./packages {
             # ags only builds on linux; null on darwin, where it is unused.
             agsPackages = inputs.ags.packages.${system} or null;
+            # virtual-headset mute CLI for the ags bar; linux-only.
+            virtual-headset-ctl = inputs.virtual-headset.packages.${system}.virtual-headset-ctl or null;
             atuin = inputs.atuin.packages.${system}.default;
             generate-kaomoji = inputs.generate-kaomoji.packages.${system}.default;
             # Use regular nixpkgs - most packages are writeNuApplication wrappers

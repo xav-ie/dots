@@ -1,6 +1,8 @@
 { pkgs, ... }:
 {
   imports = [
+    ./bar
+    ./calendar.nix
     ./cliphist
     ./dconf
     ./email
@@ -9,17 +11,15 @@
     ./gtk
     ./hyprland
     ./nemo
+    ./notification-center
     ./notion-calendar.nix
     ./obs
     ./orca-slicer.nix
     ./qt
-    ./rofi
     ./screencast-dnd
     ./speech
     ./sioyek
-    ./swaynotificationcenter
     ./systemd
-    ./waybar
     ./wayvnc
   ];
 
@@ -43,7 +43,6 @@
           subliminal-custom # for mpv autosub script (custom 2.4.0 with knowit)
           xdg-utils # xdg-open, xdg-mime, xdg-email, etc.
           wf-recorder
-          # wtype # xdotool for wayland; used as part of rofi-rbw for typing
           # https://github.com/marionebl/svg-term-cli
           # allows asciinema recordings to be exported to svg... this could be
           # pretty indespensable if you would like ANSI escape sequences to be
@@ -128,8 +127,9 @@
       };
       udiskie = {
         enable = true;
-        # Tray icon isn't shown in waybar; disabling stops the SNI
-        # registration race that waybar logs as "already registered."
+        # The ags bar is the session's SNI host; letting udiskie register its
+        # own tray icon races with it ("already registered"). Disable it and
+        # surface mounts through the bar's tray instead.
         tray = "never";
       };
     };
