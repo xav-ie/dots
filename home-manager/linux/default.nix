@@ -62,6 +62,7 @@
           # user programs
           ################################
           bitwarden-desktop
+          ente-desktop # Ente Photos desktop client (broken on Darwin upstream)
           # chromium - configured via programs.chromium below
           # discord
           pavucontrol # audio mixer
