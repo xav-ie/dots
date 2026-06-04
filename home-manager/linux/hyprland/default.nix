@@ -8,8 +8,9 @@
 }:
 let
   cfg = config.programs.hyprland;
-  waybarCfg = config.programs.waybar;
-  swayncCfg = config.services.swaync;
+  barCfg = config.programs.ags-bar;
+  # Same `sans` (Inter) the pickers/bar use, so hyprlock tracks the system font.
+  inherit ((import ../../../lib/fonts.nix { inherit lib pkgs; })) fonts;
 in
 {
   imports = [
@@ -53,7 +54,7 @@ in
     };
 
     home.packages = with pkgs; [
-      pkgs-mine.bluetooth-picker
+      pkgs-mine.pickers
       hyprshot
       libnotify
       libva
@@ -67,7 +68,7 @@ in
       hyprlock = {
         enable = true;
         settings = {
-          "$font" = "Monospace";
+          "$font" = fonts.name "sans";
 
           general = {
             hide_cursor = true;
@@ -93,13 +94,16 @@ in
             # monitor =
             size = "20%, 5%";
             outline_thickness = 3;
-            inner_color = "rgba(0, 0, 0, 0.0)"; # no fill
+            inner_color = "rgba(26, 23, 38, 0.55)"; # purple-tinted fill (#1a1726)
 
-            outer_color = "rgba(33ccffee) rgba(00ff99ee) 45deg";
-            check_color = "rgba(00ff99ee) rgba(ff6633ee) 120deg";
-            fail_color = "rgba(ff6633ee) rgba(ff0066ee) 40deg";
+            # Spotlight palette: lavender accent idle, green while checking, red on
+            # fail, amber while Caps Lock is on.
+            outer_color = "rgba(bb9af7ee) rgba(9d7cd8ee) 45deg";
+            check_color = "rgba(9ece6aee) rgba(bb9af7ee) 120deg";
+            fail_color = "rgba(f7768eee) rgba(ff0066ee) 40deg";
+            capslock_color = "rgba(e0af68ee) rgba(d9a05bee) 45deg";
 
-            font_color = "rgb(143, 143, 143)";
+            font_color = "rgb(242, 238, 251)"; # fg (#f2eefb)
             fade_on_empty = false;
             rounding = 15;
 
@@ -124,12 +128,17 @@ in
             # TIME
             {
               monitor = "";
-              text = "$TIME"; # ref. https://wiki.hyprland.org/Hypr-Ecosystem/hyprlock/#variable-substitution
-              font_size = 90;
-              font_family = "$font";
+              # 12-hour clock, e.g. "9:41 PM". Thin weight via a static
+              # font_family: hyprlock parses it once with
+              # pango_font_description_from_string, where "Inter Thin" selects the
+              # Thin face (the bar's CSS font-weight is a separate mechanism).
+              text = ''cmd[update:1000] date +"%-I:%M %p"'';
+              color = "rgb(242, 238, 251)"; # fg (#f2eefb)
+              font_size = 180;
+              font_family = "${fonts.name "sans"} Thin";
 
-              position = "-30, 0";
-              halign = "right";
+              position = "30, 0";
+              halign = "left";
               valign = "top";
             }
 
@@ -137,11 +146,12 @@ in
             {
               monitor = "";
               text = ''cmd[update:60000] date +"%A, %d %B %Y"''; # update every 60 seconds
-              font_size = 25;
+              color = "rgb(242, 238, 251)"; # fg (#f2eefb)
+              font_size = 50;
               font_family = "$font";
 
-              position = "-30, -150";
-              halign = "right";
+              position = "30, -300";
+              halign = "left";
               valign = "top";
             }
           ];
@@ -170,8 +180,8 @@ in
             {
               # Enable DND before DPMS off to prevent notifications from waking the monitor
               timeout = 1170;
-              on-timeout = "${lib.getExe' pkgs.swaynotificationcenter "swaync-client"} -dn";
-              on-resume = "${lib.getExe' pkgs.swaynotificationcenter "swaync-client"} -df";
+              on-timeout = "${lib.getExe' pkgs.pkgs-mine.notification-center "notifctl"} --dnd-on";
+              on-resume = "${lib.getExe' pkgs.pkgs-mine.notification-center "notifctl"} --dnd-off";
             }
             {
               timeout = 1200;
@@ -196,25 +206,15 @@ in
       let
         inherit (inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}) hyprland;
         inherit (cfg) borderSizeNumeric gapsNumeric;
-        waybarHeightNumeric = waybarCfg.barHeight;
+        barHeightNumeric = barCfg.barHeight;
         gapAndBorderNumeric = gapsNumeric + borderSizeNumeric;
-        waybarSpaceNumeric = gapAndBorderNumeric + waybarHeightNumeric - borderSizeNumeric;
-        windowTopNumeric = gapAndBorderNumeric + waybarSpaceNumeric;
+        barSpaceNumeric = gapAndBorderNumeric + barHeightNumeric - borderSizeNumeric;
+        windowTopNumeric = gapAndBorderNumeric + barSpaceNumeric;
         windowLeftNumeric = gapsNumeric + borderSizeNumeric;
 
         gaps = toString gapsNumeric;
         windowLeft = toString windowLeftNumeric;
         windowTop = toString windowTopNumeric;
-
-        # Specific positioning for swaync (using swaync config values)
-        swayncNotificationWidth = swayncCfg.notificationWidth;
-        swayncControlWidth = swayncCfg.controlCenterWidth;
-        swayncControlHeight = swayncCfg.controlCenterHeight;
-        swayncNotificationHeight = swayncCfg.notificationHeight;
-        # Position from right edge (not center point)
-        swayncRightOffset = gapsNumeric + borderSizeNumeric;
-        # Use the same top offset as other windows for consistency
-        swayncTopOffset = windowTopNumeric;
 
         pipHeight = 324;
         move-active = "${pkgs.pkgs-mine.move-active}/bin/move-active";
@@ -258,10 +258,9 @@ in
             gaps_out = gaps;
             border_size = toString borderSizeNumeric;
 
-            # avg
-            "col.inactive_border" = "rgb(631f33)";
-            # tetra1, tetra2
-            "col.active_border" = "rgb(4bff00) rgb(004bff) 45deg";
+            # darker/saturated take on packages/pickers accent ($accent #bb9af7)
+            "col.inactive_border" = "rgb(3a2e5e)";
+            "col.active_border" = "rgb(7c5cba)";
 
             layout = "dwindle";
           };
@@ -321,9 +320,9 @@ in
           exec-once = [
             "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type text --watch cliphist store"
             "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type image --watch cliphist store"
-            # Pre-warm the clipboard picker so $mainMod+V opens instantly (it
-            # stays resident and just toggles its window thereafter).
-            "${pkgs.pkgs-mine.clipboard-picker}/bin/clipboard-picker --daemon"
+            # Pre-warm the spotlight launcher so the picker keybinds open
+            # instantly (it stays resident and just switches/toggles its mode).
+            "${pkgs.pkgs-mine.pickers}/bin/spotlight --daemon"
             "[workspace 2 silent] ${config.programs.firefox.package}/bin/firefox"
             "[workspace 1 silent] ${config.programs.ghostty.package}/bin/ghostty"
           ];
@@ -376,27 +375,6 @@ in
             "match:title ^$, no_shadow on"
             "match:title ^$, size 25% 100%"
 
-            # sway notifications
-            # Match notification popups by class
-            "match:class swaync, float on"
-            "match:class swaync, move (monitor_w-${
-              toString (swayncNotificationWidth + swayncRightOffset)
-            }) ${toString swayncTopOffset}"
-            "match:class swaync, no_initial_focus on"
-            "match:class swaync, pin on"
-            "match:class swaync, size ${toString swayncNotificationWidth} ${toString swayncNotificationHeight}"
-            "match:class swaync, animation slide"
-
-            # Control center specific rules (different class name)
-            "match:class org.erikreider.swaync, float on"
-            "match:class org.erikreider.swaync, move (monitor_w-${
-              toString (swayncControlWidth + swayncRightOffset)
-            }) ${toString swayncTopOffset}"
-            "match:class org.erikreider.swaync, no_initial_focus on"
-            "match:class org.erikreider.swaync, pin on"
-            "match:class org.erikreider.swaync, size ${toString swayncControlWidth} ${toString swayncControlHeight}"
-            "match:class org.erikreider.swaync, animation slide"
-
             # improve animation on ueberzugpp windows
             "match:title ueberzugpp.*, animation slide right"
 
@@ -413,24 +391,31 @@ in
           monitor = ",preferred,auto,auto";
 
           layerrule = [
-            "match:namespace bluetooth-picker, blur on"
-            # Only blur where the panel is; the rest of the layer is the
-            # fully-transparent click-catcher and must stay unblurred.
-            "match:namespace bluetooth-picker, ignore_alpha 0.6"
-            "match:namespace emoji-picker, blur on"
-            "match:namespace emoji-picker, ignore_alpha 0.6"
-            "match:namespace power-picker, blur on"
-            "match:namespace power-picker, ignore_alpha 0.6"
-            # No blur on clipboard-picker: blurring the layer blooms opaque image
-            # thumbnails into the surrounding panel. The panel is near-opaque
-            # (see style.scss) to compensate.
-            "match:namespace notifications, blur on"
-            "match:namespace rofi, blur on"
-            "match:namespace swaync, blur on"
-            "match:namespace swaynotificationcenter, blur on"
-            "match:namespace waybar, blur on"
-            "match:namespace rofi, ignore_alpha 0"
-            "match:namespace waybar, ignore_alpha 0"
+            # spotlight hosts every picker mode in one layer. Only blur where the
+            # panel is (ignore_alpha) — the rest of the layer is a transparent
+            # click-catcher — and the panel stays near-opaque (see style.scss) so
+            # clipboard-mode image thumbnails don't bloom into the blur.
+            "match:namespace spotlight, blur on"
+            "match:namespace spotlight, ignore_alpha 0.6"
+            # askpass is the same shape — a near-opaque centered panel over a
+            # transparent click-catcher — so it takes spotlight's blur as-is.
+            "match:namespace askpass, blur on"
+            "match:namespace askpass, ignore_alpha 0.6"
+            # The notification center is the same shape as spotlight (opaque panel
+            # over a transparent click-catcher); the popups are opaque cards over a
+            # transparent surface. ignore_alpha keeps the blur on the cards only.
+            "match:namespace notification-center, blur on"
+            "match:namespace notification-center, ignore_alpha 0.6"
+            "match:namespace notification-center-popups, blur on"
+            "match:namespace notification-center-popups, ignore_alpha 0.6"
+            # Don't let Hyprland animate the popup layer's resize as toasts stack
+            # (that's the vertical "stretch"); they fade in via CSS opacity instead.
+            "match:namespace notification-center-popups, no_anim on"
+            "match:namespace bar, blur on"
+            # Threshold (not 0): skip the bar's fully transparent margins so they
+            # stay see-through instead of rendering as an opaque blurred band.
+            # Must sit below the .bar background alpha so the pill itself blurs.
+            "match:namespace bar, ignore_alpha 0.4"
           ];
           # Move/resize windows with mainMod + LMB/RMB and dragging
           bindm = [
@@ -484,16 +469,16 @@ in
             "$mainMod ALT,6,exec,${move-active} middleMiddle"
             "$mainMod ALT,7,exec,${move-active} bottomMiddle"
             "$mainMod, P, pin,"
-            "$mainMod, Escape, exec, ${pkgs.pkgs-mine.power-picker}/bin/power-picker"
-            "$mainMod, B, exec, ${pkgs.pkgs-mine.bluetooth-picker}/bin/bluetooth-picker"
-            "$mainMod, E, exec, ${pkgs.pkgs-mine.emoji-picker}/bin/emoji-picker"
-            "$mainMod, SPACE, exec, ${config.programs.rofi.package}/bin/rofi -show drun -show-icons"
+            "$mainMod, Escape, exec, ${pkgs.pkgs-mine.pickers}/bin/spotlight power"
+            "$mainMod, B, exec, ${pkgs.pkgs-mine.pickers}/bin/spotlight bluetooth"
+            "$mainMod, E, exec, ${pkgs.pkgs-mine.pickers}/bin/spotlight emoji"
+            "$mainMod, SPACE, exec, ${pkgs.pkgs-mine.pickers}/bin/spotlight app"
             # "$mainMod, P, pseudo, # dwindle"
             # "$mainMod, T, togglesplit, # dwindle"
-            "$mainMod, V, exec, ${pkgs.pkgs-mine.clipboard-picker}/bin/clipboard-picker"
+            "$mainMod, V, exec, ${pkgs.pkgs-mine.pickers}/bin/spotlight clipboard"
             "$mainMod, S, exec, ${pkgs.hyprshot}/bin/hyprshot -m region -z --clipboard-only"
             "$mainMod SHIFT, S, exec, ${pkgs.hyprshot}/bin/hyprshot -m region -z -o ~/Pictures"
-            "$mainMod, N, exec, ${lib.getExe' config.services.swaync.package "swaync-client"} -t"
+            "$mainMod, N, exec, ${lib.getExe' pkgs.pkgs-mine.notification-center "notifctl"} -t"
             "$mainMod, C, exec, ${config.programs.mpv.package}/bin/mpv av://v4l2:/dev/video1"
             "$mainMod SHIFT, M, exit,"
             "$mainMod, U, exec, ${pkgs.pkgs-mine.uair-toggle-and-notify}/bin/uair-toggle-and-notify"

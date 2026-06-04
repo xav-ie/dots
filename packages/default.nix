@@ -9,6 +9,9 @@
   isLinux ? pkgs.stdenv.isLinux,
   # ags package set (inputs.ags.packages.<system>); null on darwin, unused there.
   agsPackages ? null,
+  # virtual-headset mute control CLI (inputs.virtual-headset); linux-only, used
+  # by the ags bar. null on darwin.
+  virtual-headset-ctl ? null,
   # User's atuin fork, pulled from inputs at the flake level since the
   # overlay isn't applied to top-level `pkgs` here.
   atuin,
@@ -105,32 +108,48 @@ rec {
   zerobrew = pkgs.callPackage ./zerobrew { src = zerobrew-src; };
   tcc-grant = pkgs.callPackage ./tcc-grant { inherit writeNuApplication; };
 })
-// (optionalAttrs isLinux {
-  bluetooth-picker = pkgs.callPackage ./bluetooth-picker {
+// (optionalAttrs isLinux rec {
+  askpass = pkgs.callPackage ./askpass {
     inherit agsPackages;
+    fontName = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
+  };
+  bar = pkgs.callPackage ./bar {
+    inherit
+      agsPackages
+      notification-center
+      pickers
+      virtual-headset-ctl
+      ;
+    # Plain (non-CUDA) build: the bar only needs the `record toggle` IPC client,
+    # which never loads whisper, so it stays out of the heavy GPU closure.
+    inherit (pkgs-bleeding) hyprwhspr-rs;
+    # uair-toggle-and-notify lives in the base (non-Linux) set, out of scope
+    # here; rebuild it from the same inputs (identical store path).
+    uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
     fontName = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
   };
   browser-session-mcp = pkgs.callPackage ./browser-session-mcp { };
+  calendar = pkgs.callPackage ./calendar {
+    inherit agsPackages;
+    fontName = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
+    monoFont = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "mono";
+  };
   chrome-headless-shell = pkgs.callPackage ./chrome-headless-shell { };
   claude-overlay = pkgs.callPackage ./claude-overlay { };
   claude-yolo = pkgs.callPackage ./claude-yolo { };
-  clipboard-picker = pkgs.callPackage ./clipboard-picker {
-    inherit agsPackages;
-    fontName = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
-  };
-  emoji-picker = pkgs.callPackage ./emoji-picker {
-    inherit agsPackages;
-    fontName = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
-  };
   executor = pkgs.callPackage ./executor { inherit executor-src; };
   move-active = pkgs.callPackage ./move-active { inherit writeNuApplication; };
-  notion-calendar = pkgs.callPackage ./notion-calendar { src = notion-calendar-src; };
-  openrgb-appimage = pkgs.callPackage ./openrgb-appimage { };
-  pinentry-auto = pkgs.callPackage ./pinentry-auto { };
-  power-picker = pkgs.callPackage ./power-picker {
+  notification-center = pkgs.callPackage ./notification-center {
     inherit agsPackages;
     fontName = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
   };
+  notion-calendar = pkgs.callPackage ./notion-calendar { src = notion-calendar-src; };
+  openrgb-appimage = pkgs.callPackage ./openrgb-appimage { };
+  pickers = pkgs.callPackage ./pickers {
+    inherit agsPackages;
+    fontName = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
+  };
+  pinentry-auto = pkgs.callPackage ./pinentry-auto { };
   simulstreaming = pkgs.callPackage ./simulstreaming { src = simulstreaming-src; };
   record = pkgs.callPackage ./record { };
   record-section = pkgs.callPackage ./record-section { };
