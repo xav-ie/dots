@@ -109,3 +109,50 @@ $env.config.table = {
   # abbreviated_row_count: 10
 }
 
+# --- zoxide commands ---------------------------------------------------------
+# We own `z`/`zi`/`zf` here because programs.zoxide is set with `--no-cmd`
+# (see home-manager/default.nix): that keeps zoxide's directory-tracking hook
+# but drops its auto-generated aliases, which load *after* this file and would
+# otherwise shadow these defs. All three only ever *read* the db.
+
+# zf: fuzzy zoxide jump via skim.
+#
+# Why this exists: zoxide's own matcher is *substring*, so a query like `xnxi`
+# never matches `xnixvim`. Here we feed the FULL db (`zoxide query --list`,
+# already ranked by frecency) straight into skim and let skim fuzzy-match —
+# that's what makes typos forgiving.
+def --env --wrapped zf [...rest: string] {
+  let sel = (
+    zoxide query --list
+    | sk --query ($rest | str join ' ') --height 40% --layout reverse --prompt "z> "
+    | str trim
+  )
+  if ($sel | is-not-empty) { cd $sel }
+}
+
+# zi: interactive picker over the whole db — same as `zf` with no/seed query.
+def --env --wrapped zi [...rest: string] {
+  zf ...$rest
+}
+
+# z: zoxide jump. On a miss, fall through to `zf` so a typo opens the skim
+# picker (seeded with your keywords) instead of just erroring. No db writes.
+def --env --wrapped z [...rest: string] {
+  let path = match $rest {
+    [] => {'~'},
+    [ '-' ] => {'-'},
+    [ $arg ] if ($arg | path expand | path type) == 'dir' => {$arg}
+    _ => {
+      # `do {...} | complete` captures the exit code and swallows zoxide's
+      # "no match found" stderr instead of aborting on a miss.
+      (do { zoxide query --exclude $env.PWD -- ...$rest } | complete).stdout
+      | str trim -r -c "\n"
+    }
+  }
+  if ($path | is-empty) {
+    zf ...$rest
+  } else {
+    cd $path
+  }
+}
+
