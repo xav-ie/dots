@@ -188,8 +188,8 @@ mod platform {
         pbi_svuid: u32,
         pbi_svgid: u32,
         pbi_reserved: u32,
-        pbi_comm: [u8; 16],  // MAXCOMLEN
-        pbi_name: [u8; 32],  // 2 * MAXCOMLEN
+        pbi_comm: [u8; 16], // MAXCOMLEN
+        pbi_name: [u8; 32], // 2 * MAXCOMLEN
         pbi_nfiles: u32,
         pbi_pgid: u32,
         pbi_pjobc: u32,
@@ -201,8 +201,12 @@ mod platform {
     }
 
     extern "C" {
-        fn proc_listpids(r#type: u32, typeinfo: u32, buffer: *mut c_void, buffersize: c_int)
-            -> c_int;
+        fn proc_listpids(
+            r#type: u32,
+            typeinfo: u32,
+            buffer: *mut c_void,
+            buffersize: c_int,
+        ) -> c_int;
         fn proc_pidinfo(
             pid: c_int,
             flavor: c_int,

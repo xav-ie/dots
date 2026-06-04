@@ -363,6 +363,8 @@
                   package = config.packages.prettier-with-toml;
                   includes = options.programs.prettier.includes.default ++ [
                     "*.cfg"
+                    "*.mjs"
+                    "*.mts"
                     "*.toml"
                   ];
                 };
