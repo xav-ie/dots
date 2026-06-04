@@ -155,6 +155,9 @@
     xdg.portal = {
       extraPortals = with pkgs; [
         xdg-desktop-portal-gnome
+        # gtk owns the FileChooser interface; gnome's backend only exposes
+        # Settings off a GNOME session and cannot serve the file picker here.
+        xdg-desktop-portal-gtk
         # xdg-desktop-portal-hyprland is automatically added by Hyprland module
       ];
       # Config is set at NixOS level in nixosConfigurations/modules/hyprland.nix

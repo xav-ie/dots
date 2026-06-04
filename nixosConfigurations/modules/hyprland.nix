@@ -28,14 +28,19 @@ in
 
     # XDG portal configuration for hyprland.
     # NOTE: the hyprland portal package and its config are added by
-    # `programs.hyprland.enable = true` above. We only layer on the gnome
-    # portal here for keyring/secret/file-chooser support.
+    # `programs.hyprland.enable = true` above. We layer on the gtk portal
+    # for the FileChooser (gnome's backend only exposes Settings off a GNOME
+    # session, so it cannot serve the file picker here) and gnome for the
+    # remaining settings/secret interfaces.
     (lib.mkIf hyprlandEnabled {
       # TIP: run `nix run nixpkgs#door-knocker` and check that portal
       # implementation has expected support
       xdg.portal = {
         enable = true;
-        extraPortals = [ pkgs.xdg-desktop-portal-gnome ];
+        extraPortals = [
+          pkgs.xdg-desktop-portal-gnome
+          pkgs.xdg-desktop-portal-gtk
+        ];
         configPackages = [ pkgs.xdg-desktop-portal-gnome ];
         config =
           let
@@ -44,8 +49,9 @@ in
                 "hyprland"
                 "gnome"
               ];
-              # TODO: what kinds of other useful settings can I set?
-              # "org.freedesktop.impl.portal.Secret" = [ "gnome-keyring" ];
+              # The gnome backend refuses FileChooser outside a GNOME session,
+              # so the gtk portal owns the file picker for Firefox/Chromium.
+              "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
             };
           in
           {
