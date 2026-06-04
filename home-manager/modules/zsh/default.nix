@@ -71,7 +71,13 @@
               git diff --name-only "$start_commit" "$end_commit" | grep -v "$exclude_file" | xargs -I {} git diff "$start_commit" "$end_commit" -- {} > "$output_file"
             }
 
-            source $HOME/.env
+            # Secrets decrypted by sops-nix at activation (see lib/common/sops.nix).
+            # `set -a` exports every assignment so child processes inherit them.
+            if [ -r /run/secrets/shell-env ]; then
+              set -a
+              source /run/secrets/shell-env
+              set +a
+            fi
 
             download_nixpkgs_cache_index () {
               filename="index-$(uname -m | sed 's/^arm64$/aarch64/')-$(uname | tr A-Z a-z)"

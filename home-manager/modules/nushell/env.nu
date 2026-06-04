@@ -123,4 +123,6 @@ def "from env" []: string -> record {
     | transpose -r -d
 }
 
-try { open ~/.env | load-env }
+# Secrets decrypted by sops-nix at activation (see lib/common/sops.nix).
+# Use --raw + `from env` since the rendered file has no .env extension.
+try { open --raw /run/secrets/shell-env | from env | load-env }
