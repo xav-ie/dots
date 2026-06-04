@@ -7,6 +7,15 @@
   "hooks": {
     "Notification": [
       {
+        "matcher": "idle_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/notify-if-question.nu"
+          }
+        ]
+      },
+      {
         "matcher": "permission_prompt",
         "hooks": [
           {
@@ -85,6 +94,7 @@
     "dts@outsmartly-plugins": false,
     "pts@outsmartly-plugins": false
   },
+  "preferredNotifChannel": "notifications_disabled",
   "alwaysThinkingEnabled": true,
   "effortLevel": "medium",
   "tui": "fullscreen",
