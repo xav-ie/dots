@@ -58,6 +58,10 @@
       watson.enable = true;
       # cd supercharged
       zoxide.enable = true;
+      # we define `z`/`zi`/`zf` ourselves in nushell config.nu (with skim
+      # fall-through); --no-cmd keeps zoxide's dir-tracking hook but drops its
+      # own z/zi aliases, which would otherwise load *after* and shadow ours.
+      zoxide.options = [ "--no-cmd" ];
       # file manager
       yazi.enable = true;
       worktrunk.enable = true;
@@ -93,6 +97,7 @@
           neovide
           nix-output-monitor # better nix build
           pnpm
+          skim # fuzzy finder (sk) — used by `zf`
           tldr
           tree
           (ueberzugpp.override {
