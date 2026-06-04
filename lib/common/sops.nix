@@ -86,6 +86,16 @@
         mode = "0400";
       };
 
+      # mgrep indexing allowlist (home-manager/linux/systemd/mgrep-watch.nix).
+      # One opaque JSON blob — {folders, worktrees, extraIgnore} — because the
+      # repo paths name private work projects. Read at runtime by the sync /
+      # worktree-pull services; never baked into the Nix store. Decrypts to
+      # /run/secrets/mgrep/config.
+      secrets."mgrep/config" = {
+        owner = config.defaultUser;
+        mode = "0400";
+      };
+
     };
 
     # Ensure that no one may read my key file
