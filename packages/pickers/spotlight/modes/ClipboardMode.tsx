@@ -1,8 +1,16 @@
-import { createComputed, createState, For, onCleanup } from "ags";
+import {
+  Accessor,
+  createComputed,
+  createEffect,
+  createState,
+  For,
+  onCleanup,
+} from "ags";
 import { Gtk, Gdk } from "ags/gtk4";
 import GLib from "gi://GLib";
 import Gio from "gi://Gio";
 import { ClipEntry, copy, decodeToFile, list, remove } from "./cliphist";
+import { createSelection, scrollIntoView } from "../../lib/selection";
 import { ModeProps, PANEL_CONTENT_H } from "./types";
 
 // cliphist keeps up to 750 entries; a plain box renders every child eagerly, so
@@ -91,11 +99,13 @@ function Thumbnail({ entry }: { entry: ClipEntry }) {
 
 function ClipRow({
   entry,
+  cls,
   onActivate,
   onDelete,
   registerButton,
 }: {
   entry: ClipEntry;
+  cls: Accessor<string>;
   onActivate: () => void;
   onDelete: () => void;
   registerButton: (button: Gtk.Button | null) => void;
@@ -104,7 +114,7 @@ function ClipRow({
   return (
     <box class="row" spacing={6}>
       <button
-        class="entry"
+        class={cls}
         hexpand
         $={(ref) => registerButton(ref as Gtk.Button)}
         onClicked={onActivate}
@@ -130,14 +140,16 @@ function ClipRow({
   );
 }
 
-export default function ClipboardMode({ register, close, getWin }: ModeProps) {
+export default function ClipboardMode({ register, close }: ModeProps) {
   let searchentry: Gtk.Entry;
+  let scroller: Gtk.ScrolledWindow;
+  let listBox: Gtk.Box;
 
   const [entries, setEntries] = createState(list());
   const [query, setQuery] = createState("");
 
-  // Item (entry) buttons by id, so the arrows step item-to-item and skip the
-  // per-row trash buttons.
+  // Entry button per id, so the selection can scroll the highlighted row into
+  // view (and the trash buttons stay out of the way).
   const itemButtons = new Map<string, Gtk.Button>();
 
   const shown = createComputed(() => {
@@ -147,6 +159,19 @@ export default function ClipboardMode({ register, close, getWin }: ModeProps) {
       ? all.filter((e) => e.preview.toLowerCase().includes(q))
       : all;
     return matched.slice(0, MAX_ROWS);
+  });
+
+  const sel = createSelection(shown);
+
+  // Keep the highlighted row visible as the arrows move it (or as a new query
+  // resets it to the top).
+  createEffect(() => {
+    const item = sel.current();
+    if (!item) return;
+    GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+      scrollIntoView(scroller, listBox, itemButtons.get(item.id));
+      return GLib.SOURCE_REMOVE;
+    });
   });
 
   onCleanup(() => {
@@ -172,53 +197,11 @@ export default function ClipboardMode({ register, close, getWin }: ModeProps) {
       .then(close);
   }
 
-  function copyTop() {
-    const top = shown()[0];
-    if (top) pick(top);
-  }
-
   function onDelete(entry: ClipEntry) {
     remove(entry).catch((err) =>
       console.error("spotlight/clipboard: delete failed", err),
     );
     setEntries(entries().filter((e) => e !== entry));
-  }
-
-  function searchHasFocus() {
-    const focus = getWin()?.get_focus() ?? null;
-    return (
-      focus !== null &&
-      (focus === searchentry || focus.is_ancestor(searchentry))
-    );
-  }
-
-  function orderedItems(): Gtk.Button[] {
-    return shown()
-      .map((e) => itemButtons.get(e.id))
-      .filter((b): b is Gtk.Button => b != null);
-  }
-
-  // Move focus prev/next between items (delta -1/+1), skipping trash buttons.
-  function focusItem(delta: number) {
-    const items = orderedItems();
-    if (items.length === 0) return;
-    if (searchHasFocus()) {
-      if (delta > 0) items[0].grab_focus();
-      return;
-    }
-    const focus = getWin()?.get_focus() ?? null;
-    const cur = items.findIndex(
-      (b) =>
-        b === focus ||
-        (focus !== null && b.get_parent() === focus.get_parent()),
-    );
-    if (cur === -1) {
-      if (delta > 0) items[0].grab_focus();
-      return;
-    }
-    const next = cur + delta;
-    if (next < 0) searchentry.grab_focus();
-    else if (next < items.length) items[next].grab_focus();
   }
 
   function onShow() {
@@ -233,42 +216,16 @@ export default function ClipboardMode({ register, close, getWin }: ModeProps) {
     });
   }
 
-  // Up/Down walk between the search entry and the rows; Enter/Space activate the
-  // focused row. Any other key while focus is in the list snaps back to search.
-  // Escape is left to the shell's default close.
-  function onKey(
-    keyval: number,
-    _mod: number,
-    controller: Gtk.EventControllerKey,
-  ) {
-    if (keyval === Gdk.KEY_Escape) return false;
+  // Focus stays on the entry; the arrows just slide the highlight. Enter is the
+  // entry's default action (onActivate → copy the highlighted entry). Escape is
+  // left to the shell's default close.
+  function onKey(keyval: number) {
     if (keyval === Gdk.KEY_Down) {
-      focusItem(1);
+      sel.move(1);
       return true;
     }
     if (keyval === Gdk.KEY_Up) {
-      focusItem(-1);
-      return true;
-    }
-    if (keyval === Gdk.KEY_Return || keyval === Gdk.KEY_KP_Enter) {
-      const focus = getWin()?.get_focus() ?? null;
-      const onRow =
-        focus !== null &&
-        orderedItems().some(
-          (b) => b === focus || b.get_parent() === focus.get_parent(),
-        );
-      if (onRow) return false;
-      copyTop();
-      return true;
-    }
-
-    const passthrough =
-      keyval === Gdk.KEY_space ||
-      keyval === Gdk.KEY_Tab ||
-      keyval === Gdk.KEY_ISO_Left_Tab;
-    if (!passthrough && !searchHasFocus()) {
-      searchentry.grab_focus();
-      controller.forward(searchentry);
+      sel.move(-1);
       return true;
     }
     return false;
@@ -288,11 +245,22 @@ export default function ClipboardMode({ register, close, getWin }: ModeProps) {
         primaryIconName="system-search-symbolic"
         placeholderText="Search clipboard…"
         onNotifyText={({ text }) => setQuery(text)}
-        onActivate={copyTop}
+        onActivate={() => {
+          const top = sel.current();
+          if (top) pick(top);
+        }}
       />
       <Gtk.Separator />
-      <Gtk.ScrolledWindow vexpand hscrollbarPolicy={Gtk.PolicyType.NEVER}>
-        <box orientation={Gtk.Orientation.VERTICAL} spacing={2}>
+      <Gtk.ScrolledWindow
+        $={(ref) => (scroller = ref)}
+        vexpand
+        hscrollbarPolicy={Gtk.PolicyType.NEVER}
+      >
+        <box
+          $={(ref) => (listBox = ref)}
+          orientation={Gtk.Orientation.VERTICAL}
+          spacing={2}
+        >
           <label
             class="dim"
             label={query((q) =>
@@ -304,6 +272,7 @@ export default function ClipboardMode({ register, close, getWin }: ModeProps) {
             {(entry) => (
               <ClipRow
                 entry={entry}
+                cls={sel.cls(entry, "entry")}
                 onActivate={() => pick(entry)}
                 onDelete={() => onDelete(entry)}
                 registerButton={(btn) => {

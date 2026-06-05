@@ -1,9 +1,10 @@
-import { createComputed, createState, For } from "ags";
+import { createComputed, createEffect, createState, For, onCleanup } from "ags";
 import { Gtk, Gdk } from "ags/gtk4";
 import GLib from "gi://GLib";
 import Gio from "gi://Gio";
 import { EMOJIS, EmojiRecord } from "./data";
 import { frecencyStore } from "../../lib/frecency";
+import { createSelection, scrollIntoView } from "../../lib/selection";
 import { ModeProps, PANEL_CONTENT_H } from "./types";
 
 const COLUMNS = 6;
@@ -45,11 +46,16 @@ function haystack(r: EmojiRecord): string {
   return h;
 }
 
-export default function EmojiMode({ register, close, getWin }: ModeProps) {
+export default function EmojiMode({ register, close }: ModeProps) {
   let searchentry: Gtk.Entry;
+  let scroller: Gtk.ScrolledWindow;
+  let listBox: Gtk.Box;
 
   const fr = frecencyStore("emoji");
   const [query, setQuery] = createState("");
+  // Cell button per glyph, so the selection can scroll the highlighted emoji
+  // into view as the arrows walk the grid.
+  const cellButtons = new Map<string, Gtk.Button>();
   // Default-view ordering (frecent first). Recomputed on each show so a pick
   // from a previous open is reflected (the instance is resident).
   const [byFrecency, setByFrecency] =
@@ -80,6 +86,19 @@ export default function EmojiMode({ register, close, getWin }: ModeProps) {
     return matched.slice(0, MAX_RESULTS);
   });
 
+  const sel = createSelection(shown);
+
+  // Keep the highlighted glyph visible as the arrows walk the grid (or as a new
+  // query resets it to the top).
+  createEffect(() => {
+    const item = sel.current();
+    if (!item) return;
+    GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+      scrollIntoView(scroller, listBox, cellButtons.get(item.e));
+      return GLib.SOURCE_REMOVE;
+    });
+  });
+
   async function pick(r: EmojiRecord) {
     fr.bump(r.e);
     try {
@@ -88,11 +107,6 @@ export default function EmojiMode({ register, close, getWin }: ModeProps) {
       console.error("spotlight/emoji: copy failed", err);
     }
     close();
-  }
-
-  function pickTop() {
-    const top = shown()[0];
-    if (top) pick(top);
   }
 
   function onShow() {
@@ -105,21 +119,38 @@ export default function EmojiMode({ register, close, getWin }: ModeProps) {
     });
   }
 
-  function onKey(keyval: number) {
-    if (keyval === Gdk.KEY_Return || keyval === Gdk.KEY_KP_Enter) {
-      // Enter reaches here only when the entry hasn't taken focus yet (a fast
-      // open). If a glyph holds focus instead, let it activate that glyph.
-      const focus = getWin()?.get_focus() ?? null;
-      if (focus && focus !== searchentry && !focus.is_ancestor(searchentry)) {
-        return false;
-      }
-      pickTop();
+  // Grid navigation. Focus stays on the entry, so the arrows must be caught in
+  // the CAPTURE phase (below) — otherwise the entry eats Left/Right as cursor
+  // moves before we get a look. Left/Right step one glyph; Up/Down jump a row.
+  function onNavKey(keyval: number, modk: number) {
+    // Ctrl+←/→ is the shell's mode cycle (handled higher up); leave it alone.
+    if ((modk & Gdk.ModifierType.CONTROL_MASK) !== 0) return false;
+    if (keyval === Gdk.KEY_Left) {
+      sel.move(-1);
+      return true;
+    }
+    if (keyval === Gdk.KEY_Right) {
+      sel.move(1);
+      return true;
+    }
+    if (keyval === Gdk.KEY_Up) {
+      sel.move(-COLUMNS);
+      return true;
+    }
+    if (keyval === Gdk.KEY_Down) {
+      sel.move(COLUMNS);
       return true;
     }
     return false;
   }
 
-  register({ onShow, focus: () => searchentry.grab_focus(), onKey });
+  // Enter is the entry's default action (onActivate → pick the highlight); the
+  // arrows are consumed in CAPTURE, so nothing is left for the bubble handler.
+  register({
+    onShow,
+    focus: () => searchentry.grab_focus(),
+    onKey: () => false,
+  });
 
   return (
     <box
@@ -128,16 +159,30 @@ export default function EmojiMode({ register, close, getWin }: ModeProps) {
       spacing={12}
       heightRequest={PANEL_CONTENT_H}
     >
+      <Gtk.EventControllerKey
+        propagationPhase={Gtk.PropagationPhase.CAPTURE}
+        onKeyPressed={(_c, keyval, _k, modk) => onNavKey(keyval, modk)}
+      />
       <entry
         $={(ref) => (searchentry = ref)}
         primaryIconName="system-search-symbolic"
         placeholderText="Search emoji…"
         onNotifyText={({ text }) => setQuery(text)}
-        onActivate={pickTop}
+        onActivate={() => {
+          const top = sel.current();
+          if (top) pick(top);
+        }}
       />
       <Gtk.Separator />
-      <Gtk.ScrolledWindow vexpand hscrollbarPolicy={Gtk.PolicyType.NEVER}>
-        <box orientation={Gtk.Orientation.VERTICAL}>
+      <Gtk.ScrolledWindow
+        $={(ref) => (scroller = ref)}
+        vexpand
+        hscrollbarPolicy={Gtk.PolicyType.NEVER}
+      >
+        <box
+          $={(ref) => (listBox = ref)}
+          orientation={Gtk.Orientation.VERTICAL}
+        >
           <label
             class="dim"
             label="No matches."
@@ -155,17 +200,21 @@ export default function EmojiMode({ register, close, getWin }: ModeProps) {
             halign={Gtk.Align.FILL}
           >
             <For each={shown}>
-              {(r: EmojiRecord) => (
-                <button
-                  class="emoji"
-                  tooltipText={r.d}
-                  widthRequest={CELL}
-                  heightRequest={CELL}
-                  onClicked={() => pick(r)}
-                >
-                  <label label={r.e} />
-                </button>
-              )}
+              {(r: EmojiRecord) => {
+                onCleanup(() => cellButtons.delete(r.e));
+                return (
+                  <button
+                    class={sel.cls(r, "emoji")}
+                    tooltipText={r.d}
+                    widthRequest={CELL}
+                    heightRequest={CELL}
+                    onClicked={() => pick(r)}
+                    $={(ref) => cellButtons.set(r.e, ref as Gtk.Button)}
+                  >
+                    <label label={r.e} />
+                  </button>
+                );
+              }}
             </For>
           </Gtk.FlowBox>
         </box>

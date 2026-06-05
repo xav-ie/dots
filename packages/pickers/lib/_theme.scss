@@ -69,7 +69,10 @@ separator {
 }
 
 // Interactive tile (rows, action buttons, emoji cells): flat with an accent
-// tint on hover and a purple border on focus. $radius varies per call site.
+// tint on hover and a purple border on focus. `.sel` is the keyboard highlight —
+// the result Enter would pick — styled like focus so it reads identically whether
+// a row is focus-walked (bluetooth/power) or index-selected (app/clipboard/emoji).
+// $radius varies per call site.
 @mixin cell($radius: 10px) {
   background: transparent;
   border: $border-width solid transparent;
@@ -80,6 +83,7 @@ separator {
     background-color: rgba($accent, 0.12);
   }
 
+  &.sel,
   &:focus,
   &:focus-visible,
   &:active {

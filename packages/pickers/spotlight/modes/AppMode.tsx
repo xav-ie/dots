@@ -1,19 +1,22 @@
-import { createState, For, onCleanup } from "ags";
+import { Accessor, createEffect, createState, For, onCleanup } from "ags";
 import { Gtk, Gdk } from "ags/gtk4";
 import AstalApps from "gi://AstalApps";
 import GLib from "gi://GLib";
 import { frecencyStore } from "../../lib/frecency";
 import { Store } from "../../lib/frecency";
+import { createSelection, scrollIntoView } from "../../lib/selection";
 import { ModeProps, PANEL_CONTENT_H } from "./types";
 
 const MAX_RESULTS = 8;
 
 function AppRow({
   application,
+  cls,
   onActivate,
   registerButton,
 }: {
   application: AstalApps.Application;
+  cls: Accessor<string>;
   onActivate: () => void;
   registerButton: (button: Gtk.Button | null) => void;
 }) {
@@ -21,7 +24,7 @@ function AppRow({
   const desc = application.description;
   return (
     <button
-      class="row"
+      class={cls}
       $={(ref) => registerButton(ref as Gtk.Button)}
       onClicked={onActivate}
     >
@@ -58,8 +61,10 @@ function AppRow({
   );
 }
 
-export default function AppMode({ register, close, getWin }: ModeProps) {
+export default function AppMode({ register, close }: ModeProps) {
   let searchentry: Gtk.Entry;
+  let scroller: Gtk.ScrolledWindow;
+  let listBox: Gtk.Box;
 
   const apps = new AstalApps.Apps();
   const fr = frecencyStore("app");
@@ -68,6 +73,8 @@ export default function AppMode({ register, close, getWin }: ModeProps) {
   let frecency: Store = fr.load();
   let allApps: AstalApps.Application[] = apps.fuzzy_query("");
 
+  // Row button per app entry, so the selection can scroll the highlighted row
+  // into view without walking focus.
   const itemButtons = new Map<string, Gtk.Button>();
 
   // Empty query → most frecent first. Typed query → AstalApps' fuzzy relevance
@@ -94,6 +101,7 @@ export default function AppMode({ register, close, getWin }: ModeProps) {
   }
 
   const [results, setResults] = createState<AstalApps.Application[]>(rank(""));
+  const sel = createSelection(results);
 
   function search(text: string) {
     setResults(rank(text));
@@ -106,42 +114,16 @@ export default function AppMode({ register, close, getWin }: ModeProps) {
     close();
   }
 
-  function launchTop() {
-    launch(results.get()[0]);
-  }
-
-  function searchHasFocus() {
-    const focus = getWin()?.get_focus() ?? null;
-    return (
-      focus !== null &&
-      (focus === searchentry || focus.is_ancestor(searchentry))
-    );
-  }
-
-  function orderedItems(): Gtk.Button[] {
-    return results
-      .get()
-      .map((a) => itemButtons.get(a.entry))
-      .filter((b): b is Gtk.Button => b != null);
-  }
-
-  function focusItem(delta: number) {
-    const items = orderedItems();
-    if (items.length === 0) return;
-    if (searchHasFocus()) {
-      if (delta > 0) items[0].grab_focus();
-      return;
-    }
-    const focus = getWin()?.get_focus() ?? null;
-    const cur = items.findIndex((b) => b === focus);
-    if (cur === -1) {
-      if (delta > 0) items[0].grab_focus();
-      return;
-    }
-    const next = cur + delta;
-    if (next < 0) searchentry.grab_focus();
-    else if (next < items.length) items[next].grab_focus();
-  }
+  // Keep the highlighted row visible as the arrows move it (or as a new query
+  // resets it to the top).
+  createEffect(() => {
+    const item = sel.current();
+    if (!item) return;
+    GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+      scrollIntoView(scroller, listBox, itemButtons.get(item.entry));
+      return GLib.SOURCE_REMOVE;
+    });
+  });
 
   function onShow() {
     frecency = fr.load();
@@ -154,34 +136,16 @@ export default function AppMode({ register, close, getWin }: ModeProps) {
     });
   }
 
-  function onKey(
-    keyval: number,
-    _mod: number,
-    controller: Gtk.EventControllerKey,
-  ) {
-    if (keyval === Gdk.KEY_Escape) return false;
+  // Focus stays on the entry; the arrows just slide the highlight. Enter is the
+  // entry's default action (onActivate → launch the highlighted app). Escape is
+  // left to the shell's default close.
+  function onKey(keyval: number) {
     if (keyval === Gdk.KEY_Down) {
-      focusItem(1);
+      sel.move(1);
       return true;
     }
     if (keyval === Gdk.KEY_Up) {
-      focusItem(-1);
-      return true;
-    }
-    if (keyval === Gdk.KEY_Return || keyval === Gdk.KEY_KP_Enter) {
-      const focus = getWin()?.get_focus() ?? null;
-      const onRow = focus !== null && orderedItems().some((b) => b === focus);
-      if (onRow) return false;
-      launchTop();
-      return true;
-    }
-    const passthrough =
-      keyval === Gdk.KEY_space ||
-      keyval === Gdk.KEY_Tab ||
-      keyval === Gdk.KEY_ISO_Left_Tab;
-    if (!passthrough && !searchHasFocus()) {
-      searchentry.grab_focus();
-      controller.forward(searchentry);
+      sel.move(-1);
       return true;
     }
     return false;
@@ -201,11 +165,19 @@ export default function AppMode({ register, close, getWin }: ModeProps) {
         primaryIconName="system-search-symbolic"
         placeholderText="Search apps…"
         onNotifyText={({ text }) => search(text)}
-        onActivate={launchTop}
+        onActivate={() => launch(sel.current())}
       />
       <Gtk.Separator />
-      <Gtk.ScrolledWindow vexpand hscrollbarPolicy={Gtk.PolicyType.NEVER}>
-        <box orientation={Gtk.Orientation.VERTICAL} spacing={2}>
+      <Gtk.ScrolledWindow
+        $={(ref) => (scroller = ref)}
+        vexpand
+        hscrollbarPolicy={Gtk.PolicyType.NEVER}
+      >
+        <box
+          $={(ref) => (listBox = ref)}
+          orientation={Gtk.Orientation.VERTICAL}
+          spacing={2}
+        >
           <label
             class="dim"
             label="No matches."
@@ -215,6 +187,7 @@ export default function AppMode({ register, close, getWin }: ModeProps) {
             {(application) => (
               <AppRow
                 application={application}
+                cls={sel.cls(application, "row")}
                 onActivate={() => launch(application)}
                 registerButton={(btn) => {
                   if (btn) itemButtons.set(application.entry, btn);
