@@ -17,6 +17,11 @@ def main [] {
     exit 0
   }
 
+  # Already seen: the user was looking at this pane when the prompt was
+  # presented (recorded by record-pending-tool.nu), so there is nothing to
+  # alert them to.
+  if ($pending.seen? | default false) { exit 0 }
+
   # Dedup: permission_prompt can fire repeatedly for the same unanswered prompt
   # (Claude re-pings while you stay idle / leave the pane). Notify once per
   # recorded tool. A genuinely new tool call rewrites this file via PreToolUse
