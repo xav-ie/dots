@@ -60,80 +60,21 @@ other bits of config.
 ## Things I am working on
 
 <details>
-<summary>Secrets</summary>
-I want to configure secrets the "right way".
+<summary>Stuff</summary>
 
-- [x] Use `pass` or `age` to just store all my ENV variables — **solved with
-      sops-nix + age, no master password and no manager lock-in.** The age
-      _host_ key at `/etc/age/keys.txt` decrypts secrets automatically at
-      system activation, so there is nothing to type at runtime. Bitwarden's
-      only role is to hold a backup of that one age key; sops/age is
-      manager-agnostic, so switching managers later just means moving the key.
-      The old `~/.env` values now live in `secrets/main.yaml` under `env/*` and
-      are rendered to `/run/secrets/rendered/shell-env` (tmpfs), which zsh and
-      nushell source instead. See `lib/common/sops.nix`.
-- [x] Look into these secret solutions others have worked on:
-  - [Secrets Management with SOPS-NIX by Vimjoyer](https://youtube.com/watch?v=G5f6GC7SnhU)
-  - [NixOS Secrets Management by Emergent Mind](https://youtube.com/watch?v=G5f6GC7SnhU)
-  - [Encrypted Secrets with NixOS](https://xeiaso.net/blog/nixos-encrypted-secrets-2021-01-20/)
-  - [A Modern and Secure Desktop Setup](https://discourse.nixos.org/t/a-modern-and-secure-desktop-setup/41154)
-  - [We should manage secrets the SystemD way!](https://youtube.com/watch?v=YFXwV0ZO9NE)
-  - [Alternative way to handle secrets](https://discourse.nixos.org/t/alternative-way-to-handle-secrets/35511)
-  - [Introducing Secrix](https://journal.platonic.systems/introducing-secrix)
-  - [Handling Secrets in NixOS: An Overview](https://discourse.nixos.org/t/handling-secrets-in-nixos-an-overview-git-crypt-agenix-sops-and-when-to-use-them/35462)
-  </details>
-
-<details>
-<summary>IOT</summary>
-I have some things in my house that I want control with my computer.
-
-- Computer lights are semi-controllable through `open-rgb -p`, but I
-need to set up more profiles.
-</details>
-
-<details>
-<summary>Waybar replacement</summary>
-I am not 100% happy with Waybar. It is a great tool for getting started,
-but I want complete control. Also, the blur is controled through hacks.
-Vimjoyer made a video on AGS: https://youtube.com/watch?v=GvpTUKaXqNk
-
-I think this is a good idea to learn because it seems extremely
-extensible to make future applications.
-
-This should also mean I get keyboard access!
-
-</details>
-
-<details>
-<summary>Firefox Sync</summary>
-
-- [x] I need to just make my Firefox configured more through Nix. A
-      lot of my plugins and settings are not 100% synced properly.
-- [x] I also need to find an RSS reader that can read/sync with a filesystem. I
-    am currently using FeedBro, but it does not sync between
-    my desktop and laptop.
-</details>
-
-<details>
-<summary>Automated Testing</summary>
-You will notice that a lot of my commits are update, then fixing the
-update. This is because I update depencies from my desktop or laptop,
-and then update from the other. This often leads to build time errors
-that only occurs on the other system due to new options/drivers/etc.
-
-There is a person who has a twitter thread (I can't remember who >:[)
-who explain how they set up automated GitHub CI to test their config.
-
-This would be **amazing** and I want to set this up, too.
-
-I also want it to be where it will also boot up the desktop and take a
-screenshot of it open and maybe even do some actions.
-
-</details>
-
-<details>
-<summary>Miscellaneous</summary>
-
+- [ ] Automated Testing
+      You will notice that a lot of my commits are update, then fixing the
+      update. This is because I update depencies from my desktop or laptop,
+      and then update from the other. This often leads to build time errors
+      that only occurs on the other system due to new options/drivers/etc.
+      There is a person who has a twitter thread (I can't remember who >:[)
+      who explain how they set up automated GitHub CI to test their config.
+      This would be **amazing** and I want to set this up, too.
+      I also want it to be where it will also boot up the desktop and take a
+      screenshot of it open and maybe even do some actions.
+- [ ] I have some things in my house that I want control with my computer.
+      Computer lights are semi-controllable through `open-rgb -p`, but I
+      need to set up more profiles.
 - [x] Global mute - this will require building a virtual HID device
       that is recognized by Zoom. Then, when you mute this virtual device,
       the state is reflected in Zoom as well. This opens up many
