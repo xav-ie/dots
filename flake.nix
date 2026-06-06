@@ -109,8 +109,6 @@
     bun-demincer-src.flake = false;
     clauhist-src.url = "github:lef237/clauhist";
     clauhist-src.flake = false;
-    notion-calendar-src.url = "github:czlabinger/notion-calendar-electron/7e01efb90361048b27220abb9b9e703ab705d05d";
-    notion-calendar-src.flake = false;
     macos-corner-fix-src.url = "github:m4rkw/macos-corner-fix/147f2708cb468475567139acbad7d714859a4b67";
     macos-corner-fix-src.flake = false;
     zerobrew-src.url = "github:lucasgelfond/zerobrew";
@@ -272,7 +270,6 @@
               clauhist-src
               executor-src
               mcp-atlassian-src
-              notion-calendar-src
               simulstreaming-src
               zerobrew-src
               ;

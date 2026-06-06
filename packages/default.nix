@@ -24,7 +24,6 @@
   executor-src,
   generate-kaomoji,
   mcp-atlassian-src,
-  notion-calendar-src,
   nuenv,
   simulstreaming-src,
   slack-mcp-server-src,
@@ -151,7 +150,6 @@ rec {
     inherit agsPackages;
     fontName = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
   };
-  notion-calendar = pkgs.callPackage ./notion-calendar { src = notion-calendar-src; };
   openrgb-appimage = pkgs.callPackage ./openrgb-appimage { };
   pickers = pkgs.callPackage ./pickers {
     inherit agsPackages;

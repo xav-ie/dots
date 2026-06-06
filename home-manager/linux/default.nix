@@ -12,7 +12,6 @@
     ./morrow.nix
     ./nemo
     ./notification-center
-    ./notion-calendar.nix
     ./obs
     ./orca-slicer.nix
     ./qt
