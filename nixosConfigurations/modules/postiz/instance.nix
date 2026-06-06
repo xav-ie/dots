@@ -66,6 +66,27 @@ let
 
   cfgSecret = config.sops.placeholder;
 
+  # Postiz records each upload's URL as `${FRONTEND_URL}/uploads/...`
+  # (local.storage.ts) and every social provider re-fetches that URL to upload
+  # the media bytes. FRONTEND_URL is the public, Cloudflare-Access-fronted
+  # hostname, so the fetch would otherwise leave the pod and hit the Access
+  # edge. This preload rewrites upload fetches to the in-pod origin, keeping
+  # media reads local so `/uploads/*` stays behind Access. Keyed off
+  # FRONTEND_URL so it tracks the env across Postiz upgrades.
+  uploadFetchShim = pkgs.writeText "postiz-upload-fetch-shim.cjs" ''
+    const orig = globalThis.fetch;
+    const PUB = (process.env.FRONTEND_URL || "") + "/uploads";
+    const INT = 'http://localhost:5000/uploads';
+    globalThis.fetch = (input, init) => {
+      if (typeof input === 'string' && input.startsWith(PUB)) {
+        input = INT + input.slice(PUB.length);
+      } else if (input && typeof input.url === 'string' && input.url.startsWith(PUB)) {
+        input = new Request(INT + input.url.slice(PUB.length), input);
+      }
+      return orig(input, init);
+    };
+  '';
+
   # Pinned tags for the temporal stack. Server + admin-tools follow
   # `temporalio/temporal` releases; we picked the latest 1.30 minor that
   # was published when this config was written. Bump together.
@@ -273,6 +294,7 @@ in
               volumes = [
                 "${postizDataDir}/config:/config/"
                 "${postizDataDir}/uploads:/uploads/"
+                "${uploadFetchShim}:/config/upload-fetch-shim.cjs:ro"
               ];
               environmentFiles = [ config.sops.templates."${name}.env".path ];
               environments = {
@@ -287,6 +309,9 @@ in
                 UPLOAD_DIRECTORY = "/uploads";
                 NEXT_PUBLIC_UPLOAD_DIRECTORY = "/uploads";
                 PRISMA_HIDE_UPDATE_MESSAGE = "true";
+                # Rewrite provider upload fetches to the in-pod origin; see
+                # uploadFetchShim above.
+                NODE_OPTIONS = "--require /config/upload-fetch-shim.cjs";
               };
               # Cap the CPU set the Temporal TS SDK sees at startup. Its Rust
               # core sizes the Tokio thread pool from `nproc`, so on a 32-thread
