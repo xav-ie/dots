@@ -1396,23 +1396,6 @@
         "type": "github"
       }
     },
-    "notion-calendar-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1764778294,
-        "narHash": "sha256-kYex7JjucpAMxOvLL9GbXxqgHcB4qhOMSE2VlNw7udI=",
-        "owner": "czlabinger",
-        "repo": "notion-calendar-electron",
-        "rev": "7e01efb90361048b27220abb9b9e703ab705d05d",
-        "type": "github"
-      },
-      "original": {
-        "owner": "czlabinger",
-        "repo": "notion-calendar-electron",
-        "rev": "7e01efb90361048b27220abb9b9e703ab705d05d",
-        "type": "github"
-      }
-    },
     "nuenv": {
       "inputs": {
         "nixpkgs": [
@@ -1762,7 +1745,6 @@
         "nixpkgs-lib-v1-merge": "nixpkgs-lib-v1-merge",
         "nixpkgs-stable": "nixpkgs-stable",
         "nixpkgs-swift": "nixpkgs-swift",
-        "notion-calendar-src": "notion-calendar-src",
         "nuenv": "nuenv",
         "obs-backgroundremoval": "obs-backgroundremoval",
         "ollama-src": "ollama-src",
