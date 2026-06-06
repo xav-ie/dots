@@ -83,7 +83,7 @@
           git-absorb
           gnumake
           go-jira
-          hyperfine # perfomance tester
+          hyperfine # performance tester
           imagemagick
           (jira-cli-go.overrideAttrs {
             postInstall = ''

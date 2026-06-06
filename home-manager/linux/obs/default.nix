@@ -94,7 +94,7 @@ in
           obs-shaderfilter
           # clone sources for applying effects
           obs-source-clone
-          # # allow caputre from wlroots-based compositors
+          # # allow capture from wlroots-based compositors
           # wlrobs
         ]
         ++ [

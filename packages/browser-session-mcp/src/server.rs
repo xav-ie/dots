@@ -535,7 +535,7 @@ impl BrowserSessionServer {
                 }
                 match serde_json::from_value::<CookieParam>(cleaned) {
                     Ok(p) => params.push(p),
-                    Err(err) => tracing::warn!(error = %err, "skipping unparseable saved cookie"),
+                    Err(err) => tracing::warn!(error = %err, "skipping unparsable saved cookie"),
                 }
             }
             sessions

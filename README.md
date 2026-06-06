@@ -64,7 +64,7 @@ other bits of config.
 
 - [ ] Automated Testing
       You will notice that a lot of my commits are update, then fixing the
-      update. This is because I update depencies from my desktop or laptop,
+      update. This is because I update dependencies from my desktop or laptop,
       and then update from the other. This often leads to build time errors
       that only occurs on the other system due to new options/drivers/etc.
       There is a person who has a twitter thread (I can't remember who >:[)

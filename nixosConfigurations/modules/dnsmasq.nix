@@ -12,7 +12,7 @@
       conf-file = "${pkgs.dnsmasq.outPath}/share/dnsmasq/trust-anchors.conf";
       # Never forward plain names (without a dot or domain part)
       domain-needed = true;
-      # allow dynamic config files, useful for sensistive information
+      # allow dynamic config files, useful for sensitive information
       conf-dir = "/etc/dnsmasq.d/,*.conf";
       # go to our DOH resolver
       # server = [ "127.0.0.1#5053" ];

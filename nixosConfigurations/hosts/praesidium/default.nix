@@ -335,7 +335,7 @@ in
           })
           pciutils
           pipewire
-          # TODO: find more "official" ditribution of libwebp.so.6
+          # TODO: find more "official" distribution of libwebp.so.6
           rigsofrods-bin
           sqlite
           stdenv.cc.cc

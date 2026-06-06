@@ -27,11 +27,11 @@ $env.TRANSIENT_PROMPT_COMMAND = { ||
 }
 
 $env.PROMPT_INDICATOR_VI_INSERT = { || make_prompt_indicator "" }
-# mantain the same prompt
+# maintain the same prompt
 $env.TRANSIENT_PROMPT_INDICATOR_VI_NORMAL = null
 
 $env.PROMPT_INDICATOR_VI_NORMAL = { || make_prompt_indicator "" }
-# mantain the same prompt
+# maintain the same prompt
 $env.TRANSIENT_PROMPT_INDICATOR_VI_INSERT = null
 
 $env.PROMPT_MULTILINE_INDICATOR = "⟶ "
