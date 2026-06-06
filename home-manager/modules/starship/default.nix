@@ -22,7 +22,7 @@ _: {
           # error_symbol = "[❯](bold red)";
 
           # Does not work, it will not print the new line
-          # I belive that *some* character is required
+          # I believe that *some* character is required
           # success_symbol = "[](bold green)";
           # error_symbol = "[](bold red)";
 

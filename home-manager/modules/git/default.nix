@@ -148,7 +148,7 @@ in
                 # also don't want to greedy match locks because I want the source
                 # to be tightly tied to the lock. I don't want to have unexpected
                 # files appearing between the source and generated lock. By
-                # setting explicit lock paths for each source, they are tighly
+                # setting explicit lock paths for each source, they are tightly
                 # paired.
 
                 # * <- implied at end of file, no effect here

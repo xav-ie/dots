@@ -1,0 +1,18 @@
+# Allowlist for the report-only typos check. typos never edits files.
+[files]
+# emoji shortcode data
+extend-exclude = ["packages/pickers/spotlight/modes/data.ts"]
+
+[default.extend-words]
+ags = "ags"
+hass = "hass"
+fre = "fre"
+# git typo-alias
+jsut = "jsut"
+# git typo-alias
+chekcout = "chekcout"
+DNE = "DNE"
+
+[default.extend-identifiers]
+# gix field
+rela_path = "rela_path"

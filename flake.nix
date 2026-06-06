@@ -181,6 +181,7 @@
         (import ./home-manager/modules/git/flake-check.nix toplevel)
         (import ./packages/clippy-checks.nix inputs)
         ./lib/nix-multiline-lint
+        ./lib/typos-check
       ];
 
       perSystem =

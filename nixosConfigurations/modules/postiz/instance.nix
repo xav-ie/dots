@@ -104,7 +104,7 @@ let
   '';
 
   # OpenSearch 3.6.0's image ships the performance-analyzer agent but
-  # not its config file. Without one, the agent logs two ERRORs at
+  # not its config file. Without one, the agent logs two errors at
   # boot before disabling itself. Mount this stub at the expected path
   # to keep startup quiet.
   opensearchPerfAnalyzerConfig = pkgs.writeText "performance-analyzer.properties" ''

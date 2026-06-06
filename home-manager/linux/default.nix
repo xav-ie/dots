@@ -45,7 +45,7 @@
           wf-recorder
           # https://github.com/marionebl/svg-term-cli
           # allows asciinema recordings to be exported to svg... this could be
-          # pretty indespensable if you would like ANSI escape sequences to be
+          # pretty indispensable if you would like ANSI escape sequences to be
           # interpreted by GH
           ################################
           # universal utils
@@ -108,7 +108,7 @@
           # opengles is blocked on NVIDIA; vulkan causes render pass stalls with video apps
         ];
       };
-      rbw.enable = true; # unnofficial bitwarden client
+      rbw.enable = true; # unofficial bitwarden client
       lazygit.enable = true; # easy git tui
     };
 
