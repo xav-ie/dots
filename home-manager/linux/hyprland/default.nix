@@ -124,6 +124,7 @@ in
       libva
       libva-utils # hardware video acceleration
       polkit_gnome # just a GUI askpass
+      satty # screenshot annotator
       waypipe
       wl-clipboard
     ];
@@ -567,6 +568,8 @@ in
             "$mainMod, V, exec, ${pkgs.pkgs-mine.pickers}/bin/spotlight clipboard"
             "$mainMod, S, exec, ${pkgs.hyprshot}/bin/hyprshot -m region -z --clipboard-only"
             "$mainMod SHIFT, S, exec, ${pkgs.hyprshot}/bin/hyprshot -m region -z -o ~/Pictures"
+            # Region screenshot → annotate in satty → copy to clipboard.
+            "$mainMod CTRL, S, exec, ${pkgs.hyprshot}/bin/hyprshot -m region --raw | ${pkgs.satty}/bin/satty --filename - --copy-command wl-copy"
             "$mainMod, N, exec, ${lib.getExe' pkgs.pkgs-mine.notification-center "notifctl"} -t"
             "$mainMod, C, exec, ${config.programs.mpv.package}/bin/mpv av://v4l2:/dev/video1"
             "$mainMod SHIFT, M, exit,"
