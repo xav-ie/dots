@@ -39,13 +39,6 @@ takes a long time to generate.
 
 fzf files on command line.
 
-### [g](./g)
-
-fzf powered git log. Allows you to browse git commit history with
-preview of diff.
-
-Broken: Still working on nixifying this properly.
-
 ### [is-sshed](./is-sshed)
 
 Check if there is someone currently ssh-ed into system. Useful for
