@@ -23,39 +23,41 @@ let
   #      fetch is reproducible in pure eval mode (nh, flake check, etc.).
   patchedImportCargoLockFor =
     pkgs:
-    (pkgs.runCommand "import-cargo-lock-patched" { } ''
-      mkdir -p $out
-      cp -r ${pkgs.path}/pkgs/build-support/rust/. $out/
-      ${pkgs.gnused}/bin/sed -i \
-        -e 's|https://crates.io/api/v1/crates|https://static.crates.io/crates|g' \
-        -e '/else if allowBuiltinFetchGit then/,/missingHash;/c\
-          else if allowBuiltinFetchGit then\
-            (let\
-              m = builtins.match "https?://github.com/([^/]+)/([^/.]+)(\\.git)?/?" gitParts.url;\
-              knownHashes = { ${
-                toString (
-                  builtins.map (k: ''"${k}" = "${knownOrphanTarballHashes.${k}}"; '') (
-                    builtins.attrNames knownOrphanTarballHashes
+    (pkgs.runCommand "import-cargo-lock-patched" { } # sh
+      ''
+        mkdir -p $out
+        cp -r ${pkgs.path}/pkgs/build-support/rust/. $out/
+        ${pkgs.gnused}/bin/sed -i \
+          -e 's|https://crates.io/api/v1/crates|https://static.crates.io/crates|g' \
+          -e '/else if allowBuiltinFetchGit then/,/missingHash;/c\
+            else if allowBuiltinFetchGit then\
+              (let\
+                m = builtins.match "https?://github.com/([^/]+)/([^/.]+)(\\.git)?/?" gitParts.url;\
+                knownHashes = { ${
+                  toString (
+                    builtins.map (k: ''"${k}" = "${knownOrphanTarballHashes.${k}}"; '') (
+                      builtins.attrNames knownOrphanTarballHashes
+                    )
                   )
-                )
-              } };\
-            in\
-              if m != null && knownHashes ? ''${gitParts.sha} then\
-                builtins.fetchTarball {\
-                  url = "https://github.com/" + (builtins.elemAt m 0) + "/" + (builtins.elemAt m 1) + "/archive/" + gitParts.sha + ".tar.gz";\
-                  sha256 = knownHashes.''${gitParts.sha};\
-                }\
-              else\
-                fetchGit {\
-                  inherit (gitParts) url;\
-                  rev = gitParts.sha;\
-                  allRefs = true;\
-                  submodules = true;\
-                })\
-          else\
-            missingHash;' \
-        $out/import-cargo-lock.nix
-    '')
+                } };\
+              in\
+                if m != null && knownHashes ? ''${gitParts.sha} then\
+                  builtins.fetchTarball {\
+                    url = "https://github.com/" + (builtins.elemAt m 0) + "/" + (builtins.elemAt m 1) + "/archive/" + gitParts.sha + ".tar.gz";\
+                    sha256 = knownHashes.''${gitParts.sha};\
+                  }\
+                else\
+                  fetchGit {\
+                    inherit (gitParts) url;\
+                    rev = gitParts.sha;\
+                    allRefs = true;\
+                    submodules = true;\
+                  })\
+            else\
+              missingHash;' \
+          $out/import-cargo-lock.nix
+      ''
+    )
     + "/import-cargo-lock.nix";
 in
 {
@@ -278,6 +280,7 @@ in
                   "libgstsubenc"
                 ];
               in
+              # sh
               ''
                 mkdir -p $out/lib/gstreamer-1.0
                 for plugin in ${builtins.concatStringsSep " " neededPlugins}; do

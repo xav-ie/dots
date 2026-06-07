@@ -1,0 +1,102 @@
+{
+  flake.modules.homeManager.common =
+    { pkgs, ... }:
+    {
+      config = {
+        programs.zsh =
+          let
+            # TODO: move this and plugin config into a separate file
+            fzfTabInitExtra = # sh
+              ''
+                # disable sort when completing `git checkout`
+                zstyle ':completion:*:git-checkout:*' sort false
+                # set descriptions format to enable group support
+                # NOTE: don't use escape sequences here, fzf-tab will ignore them
+                zstyle ':completion:*:descriptions' format '[%d]'
+                # set list-colors to enable filename colorizing
+                # zstyle ':completion:*' list-colors ''${("s.:.") LS_COLORS}
+                # force zsh not to show completion menu, which allows fzf-tab to capture the unambiguous prefix
+                zstyle ':completion:*' menu no
+                # preview directory's content with eza when completing cd
+                zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always $realpath'
+                # switch group using `<` and `>`
+                zstyle ':fzf-tab:*' switch-group '<' '>'
+              '';
+          in
+          {
+            enable = true;
+            enableCompletion = true;
+            autosuggestion.enable = true;
+            syntaxHighlighting.enable = true;
+            shellAliases = {
+              # this is for commands that do not properly adjust their output to given width
+              c4 = "COLUMNS=$COLUMNS-4";
+              gake = "git pull && make";
+              gpw = "gh pr view -w";
+              grw = "gh repo view -w";
+              info = "env info --vi-keys";
+              l = "ls -lah";
+              # I could not get man to respect pager width
+              man = "c4 env man";
+              # nvim = "~/Projects/xnixvim/result/bin/nvim";
+              w = "watson";
+              zj = "zellij attach || zellij";
+            };
+            initContent = # sh
+              ''
+                # get system environment variables for each new shell, skipping
+                # needing to re-login. Not sure why this is not the default...
+                unset __NIX_DARWIN_SET_ENVIRONMENT_DONE
+                unset __NIXOS_SET_ENVIRONMENT_DONE
+                source /etc/zshenv
+                if [ -f /etc/set-environment ]; then
+                  source /etc/set-environment
+                fi
+                unset __HM_SESS_VARS_SOURCED
+                source $HOME/.zshenv
+
+                ${fzfTabInitExtra}
+                # comment this if you face weird direnv issues
+                export DIRENV_LOG_FORMAT=""
+
+                function git_diff_exclude_file() {
+                  if [ $# -lt 3 ]; then
+                    echo "Usage: git_diff_exclude_file <start_commit> <end_commit> <exclude_file> [output_file]"
+                    return 1
+                  fi
+
+                  local start_commit=$1
+                  local end_commit=$2
+                  local exclude_file=$3
+                  local output_file=$\{4:-combined_diff.txt}
+
+                  git diff --name-only "$start_commit" "$end_commit" | grep -v "$exclude_file" | xargs -I {} git diff "$start_commit" "$end_commit" -- {} > "$output_file"
+                }
+
+                # Secrets decrypted by sops-nix at activation (see lib/common/sops.nix).
+                # `set -a` exports every assignment so child processes inherit them.
+                if [ -r /run/secrets/shell-env ]; then
+                  set -a
+                  source /run/secrets/shell-env
+                  set +a
+                fi
+
+                download_nixpkgs_cache_index () {
+                  filename="index-$(uname -m | sed 's/^arm64$/aarch64/')-$(uname | tr A-Z a-z)"
+                  mkdir -p ~/.cache/nix-index && cd ~/.cache/nix-index
+                  # -N will only download a new version if there is an update.
+                  wget -q -N https://github.com/Mic92/nix-index-database/releases/latest/download/$filename
+                  ln -f $filename files
+                }
+              '';
+            plugins = [
+              {
+                name = "fzf-tab";
+                src = pkgs.zsh-fzf-tab;
+                file = "share/fzf-tab/fzf-tab.plugin.zsh";
+              }
+            ];
+          };
+      };
+    };
+}

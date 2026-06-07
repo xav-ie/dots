@@ -1,0 +1,56 @@
+{
+  flake.modules.homeManager.common =
+    { pkgs, ... }:
+    let
+      delta-jj = pkgs.writeNuApplication {
+        name = "delta-jj";
+        runtimeInputs = [ pkgs.delta ];
+        text = builtins.readFile ./delta-jj.nu;
+      };
+    in
+    {
+      config = {
+        programs.jjui = {
+          enable = true;
+        };
+
+        programs.jujutsu = {
+          enable = true;
+          settings = {
+            "$schema" = "https://jj-vcs.github.io/jj/latest/config-schema.json";
+            # https://jj-vcs.github.io/jj/latest/config/#commit-signing
+            signing = {
+              behavior = "own";
+              backend = "gpg";
+              # github@xav.ie
+              key = "5B9134A9E7E7F965";
+            };
+            ui = {
+              show-cryptographic-signatures = true;
+
+              diff-formatter = "${delta-jj}/bin/delta-jj";
+            };
+            user = {
+              name = "Xavier Ruiz";
+              email = "github@xav.ie";
+            };
+
+            "--scope" = [
+              {
+                # NB: only applies properly when there is active jj repo
+                "--when"."repositories" = [ "~/Work/" ];
+                user.email = "xavier@outsmartly.com";
+                # xavier@outsmartly.com
+                signing.key = "22420DD6C13E3EB7";
+              }
+            ];
+
+            # TODO:
+            # - pager
+            # - diff editor
+            # - rebase stuff
+          };
+        };
+      };
+    };
+}
