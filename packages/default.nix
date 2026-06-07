@@ -117,7 +117,7 @@ rec {
 // (optionalAttrs isLinux rec {
   askpass = pkgs.callPackage ./askpass {
     inherit agsPackages;
-    fontName = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
+    fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
   };
   bar = pkgs.callPackage ./bar {
     inherit
@@ -132,7 +132,7 @@ rec {
     # uair-toggle-and-notify lives in the base (non-Linux) set, out of scope
     # here; rebuild it from the same inputs (identical store path).
     uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
-    fontName = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
+    fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
   };
   browser-session-mcp = pkgs.callPackage ./browser-session-mcp { };
   chrome-headless-shell = pkgs.callPackage ./chrome-headless-shell { };
@@ -143,17 +143,17 @@ rec {
   # Built upstream in the morrow flake; override only the fonts so it tracks the
   # same lib/fonts.nix `sans`/`mono` families as the rest of the GTK config.
   morrow = morrow-pkg.override {
-    fontName = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
-    monoFont = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "mono";
+    fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
+    monoFont = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "mono";
   };
   notification-center = pkgs.callPackage ./notification-center {
     inherit agsPackages;
-    fontName = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
+    fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
   };
   openrgb-appimage = pkgs.callPackage ./openrgb-appimage { };
   pickers = pkgs.callPackage ./pickers {
     inherit agsPackages;
-    fontName = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
+    fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
   };
   pinentry-auto = pkgs.callPackage ./pinentry-auto { };
   simulstreaming = pkgs.callPackage ./simulstreaming { src = simulstreaming-src; };
@@ -161,7 +161,7 @@ rec {
   record-section = pkgs.callPackage ./record-section { };
   screencast-border = pkgs.callPackage ./screencast-border {
     inherit agsPackages;
-    fontName = (import ../lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
+    fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
   };
   snippet-mcp = pkgs.callPackage ./snippet-mcp { };
   zenity-askpass = pkgs.callPackage ./zenity-askpass { inherit writeNuApplication; };

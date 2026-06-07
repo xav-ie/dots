@@ -18,33 +18,29 @@ config:
     lineColor: "#888"
     fontFamily: "monospace"
 ---
-classDiagram
-    %% Unfortunately, we cannot use relative links and must specify a branch :/
-    class lib["<a href='https://github.com/xav-ie/dots/tree/main/lib'>./lib</a>"]
-    class darwinConfigurations["<a href='https://github.com/xav-ie/dots/tree/main/darwinConfigurations'>./darwinConfigurations</a>"]
-    class home-manager["<a href='https://github.com/xav-ie/dots/tree/main/home-manager'>./home-manager</a>"]
-    class nixosConfigurations["<a href='https://github.com/xav-ie/dots/tree/main/nixosConfigurations'>./nixosConfigurations</a>"]
-    class overlays["<a href='https://github.com/xav-ie/dots/tree/main/overlays'>./overlays</a>"]
-    class packages["<a href='https://github.com/xav-ie/dots/tree/main/packages'>./packages</a>"]
+flowchart LR
+    %% Relative links don't render on GitHub, so we pin to the main branch.
+    flake["<div style='text-align:left'><b><a href='https://github.com/xav-ie/dots/blob/main/flake.nix'>flake.nix</a></b><br/>entry point</div>"]
 
-    lib: overlay setup,
-    lib:  nix settings,
-    lib:  utilities
-    darwinConfigurations: • nox
-    home-manager: hm modules and setup
-    home-manager: for linux and mac
-    nixosConfigurations: • praesidium
-    overlays: package overrides
-    packages: • cache-command
-    packages: • record
-    packages: • record-section
-    packages: • ...
+    modules["<div style='text-align:left'><b><a href='https://github.com/xav-ie/dots/tree/main/modules'>modules/</a></b><br/>· hardware<br/>· window manager<br/>· services<br/>· dotfiles<br/>...</div>"]
 
-    lib ..> overlays
-    darwinConfigurations ..> lib
-    darwinConfigurations ..> home-manager
-    nixosConfigurations ..> lib
-    nixosConfigurations ..> home-manager
+    machines["<div style='text-align:left'><b><a href='https://github.com/xav-ie/dots/tree/main/modules/hosts'>machines</a></b><br/>·&nbsp;praesidium&nbsp;—&nbsp;Linux&nbsp;desktop<br/>·&nbsp;nox&nbsp;—&nbsp;MacBook</div>"]
+
+    overlays["<div style='text-align:left'><b><a href='https://github.com/xav-ie/dots/tree/main/overlays'>overlays/</a></b><br/>· upstream patches<br/>· version pins</div>"]
+    packages["<div style='text-align:left'><b><a href='https://github.com/xav-ie/dots/tree/main/packages'>packages/</a></b><br/>· spotlight launcher<br/>· status bar<br/>· notification center<br/>...more custom packages</div>"]
+
+    flake -->|auto-loads| modules
+    modules -->|builds| machines
+    modules -->|applies| overlays
+    modules -->|installs| packages
+    flake -->|exposes| packages
+
+    classDef entry fill:#240033,stroke:#fa99fa,color:#fa99fa
+    classDef internal fill:#1a0020,stroke:#aaaafa,color:#fa99fa
+    classDef output fill:#2e0b36,stroke:#fa99fa,color:#ffd6ff
+    class flake entry
+    class modules,overlays internal
+    class packages,machines output
 ```
 
 <div align="center">
