@@ -21,10 +21,17 @@
         agsPackages = inputs.ags.packages.${system} or null;
         # virtual-headset mute CLI for the ags bar; linux-only.
         virtual-headset-ctl = inputs.virtual-headset.packages.${system}.virtual-headset-ctl or null;
+        # virtual-headset AGS panel, opened from the bar's right-click; linux-only.
+        virtual-headset-panel = inputs.virtual-headset.packages.${system}.virtual-headset-panel or null;
         # morrow calendar app; linux-only, null on darwin (no output there).
         morrow-pkg = inputs.morrow.packages.${system}.default or null;
         atuin = inputs.atuin.packages.${system}.default;
         generate-kaomoji = inputs.generate-kaomoji.packages.${system}.default;
+        # uair patched with PR#31 (overlays/default.nix `modifications`), so
+        # `uairctl listen` is newline-delimited and flushed per line — the AGS bar
+        # reads it as a stream. The package-set pkgs below has no overlays, so
+        # apply them here (like atuin) and pull the patched uair out.
+        inherit ((pkgs.extend (lib.composeManyExtensions (builtins.attrValues inputs.self.overlays)))) uair;
         # Use regular nixpkgs - most packages are writeNuApplication wrappers
         # that don't need bleeding-edge.
         inherit pkgs;

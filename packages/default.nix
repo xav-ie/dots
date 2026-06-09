@@ -12,6 +12,9 @@
   # virtual-headset mute control CLI (inputs.virtual-headset); linux-only, used
   # by the ags bar. null on darwin.
   virtual-headset-ctl ? null,
+  # virtual-headset AGS panel (inputs.virtual-headset); opened from the bar's
+  # right-click. linux-only, null on darwin.
+  virtual-headset-panel ? null,
   # The morrow calendar app (inputs.morrow.packages.<system>.default); built
   # with default fonts, re-overridden below to track lib/fonts.nix. null on
   # darwin, where morrow has no output and morrow.nix is not imported.
@@ -19,6 +22,10 @@
   # User's atuin fork, pulled from inputs at the flake level since the
   # overlay isn't applied to top-level `pkgs` here.
   atuin,
+  # uair patched with PR#31 (overlays/default.nix), threaded in from packages.nix
+  # for the same reason: `uairctl listen` must be newline-delimited and flushed so
+  # the AGS bar can stream it. Forwarded to the bar below.
+  uair,
   bun-demincer-src,
   clauhist-src,
   executor-src,
@@ -124,7 +131,9 @@ rec {
       agsPackages
       notification-center
       pickers
+      uair
       virtual-headset-ctl
+      virtual-headset-panel
       ;
     # Plain (non-CUDA) build: the bar only needs the `record toggle` IPC client,
     # which never loads whisper, so it stays out of the heavy GPU closure.
@@ -133,6 +142,7 @@ rec {
     # here; rebuild it from the same inputs (identical store path).
     uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
     fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
+    monoFontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "mono";
   };
   browser-session-mcp = pkgs.callPackage ./browser-session-mcp { };
   chrome-headless-shell = pkgs.callPackage ./chrome-headless-shell { };

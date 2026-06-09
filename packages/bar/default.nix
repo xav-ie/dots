@@ -20,6 +20,8 @@
   pickers,
   uair-toggle-and-notify,
   virtual-headset-ctl,
+  # bin/virtual-headset-panel: opened by the virtual-headset module's right-click.
+  virtual-headset-panel,
   # bin/hyprwhspr-rs: the dictation module's click toggles recording via its
   # `record toggle` IPC client (talks to the running daemon; no GPU/whisper).
   hyprwhspr-rs,
@@ -68,6 +70,7 @@ stdenv.mkDerivation {
         pickers
         uair-toggle-and-notify
         virtual-headset-ctl
+        virtual-headset-panel
         hyprwhspr-rs
         pavucontrol
         pulseaudio
