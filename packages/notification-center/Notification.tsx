@@ -31,32 +31,53 @@ function fileExists(path?: string | null): boolean {
   return !!p && GLib.file_test(p, GLib.FileTest.EXISTS);
 }
 
-// Render an arbitrary image file at a thumbnail size. Gtk.Image draws file images
-// at icon size (tiny), so use Gdk.Texture + Gtk.Picture like the clipboard picker.
-function NotifImage({ path }: { path: string }) {
+// Notification thumbnail: fixed height, aspect-ratio width (capped at 2×) so a
+// wide image is shown in full instead of being cropped to a square. Drawn as a
+// CSS background-image which — unlike Gtk.Picture — carries no natural size, so a
+// large source file can never drive the box (and thus the unconstrained popup) up
+// to its full resolution. Mirrors the MPRIS album-art approach.
+const THUMB_H = 64;
+const THUMB_MAX_W = THUMB_H * 2;
+
+interface Thumb {
+  css: string;
+  w: number;
+}
+const thumbCache = new Map<string, Thumb | null>();
+function thumbInfo(path: string): Thumb | null {
   const p = toPath(path);
-  let tex: Gdk.Texture | null = null;
+  if (!p) return null;
+  if (thumbCache.has(p)) return thumbCache.get(p)!;
+  let info: Thumb | null = null;
   try {
-    if (p) tex = Gdk.Texture.new_from_filename(p);
+    const tex = Gdk.Texture.new_from_filename(p);
+    const ratio = tex.get_width() / tex.get_height();
+    const w = Math.max(
+      THUMB_H,
+      Math.min(THUMB_MAX_W, Math.round(THUMB_H * ratio)),
+    );
+    info = {
+      css: `background-image: url("file://${p}"); background-size: cover; background-position: center;`,
+      w,
+    };
   } catch {
-    tex = null;
+    info = null;
   }
-  if (!tex) return <box />;
+  thumbCache.set(p, info);
+  return info;
+}
+
+function NotifImage({ path }: { path: string }) {
+  const info = thumbInfo(path);
+  if (!info) return <box />;
   return (
     <box
       class="image"
       valign={Gtk.Align.START}
-      widthRequest={64}
-      heightRequest={64}
-      overflow={Gtk.Overflow.HIDDEN}
-    >
-      <Gtk.Picture
-        contentFit={Gtk.ContentFit.COVER}
-        hexpand
-        vexpand
-        paintable={tex}
-      />
-    </box>
+      heightRequest={THUMB_H}
+      widthRequest={info.w}
+      css={info.css}
+    />
   );
 }
 

@@ -60,7 +60,7 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
 // the pomodoro timer, floating in the transparent gap between the main Bar's side
 // clusters. Mirrors the notification centre's Osd: anchoring only TOP centers it
 // horizontally, IGNORE keeps it from being pushed below the main Bar's exclusive
-// zone, OVERLAY puts it on the same plane, and marginTop matches `.bar` so the
+// zone, TOP keeps it on the bar's plane (not above every window), and marginTop matches `.bar` so the
 // pill lines up with the side pills. `visible` tracks the timer, so the whole
 // window unmaps when no session runs; NONE keymode keeps it from stealing focus.
 export function CenterBar(gdkmonitor: Gdk.Monitor) {
@@ -71,7 +71,7 @@ export function CenterBar(gdkmonitor: Gdk.Monitor) {
       gdkmonitor={gdkmonitor}
       anchor={TOP}
       marginTop={6}
-      layer={Astal.Layer.OVERLAY}
+      layer={Astal.Layer.TOP}
       exclusivity={Astal.Exclusivity.IGNORE}
       keymode={Astal.Keymode.NONE}
       visible={pomodoroActive}
