@@ -4,6 +4,7 @@
       config,
       lib,
       pkgs,
+      inputs,
       ...
     }:
     let
@@ -11,7 +12,18 @@
       shared = "${config.dotFilesDir}/modules/_lib/firefox";
     in
     {
+      # Native-messaging bridge so the virtual headset's mute syncs with the
+      # Zoom/Meet *web* apps (Firefox has no WebHID). Registers the
+      # virtual_headset_bridge native host and force-installs the Mozilla-signed
+      # extension from its latest GitHub release (installExtension), which
+      # auto-updates via the manifest's update_url.
+      # See github:xav-ie/virtual-headset extension/.
+      imports = [ inputs.virtual-headset.homeManagerModules.firefox ];
+
       config = {
+        programs.virtual-headset-firefox.enable = true;
+        programs.virtual-headset-firefox.installExtension = true;
+
         home.packages = [ pkgs.firefoxpwa ];
         programs.firefox = {
           enable = true;
