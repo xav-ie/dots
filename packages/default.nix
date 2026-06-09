@@ -142,7 +142,6 @@ rec {
     # here; rebuild it from the same inputs (identical store path).
     uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
     fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
-    monoFontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "mono";
   };
   browser-session-mcp = pkgs.callPackage ./browser-session-mcp { };
   chrome-headless-shell = pkgs.callPackage ./chrome-headless-shell { };

@@ -76,7 +76,12 @@ window#notification-center-popups {
       margin-left: 8px;
     }
 
-    .image,
+    // .image sizes itself via width/height request (fixed height, aspect width)
+    // and carries its own background-image; the icon fallback keeps a square.
+    .image {
+      border-radius: 10px;
+      margin-right: 10px;
+    }
     .icon-image {
       border-radius: 10px;
       margin-right: 10px;
@@ -110,11 +115,6 @@ window#notification-center-popups {
       }
     }
   }
-}
-
-// ─── Toast stack ───────────────────────────────────────────────────────────
-.popups .notification {
-  box-shadow: 2px 4px 14px 0 rgba(0, 0, 0, 0.45);
 }
 
 // Fade in/out, paired with the SLIDE_DOWN revealer in Popups.tsx. Each toast's
@@ -284,6 +284,10 @@ scale {
     background-color: rgba($accent, 0.22);
     border-radius: 100px;
     min-height: 6px;
+    // GTK's default trough draws an inset dark border/shadow; clear it so the
+    // thin OSD bar doesn't read as a black outline.
+    border: none;
+    box-shadow: none;
   }
   highlight {
     background-color: $accent;
@@ -324,23 +328,28 @@ window#osd {
   border-radius: 12px;
   min-height: 28px;
   padding: 0 14px;
-  box-shadow: 2px 4px 14px 0 rgba(0, 0, 0, 0.45);
+  box-shadow: none;
 
   image {
     color: $accent;
   }
+  // Match the bar's right-side text modules (.volume / .clock): full-strength
+  // foreground at the light 300 weight, not the dimmed readout grey. Tabular
+  // figures keep the percentage digits fixed-width so the readout doesn't jitter.
   .osd-pct {
-    color: $dim;
+    color: $fg;
+    font-weight: 300;
+    font-feature-settings: "tnum" 1;
     min-width: 46px;
   }
   // The bar is a slider (`scale`), so it already inherits the shared slider
-  // styling; muted just recolours the filled portion (highlight) red.
+  // styling; muted just recolours the filled portion (highlight) gray.
   &.muted {
     image {
-      color: $danger;
+      color: $dim;
     }
     .osd-bar highlight {
-      background-color: $danger;
+      background-color: $dim;
     }
   }
 }
