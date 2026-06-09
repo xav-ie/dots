@@ -39,7 +39,7 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
         <box
           $type="end"
           class="bar-section bar-right"
-          spacing={2}
+          spacing={0}
           halign={Gtk.Align.END}
         >
           <Tray />
