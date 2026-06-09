@@ -3,6 +3,7 @@ import Gtk from "gi://Gtk?version=4.0";
 import style from "./style.scss";
 import "./popupStore"; // wires the toast lifecycle onto the daemon (pulls in notifd)
 import Popup from "./Popups";
+import Osd from "./Osd";
 import NotificationCenter from "./NotificationCenter";
 import { toggleCenter, setCenter } from "./controller";
 
@@ -35,6 +36,7 @@ app.start({
       return;
     }
     for (const monitor of app.get_monitors()) app.add_window(Popup(monitor));
+    app.add_window(Osd() as Gtk.Window);
     app.add_window(NotificationCenter() as Gtk.Window);
   },
 });

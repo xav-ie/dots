@@ -248,6 +248,103 @@ switch {
   }
 }
 
+// ─── Screen filter card (1/3-width column in the weather row) ───────────────
+.screen-filter {
+  @include card;
+  background-color: transparent;
+  border-color: rgba($accent, 0.18);
+  border-width: $border-width;
+  padding: 10px 12px;
+
+  .sf-header {
+    image {
+      color: $accent;
+    }
+    label {
+      font-weight: 600;
+    }
+  }
+  .sf-caption {
+    margin-bottom: 2px;
+  }
+  .sf-name {
+    color: $accent;
+    font-weight: 600;
+  }
+  .sf-pct {
+    color: $dim;
+  }
+}
+
+// Astal.Slider is a Gtk.Scale, so its CSS node is `scale` (the `switch slider`
+// rule above targets a different node and doesn't apply here). Accent trough +
+// fill with a light handle, matching the rest of the shell.
+scale {
+  trough {
+    background-color: rgba($accent, 0.22);
+    border-radius: 100px;
+    min-height: 6px;
+  }
+  highlight {
+    background-color: $accent;
+    border-radius: 100px;
+    min-height: 6px;
+  }
+  slider {
+    background-image: none;
+    background-color: $fg;
+    border: none;
+    box-shadow: none;
+    border-radius: 100px;
+    min-width: 16px;
+    min-height: 16px;
+    margin: -7px;
+  }
+  // Focus ring around the whole bar: the scale is the tab stop, so outline its
+  // full track. Use the shell's $border-width accent stroke so it reads the same
+  // weight as the switch/cell focus borders. Outline follows the node's
+  // border-radius, so round it to a pill.
+  &:focus,
+  &:focus-visible {
+    outline: $border-width solid $accent;
+    // Negative offset insets the ring so it doesn't bleed into neighbours.
+    outline-offset: -2px;
+    border-radius: 100px;
+  }
+}
+
+// ─── Volume OSD (transient top-center overlay) ─────────────────────────────
+window#osd {
+  background: transparent;
+}
+.osd {
+  @include card;
+  // Match the bar pill: 28px content + 4px border each side = 36px tall, same
+  // 12px corner. No vertical padding so the row owns the full inner height.
+  border-radius: 12px;
+  min-height: 28px;
+  padding: 0 14px;
+  box-shadow: 2px 4px 14px 0 rgba(0, 0, 0, 0.45);
+
+  image {
+    color: $accent;
+  }
+  .osd-pct {
+    color: $dim;
+    min-width: 46px;
+  }
+  // The bar is a slider (`scale`), so it already inherits the shared slider
+  // styling; muted just recolours the filled portion (highlight) red.
+  &.muted {
+    image {
+      color: $danger;
+    }
+    .osd-bar highlight {
+      background-color: $danger;
+    }
+  }
+}
+
 // ─── Weather (today + tomorrow) ─────────────────────────────────────────────
 .weather {
   .weather-day {
@@ -271,13 +368,15 @@ switch {
   }
   .weather-lo {
     color: $dim;
+    font-weight: 400;
   }
   .weather-desc {
     color: $dim;
     font-size: 0.9em;
+    font-weight: 500;
   }
+  // Rain chance on its own line, sized to match the low temp.
   .weather-rain {
-    font-size: 1.1em;
-    font-weight: 600;
+    color: $dim;
   }
 }

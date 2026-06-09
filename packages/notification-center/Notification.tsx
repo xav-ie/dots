@@ -3,6 +3,7 @@ import Gdk from "gi://Gdk?version=4.0";
 import GLib from "gi://GLib";
 import Pango from "gi://Pango";
 import AstalNotifd from "gi://AstalNotifd";
+import { focusAdjacent } from "./focusTrap";
 
 // Adapted from the official Aylur/ags gtk4 notifications example, shared between
 // the transient popups and the persistent center list.
@@ -204,15 +205,52 @@ export default function Notification({
               return false;
             }
             if (keyval === Gdk.KEY_BackSpace || keyval === Gdk.KEY_Delete) {
-              // Remove the focused notification, then move focus to a neighbour
-              // so you can keep deleting without re-selecting.
-              const sib = nextFocusable(row) ?? prevFocusable(row);
+              // Sole notification: no neighbour to receive focus, so a focused-
+              // then-destroyed row lingers undeleted — hand focus to the adjacent
+              // trap stop (Clear All) before dismissing.
+              if (!nextFocusable(row) && !prevFocusable(row)) {
+                const root = row.get_root();
+                if (root) focusAdjacent(root as Gtk.Widget, row);
+                n.dismiss();
+                return true;
+              }
+              // Otherwise focus the neighbour that slides into this row's slot.
+              // Capture the position now, but grab from the LIVE list after
+              // dismiss: For rebuilds its rows on delete, so a widget reference
+              // captured beforehand goes stale — the grab then silently no-ops
+              // and the new row never picks up :focus styling.
+              const listBox = row.get_parent();
+              let idx = 0;
+              for (
+                let c = listBox?.get_first_child();
+                c && c !== row;
+                c = c.get_next_sibling()
+              )
+                idx++;
               n.dismiss();
-              if (sib)
-                GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
-                  sib.grab_focus();
-                  return GLib.SOURCE_REMOVE;
-                });
+              GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+                let target: Gtk.Widget | null =
+                  listBox?.get_first_child() ?? null;
+                for (let i = 0; i < idx && target?.get_next_sibling(); i++)
+                  target = target!.get_next_sibling();
+                while (target && !target.get_focusable())
+                  target = target.get_next_sibling();
+                if (!target) {
+                  // Deleted the bottom row: fall back to the new last row.
+                  let c = listBox?.get_last_child() ?? null;
+                  while (c && !c.get_focusable()) c = c.get_prev_sibling();
+                  target = c;
+                }
+                target?.grab_focus();
+                // grab_focus restores logical focus but not the window's
+                // focus-visible flag (reset to false when the old focused row was
+                // destroyed), and GTK only paints :focus when it's true — so force
+                // it on or the new row gets focus without the ring.
+                (target?.get_root() as Gtk.Window | null)?.set_focus_visible(
+                  true,
+                );
+                return GLib.SOURCE_REMOVE;
+              });
               return true;
             }
             return false;
