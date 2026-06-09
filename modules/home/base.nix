@@ -22,6 +22,12 @@
           claude.nativeInstall = false;
           # fuzzy finder
           fzf.enable = true;
+          # GitHub CLI + declaratively-managed extensions
+          gh = {
+            enable = true;
+            extensions = [ pkgs.gh-markdown-preview ];
+            settings.git_protocol = "ssh";
+          };
           # json processor
           jq.enable = true;
           gemini.enable = true;
@@ -77,7 +83,6 @@
               ffpb
               ffmpeg
               generate-kaomoji
-              gh
               git-absorb
               gnumake
               go-jira
