@@ -4,8 +4,9 @@
 # session has an update awaiting attention. The tmux window-status format
 # reads this option to render a colored dot prefix in the status line.
 #
-# Invoked from Claude hooks (Stop/Notification) to set the color, and from a
-# tmux `pane-focus-in` hook with `clear` to swap to a neutral color.
+# Invoked from Claude hooks (Stop/Notification) to set the color, and from
+# tmux `after-select-pane`/`after-select-window` hooks with `clear` to swap to
+# a neutral color.
 #
 # Logging is off by default. Set $TMUX_CLAUDE_INDICATOR_DEBUG=1 to enable
 # it; activity is then written to $TMUX_CLAUDE_INDICATOR_LOG (default:

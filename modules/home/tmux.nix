@@ -114,8 +114,14 @@
               set-option -g window-status-format "#{?@claude-dot,#[fg=#{?#{==:#{@claude-dot},clear},colour244,#{@claude-dot}}]● ,}#[fg=colour244]#W#[default]"
               set-option -g window-status-current-format "#{?@claude-dot,#[fg=#{?#{==:#{@claude-dot},clear},white,#{@claude-dot}}]● #[fg=default],}#[bold]#W#[default]"
 
-              # Clear the Claude "needs attention" dot prefix when its pane gets focus.
-              set-hook -g pane-focus-in 'run-shell -b "~/.claude/tmux-claude-indicator.nu clear #{pane_id}"'
+              # Clear the Claude "needs attention" dot when its pane/window is
+              # selected. NOT pane-focus-in: @continuum-restore rebuilds panes at
+              # startup and tmux never re-establishes focus tracking afterwards, so
+              # pane-focus-in/-out never fire again for the life of the server.
+              # after-select-{pane,window} fire reliably and "selecting" is exactly
+              # the "I'm now viewing it" signal we want.
+              set-hook -g after-select-pane 'run-shell -b "~/.claude/tmux-claude-indicator.nu clear #{pane_id}"'
+              set-hook -g after-select-window 'run-shell -b "~/.claude/tmux-claude-indicator.nu clear #{pane_id}"'
 
               unbind-key -n C-.
               bind-key -n C-. send-keys C-.
