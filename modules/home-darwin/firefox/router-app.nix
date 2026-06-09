@@ -69,13 +69,20 @@
         swift=/usr/bin/swift
         [ -x "$swift" ] || exit 0
         "$swift" - <<'SWIFT' || true
-        import CoreServices
+        import AppKit
         import Foundation
-        let id = "casa.lalala.firefox-router" as CFString
-        let cur = LSCopyDefaultHandlerForURLScheme("http" as CFString)?.takeRetainedValue() as String?
-        if cur != (id as String) {
-            LSSetDefaultHandlerForURLScheme("http" as CFString, id)
-            LSSetDefaultHandlerForURLScheme("https" as CFString, id)
+        let id = "casa.lalala.firefox-router"
+        let ws = NSWorkspace.shared
+        guard let appURL = ws.urlForApplication(withBundleIdentifier: id) else { exit(0) }
+        let current = ws.urlForApplication(toOpen: URL(string: "http://example.com")!)
+        let currentID = current.flatMap { Bundle(url: $0)?.bundleIdentifier }
+        if currentID != id {
+            let group = DispatchGroup()
+            for scheme in ["http", "https"] {
+                group.enter()
+                ws.setDefaultApplication(at: appURL, toOpenURLsWithScheme: scheme) { _ in group.leave() }
+            }
+            _ = group.wait(timeout: .now() + 5)
         }
         SWIFT
       '';
