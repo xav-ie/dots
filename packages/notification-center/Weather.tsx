@@ -74,18 +74,7 @@ GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 1800, () => {
 function DayCard({ d }: { d: Day }) {
   return (
     <box class="weather-day" orientation={Gtk.Orientation.VERTICAL} spacing={4}>
-      <box class="weather-top">
-        <label
-          class="weather-label"
-          label={d.label}
-          halign={Gtk.Align.START}
-          hexpand
-        />
-        <box class="weather-rain" spacing={4} valign={Gtk.Align.START}>
-          <image iconName="weather-showers-symbolic" pixelSize={18} />
-          <label label={d.rain} />
-        </box>
-      </box>
+      <label class="weather-label" label={d.label} halign={Gtk.Align.START} />
       <box spacing={10}>
         <image iconName={d.icon} pixelSize={40} valign={Gtk.Align.CENTER} />
         <box orientation={Gtk.Orientation.VERTICAL} valign={Gtk.Align.CENTER}>
@@ -99,19 +88,21 @@ function DayCard({ d }: { d: Day }) {
         halign={Gtk.Align.START}
         ellipsize={Pango.EllipsizeMode.END}
       />
+      {/* Rain chance on its own last line, under the condition text. */}
+      <box class="weather-rain" spacing={3} halign={Gtk.Align.START}>
+        <image iconName="weather-showers-symbolic" pixelSize={14} />
+        <label label={d.rain} />
+      </box>
     </box>
   );
 }
 
-// Today + tomorrow cards at the top of the center; hidden until data loads.
+// Today + tomorrow cards. Rendered as one homogeneous block (two equal cards)
+// that the center pairs with the screen-filter card in a 50/50 row. Always
+// visible so its half holds its place even before the forecast loads.
 export default function Weather() {
   return (
-    <box
-      class="weather"
-      spacing={12}
-      homogeneous
-      visible={days((d) => d.length > 0)}
-    >
+    <box class="weather" spacing={12} homogeneous>
       <For each={days}>{(d) => <DayCard d={d} />}</For>
     </box>
   );

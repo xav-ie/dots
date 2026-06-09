@@ -496,6 +496,10 @@
                 # Don't let Hyprland animate the popup layer's resize as toasts stack
                 # (that's the vertical "stretch"); they fade in via CSS opacity instead.
                 "match:namespace notification-center-popups, no_anim on"
+                # The volume OSD is one opaque card over a transparent overlay,
+                # same frosted-glass treatment as the popups.
+                "match:namespace osd, blur on"
+                "match:namespace osd, ignore_alpha 0.6"
                 "match:namespace bar, blur on"
                 # Threshold (not 0): skip the bar's fully transparent margins so they
                 # stay see-through instead of rendering as an opaque blurred band.

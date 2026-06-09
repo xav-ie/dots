@@ -1,6 +1,7 @@
 # AGS (Astal) notification daemon + control center, bundled into two standalone
 # gjs binaries. `agsPackages` is inputs.ags.packages.<system>, re-exporting the
-# astal libraries (io, astal4, notifd, mpris) alongside the ags CLI (default).
+# astal libraries (io, astal4, notifd, mpris, wireplumber) alongside the ags CLI
+# (default).
 # Produces:
 #   notification-center  — the resident daemon (owns org.freedesktop.Notifications;
 #                          renders toast popups + the control center), run as the
@@ -15,6 +16,9 @@
   agsPackages,
   # The weather widget shells out to curl (wttr.in).
   curl,
+  # The screen-filter widget drives hyprshade (toggles the generated GLSL
+  # warmth/brightness shaders from modules/home-linux/hyprland/hyprshade.nix).
+  hyprshade,
   # System UI font family, threaded in from lib/fonts.nix so the center tracks
   # the same `sans` font as the bar and pickers.
   fontName,
@@ -40,13 +44,14 @@ stdenv.mkDerivation {
     agsPackages.astal4
     agsPackages.notifd
     agsPackages.mpris
+    agsPackages.wireplumber
   ];
 
   # notifctl re-invokes its sibling `notification-center` (single-instance argv
   # forwarding) to toggle the control center, so put $out/bin on the wrapper PATH;
-  # curl is for the weather widget.
+  # curl is for the weather widget, hyprshade for the screen-filter widget.
   preFixup = ''
-    gappsWrapperArgs+=(--prefix PATH : "$out/bin:${curl}/bin")
+    gappsWrapperArgs+=(--prefix PATH : "$out/bin:${curl}/bin:${hyprshade}/bin")
   '';
 
   installPhase = ''
