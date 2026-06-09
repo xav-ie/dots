@@ -55,19 +55,34 @@ window#notification-center-popups {
 }
 
 // ─── A single notification (toasts + center list) ──────────────────────────
+// `.notification` is a transparent, stationary wrapper that owns the focus ring
+// and the swipe gesture controllers; the visible card is the inner `.card`,
+// which is what a swipe translates (so the wrapper stays put under the pointer).
 .notification {
-  @include card;
-  min-width: 380px;
-  padding: 12px 14px;
+  // The visible frosted card.
+  .card {
+    @include card;
+    min-width: 380px;
+    padding: 12px 14px;
+  }
 
   // Focused/selected row in the center (popups aren't focusable).
-  &:focus,
-  &:focus-within {
+  &:focus .card,
+  &:focus-within .card {
     border-color: $accent;
   }
 
-  &.critical {
+  &.critical .card {
     border-color: rgba($danger, 0.7);
+  }
+
+  // Swipe-to-dismiss: the card translates/fades inline (Notification.tsx). No
+  // transition while dragging so it tracks 1:1; `.animating` (set on release)
+  // glides the snap-back or the fling-out.
+  .card.animating {
+    transition:
+      transform 220ms ease,
+      opacity 220ms ease;
   }
 
   .content {
@@ -181,7 +196,7 @@ window#notification-center-popups {
 
   // Notifications in the panel list blend into the panel card — only the toasts
   // keep the frosted-glass background.
-  .notification {
+  .notification .card {
     background-color: transparent;
   }
 }

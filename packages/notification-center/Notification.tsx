@@ -3,10 +3,20 @@ import Gdk from "gi://Gdk?version=4.0";
 import GLib from "gi://GLib";
 import Pango from "gi://Pango";
 import AstalNotifd from "gi://AstalNotifd";
+import { createState, onCleanup } from "ags";
 import { focusAdjacent } from "./focusTrap";
 
 // Adapted from the official Aylur/ags gtk4 notifications example, shared between
 // the transient popups and the persistent center list.
+
+// Swipe-to-dismiss tuning. SWIPE_START is the initial button-drag travel before
+// it counts as a swipe (and claims the gesture so the body click is cancelled);
+// DISMISS_FRACTION is the share of the card's width past which a release
+// dismisses instead of snapping back; SCROLL_END_MS debounces "fingers lifted"
+// for the touchpad path (the compositor's scroll-end framing is unreliable).
+const SWIPE_START = 8;
+const DISMISS_FRACTION = 0.28;
+const SCROLL_END_MS = 120;
 
 function isIcon(icon?: string | null): boolean {
   const theme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default()!);
@@ -153,11 +163,15 @@ interface NotificationProps {
   // Center rows are focusable, fire the default action on Enter/Backspace, and
   // show a close (X) button; toast popups are passive and omit all of that.
   selectable?: boolean;
+  // What a swipe-dismiss runs. Defaults to closing the notification (`n.dismiss`,
+  // same as the X button); the toast overrides it to also drop its popup.
+  onSwipeDismiss?: () => void;
 }
 
 export default function Notification({
   notification: n,
   selectable,
+  onSwipeDismiss,
 }: NotificationProps) {
   // Default action (freedesktop "default", else the first action), fired when a
   // selectable center row is activated with Enter.
@@ -183,6 +197,62 @@ export default function Notification({
     if (def) n.invoke(def.id);
     else n.dismiss();
   }
+
+  // Swipe-to-dismiss. The visible card (`.card`, below) translates with the
+  // gesture while this root box stays put, so the root's scroll/drag controllers
+  // keep getting events even after the card has slid past the pointer. Width is
+  // read live so the threshold/fling scale to the toast's and the center row's
+  // actual sizes.
+  const swipe = onSwipeDismiss ?? (() => n.dismiss());
+  const [swipeCss, setSwipeCss] = createState("");
+  // Toggles the transition: off while dragging (track 1:1), on for the
+  // snap-back / fling so those glide.
+  const [animating, setAnimating] = createState(false);
+  let card: Gtk.Widget | null = null;
+  const cardWidth = (): number => card?.get_width() || 400;
+
+  // Follow the swipe 1:1: translate by `px` and fade proportionally.
+  const track = (px: number): void => {
+    const op = Math.max(0, 1 - Math.abs(px) / cardWidth());
+    setSwipeCss(`transform: translateX(${px}px); opacity: ${op};`);
+  };
+  // On release: past the threshold fling the card out and dismiss; otherwise
+  // glide back to rest.
+  const settle = (px: number): void => {
+    setAnimating(true);
+    if (Math.abs(px) > cardWidth() * DISMISS_FRACTION) {
+      const dir = px > 0 ? 1 : -1;
+      setSwipeCss(`transform: translateX(${dir * cardWidth()}px); opacity: 0;`);
+      swipe();
+    } else {
+      setSwipeCss("transform: translateX(0px); opacity: 1;");
+    }
+  };
+
+  // Flips true once a button-drag has moved far enough horizontally to count as
+  // a swipe; the gesture then claims the sequence so the body click is cancelled.
+  let dragging = false;
+  // Touchpad two-finger swipe. The compositor's scroll-end framing is
+  // unreliable, so each scroll tick rearms a short timer and the gesture is
+  // treated as released once the ticks stop (fingers lifted) and it fires.
+  let scrollOffset = 0;
+  let scrolling = false;
+  let endTimer = 0;
+  const armEndTimer = (): void => {
+    if (endTimer) GLib.source_remove(endTimer);
+    endTimer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, SCROLL_END_MS, () => {
+      endTimer = 0;
+      if (scrolling) {
+        scrolling = false;
+        settle(scrollOffset);
+        scrollOffset = 0;
+      }
+      return GLib.SOURCE_REMOVE;
+    });
+  };
+  onCleanup(() => {
+    if (endTimer) GLib.source_remove(endTimer);
+  });
 
   return (
     <box
@@ -278,60 +348,108 @@ export default function Notification({
           }}
         />
       )}
-      <box class="content">
-        {n.image && fileExists(n.image) && <NotifImage path={n.image} />}
-        {n.image && isIcon(nmIcon(n.image)) && (
-          <box valign={Gtk.Align.START} class="icon-image">
-            <image
-              iconName={nmIcon(n.image)}
-              pixelSize={48}
-              halign={Gtk.Align.CENTER}
-              valign={Gtk.Align.CENTER}
-            />
-          </box>
-        )}
-        <box orientation={Gtk.Orientation.VERTICAL} hexpand>
-          <box class="title-row">
-            <label
-              class="summary"
-              hexpand
-              halign={Gtk.Align.FILL}
-              xalign={0}
-              maxWidthChars={1}
-              ellipsize={Pango.EllipsizeMode.END}
-              label={n.summary}
-            />
-            {selectable && (
+      {/* Two-finger trackpad swipe. SURFACE units only (mouse-wheel WHEEL units
+          are ignored so the wheel never nudges a card); vertical-led scroll is
+          left to bubble up to the center's scroller. dx is negated so the card
+          follows the fingers under natural scrolling. */}
+      <Gtk.EventControllerScroll
+        flags={Gtk.EventControllerScrollFlags.BOTH_AXES}
+        onScroll={(c: Gtk.EventControllerScroll, dx: number, dy: number) => {
+          if (c.get_unit() !== Gdk.ScrollUnit.SURFACE) return false;
+          if (!scrolling) {
+            if (Math.abs(dx) <= Math.abs(dy)) return false; // vertical-led
+            scrolling = true;
+            scrollOffset = 0;
+            setAnimating(false);
+          }
+          scrollOffset -= dx;
+          track(scrollOffset);
+          armEndTimer();
+          return true;
+        }}
+      />
+      {/* Press-drag fallback (mouse). CAPTURE so the drag sees the pointer before
+          the body-click gesture and can claim it; a plain tap never crosses
+          SWIPE_START, so buttons and body clicks still work. */}
+      <Gtk.GestureDrag
+        propagationPhase={Gtk.PropagationPhase.CAPTURE}
+        onDragUpdate={(g: Gtk.GestureDrag, ox: number, oy: number) => {
+          if (!dragging) {
+            if (Math.abs(ox) < SWIPE_START || Math.abs(ox) <= Math.abs(oy))
+              return;
+            dragging = true;
+            g.set_state(Gtk.EventSequenceState.CLAIMED);
+            setAnimating(false);
+          }
+          track(ox);
+        }}
+        onDragEnd={(_g: Gtk.GestureDrag, ox: number) => {
+          if (!dragging) return;
+          dragging = false;
+          settle(ox);
+        }}
+      />
+      <box
+        $={(self) => (card = self)}
+        class={animating((a) => `card${a ? " animating" : ""}`)}
+        orientation={Gtk.Orientation.VERTICAL}
+        css={swipeCss}
+      >
+        <box class="content">
+          {n.image && fileExists(n.image) && <NotifImage path={n.image} />}
+          {n.image && isIcon(nmIcon(n.image)) && (
+            <box valign={Gtk.Align.START} class="icon-image">
+              <image
+                iconName={nmIcon(n.image)}
+                pixelSize={48}
+                halign={Gtk.Align.CENTER}
+                valign={Gtk.Align.CENTER}
+              />
+            </box>
+          )}
+          <box orientation={Gtk.Orientation.VERTICAL} hexpand>
+            <box class="title-row">
               <label
-                class="time"
-                halign={Gtk.Align.END}
-                valign={Gtk.Align.START}
-                label={time(n.time)}
+                class="summary"
+                hexpand
+                halign={Gtk.Align.FILL}
+                xalign={0}
+                maxWidthChars={1}
+                ellipsize={Pango.EllipsizeMode.END}
+                label={n.summary}
+              />
+              {selectable && (
+                <label
+                  class="time"
+                  halign={Gtk.Align.END}
+                  valign={Gtk.Align.START}
+                  label={time(n.time)}
+                />
+              )}
+            </box>
+            {n.body && (
+              <label
+                class="body"
+                wrap
+                useMarkup
+                maxWidthChars={1}
+                halign={Gtk.Align.FILL}
+                xalign={0}
+                label={n.body}
               />
             )}
           </box>
-          {n.body && (
-            <label
-              class="body"
-              wrap
-              useMarkup
-              maxWidthChars={1}
-              halign={Gtk.Align.FILL}
-              xalign={0}
-              label={n.body}
-            />
-          )}
         </box>
+        {buttons.length > 0 && (
+          <box class="actions" homogeneous>
+            {buttons.map(({ label, id }) => (
+              <button hexpand onClicked={() => n.invoke(id)}>
+                <label label={label} halign={Gtk.Align.CENTER} hexpand />
+              </button>
+            ))}
+          </box>
+        )}
       </box>
-      {buttons.length > 0 && (
-        <box class="actions" homogeneous>
-          {buttons.map(({ label, id }) => (
-            <button hexpand onClicked={() => n.invoke(id)}>
-              <label label={label} halign={Gtk.Align.CENTER} hexpand />
-            </button>
-          ))}
-        </box>
-      )}
     </box>
   ) as Gtk.Widget;
 }
