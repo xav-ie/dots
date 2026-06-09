@@ -81,6 +81,14 @@
   margin-inline: 0 !important;
 }
 
+/* Inset the tab-group label's hover highlight so it doesn't bleed to the edge
+ * of the collapsed vertical-tabs column. */
+.tab-group-label-hover-highlight {
+  #tabbrowser-tabs[orient="vertical"]:not([expanded]) & {
+    margin-inline: 6px;
+  }
+}
+
 /* Near-black favicons are invisible on the dark theme. The autoconfig script
  * (firefox.cfg) samples each favicon and tags dark ones with [darkfavicon];
  * invert just those. `hue-rotate(180deg)` keeps coloured logos roughly on-hue
