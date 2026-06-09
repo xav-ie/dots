@@ -3,7 +3,13 @@ import Gdk from "gi://Gdk?version=4.0";
 import GLib from "gi://GLib";
 import AstalNotifd from "gi://AstalNotifd";
 import { For, createState, onCleanup } from "ags";
-import { popups, registerToast, unregisterToast, ANIM_MS } from "./popupStore";
+import {
+  popups,
+  registerToast,
+  unregisterToast,
+  dismissPopup,
+  ANIM_MS,
+} from "./popupStore";
 import Notification from "./Notification";
 
 const { TOP, RIGHT } = Astal.WindowAnchor;
@@ -36,7 +42,17 @@ function Toast({ n }: { n: AstalNotifd.Notification }) {
       revealChild={revealed}
     >
       <box class={revealed((r) => `toast-fade${r ? " shown" : ""}`)}>
-        <Notification notification={n} />
+        {/* Swipe-to-dismiss is owned by Notification (shared with the center
+            rows). `n.dismiss()` closes it everywhere and the resulting `resolved`
+            plays this toast's leave; dismissPopup is also called so the toast
+            collapses right away even if the daemon round-trip lags. */}
+        <Notification
+          notification={n}
+          onSwipeDismiss={() => {
+            n.dismiss();
+            dismissPopup(n.id);
+          }}
+        />
       </box>
     </Gtk.Revealer>
   );
