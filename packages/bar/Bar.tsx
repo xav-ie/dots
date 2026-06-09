@@ -2,7 +2,7 @@ import { Astal, Gtk } from "ags/gtk4";
 import type Gdk from "gi://Gdk?version=4.0";
 import Power from "./modules/Power";
 import Workspaces from "./modules/Workspaces";
-import Pomodoro from "./modules/Pomodoro";
+import Pomodoro, { pomodoroActive } from "./modules/Pomodoro";
 import Tray, { Network } from "./modules/Tray";
 import Volume from "./modules/Volume";
 import CavaMic from "./modules/CavaMic";
@@ -33,7 +33,6 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
         <box $type="start" class="bar-section bar-left" spacing={0}>
           <Power />
           <Workspaces />
-          <Pomodoro />
         </box>
         <box $type="center" />
         <box
@@ -53,6 +52,31 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
           <Clock />
         </box>
       </centerbox>
+    </window>
+  ) as Astal.Window;
+}
+
+// A standalone centered bar: its own top-anchored layer-shell window holding only
+// the pomodoro timer, floating in the transparent gap between the main Bar's side
+// clusters. Mirrors the notification centre's Osd: anchoring only TOP centers it
+// horizontally, IGNORE keeps it from being pushed below the main Bar's exclusive
+// zone, OVERLAY puts it on the same plane, and marginTop matches `.bar` so the
+// pill lines up with the side pills. `visible` tracks the timer, so the whole
+// window unmaps when no session runs; NONE keymode keeps it from stealing focus.
+export function CenterBar(gdkmonitor: Gdk.Monitor) {
+  return (
+    <window
+      name={`bar-center-${gdkmonitor.connector}`}
+      namespace="bar"
+      gdkmonitor={gdkmonitor}
+      anchor={TOP}
+      marginTop={6}
+      layer={Astal.Layer.OVERLAY}
+      exclusivity={Astal.Exclusivity.IGNORE}
+      keymode={Astal.Keymode.NONE}
+      visible={pomodoroActive}
+    >
+      <Pomodoro />
     </window>
   ) as Astal.Window;
 }

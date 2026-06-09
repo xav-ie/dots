@@ -13,6 +13,9 @@
   # System UI font family, threaded in from lib/fonts.nix so the bar tracks the
   # same `sans` font as the pickers.
   fontName,
+  # Monospace family (lib/fonts.nix `mono`), used for the pomodoro countdown so
+  # its digits stay fixed-width and the centre pill doesn't jitter as time ticks.
+  monoFontName,
   # Sibling packages the bar shells out to (clicks). `pickers` provides
   # bin/spotlight (the power/bluetooth modules run `spotlight <mode>`);
   # `notification-center` provides bin/notifctl (notification status/toggle/DND).
@@ -39,7 +42,9 @@ stdenv.mkDerivation {
   src = ./.;
 
   postPatch = ''
-    substituteInPlace style.scss --replace-fail "@FONT@" "${fontName}"
+    substituteInPlace style.scss \
+      --replace-fail "@FONT@" "${fontName}" \
+      --replace-fail "@MONOFONT@" "${monoFontName}"
   '';
 
   nativeBuildInputs = [
