@@ -64,7 +64,7 @@
 /* Pinned tabs sit in their own grid that's offset further right, so they need
  * a bigger horizontal nudge than regular tabs to line up in the column. */
 .tabbrowser-tab[pinned] .tab-icon-image {
-  transform: translate(-11.6px, 0) !important;
+  transform: translate(-8.6px, 0) !important;
 }
 
 /* Make the pinned/regular tabs divider visible against the dark theme and span
