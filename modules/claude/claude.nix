@@ -287,6 +287,8 @@
             '';
             ".claude/agents".source =
               config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/agents";
+            ".claude/commands".source =
+              config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/commands";
             ".claude/CLAUDE.md".source =
               config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/CLAUDE.md";
             ".claude/plugins/known_marketplaces.json".text = knownMarketplacesJson;
