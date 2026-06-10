@@ -49,20 +49,25 @@
                   rain: ($hourly | each {|h| $h.chanceofrain | into int } | append 0 | math max)
                   hi: $d.maxtempF
                   lo: $d.mintempF
-                  desc: ($src.weatherDesc.0.value | str trim)
+                  # current_condition sentence-cases the description but the hourly
+                  # feed Title-Cases it; normalise so today and tomorrow agree.
+                  desc: ($src.weatherDesc.0.value | str trim | str downcase | str capitalize)
                 }
               }
               let days = [(do $mk $j.weather.0 true) (do $mk $j.weather.1 false)]
               # Description column fits the wider of the two days, no fixed slack.
               let dw = ($days | each {|x| $x.desc | str length } | math max)
-              # Right-align each fixed-width field so columns line up between the
-              # two rows while the whole block stays flush-right (text_align=right);
-              # the condition glyph is doubled and dropped via a pango <span>.
+              # Fixed-width fields keep columns aligned between the two rows while
+              # the whole block stays flush-right (text_align=right): every field
+              # is right-aligned so the text hugs the edge.
+              # The condition glyph is doubled and dropped via a pango <span>.
               let fmt = {|x|
-                let rainf = ($"(char -u e371)($x.rain)%" | fill -a r -w 5)
-                let temp = ($"($x.hi)°/($x.lo)°" | fill -a l -w 8)
+                # Drop the umbrella glyph outside the padded field so it stays in a
+                # fixed column hard against the temp; only the digits right-pad.
+                let rainf = ($"($x.rain)%" | fill -a r -w 4)
+                let temp = ($"($x.hi)°/($x.lo)°" | fill -a r -w 8)
                 let desc = ($x.desc | fill -a r -w $dw)
-                $"($rainf)   <span size='200%' rise='-19000'>($x.icon)</span>($temp) ($desc)"
+                $"($desc) <span size='200%' rise='-19000'>($x.icon)</span>($temp) (char -u e371)($rainf)"
               }
               # Headers in Inter ExtraLight (matching the clock/date module); data in
               # mono. The leading zero-width space is load-bearing: hyprgraphics
