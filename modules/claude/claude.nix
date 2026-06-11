@@ -249,6 +249,8 @@
             ".local/bin/claude".source = "${claude-package}/bin/claude";
             ".claude/settings.json".source =
               config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/settings.json";
+            ".claude/keybindings.json".source =
+              config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/keybindings.json";
             ".claude/notify.nu".source =
               config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/notify.nu";
             ".claude/notify-if-question.nu".source =

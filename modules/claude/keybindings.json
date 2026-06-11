@@ -1,0 +1,20 @@
+{
+  "$schema": "https://www.schemastore.org/claude-code-keybindings.json",
+  "$docs": "https://code.claude.com/docs/en/keybindings",
+  "bindings": [
+    {
+      "context": "Scroll",
+      "bindings": {
+        "ctrl+b": "scroll:pageUp",
+        "ctrl+f": "scroll:pageDown"
+      }
+    },
+    {
+      "context": "Chat",
+      "bindings": {
+        "ctrl+b": "scroll:pageUp",
+        "ctrl+f": "scroll:pageDown"
+      }
+    }
+  ]
+}
