@@ -2,9 +2,9 @@
 # default.nix. Everything here is keyed off `name`, so each instance
 # gets its own pod, containers, data dir, secrets and Temporal stack.
 #
-# Shared bits (the patched app image build, the patched OpenSearch image
-# load, the overcommit sysctl) live in default.nix and are referenced by
-# tag/unit name — they must NOT be duplicated per instance.
+# Shared bits (the patched app image build, the overcommit sysctl) live
+# in default.nix and are referenced by tag/unit name — they must NOT be
+# duplicated per instance.
 {
   name,
   # Public hostname. When null, falls back to `${name}.${baseDomain}`,
@@ -26,6 +26,11 @@
   # Whether to wire up the social-provider OAuth secrets + env. Only the
   # original instance has these configured today.
   enableSocialProviders ? false,
+  # Patched copy of the app image's nginx.conf, mounted over the baked one so
+  # its `proxy_pass` upstreams use 127.0.0.1 instead of `localhost` (which the
+  # pod resolves to IPv6 `::1`, where the IPv4-only node backends aren't
+  # listening → 502). Built in default.nix from the source config.
+  nginxConf,
 }:
 {
   config,
@@ -59,11 +64,6 @@ let
   temporalPgUID = "999";
   temporalPgGID = "999";
 
-  # UID/GID of the opensearch user inside opensearchproject/opensearch:3.6.0
-  # (matches the `User = "1000"` on the patched image config).
-  esUID = "1000";
-  esGID = "1000";
-
   cfgSecret = config.sops.placeholder;
 
   # Postiz records each upload's URL as `${FRONTEND_URL}/uploads/...`
@@ -81,7 +81,7 @@ let
   uploadFetchShim = pkgs.writeText "postiz-upload-fetch-shim.cjs" ''
     const orig = globalThis.fetch;
     const PUB = (process.env.FRONTEND_URL || "") + "/uploads";
-    const INT = "http://localhost:5000/uploads";
+    const INT = "http://127.0.0.1:5000/uploads";
     const rewrite = (u) =>
       typeof u === "string" && u.startsWith(PUB) ? INT + u.slice(PUB.length) : u;
 
@@ -131,25 +131,6 @@ let
       - value: 255
         constraints: {}
   '';
-
-  # OpenSearch 3.6.0's image ships the performance-analyzer agent but
-  # not its config file. Without one, the agent logs two errors at
-  # boot before disabling itself. Mount this stub at the expected path
-  # to keep startup quiet.
-  opensearchPerfAnalyzerConfig = pkgs.writeText "performance-analyzer.properties" ''
-    webservice-bind-host = 127.0.0.1
-    webservice-port = 9600
-    metrics-location = /dev/shm/performanceanalyzer/
-    metrics-deletion-interval = 1
-    https-enabled = false
-    plugin-stats-metadata = plugin-stats-metadata
-    agent-stats-metadata = agent-stats-metadata
-  '';
-
-  # The OpenSearch image (with jvm.options patched) is built and loaded
-  # by temporal-opensearch-image.nix; this string is the tag the load
-  # service registers, kept here so the container ref agrees.
-  opensearchPatchedImageRef = "localhost/postiz-temporal-opensearch:patched";
 
   socialEnv =
     lib.optionalString enableSocialProviders # sh
@@ -326,15 +307,21 @@ in
                 "${postizDataDir}/config:/config/"
                 "${postizDataDir}/uploads:/uploads/"
                 "${uploadFetchShim}:/config/upload-fetch-shim.cjs:ro"
+                "${nginxConf}:/etc/nginx/nginx.conf:ro"
               ];
               environmentFiles = [ config.sops.templates."${name}.env".path ];
               environments = {
                 MAIN_URL = "https://${fullHostName}";
                 FRONTEND_URL = "https://${fullHostName}";
                 NEXT_PUBLIC_BACKEND_URL = "https://${fullHostName}/api";
-                REDIS_URL = "redis://localhost:6379";
-                BACKEND_INTERNAL_URL = "http://localhost:3000";
-                TEMPORAL_ADDRESS = "localhost:7233";
+                # IPv4-explicit (127.0.0.1, not localhost) throughout: the pod
+                # resolves `localhost` to IPv6 `::1`, but these services bind
+                # IPv4 only, so `localhost` upstreams hang (gRPC) or are refused
+                # (redis/http) → 502s. Same reason the mounted nginx.conf's
+                # proxy_pass uses 127.0.0.1.
+                REDIS_URL = "redis://127.0.0.1:6379";
+                BACKEND_INTERNAL_URL = "http://127.0.0.1:3000";
+                TEMPORAL_ADDRESS = "127.0.0.1:7233";
                 IS_GENERAL = "true";
                 STORAGE_PROVIDER = "local";
                 UPLOAD_DIRECTORY = "/uploads";
@@ -423,73 +410,6 @@ in
             };
           };
 
-          # OpenSearch backs Temporal's "advanced visibility". Postiz
-          # registers >3 Text-type custom search attributes per workflow,
-          # which exceeds SQL visibility's per-type column limit, so we
-          # need a search-capable visibility store. OpenSearch speaks the
-          # Elasticsearch v7 protocol; Temporal's ES_VERSION=v7 + the
-          # `temporal-elasticsearch-tool` from admin-tools both work
-          # against it unmodified. Image and tunables track the
-          # samples-server postgres-opensearch compose example.
-          "${subdomain}-temporal-opensearch" = {
-            containerConfig = {
-              # OpenSearch 3.x runs on Java 21 (no more SecurityManager)
-              # and Lucene 10. The protocol stays ES 7.10-compatible for
-              # clients, so Temporal's ES_VERSION=v7 + admin-tools'
-              # temporal-elasticsearch-tool keep working unmodified.
-              # Lucene index format changed though, so the on-disk data
-              # dir must be wiped when crossing 2.x → 3.x.
-              # We don't pull the upstream tag here — the load service
-              # above sideloads our locally-patched copy with the
-              # jvm.options noise stripped.
-              image = opensearchPatchedImageRef;
-              pod = pods."${subdomain}-pod".ref;
-              volumes = [
-                "${postizDataDir}/temporal-opensearch:/usr/share/opensearch/data"
-                "${opensearchPerfAnalyzerConfig}:/usr/share/opensearch/config/opensearch-performance-analyzer/performance-analyzer.properties:ro"
-              ];
-              environments = {
-                "cluster.routing.allocation.disk.threshold_enabled" = "true";
-                "cluster.routing.allocation.disk.watermark.low" = "512mb";
-                "cluster.routing.allocation.disk.watermark.high" = "256mb";
-                "cluster.routing.allocation.disk.watermark.flood_stage" = "128mb";
-                "discovery.type" = "single-node";
-                # OpenSearch 3.x dropped SecurityManager entirely, so
-                # the `-Djava.security.manager=allow` flag we needed on
-                # 2.x is no longer applicable. Keeping the locale +
-                # native-access flags for the JVM-level warnings that
-                # would otherwise still fire on Java 21.
-                OPENSEARCH_JAVA_OPTS = "-Xms256m -Xmx256m -Djava.locale.providers=CLDR --enable-native-access=ALL-UNNAMED";
-                # OpenSearch's bundled security plugin is unnecessary for
-                # a single-node, pod-local visibility store.
-                "plugins.security.disabled" = "true";
-                # 2.12+ runs the demo-config installer at every boot and
-                # refuses to start without OPENSEARCH_INITIAL_ADMIN_PASSWORD,
-                # even when the security plugin is disabled at runtime.
-                # Skipping the installer entirely avoids both the password
-                # requirement and the demo certs we'd never use.
-                DISABLE_INSTALL_DEMO_CONFIG = "true";
-              };
-              # OpenSearch refuses to start without the higher fd limit.
-              podmanArgs = [ "--ulimit=nofile=65536:65536" ];
-              # Internally-patient healthcheck — see the rationale on
-              # postiz-postgres. OpenSearch boot is ~30-40s on this host,
-              # so the inner loop has a 60s budget before declaring real
-              # failure.
-              healthCmd = "sh -c 'for _ in $(seq 1 60); do curl -fsS http://localhost:9200/_cluster/health >/dev/null 2>&1 && exit 0; sleep 1; done; exit 1'";
-              healthInterval = "120s";
-              healthTimeout = "65s";
-              healthRetries = 3;
-            };
-            serviceConfig = {
-              Restart = "always";
-            };
-            unitConfig = {
-              After = [ "load-postiz-temporal-opensearch-image.service" ];
-              Requires = [ "load-postiz-temporal-opensearch-image.service" ];
-            };
-          };
-
           # Temporal server. Postiz connects to it via TEMPORAL_ADDRESS.
           # BIND_ON_IP=0.0.0.0 makes temporal listen on all interfaces inside
           # the pod, so other containers in the pod can reach it via localhost.
@@ -513,17 +433,19 @@ in
                 POSTGRES_USER = "temporal";
                 POSTGRES_PWD = "temporal";
                 POSTGRES_SEEDS = "localhost";
-                ENABLE_ES = "true";
-                ES_SEEDS = "localhost";
-                ES_VERSION = "v7";
+                # No ENABLE_ES: the server's embedded config template falls
+                # back to SQL visibility on the temporal-postgres above
+                # (database `temporal_visibility`, same seeds/port/creds).
+                # Temporal 1.20+ supports custom search attributes on
+                # PostgreSQL v12+, so Postiz's two Text attributes
+                # (organizationId, postId) no longer need a search engine.
                 BIND_ON_IP = "0.0.0.0";
                 DYNAMIC_CONFIG_FILE_PATH = "config/dynamicconfig/docker.yaml";
-                # Filter out Temporal's `info`-level startup chatter
-                # ("Not enough hosts to serve the request", "shard status
-                # unknown", "matching client encountered error") which
-                # always fires for ~5-10s during cold start while the
-                # frontend/matching/history services are forming their
-                # internal cluster ring. Real problems still log at warn+.
+                # Filter out Temporal's `info`-level startup chatter ("Not
+                # enough hosts to serve the request", "shard status unknown")
+                # which always fires for ~5-10s during cold start while the
+                # frontend/matching/history services form their cluster ring.
+                # Real problems still log at warn+.
                 LOG_LEVEL = "warn";
               };
             };
@@ -533,12 +455,10 @@ in
             unitConfig = {
               After = [
                 "${subdomain}-temporal-postgres.service"
-                "${subdomain}-temporal-opensearch.service"
                 "${subdomain}-temporal-schema-init.service"
               ];
               Requires = [
                 "${subdomain}-temporal-postgres.service"
-                "${subdomain}-temporal-opensearch.service"
                 "${subdomain}-temporal-schema-init.service"
               ];
             };
@@ -553,22 +473,20 @@ in
       "d ${postizDataDir}/config 0755 root root -"
       "d ${postizDataDir}/uploads 0755 root root -"
       "d ${postizDataDir}/temporal-postgres 0700 ${temporalPgUID} ${temporalPgGID} -"
-      "d ${postizDataDir}/temporal-opensearch 0750 ${esUID} ${esGID} -"
     ];
 
-    # Schema/index initializer for Temporal. Skips entirely when the
-    # `namespaces` table is already present, so re-runs are silent.
-    # State lives in the postgres/ES volumes — wipe those to force a
-    # full re-init.
+    # Schema initializer for Temporal. Sets up both the main `temporal`
+    # database and the SQL `temporal_visibility` database (Postgres-backed
+    # advanced visibility — no search engine). Each first-time step is
+    # gated so re-runs are silent. State lives in the temporal-postgres
+    # volume — wipe it to force a full re-init.
     systemd.services."${subdomain}-temporal-schema-init" = {
-      description = "Initialize Temporal DB schema + ES indexes";
+      description = "Initialize Temporal DB + visibility schema";
       after = [
         "${subdomain}-temporal-postgres.service"
-        "${subdomain}-temporal-opensearch.service"
       ];
       requires = [
         "${subdomain}-temporal-postgres.service"
-        "${subdomain}-temporal-opensearch.service"
       ];
       before = [ "${subdomain}-temporal.service" ];
       requiredBy = [ "${subdomain}-temporal.service" ];
@@ -582,20 +500,15 @@ in
         ''
           set -eu
           PG=${subdomain}-temporal-postgres
-          OS=${subdomain}-temporal-opensearch
           POD=${subdomain}-pod
 
-          # `Requires=` only ensures the containers have been started, not
-          # that postgres is accepting queries or that OpenSearch is bound
-          # on :9200. OpenSearch boot is the long pole (~30-40s on this
-          # host), so its loop has the larger budget.
-          #
-          # For postgres: a plain TCP connect doesn't trigger postgres's
-          # "FATAL: the database system is starting up" log line, but
-          # pg_isready does (it sends a startup packet). Wait for the
-          # socket first, then a single pg_isready as a final readiness
-          # gate — by then postgres is past initdb so pg_isready won't
-          # provoke the FATAL.
+          # `Requires=` only ensures the container has been started, not
+          # that postgres is accepting queries. A plain TCP connect doesn't
+          # trigger postgres's "FATAL: the database system is starting up"
+          # log line, but pg_isready does (it sends a startup packet). Wait
+          # for the socket first, then a single pg_isready as a final
+          # readiness gate — by then postgres is past initdb so pg_isready
+          # won't provoke the FATAL.
           for _ in $(seq 1 60); do
             if podman exec "$PG" bash -c ': </dev/tcp/localhost/5433' \
                  2>/dev/null; then
@@ -610,26 +523,14 @@ in
             sleep 1
           done
 
-          for _ in $(seq 1 90); do
-            if podman exec "$OS" \
-                 curl -fsS "http://localhost:9200/_cluster/health" \
-                 >/dev/null 2>&1; then
-              break
-            fi
-            sleep 1
-          done
-
-          # Two independent state checks. Either side can be in an
-          # intermediate state (e.g. postgres got migrated past failure
-          # but ES never got its index), so we gate each first-time-only
-          # operation independently:
-          #   - PG_SCHEMA_PRESENT: skip `create` + `setup-schema -v 0.0`
-          #     (sql-tool errors if DB exists / schema already applied)
-          #   - ES_INDEX_PRESENT:  skip `create-index`
-          #     (errors with "already exists")
-          # Always-safe operations (`update-schema`, ES `setup-schema`)
-          # run unconditionally — both are idempotent and apply any new
-          # versioned migrations on a server bump.
+          # Two independent state checks. Each DB can be in an intermediate
+          # state, so we gate each first-time-only `create`/`setup-schema`
+          # independently (sql-tool errors if the DB exists / schema is
+          # already applied). `update-schema` runs unconditionally — it's
+          # idempotent and applies any new versioned migrations on a server
+          # bump. The `temporal` DB is auto-created by the postgres image
+          # (POSTGRES_USER=temporal); `temporal_visibility` is not, so the
+          # visibility path creates it on first boot.
           if podman exec "$PG" psql -U temporal -d temporal -p 5433 -tAc \
                "SELECT 1 FROM information_schema.tables WHERE table_name='namespaces'" \
                2>/dev/null | grep -q '^1$'; then
@@ -638,34 +539,30 @@ in
             PG_SCHEMA_PRESENT=false
           fi
 
-          if podman exec "$OS" curl -fsS -o /dev/null \
-               "http://localhost:9200/temporal_visibility_v1_dev" \
-               2>/dev/null; then
-            ES_INDEX_PRESENT=true
+          if podman exec "$PG" psql -U temporal -d temporal_visibility -p 5433 -tAc \
+               "SELECT 1 FROM information_schema.tables WHERE table_name='executions_visibility'" \
+               2>/dev/null | grep -q '^1$'; then
+            VIS_SCHEMA_PRESENT=true
           else
-            ES_INDEX_PRESENT=false
+            VIS_SCHEMA_PRESENT=false
           fi
 
-          echo "Temporal: pg-schema=$PG_SCHEMA_PRESENT, es-index=$ES_INDEX_PRESENT"
+          echo "Temporal: pg-schema=$PG_SCHEMA_PRESENT, vis-schema=$VIS_SCHEMA_PRESENT"
 
           podman run --rm --pod "$POD" \
             -e PG_SCHEMA_PRESENT="$PG_SCHEMA_PRESENT" \
-            -e ES_INDEX_PRESENT="$ES_INDEX_PRESENT" \
+            -e VIS_SCHEMA_PRESENT="$VIS_SCHEMA_PRESENT" \
             -e POSTGRES_SEEDS=localhost \
             -e POSTGRES_USER=temporal \
             -e POSTGRES_PWD=temporal \
             -e SQL_PASSWORD=temporal \
             -e DB_PORT=5433 \
-            -e ES_SCHEME=http \
-            -e ES_HOST=localhost \
-            -e ES_PORT=9200 \
-            -e ES_VERSION=v7 \
-            -e ES_VISIBILITY_INDEX=temporal_visibility_v1_dev \
             ${temporalAdminToolsImage} \
             sh -eu -c '
               SQL_BASE="temporal-sql-tool --plugin postgres12 --ep $POSTGRES_SEEDS \
                 -u $POSTGRES_USER -p $DB_PORT --db temporal"
-              ES_EP="$ES_SCHEME://$ES_HOST:$ES_PORT"
+              SQL_VIS="temporal-sql-tool --plugin postgres12 --ep $POSTGRES_SEEDS \
+                -u $POSTGRES_USER -p $DB_PORT --db temporal_visibility"
 
               if [ "$PG_SCHEMA_PRESENT" != "true" ]; then
                 $SQL_BASE create
@@ -673,10 +570,11 @@ in
               fi
               $SQL_BASE update-schema -d /etc/temporal/schema/postgresql/v12/temporal/versioned
 
-              temporal-elasticsearch-tool --ep "$ES_EP" setup-schema
-              if [ "$ES_INDEX_PRESENT" != "true" ]; then
-                temporal-elasticsearch-tool --ep "$ES_EP" create-index --index "$ES_VISIBILITY_INDEX"
+              if [ "$VIS_SCHEMA_PRESENT" != "true" ]; then
+                $SQL_VIS create
+                $SQL_VIS setup-schema -v 0.0
               fi
+              $SQL_VIS update-schema -d /etc/temporal/schema/postgresql/v12/visibility/versioned
             '
         '';
     };
@@ -694,7 +592,10 @@ in
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-        TimeoutStartSec = "3min";
+        # Headroom for a slow cold-start boot (Temporal forms its cluster ring
+        # over ~10-30s, longer under memory pressure). The health loop below is
+        # the real gate; this is just the outer ceiling.
+        TimeoutStartSec = "6min";
       };
       script = # sh
         ''
@@ -702,11 +603,11 @@ in
           POD=${subdomain}-pod
 
           podman run --rm --pod "$POD" \
-            -e TEMPORAL_ADDRESS=localhost:7233 \
+            -e TEMPORAL_ADDRESS=127.0.0.1:7233 \
             -e DEFAULT_NAMESPACE=default \
             ${temporalAdminToolsImage} \
             sh -eu -c '
-              for _ in $(seq 1 60); do
+              for _ in $(seq 1 120); do
                 if temporal operator cluster health \
                      --address "$TEMPORAL_ADDRESS" >/dev/null 2>&1; then
                   break

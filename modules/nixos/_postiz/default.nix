@@ -29,11 +29,23 @@ let
       cp -r . $out/
     '';
   };
+
+  # The app image bakes in var/docker/nginx.conf with `proxy_pass
+  # http://localhost:{3000,4200}/`. The pod resolves `localhost` to IPv6 `::1`,
+  # where the IPv4-only node backends aren't listening → every request 502s.
+  # Patch the upstreams to 127.0.0.1 and mount this over the baked config (see
+  # the `nginxConf` arg in instance.nix) — mounting avoids the ~15min image
+  # rebuild that editing the source copy would trigger (the COPY precedes the
+  # pnpm build layers in Dockerfile.dev).
+  patchedNginxConf = pkgs.runCommand "postiz-nginx.conf" { } ''
+    substitute ${postizSrc}/var/docker/nginx.conf $out \
+      --replace-fail 'http://localhost:3000/' 'http://127.0.0.1:3000/' \
+      --replace-fail 'http://localhost:4200/' 'http://127.0.0.1:4200/'
+  '';
 in
 {
   imports = [
     inputs.quadlet-nix.nixosModules.quadlet
-    ./temporal-opensearch-image.nix
 
     # Instance A. Fronted by a Cloudflare Tunnel + Access at the hostname
     # below; the app port is published to loopback for the tunnel to
@@ -45,6 +57,7 @@ in
       cpuset = "0-3";
       publishPort = "127.0.0.1:18801:5000";
       enableSocialProviders = true;
+      nginxConf = patchedNginxConf;
     })
 
     # Instance B. Same tunnel-fronted setup as A.
@@ -54,6 +67,7 @@ in
       local = false;
       cpuset = "4-7";
       publishPort = "127.0.0.1:18800:5000";
+      nginxConf = patchedNginxConf;
     })
   ];
 
