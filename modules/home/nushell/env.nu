@@ -109,18 +109,21 @@ $env.NU_PLUGIN_DIRS = [
   ($nu.default-config-dir | path join 'plugins')
 ]
 
-# TODO: load this from nu_scripts instead
+# Custom dotenv (KEY=value) deserializer. Named `from env` so nushell also
+# auto-dispatches it for `open *.env`, not just the explicit loader below.
+# The regex drops comments, blanks, and an optional `export ` in one pass.
 def "from env" []: string -> record {
   lines
-    | split column '#'
-    | get column1
-    | where {($in | str length) > 0}
-    | parse "{key}={value}"
-    | update value {
-        str trim -c '"' |
-        str replace -a "\\n" "\n"
+  | parse --regex '^\s*(?:export\s+)?(?<key>[A-Za-z_]\w*)=(?<value>.*)$'
+  | update value {
+      str trim                       # whitespace around the value
+      | str trim --char '"'          # unwrap "double" quotes
+      | str trim --char "'"          # unwrap 'single' quotes
+      | str replace --all '\n' (char newline)
+      | str replace --all '\r' (char cr)
+      | str replace --all '\t' (char tab)
     }
-    | transpose -r -d
+  | transpose --header-row --as-record
 }
 
 # Secrets decrypted by sops-nix at activation (see lib/common/sops.nix).
