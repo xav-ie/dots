@@ -122,13 +122,32 @@ let
   temporalServerImage = "docker.io/temporalio/server:1.30.4";
   temporalAdminToolsImage = "docker.io/temporalio/admin-tools:1.30";
 
-  # Minimal dynamicconfig file (runtime feature toggles). The server
-  # refuses to start without one when DYNAMIC_CONFIG_FILE_PATH is set.
-  # Values mirror temporalio/samples-server's development-sql.yaml; the
-  # stamp comment is just to keep the file non-empty/readable.
+  # Dynamicconfig file (runtime feature toggles). The server refuses to
+  # start without one when DYNAMIC_CONFIG_FILE_PATH is set.
+  #
+  # Beyond the required maxIDLength, every knob here trims Temporal's idle
+  # background CPU for this very-low-throughput deployment (a handful of
+  # scheduled-post workflows). Temporal's defaults assume a busy cluster:
+  # each task queue gets 4 read + 4 write partitions that the matching
+  # service long-polls continuously, and the history queue processors poll
+  # on a tight interval. Collapsing partitions to 1 and stretching the poll
+  # intervals removes most of the ~1.4%/core idle churn with no behavioural
+  # change at our volume.
   temporalDynamicConfig = pkgs.writeText "temporal-dynamicconfig.yaml" ''
     limit.maxIDLength:
       - value: 255
+        constraints: {}
+    matching.numTaskqueueReadPartitions:
+      - value: 1
+        constraints: {}
+    matching.numTaskqueueWritePartitions:
+      - value: 1
+        constraints: {}
+    history.timerProcessorMaxPollInterval:
+      - value: "5m"
+        constraints: {}
+    history.transferProcessorMaxPollInterval:
+      - value: "5m"
         constraints: {}
   '';
 
@@ -440,6 +459,13 @@ in
                 # PostgreSQL v12+, so Postiz's two Text attributes
                 # (organizationId, postId) no longer need a search engine.
                 BIND_ON_IP = "0.0.0.0";
+                # One history shard instead of the default 4. Each shard runs
+                # its own background queue-processing loops, so fewer shards =
+                # less idle CPU; 1 is ample for our throughput. Shard count is
+                # baked into cluster metadata at schema-init and CANNOT change
+                # on an existing DB — the temporal-postgres volume must be
+                # wiped for this to take effect (see schema-init below).
+                NUM_HISTORY_SHARDS = "1";
                 DYNAMIC_CONFIG_FILE_PATH = "config/dynamicconfig/docker.yaml";
                 # Filter out Temporal's `info`-level startup chatter ("Not
                 # enough hosts to serve the request", "shard status unknown")
