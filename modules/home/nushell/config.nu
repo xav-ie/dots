@@ -68,6 +68,25 @@ $env.config.hooks.env_change.PWD = (
     | append { |_before, _after| tmux-tab-name-update }
 )
 
+# --- graphical session env ---------------------------------------------------
+# Pull the live graphical session's compositor vars (DISPLAY, WAYLAND_DISPLAY, …)
+# into the current shell. Use it to un-stick a tmux pane that was started over
+# SSH so firefox-router / xdg-open can reach the display. Only *sets* vars —
+# clearing them again (to go headless) is left to you.
+#
+# Source is `systemctl --user show-environment`, the canonical graphical session
+# Hyprland imports its env into. New panes opened after a local `tmux attach`
+# already inherit these via update-environment (../tmux.nix); this is for
+# already-running shells.
+def --env get-graphical-env [] {
+  systemctl --user show-environment
+  | lines
+  | parse "{name}={value}"
+  | where name in [DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE XAUTHORITY]
+  | reduce -f {} {|it, acc| $acc | insert $it.name $it.value }
+  | load-env
+}
+
 $env.config.keybindings ++= [
   {
     name: cut_line_from_start
