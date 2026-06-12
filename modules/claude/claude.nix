@@ -74,6 +74,10 @@
               repo = "mixedbread-ai/mgrep";
               src = inputs.claude-marketplace-mgrep;
             };
+            "osgrep" = {
+              repo = "Ryandonofrio3/osgrep";
+              src = inputs.claude-marketplace-osgrep;
+            };
           };
           description = "Claude Code marketplaces pinned from flake inputs";
           example = lib.literalExpression ''
@@ -115,11 +119,31 @@
             }) cfg.marketplaces
           );
 
+          # osgrep ships a SessionStart hook (hooks/start.js) that launches a
+          # long-lived `osgrep serve` daemon. Its worker pool busy-loops at 100%
+          # CPU once indexing finishes — four pegged cores, fans spun up — and it
+          # runs uncapped, unlike our Nice'd/idle-IO osgrep-index.service. We
+          # don't need it: the osgrep-index systemd timer already keeps every
+          # allowlisted repo indexed. So, mirroring the mgrep treatment
+          # (claudeMgrepDisableWatch below), we vendor the marketplace but neuter
+          # its hooks.json. mgrep's hooks live in the WRITABLE plugin cache, so
+          # that one is stripped at activation time; osgrep is served straight
+          # from this read-only /nix/store symlink, so we can't edit it in place.
+          # Instead we build a patched copy here (hooks.json → no-op) and symlink
+          # THAT in. marketplace.src stays the raw input so findInputName (and
+          # thus `claude-update-marketplaces`) keeps working.
+          stripPluginHooks =
+            name: src:
+            pkgs.runCommand "claude-marketplace-${name}-nohooks" { } ''
+              cp -r --no-preserve=mode,ownership ${src} "$out"
+              echo '{ "hooks": {} }' > "$out/plugins/${name}/hooks.json"
+            '';
+
           # Generate home.file entries for marketplace directories
           marketplaceFiles = lib.mapAttrs' (name: marketplace: {
             name = ".claude/plugins/marketplaces/${name}";
             value = {
-              source = marketplace.src;
+              source = if name == "osgrep" then stripPluginHooks name marketplace.src else marketplace.src;
             };
           }) cfg.marketplaces;
 

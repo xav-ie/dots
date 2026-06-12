@@ -21,6 +21,8 @@
             ".devenv*"
             ".direnv"
             ".mgrepignore"
+            ".osgrep"
+            ".osgrepignore"
             ".pi"
             ".pre-commit-config.yaml"
             "CLAUDE.md"
