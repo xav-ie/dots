@@ -82,6 +82,17 @@
               bind -r K resize-pane -U 5
               bind -r L resize-pane -R 5
 
+              # Refresh compositor/session vars from the attaching client on each
+              # attach. DISPLAY + XAUTHORITY are in tmux's default
+              # update-environment already; add the Wayland/Hyprland ones so a
+              # pane opened after a local attach can launch GUIs (firefox-router,
+              # xdg-open) while a pane under an SSH attach gets them cleared (no
+              # DISPLAY -> links don't pop a browser on the host). Already-open
+              # panes don't auto-update -> `refresh-env` (nushell).
+              set-option -ga update-environment "WAYLAND_DISPLAY"
+              set-option -ga update-environment "XDG_CURRENT_DESKTOP"
+              set-option -ga update-environment "HYPRLAND_INSTANCE_SIGNATURE"
+
               set-option -g escape-time 5 # ms
               set-option -g history-limit 50000
               set-option -g renumber-windows on
