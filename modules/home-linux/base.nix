@@ -60,14 +60,13 @@
               move-active
               record
               record-section
-              zenity-askpass
             ]);
 
           # NVIDIA/Wayland env vars live in the hyprland module — they're only
           # relevant under that graphical session.
           sessionVariables = {
             NH_ELEVATION_PROGRAM = "/run/wrappers/bin/sudo-askpass";
-            SUDO_ASKPASS = "${pkgs.pkgs-mine.zenity-askpass}/bin/zenity-askpass";
+            SUDO_ASKPASS = "${pkgs.pkgs-mine.askpass}/bin/askpass";
             XDG_CONFIG_HOME = "/home/x/.config";
           };
         };

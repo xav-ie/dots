@@ -173,5 +173,4 @@ rec {
     fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
   };
   snippet-mcp = pkgs.callPackage ./snippet-mcp { };
-  zenity-askpass = pkgs.callPackage ./zenity-askpass { inherit writeNuApplication; };
 })
