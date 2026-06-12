@@ -103,7 +103,8 @@
     "padding": 0
   },
   "enabledPlugins": {
-    "mgrep@Mixedbread-Grep": true,
+    "mgrep@Mixedbread-Grep": false,
+    "osgrep@osgrep": false,
     "vtsls@claude-code-lsps": false,
     "vscode-langservers@claude-code-lsps": false,
     "typescript-lsp@claude-plugins-official": false,

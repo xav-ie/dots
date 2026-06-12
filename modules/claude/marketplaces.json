@@ -9,6 +9,7 @@
     "meta-cc@meta-cc-marketplace",
     "plugin-dev@claude-plugins-official",
     "mgrep@Mixedbread-Grep",
+    "osgrep@osgrep",
     "beads@beads-marketplace",
     "typescript-lsp@claude-plugins-official",
     "hookify@claude-plugins-official",

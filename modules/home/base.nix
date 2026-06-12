@@ -130,6 +130,7 @@
               nom-run
               notify
               nvim
+              osgrep-indexed
               pgpod
               pr-summary
               prs

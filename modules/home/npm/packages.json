@@ -11,5 +11,6 @@
   "chrome-devtools-mcp": "0.16.0",
   "@shopify/cli": "3.91.1",
   "wrangler": "4.71.0",
-  "@mariozechner/pi-coding-agent": "0.64.0"
+  "@mariozechner/pi-coding-agent": "0.64.0",
+  "osgrep": "0.5.16"
 }

@@ -289,6 +289,22 @@
         "type": "github"
       }
     },
+    "claude-marketplace-osgrep": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1768679110,
+        "narHash": "sha256-bUNAK8NQqEKW4UGrFdcY34z4U8HenCtVMr1f4CUsbZ8=",
+        "owner": "Ryandonofrio3",
+        "repo": "osgrep",
+        "rev": "9f2faf7e52783d622a583f5250f81ab24cee7864",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Ryandonofrio3",
+        "repo": "osgrep",
+        "type": "github"
+      }
+    },
     "claude-marketplace-outsmartly": {
       "flake": false,
       "locked": {
@@ -1768,6 +1784,7 @@
         "claude-marketplace-lsps": "claude-marketplace-lsps",
         "claude-marketplace-mgrep": "claude-marketplace-mgrep",
         "claude-marketplace-official": "claude-marketplace-official",
+        "claude-marketplace-osgrep": "claude-marketplace-osgrep",
         "claude-marketplace-outsmartly": "claude-marketplace-outsmartly",
         "clauhist-src": "clauhist-src",
         "crane": "crane",

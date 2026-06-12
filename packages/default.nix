@@ -81,6 +81,7 @@ rec {
   nix-repl = pkgs.callPackage ./nix-repl { inherit writeNuApplication; };
   nom-run = pkgs.callPackage ./nom-run { inherit nix-output-monitor writeNuApplication; };
   nvim = pkgs.callPackage ./nvim { };
+  osgrep-indexed = pkgs.callPackage ./osgrep-indexed { };
   pgpod = pkgs.callPackage ./pgpod { inherit writeNuApplication; };
   pr-summary = pkgs.callPackage ./pr-summary { inherit base-ref writeNuApplication; };
   prettier-plugin-toml = pkgs.callPackage ./prettier-plugin-toml { };

@@ -83,6 +83,8 @@
     claude-marketplace-lsps.url = "github:Piebald-AI/claude-code-lsps";
     claude-marketplace-mgrep.flake = false;
     claude-marketplace-mgrep.url = "github:mixedbread-ai/mgrep";
+    claude-marketplace-osgrep.flake = false;
+    claude-marketplace-osgrep.url = "github:Ryandonofrio3/osgrep";
 
     glsl_analyzer.flake = false;
     glsl_analyzer.url = "github:xav-ie/glsl_analyzer/format";
