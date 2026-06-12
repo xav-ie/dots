@@ -2097,11 +2097,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1781026514,
-        "narHash": "sha256-nwMo9eoTLEaDhYYA8OZ7t2wiiPClZ/+qI7OIFfy67Kc=",
+        "lastModified": 1781302228,
+        "narHash": "sha256-pa23swcZdkcxzQGH4wkYFzJJBJf5YOWTssUnZaTuXCI=",
         "owner": "xav-ie",
         "repo": "virtual-headset",
-        "rev": "901b0f46c9d107e8f011fb9668d903ec29de8a6d",
+        "rev": "7cacf62e085a4fe6b276893049e90cf54f5e55ef",
         "type": "github"
       },
       "original": {
