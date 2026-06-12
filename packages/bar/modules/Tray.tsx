@@ -52,7 +52,6 @@ function TrayItem(item: AstalTray.TrayItem) {
   return (
     <menubutton
       tooltipMarkup={createBinding(item, "tooltipMarkup")}
-      menuModel={createBinding(item, "menuModel")}
       $={(self: Gtk.MenuButton) => {
         // Action names in the dbusmenu model are namespaced under "dbusmenu".
         const apply = () =>
@@ -60,6 +59,15 @@ function TrayItem(item: AstalTray.TrayItem) {
         apply();
         const id = item.connect("notify::action-group", apply);
         onCleanup(() => item.disconnect(id));
+
+        // Populate the popover lazily, only as it's about to open. Binding
+        // `menuModel` live makes GtkMenuButton rebuild its GtkPopoverMenu on
+        // every dbusmenu republish — nm-applet republishes every ~30s as it
+        // rescans wifi — which orphans the popover's GtkStack pages (the
+        // "duplicate child name in GtkStack" spam) and leaks them. RSS climbed
+        // to ~1GB over a couple days and swap-thrashed the session. Building the
+        // menu on demand snapshots the current model once per open instead.
+        self.set_create_popup_func(() => self.set_menu_model(item.menuModel));
       }}
     >
       <image gicon={gicon} pixelSize={16} />

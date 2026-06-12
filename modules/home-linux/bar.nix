@@ -60,6 +60,11 @@
                 '';
             ExecStart = "${pkgs.pkgs-mine.bar}/bin/bar";
             Restart = "on-failure";
+            # Soft backstop against runaway growth: the kernel reclaims this
+            # cgroup's pages once it crosses the threshold instead of letting it
+            # balloon and swap-thrash the session. A healthy bar sits well under
+            # this, so it should never bite in normal operation.
+            MemoryHigh = "512M";
           };
           Install.WantedBy = [ "graphical-session.target" ];
         };
