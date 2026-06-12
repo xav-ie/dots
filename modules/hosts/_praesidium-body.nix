@@ -271,30 +271,8 @@
       };
 
       # Host values for this machine's single-GPU workloads; definitions live in
-      # nixos/{nginx,vllm,llama-server}.nix.
+      # nixos/{nginx,llama-server}.nix.
       reverse-proxy.enable = false;
-
-      # vLLM local AI code completion (cursortab), at vllm.lalala.casa via traefik.
-      vllm = {
-        enable = false;
-        model = "Xenova/sweep-next-edit-1.5B";
-        # 3060 Ti has 8GB, leave headroom for desktop/browser
-        gpuMemoryUtilization = 0.7;
-        # Limit context to save VRAM (4k is plenty for code completions)
-        maxModelLen = 4096;
-        # Disable CUDA graphs to save VRAM
-        enforceEager = true;
-        # Performance optimizations
-        enablePrefixCaching = true;
-        enableChunkedPrefill = true;
-        # Ngram speculation - good for edit prediction
-        ngramSpeculation = {
-          enable = true;
-          lookupMax = 4;
-          lookupMin = 2;
-          numTokens = 8;
-        };
-      };
 
       # llama.cpp server for local AI code completion (cursortab).
       # Accessible at https://llama.lalala.casa via traefik. Sweep ships
