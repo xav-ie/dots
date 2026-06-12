@@ -1,6 +1,6 @@
 # AGS (Astal) status bar, bundled into a standalone gjs binary. `agsPackages`
 # is inputs.ags.packages.<system>, re-exporting the astal service libraries
-# (wireplumber, bluetooth, tray, hyprland, mpris, cava) alongside the
+# (wireplumber, bluetooth, tray, hyprland, mpris) alongside the
 # ags CLI (default). Run as the `bar` systemd user service (see
 # home-manager/linux/bar).
 {
@@ -27,10 +27,8 @@
   hyprwhspr-rs,
   # Runtime tools spawned via execAsync/subprocess.
   pavucontrol,
-  pulseaudio, # pactl, to resolve the default mic source for cava
   networkmanagerapplet, # nm-connection-editor
   uair, # uairctl
-  cava, # mic visualizer
   bash, # `sh -c` retry loop for uairctl listen
   coreutils, # sleep, in that loop
 }:
@@ -59,7 +57,6 @@ stdenv.mkDerivation {
     agsPackages.tray
     agsPackages.hyprland
     agsPackages.mpris
-    agsPackages.cava
   ];
 
   # The bundled gjs binary spawns these directly, so put them on the wrapper's
@@ -74,10 +71,8 @@ stdenv.mkDerivation {
         virtual-headset-panel
         hyprwhspr-rs
         pavucontrol
-        pulseaudio
         networkmanagerapplet
         uair
-        cava
         bash
         coreutils
       ]
