@@ -70,20 +70,49 @@ let
   # (local.storage.ts) and every social provider re-fetches that URL to upload
   # the media bytes. FRONTEND_URL is the public, Cloudflare-Access-fronted
   # hostname, so the fetch would otherwise leave the pod and hit the Access
-  # edge. This preload rewrites upload fetches to the in-pod origin, keeping
-  # media reads local so `/uploads/*` stays behind Access. Keyed off
-  # FRONTEND_URL so it tracks the env across Postiz upgrades.
+  # edge. This preload rewrites upload reads to the in-pod origin, keeping
+  # media local so `/uploads/*` stays behind Access. Keyed off FRONTEND_URL so
+  # it tracks the env across Postiz upgrades.
+  #
+  # Two transports need rewriting: `globalThis.fetch` (some video paths) and
+  # axios. The image providers — X and LinkedIn via `readOrFetch`, Bluesky
+  # directly — download bytes with axios, which bypasses the fetch override, so
+  # we also add a request interceptor on the default axios instance as it loads.
   uploadFetchShim = pkgs.writeText "postiz-upload-fetch-shim.cjs" ''
     const orig = globalThis.fetch;
     const PUB = (process.env.FRONTEND_URL || "") + "/uploads";
-    const INT = 'http://localhost:5000/uploads';
+    const INT = "http://localhost:5000/uploads";
+    const rewrite = (u) =>
+      typeof u === "string" && u.startsWith(PUB) ? INT + u.slice(PUB.length) : u;
+
     globalThis.fetch = (input, init) => {
-      if (typeof input === 'string' && input.startsWith(PUB)) {
-        input = INT + input.slice(PUB.length);
-      } else if (input && typeof input.url === 'string' && input.url.startsWith(PUB)) {
-        input = new Request(INT + input.url.slice(PUB.length), input);
+      if (typeof input === "string") {
+        input = rewrite(input);
+      } else if (input && typeof input.url === "string" && input.url.startsWith(PUB)) {
+        input = new Request(rewrite(input.url), input);
       }
       return orig(input, init);
+    };
+
+    const Module = require("module");
+    const origLoad = Module._load;
+    Module._load = function (request, parent, isMain) {
+      const mod = origLoad.apply(this, arguments);
+      try {
+        if (request === "axios") {
+          const ax = mod && mod.default ? mod.default : mod;
+          if (ax && ax.interceptors && !ax.__uploadShim) {
+            ax.__uploadShim = true;
+            ax.interceptors.request.use((config) => {
+              if (config && typeof config.url === "string") {
+                config.url = rewrite(config.url);
+              }
+              return config;
+            });
+          }
+        }
+      } catch (_e) {}
+      return mod;
     };
   '';
 
