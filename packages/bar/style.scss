@@ -229,23 +229,6 @@ window {
   color: $accent;
 }
 
-// Mic visualizer: a row of thin bars whose height is driven inline from the
-// cava levels (see CavaMic.tsx). The container reserves a fixed footprint so
-// the bar layout doesn't jiggle as levels move.
-.cava {
-  margin: 0 4px 4px;
-
-  .cava-col {
-    margin: 0 1px;
-  }
-
-  .cava-bar {
-    background-color: $accent;
-    border-radius: 2px;
-    min-width: 3px;
-  }
-}
-
 // System tray menu buttons sit flush in the bar.
 .tray button {
   padding: 2px 4px;

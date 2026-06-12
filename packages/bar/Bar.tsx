@@ -5,7 +5,6 @@ import Workspaces from "./modules/Workspaces";
 import Pomodoro, { pomodoroActive } from "./modules/Pomodoro";
 import Tray, { Network } from "./modules/Tray";
 import Volume from "./modules/Volume";
-import CavaMic from "./modules/CavaMic";
 import Dictation from "./modules/Dictation";
 import VirtualHeadset from "./modules/VirtualHeadset";
 import Bluetooth from "./modules/Bluetooth";
@@ -45,7 +44,6 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
           <Dictation />
           <Volume />
           <VirtualHeadset />
-          <CavaMic />
           <Network />
           <Bluetooth />
           <Notifications />
