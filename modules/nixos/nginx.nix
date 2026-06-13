@@ -69,11 +69,6 @@
                       service = "home-assistant-service";
                       tls.certResolver = "cloudflare";
                     };
-                    jellyfin = {
-                      rule = "Host(`jellyfin.${baseDomain}`)";
-                      service = "jellyfin-service";
-                      tls.certResolver = "cloudflare";
-                    };
                     executor = {
                       rule = "Host(`${config.services.executor.subdomain}.${baseDomain}`)";
                       service = "executor-service";
@@ -119,13 +114,6 @@
                       loadBalancer = {
                         servers = [
                           { url = "http://127.0.0.1:8123"; }
-                        ];
-                      };
-                    };
-                    jellyfin-service = {
-                      loadBalancer = {
-                        servers = [
-                          { url = "http://127.0.0.1:8096"; }
                         ];
                       };
                     };
