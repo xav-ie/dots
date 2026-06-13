@@ -85,7 +85,7 @@
  * of the collapsed vertical-tabs column. */
 .tab-group-label-hover-highlight {
   #tabbrowser-tabs[orient="vertical"]:not([expanded]) & {
-    margin-inline: 6px;
+    margin-inline: 6px !important;
   }
 }
 
