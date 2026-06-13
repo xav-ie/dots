@@ -113,6 +113,28 @@ python3Packages.buildPythonApplication rec {
   # bypass it since we know the version from the flake input tag
   env.UV_DYNAMIC_VERSIONING_BYPASS = version;
 
+  # FastMCP starts a pydocket worker (memory://fakeredis) even for stdio
+  # servers. The fakeredis patch above removes its inner busy-poll, but the
+  # docket worker still wakes every minimum_check_interval (250ms) to read an
+  # in-memory queue this server never uses — mcp-atlassian registers no
+  # background tasks. No-op _docket_lifespan so the worker never starts,
+  # taking idle wakeups to zero. https://github.com/sooperset/mcp-atlassian/issues/868
+  postPatch = ''
+        cat >> src/mcp_atlassian/__init__.py <<'PYEOF'
+
+    import contextlib as _docket_ctx
+    import fastmcp.server.server as _fastmcp_srv
+
+
+    @_docket_ctx.asynccontextmanager
+    async def _noop_docket_lifespan(self):
+        yield
+
+
+    _fastmcp_srv.FastMCP._docket_lifespan = _noop_docket_lifespan
+    PYEOF
+  '';
+
   build-system = with python3Packages; [
     hatchling
     uv-dynamic-versioning
