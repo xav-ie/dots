@@ -6,3 +6,9 @@
 // STRING pref; -1 means "auto" (follow the display). Linux-only on purpose:
 // on macOS this would override Retina auto-scaling and render wrong.
 defaultPref("layout.css.devPixelsPerPx", "1.3");
+
+// NB: VA-API/NVDEC hardware-decode prefs live in ./vaapi.js, NOT here. The
+// gfx feature decision happens at early GPU-process startup, before autoconfig
+// (mozilla.cfg) prefs land, so setting them here is too late — Firefox
+// force-disables HARDWARE_VIDEO_DECODING ("disabled by gfxVars"). They must be
+// user_pref in the profile's user.js, which is read early enough.

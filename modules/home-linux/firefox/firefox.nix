@@ -93,8 +93,11 @@
         # Drop userChrome.css + user.js into each Firefox profile: the dark-favicon
         # inversion (tagged by firefox.cfg) and enlarged tab icons live in CSS.
         # Mirrors the macOS module — profiles get random IDs, so glob whatever
-        # exists. These are live symlinks into the repo: edits apply on the next
-        # Firefox restart, no rebuild needed.
+        # exists. userChrome.css is a live symlink (edits apply on next restart);
+        # user.js is the shared prefs concatenated with the Linux-only VA-API
+        # hardware-decode prefs (vaapi.js), which must be user_prefs applied
+        # early — see vaapi.js. Both sources are read at activation, so edits
+        # apply on the next `just`/switch then a Firefox restart.
         home.activation.firefox-userchrome = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
           profilesRoot="$HOME/.mozilla/firefox"
           [ -d "$profilesRoot" ] || exit 0
@@ -103,7 +106,11 @@
             [ -d "$profile" ] || continue
             mkdir -p "$profile/chrome"
             ln -sfn "${shared}/userChrome.css" "$profile/chrome/userChrome.css"
-            ln -sfn "${shared}/user.js"         "$profile/user.js"
+            # rm first: a leftover symlink from prior activations would make the
+            # redirect below write through it into the repo's shared user.js.
+            rm -f "$profile/user.js"
+            cat "${shared}/user.js" "${config.dotFilesDir}/modules/home-linux/firefox/vaapi.js" \
+              > "$profile/user.js"
           done
         '';
 
