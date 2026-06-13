@@ -92,17 +92,27 @@
 
         # Drop userChrome.css + user.js into each Firefox profile: the dark-favicon
         # inversion (tagged by firefox.cfg) and enlarged tab icons live in CSS.
-        # Mirrors the macOS module — profiles get random IDs, so glob whatever
-        # exists. userChrome.css is a live symlink (edits apply on next restart);
-        # user.js is the shared prefs concatenated with the Linux-only VA-API
-        # hardware-decode prefs (vaapi.js), which must be user_prefs applied
-        # early — see vaapi.js. Both sources are read at activation, so edits
-        # apply on the next `just`/switch then a Firefox restart.
+        # New-style (SelectableProfiles) profiles live in the Profile Groups DB,
+        # not profiles.ini — and the firefox dir is full of stale profile dirs +
+        # non-profile dirs (Crash Reports, Pending Pings, …), so neither a glob
+        # nor profiles.ini identifies the real ones. Read `path` from the group
+        # DB, exactly like firefox-router (packages/firefox-router): the most
+        # recently modified Profile Groups/*.sqlite. userChrome.css is a live
+        # symlink (edits apply on next restart); user.js is the shared prefs
+        # concatenated with the Linux-only VA-API hardware-decode prefs
+        # (vaapi.js), which must be user_prefs applied early — see vaapi.js.
         home.activation.firefox-userchrome = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
           profilesRoot="$HOME/.mozilla/firefox"
-          [ -d "$profilesRoot" ] || exit 0
+          db=$(ls -t "$profilesRoot/Profile Groups/"*.sqlite 2>/dev/null | head -1)
+          [ -n "$db" ] || exit 0
 
-          for profile in "$profilesRoot"/*/; do
+          # `path` is absolute (IsRelative=0) or relative to the firefox dir.
+          ${pkgs.sqlite}/bin/sqlite3 "file:$db?mode=ro&immutable=1" \
+            "SELECT path FROM Profiles;" | while IFS= read -r path; do
+            case "$path" in
+              /*) profile="$path" ;;
+              *) profile="$profilesRoot/$path" ;;
+            esac
             [ -d "$profile" ] || continue
             mkdir -p "$profile/chrome"
             ln -sfn "${shared}/userChrome.css" "$profile/chrome/userChrome.css"
