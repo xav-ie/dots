@@ -130,9 +130,17 @@ let
   # scheduled-post workflows). Temporal's defaults assume a busy cluster:
   # each task queue gets 4 read + 4 write partitions that the matching
   # service long-polls continuously, and the history queue processors poll
-  # on a tight interval. Collapsing partitions to 1 and stretching the poll
-  # intervals removes most of the ~1.4%/core idle churn with no behavioural
-  # change at our volume.
+  # on a tight interval. Three things drive the idle DB churn:
+  #   - matching partitions (4 read + 4 write) each long-poll the queue;
+  #   - each history queue processor (timer/transfer/visibility) polls for
+  #     new tasks on a tight interval AND checkpoints its ack level to the
+  #     DB every 30s (UpdateAckInterval), a steady write even at zero load;
+  #   - matching long-polls expire every 60s, re-reading the queue each time.
+  # Collapsing partitions to 1, stretching every processor poll to 5m,
+  # stretching the ack-level checkpoints to 5m, and lengthening the matching
+  # long-poll to 5m removes nearly all of the idle churn with no behavioural
+  # change at our volume (scheduled posts still fire on time — a new task
+  # signals the processor directly rather than waiting for the next poll).
   temporalDynamicConfig = pkgs.writeText "temporal-dynamicconfig.yaml" ''
     limit.maxIDLength:
       - value: 255
@@ -143,10 +151,25 @@ let
     matching.numTaskqueueWritePartitions:
       - value: 1
         constraints: {}
+    matching.longPollExpirationInterval:
+      - value: "5m"
+        constraints: {}
     history.timerProcessorMaxPollInterval:
       - value: "5m"
         constraints: {}
     history.transferProcessorMaxPollInterval:
+      - value: "5m"
+        constraints: {}
+    history.visibilityProcessorMaxPollInterval:
+      - value: "5m"
+        constraints: {}
+    history.timerProcessorUpdateAckInterval:
+      - value: "5m"
+        constraints: {}
+    history.transferProcessorUpdateAckInterval:
+      - value: "5m"
+        constraints: {}
+    history.visibilityProcessorUpdateAckInterval:
       - value: "5m"
         constraints: {}
   '';
