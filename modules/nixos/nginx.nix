@@ -89,6 +89,11 @@
                       service = "executor-service";
                       tls.certResolver = "cloudflare";
                     };
+                    ream = {
+                      rule = "Host(`${config.services.ream.subdomain}.${baseDomain}`)";
+                      service = "ream-service";
+                      tls.certResolver = "cloudflare";
+                    };
                     # Snippets MCP rides on the shared mcp.<base> host alongside
                     # the containerised mcp-proxy. The PathPrefix rule has higher
                     # default priority (longer matcher) than the docker-provider
@@ -152,6 +157,13 @@
                       loadBalancer = {
                         servers = [
                           { url = "http://127.0.0.1:${toString config.services.executor.port}"; }
+                        ];
+                      };
+                    };
+                    ream-service = {
+                      loadBalancer = {
+                        servers = [
+                          { url = "http://127.0.0.1:${toString config.services.ream.port}"; }
                         ];
                       };
                     };

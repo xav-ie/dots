@@ -25,6 +25,8 @@
         virtual-headset-panel = inputs.virtual-headset.packages.${system}.virtual-headset-panel or null;
         # morrow calendar app; linux-only, null on darwin (no output there).
         morrow-pkg = inputs.morrow.packages.${system}.default or null;
+        # ream PDF-tools app; linux-only, null on darwin (no output there).
+        ream-pkg = inputs.ream.packages.${system}.default or null;
         atuin = inputs.atuin.packages.${system}.default;
         generate-kaomoji = inputs.generate-kaomoji.packages.${system}.default;
         # uair patched with PR#31 (overlays/default.nix `modifications`), so

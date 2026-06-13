@@ -19,6 +19,9 @@
   # with default fonts, re-overridden below to track lib/fonts.nix. null on
   # darwin, where morrow has no output and morrow.nix is not imported.
   morrow-pkg ? null,
+  # The ream PDF-tools app (inputs.ream.packages.<system>.default); null on
+  # darwin, where ream has no output and the consuming module isn't imported.
+  ream-pkg ? null,
   # User's atuin fork, pulled from inputs at the flake level since the
   # overlay isn't applied to top-level `pkgs` here.
   atuin,
@@ -166,6 +169,8 @@ rec {
     fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
   };
   pinentry-auto = pkgs.callPackage ./pinentry-auto { };
+  # Built upstream in the ream flake (extracted repo); consumed as-is.
+  ream = ream-pkg;
   simulstreaming = pkgs.callPackage ./simulstreaming { src = simulstreaming-src; };
   record = pkgs.callPackage ./record { };
   record-section = pkgs.callPackage ./record-section { };
