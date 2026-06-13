@@ -20,6 +20,12 @@
   # container below. No default — distinct sets per instance keep them
   # from contending, and a silent default would guarantee a collision.
   cpuset ? null,
+  # Comma-separated provider identifiers this instance posts to →
+  # POSTIZ_WORKER_PROVIDERS (see worker-allowlist.patch). null starts a worker
+  # for every supported provider (~31, the upstream default); any explicit
+  # value — including "" — runs only the listed providers plus 'main', trimming
+  # ~2 idle threads per dropped provider.
+  workerProviders ? null,
   # When non-null, publish the app port on the host (e.g.
   # "127.0.0.1:18800:5000") so a Cloudflare Tunnel can target it.
   publishPort ? null,
@@ -372,11 +378,21 @@ in
                 # Rewrite provider upload fetches to the in-pod origin; see
                 # uploadFetchShim above.
                 NODE_OPTIONS = "--require /config/upload-fetch-shim.cjs";
+              }
+              // lib.optionalAttrs (workerProviders != null) {
+                # Start Temporal workers only for the providers this instance
+                # uses. Postiz otherwise registers one per supported provider
+                # (~31), each a permanent poller with ~2 threads. Caveat: a post
+                # to a connected provider missing from this list has no worker,
+                # so it retries then fails — keep it in sync with connections.
+                POSTIZ_WORKER_PROVIDERS = workerProviders;
               };
-              # Cap the CPU set the Temporal TS SDK sees at startup. Its Rust
-              # core sizes the Tokio thread pool from `nproc`, so on a 32-thread
-              # host it spawns 32 schedulers that each burn ~0.3% CPU even at
-              # idle (~10% baseline). 4 cores is plenty for our throughput.
+              # Pin each instance to a disjoint core set so the two don't
+              # contend. This does NOT bound the Temporal SDK's thread pools:
+              # its Rust core sizes the workflow/scheduler pools from the host's
+              # online CPU count, ignoring both the cpuset affinity mask and any
+              # cgroup cpu.max quota — so trimming those ~64 idle threads needs
+              # an SDK-level setting, not a podman cgroup knob.
               podmanArgs = lib.optionals (cpuset != null) [ "--cpuset-cpus=${cpuset}" ];
               # No container-level healthcheck:
               #

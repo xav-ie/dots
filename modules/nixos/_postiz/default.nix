@@ -18,6 +18,7 @@ let
     patches = [
       ./integration-fix.patch
       ./pm2-quiet.patch
+      ./worker-allowlist.patch
     ];
     phases = [
       "unpackPhase"
@@ -55,6 +56,9 @@ in
       hostName = "postiz.lalala.casa";
       local = false;
       cpuset = "0-3";
+      # Providers with a connected integration (from the DB). postiz-b is left
+      # at the default (all workers) until its accounts are set up.
+      workerProviders = "bluesky,discord,linkedin,mastodon,slack,x";
       publishPort = "127.0.0.1:18801:5000";
       enableSocialProviders = true;
       nginxConf = patchedNginxConf;
@@ -66,6 +70,10 @@ in
       hostName = "social.aztecahome.com";
       local = false;
       cpuset = "4-7";
+      # No social accounts connected yet — run only the 'main' worker.
+      # Enabling a provider here later is part of the same change that adds its
+      # sops OAuth secrets + enableSocialProviders.
+      workerProviders = "";
       publishPort = "127.0.0.1:18800:5000";
       nginxConf = patchedNginxConf;
     })
