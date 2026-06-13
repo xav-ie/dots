@@ -35,6 +35,8 @@
     nuenv.url = "github:xav-ie/nuenv";
     plover-flake.url = "github:openstenoproject/plover-flake";
     quadlet-nix.url = "github:SEIAROTg/quadlet-nix";
+    ream.url = "git+ssh://git@github.com/xav-ie/ream";
+    ream.inputs.nixpkgs.follows = "nixpkgs";
     sops-nix.url = "github:Mic92/sops-nix";
     virtual-headset.url = "github:xav-ie/virtual-headset";
     systems.url = "github:xav-ie/dots-systems";
