@@ -8,6 +8,24 @@ let
   # aws-sam-translator which doesn't support 3.14
   python3Packages = pkgs-bleeding.python313Packages.overrideScope (
     _final: prev: {
+      # FastMCP >=2.13 starts a pydocket worker on a memory:// (fakeredis)
+      # backend for every server, including stdio. fakeredis's async can_read
+      # busy-polled the in-memory queue (sleep(0.01) loop), so the worker spun
+      # ~1 core at idle. cunla/fakeredis-py PR #506 replaces that poll with an
+      # event-based wakeup. Tracked through the open PR (its head sha moves);
+      # `includes` drops the PR's test hunk, which targets a newer test file
+      # than 2.33.0 ships. https://github.com/cunla/fakeredis-py/pull/506
+      fakeredis = prev.fakeredis.overridePythonAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          (pkgs-bleeding.fetchpatch {
+            name = "fakeredis-can-read-event-wakeup-pr506.patch";
+            url = "https://github.com/cunla/fakeredis-py/pull/506.diff";
+            includes = [ "fakeredis/aioredis.py" ];
+            hash = "sha256-ACu7y5hdLKHJysfxqVGQ7edLWX260nIIYRpegj8LgII=";
+          })
+        ];
+      });
+
       # nixpkgs-bleeding's lupa 2.8 build only produces a combined
       # lua.cpython-*.so. py-key-value-aio's memory backend does
       # `import lupa.lua51`, which fails with ModuleNotFoundError and
