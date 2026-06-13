@@ -230,10 +230,6 @@
         user = config.defaultUser;
       };
 
-      hardware.openrgb = {
-        enable = true;
-        package = pkgs.pkgs-mine.openrgb-appimage;
-      };
       resolved = {
         enable = false;
         # dnssec = "true";
