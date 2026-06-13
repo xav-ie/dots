@@ -79,11 +79,6 @@
                       service = "jellyfin-service";
                       tls.certResolver = "cloudflare";
                     };
-                    opencode = {
-                      rule = "Host(`${config.services.opencode.subdomain}.${baseDomain}`)";
-                      service = "opencode-service";
-                      tls.certResolver = "cloudflare";
-                    };
                     executor = {
                       rule = "Host(`${config.services.executor.subdomain}.${baseDomain}`)";
                       service = "executor-service";
@@ -143,13 +138,6 @@
                       loadBalancer = {
                         servers = [
                           { url = "http://127.0.0.1:8096"; }
-                        ];
-                      };
-                    };
-                    opencode-service = {
-                      loadBalancer = {
-                        servers = [
-                          { url = "http://127.0.0.1:${toString config.services.opencode.port}"; }
                         ];
                       };
                     };
