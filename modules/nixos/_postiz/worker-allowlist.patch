@@ -1,0 +1,28 @@
+diff --git a/libraries/nestjs-libraries/src/temporal/temporal.module.ts b/libraries/nestjs-libraries/src/temporal/temporal.module.ts
+index dace46cb..7ec53c23 100644
+--- a/libraries/nestjs-libraries/src/temporal/temporal.module.ts
++++ b/libraries/nestjs-libraries/src/temporal/temporal.module.ts
+@@ -23,6 +23,23 @@ export const getTemporalModule = (
+             ...socialIntegrationList,
+           ]
+             .filter((f) => f.identifier.indexOf('-') === -1)
++            // Only start a Temporal worker for the providers this instance
++            // uses, set via POSTIZ_WORKER_PROVIDERS (comma-separated). Each
++            // worker is a permanent task-queue poller with ~2 dedicated
++            // threads, so registering all ~31 supported providers wastes ~60
++            // idle threads. 'main' is always kept. Unset keeps every worker
++            // (upstream default); an explicit value — including an empty
++            // string — keeps only the listed providers plus 'main'.
++            .filter((f) => {
++              const raw = process.env.POSTIZ_WORKER_PROVIDERS;
++              if (raw === undefined) return true;
++              if (f.identifier === 'main') return true;
++              return raw
++                .split(',')
++                .map((s) => s.trim())
++                .filter(Boolean)
++                .includes(f.identifier);
++            })
+             .map((integration) => ({
+               taskQueue: integration.identifier.split('-')[0],
+               workflowsPath: path!,
