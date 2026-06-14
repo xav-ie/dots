@@ -10,7 +10,7 @@ let
   common = import ./common.nix { inherit pkgs; };
 
   # To update: run `claude-code-update` from the packages/claude-code directory
-  sourcesData = builtins.fromJSON (builtins.readFile ./sources.json);
+  sourcesData = ./sources.json |> builtins.readFile |> builtins.fromJSON;
   inherit (sourcesData.native) version gcs_bucket sources;
 
   # Get source info for current system

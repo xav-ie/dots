@@ -298,9 +298,9 @@
             windowTopNumeric = gapAndBorderNumeric + barSpaceNumeric;
             windowLeftNumeric = gapsNumeric + borderSizeNumeric;
 
-            gaps = toString gapsNumeric;
-            windowLeft = toString windowLeftNumeric;
-            windowTop = toString windowTopNumeric;
+            gaps = gapsNumeric |> toString;
+            windowLeft = windowLeftNumeric |> toString;
+            windowTop = windowTopNumeric |> toString;
 
             pipHeight = 324;
             move-active = "${pkgs.pkgs-mine.move-active}/bin/move-active";
@@ -316,9 +316,9 @@
             settings = {
               env = [
                 "XCURSOR_THEME,${config.home.pointerCursor.name}"
-                "XCURSOR_SIZE,${builtins.toString config.home.pointerCursor.size}"
+                "XCURSOR_SIZE,${config.home.pointerCursor.size |> builtins.toString}"
                 "HYPRCURSOR_THEME,${config.home.pointerCursor.name}"
-                "HYPRCURSOR_SIZE,${builtins.toString config.home.pointerCursor.size}"
+                "HYPRCURSOR_SIZE,${config.home.pointerCursor.size |> builtins.toString}"
               ];
 
               # For all categories, see https://wiki.hyprland.org/Configuring/Variables/
@@ -340,9 +340,9 @@
               };
               general = {
                 # See https://wiki.hyprland.org/Configuring/Variables/ for more
-                gaps_in = toString (gapsNumeric / 2);
+                gaps_in = (gapsNumeric / 2) |> toString;
                 gaps_out = gaps;
-                border_size = toString borderSizeNumeric;
+                border_size = borderSizeNumeric |> toString;
 
                 # darker/saturated take on packages/pickers accent ($accent #bb9af7)
                 "col.inactive_border" = "rgb(3a2e5e)";
@@ -437,11 +437,11 @@
                 # https://github.com/hyprwm/Hyprland/issues/2942#issuecomment-1923813933
                 "match:title Picture-in-Picture, float on"
                 "match:title Picture-in-Picture, move (monitor_w-window_w-${windowLeft}) (monitor_h-${
-                  toString (pipHeight + gapAndBorderNumeric)
+                  (pipHeight + gapAndBorderNumeric) |> toString
                 })"
                 "match:title Picture-in-Picture, no_initial_focus on"
                 "match:title Picture-in-Picture, pin on"
-                "match:title Picture-in-Picture, size 576 ${toString pipHeight}"
+                "match:title Picture-in-Picture, size 576 ${pipHeight |> toString}"
 
                 # shimeji desktop pets
                 "match:title com-group_finity-mascot-Main, float on"

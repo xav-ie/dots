@@ -72,7 +72,7 @@ let
   # `writeNuApplication` comes from overlays/default.nix and is
   # auto-resolved by callPackage from pkgs.
   dyld-check = pkgs.callPackage ./pkgs/dyld-check { };
-  joined = lib.concatStringsSep ":" cfg.libraries;
+  joined = cfg.libraries |> lib.concatStringsSep ":";
 in
 {
   imports = [
@@ -124,7 +124,7 @@ in
       system.activationScripts.postActivation.text = lib.mkAfter ''
         echo "==> dyld-inject:"
         if sudo -u ${config.defaultUser} launchctl setenv DYLD_INSERT_LIBRARIES "${joined}" 2>/dev/null; then
-          echo "    setenv DYLD_INSERT_LIBRARIES (${toString (lib.length cfg.libraries)} dylib(s))"
+          echo "    setenv DYLD_INSERT_LIBRARIES (${cfg.libraries |> lib.length |> toString} dylib(s))"
         else
           echo "    warning: setenv failed (no active GUI session for ${config.defaultUser}?)"
         fi

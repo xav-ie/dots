@@ -44,7 +44,7 @@ let
   fontPackage = fontKey: fontDefs.${fontKey}.package;
   fontFeatures = fontKey: fontDefs.${fontKey}.features;
 
-  fontPackages = lib.attrValues (lib.mapAttrs (_k: v: v.package) fontDefs);
+  fontPackages = fontDefs |> lib.mapAttrs (_k: v: v.package) |> lib.attrValues;
 in
 {
   # Central font configuration for all systems (NixOS, nix-darwin, home-manager)

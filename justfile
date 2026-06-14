@@ -1,3 +1,9 @@
+# Enable pipe operators (|>) for every recipe's nix evaluation, including on a
+# fresh system whose /etc/nix/nix.conf hasn't gained the feature yet. `extra-`
+# appends, so nix-command/flakes from the system config are preserved.
+
+export NIX_CONFIG := "extra-experimental-features = pipe-operators"
+
 # `just system`
 default:
     @just system

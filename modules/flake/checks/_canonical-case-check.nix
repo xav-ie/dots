@@ -17,24 +17,26 @@ let
       match = builtins.match "([^ \"]+)(.*)" name;
     in
     if match == null then
-      lib.toLower name
+      name |> lib.toLower
     else
-      lib.toLower (builtins.elemAt match 0) + builtins.elemAt match 1;
+      (builtins.elemAt match 0 |> lib.toLower) + builtins.elemAt match 1;
 
   checkSection =
     sectionName: attrs:
     let
       fixedSection = lowerSectionOnly sectionName;
-      baseSection = lib.toLower (builtins.head (lib.splitString " " sectionName));
+      baseSection = sectionName |> lib.splitString " " |> builtins.head |> lib.toLower;
       sectionVars = canonical.${baseSection} or { };
 
       badSection = sectionName != fixedSection;
 
-      badVars = lib.concatLists (
-        lib.mapAttrsToList (
+      badVars =
+        attrs
+        |> lib.filterAttrs (_: v: !builtins.isAttrs v)
+        |> lib.mapAttrsToList (
           varName: _:
           let
-            lowerVar = lib.toLower varName;
+            lowerVar = varName |> lib.toLower;
             canonicalVar = sectionVars.${lowerVar} or null;
           in
           if canonicalVar != null && canonicalVar != varName then
@@ -53,16 +55,15 @@ let
             ]
           else
             [ ]
-        ) (lib.filterAttrs (_: v: !builtins.isAttrs v) attrs)
-      );
+        )
+        |> lib.concatLists;
     in
     badVars;
 
-  issues = lib.concatLists (
-    lib.mapAttrsToList (
-      name: val: if builtins.isAttrs val then checkSection name val else [ ]
-    ) gitSettings
-  );
+  issues =
+    gitSettings
+    |> lib.mapAttrsToList (name: val: if builtins.isAttrs val then checkSection name val else [ ])
+    |> lib.concatLists;
 in
 {
   inherit issues;
@@ -77,6 +78,6 @@ in
         programs.git.settings uses non-canonical casing.
         Sections should be lowercase, variables should use camelCase:
 
-        ${lib.concatMapStringsSep "\n" (i: "  ${i.path} -> ${i.fix}") issues}
+        ${issues |> lib.concatMapStringsSep "\n" (i: "  ${i.path} -> ${i.fix}")}
       '';
 }

@@ -7,5 +7,5 @@ writeNuApplication {
   runtimeInputs = [
     tmux
   ];
-  text = builtins.readFile ./tmux-move-window.nu;
+  text = ./tmux-move-window.nu |> builtins.readFile;
 }

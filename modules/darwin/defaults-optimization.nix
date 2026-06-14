@@ -16,7 +16,7 @@
         if domain == "-g" || domain == "NSGlobalDomain" then
           "${prefsDir}/.GlobalPreferences.plist"
         else if lib.hasPrefix "~" domain then
-          lib.replaceStrings [ "~${primaryUser}" ] [ "/Users/${primaryUser}" ] domain + ".plist"
+          (domain |> lib.replaceStrings [ "~${primaryUser}" ] [ "/Users/${primaryUser}" ]) + ".plist"
         else if lib.hasPrefix "/" domain then
           domain + ".plist"
         else
@@ -33,7 +33,7 @@
         else if lib.isInt v then
           toString v
         else if lib.isFloat v then
-          lib.strings.floatToString v
+          v |> lib.strings.floatToString
         else if lib.isString v then
           v
         else
@@ -43,7 +43,7 @@
       toPlistBuddyOutput =
         indent: v:
         let
-          spaces = lib.concatStrings (lib.genList (_: "    ") indent);
+          spaces = lib.genList (_: "    ") indent |> lib.concatStrings;
           nextIndent = indent + 1;
         in
         if lib.isBool v then
@@ -51,24 +51,24 @@
         else if lib.isInt v then
           toString v
         else if lib.isFloat v then
-          lib.strings.floatToString v
+          v |> lib.strings.floatToString
         else if lib.isString v then
           v
         else if lib.isList v then
           "Array {\n${
-            lib.concatStringsSep "\n" (map (elem: "${spaces}    ${toPlistBuddyOutput nextIndent elem}") v)
+            v |> map (elem: "${spaces}    ${toPlistBuddyOutput nextIndent elem}") |> lib.concatStringsSep "\n"
           }\n${spaces}}"
         else if lib.isAttrs v then
           "Dict {\n${
-            lib.concatStringsSep "\n" (
-              lib.mapAttrsToList (k: val: "${spaces}    ${k} = ${toPlistBuddyOutput nextIndent val}") v
-            )
+            v
+            |> lib.mapAttrsToList (k: val: "${spaces}    ${k} = ${toPlistBuddyOutput nextIndent val}")
+            |> lib.concatStringsSep "\n"
           }\n${spaces}}"
         else
           toString v;
 
       # Hash PlistBuddy output for complex types
-      hashPlistBuddyValue = value: builtins.hashString "sha256" (toPlistBuddyOutput 0 value + "\n");
+      hashPlistBuddyValue = value: (toPlistBuddyOutput 0 value + "\n") |> builtins.hashString "sha256";
 
       # Generate check command - use raw for simple types, PlistBuddy for complex
       # Runs in background, writes to $mismatch_file on mismatch and appends a
@@ -76,18 +76,24 @@
       mkKeyCheckCmd =
         plistPath: key: value:
         let
-          where = lib.escapeShellArg "${plistPath} :: ${key}";
+          where = "${plistPath} :: ${key}" |> lib.escapeShellArg;
         in
         if isSimple value then
           let
             expected = toRawValue value;
           in
-          "(actual=$(plutil -extract ${lib.escapeShellArg key} raw -o - ${lib.escapeShellArg plistPath} 2>/dev/null); [[ \"$actual\" != ${lib.escapeShellArg expected} ]] && { echo 1 > \"$mismatch_file\"; printf '  drift: %s  expected=%s actual=%s\\n' ${where} ${lib.escapeShellArg expected} \"$actual\" >> \"$drift_log\"; }) &"
+          "(actual=$(plutil -extract ${key |> lib.escapeShellArg} raw -o - ${
+            plistPath |> lib.escapeShellArg
+          } 2>/dev/null); [[ \"$actual\" != ${expected |> lib.escapeShellArg} ]] && { echo 1 > \"$mismatch_file\"; printf '  drift: %s  expected=%s actual=%s\\n' ${where} ${expected |> lib.escapeShellArg} \"$actual\" >> \"$drift_log\"; }) &"
         else
           let
             expectedHash = hashPlistBuddyValue value;
           in
-          "(actual=$(/usr/libexec/PlistBuddy -c \"Print :${key}\" ${lib.escapeShellArg plistPath} 2>/dev/null | shasum -a 256 | cut -d' ' -f1); [[ \"$actual\" != \"${expectedHash}\" ]] && { echo 1 > \"$mismatch_file\"; printf '  drift: %s  (complex value, expected hash=%s actual hash=%s)\\n' ${where} ${lib.escapeShellArg expectedHash} \"$actual\" >> \"$drift_log\"; }) &";
+          "(actual=$(/usr/libexec/PlistBuddy -c \"Print :${key}\" ${
+            plistPath |> lib.escapeShellArg
+          } 2>/dev/null | shasum -a 256 | cut -d' ' -f1); [[ \"$actual\" != \"${expectedHash}\" ]] && { echo 1 > \"$mismatch_file\"; printf '  drift: %s  (complex value, expected hash=%s actual hash=%s)\\n' ${where} ${
+            expectedHash |> lib.escapeShellArg
+          } \"$actual\" >> \"$drift_log\"; }) &";
 
       # Collect all check commands as a list
       mkDomainCheckCmds =
@@ -96,23 +102,30 @@
           plistPath = domainToPath domain;
           filteredAttrs = lib.filterAttrs (_n: v: v != null) attrs;
         in
-        lib.mapAttrsToList (mkKeyCheckCmd plistPath) filteredAttrs;
+        filteredAttrs |> lib.mapAttrsToList (mkKeyCheckCmd plistPath);
 
       # Filter out deprecated/aliased options
-      dockFiltered = builtins.removeAttrs cfg.dock [ "expose-group-by-app" ];
+      dockFiltered = removeAttrs cfg.dock [ "expose-group-by-app" ];
 
-      # All check commands as newline-separated string
-      allCheckCmds = lib.concatStringsSep "\n" (
-        lib.flatten [
-          (mkDomainCheckCmds "com.apple.dock" dockFiltered)
-          (mkDomainCheckCmds "com.apple.finder" cfg.finder)
-          (mkDomainCheckCmds "-g" cfg.NSGlobalDomain)
-          (mkDomainCheckCmds "com.apple.screencapture" cfg.screencapture)
-          (mkDomainCheckCmds "com.apple.AppleMultitouchTrackpad" cfg.trackpad)
-          (mkDomainCheckCmds "com.apple.driver.AppleBluetoothMultitouch.trackpad" cfg.trackpad)
-          (lib.flatten (lib.mapAttrsToList mkDomainCheckCmds cfg.CustomUserPreferences))
+      # All check commands as newline-separated string. Every entry is a
+      # domain → attrs mapping, so run mkDomainCheckCmds over each. Kept as
+      # separate maps (not merged) because CustomUserPreferences may repeat a
+      # fixed domain (e.g. trackpad) and both sets of checks must still run.
+      allCheckCmds =
+        [
+          {
+            "com.apple.dock" = dockFiltered;
+            "com.apple.finder" = cfg.finder;
+            "-g" = cfg.NSGlobalDomain;
+            "com.apple.screencapture" = cfg.screencapture;
+            "com.apple.AppleMultitouchTrackpad" = cfg.trackpad;
+            "com.apple.driver.AppleBluetoothMultitouch.trackpad" = cfg.trackpad;
+          }
+          cfg.CustomUserPreferences
         ]
-      );
+        |> lib.concatMap (lib.mapAttrsToList mkDomainCheckCmds)
+        |> lib.flatten
+        |> lib.concatStringsSep "\n";
     in
     {
       options.system.defaultsOptimization.enable =

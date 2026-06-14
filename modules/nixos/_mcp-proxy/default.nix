@@ -54,13 +54,13 @@ let
   };
 
   allServers = cfg.servers;
-  serverValues = lib.attrValues allServers;
+  serverValues = allServers |> lib.attrValues;
 
-  allPackages = lib.unique (lib.concatMap (s: s.packages) serverValues);
-  allExtraHosts = lib.unique (lib.concatMap (s: s.extraHosts) serverValues);
-  allSecretEnvVars = lib.foldl (a: s: a // s.secretEnvVars) { } serverValues;
-  allEnvVars = lib.foldl (a: s: a // s.envVars) { } serverValues;
-  allVolumes = lib.unique (lib.concatMap (s: s.volumes) serverValues);
+  allPackages = serverValues |> lib.concatMap (s: s.packages) |> lib.unique;
+  allExtraHosts = serverValues |> lib.concatMap (s: s.extraHosts) |> lib.unique;
+  allSecretEnvVars = serverValues |> lib.foldl (a: s: a // s.secretEnvVars) { };
+  allEnvVars = serverValues |> lib.foldl (a: s: a // s.envVars) { };
+  allVolumes = serverValues |> lib.concatMap (s: s.volumes) |> lib.unique;
 
   combinedCACert = pkgs.runCommand "combined-ca-certs" { } ''
     mkdir -p $out/etc/ssl/certs
@@ -70,9 +70,13 @@ let
 
   proxyServersConfig = pkgs.writeText "mcp-proxy-servers.json" (
     builtins.toJSON {
-      mcpServers = lib.mapAttrs (_: s: {
-        inherit (s) command args;
-      }) allServers;
+      mcpServers =
+        allServers
+        |> lib.mapAttrs (
+          _: s: {
+            inherit (s) command args;
+          }
+        );
     }
   );
 
@@ -98,7 +102,7 @@ let
         "--host"
         "0.0.0.0"
         "--port"
-        (toString containerPort)
+        (containerPort |> toString)
         "--pass-environment"
         # Clients must use /servers/<name>/mcp/ (streamable-http).
         # Stateless = no per-session state, so restarts are invisible.
@@ -106,7 +110,7 @@ let
         "--named-server-config"
         "/etc/mcp-proxy-servers.json"
       ];
-      ExposedPorts."${toString containerPort}/tcp" = { };
+      ExposedPorts."${containerPort |> toString}/tcp" = { };
       Env = [
         "HOME=/tmp"
         "SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt"
@@ -124,12 +128,12 @@ let
 
   envFileContent =
     let
-      secretLines = lib.mapAttrsToList (
-        name: sopsPath: "${name}=${config.sops.placeholder.${sopsPath}}"
-      ) allSecretEnvVars;
-      plainLines = lib.mapAttrsToList (name: value: "${name}=${value}") allEnvVars;
+      secretLines =
+        allSecretEnvVars
+        |> lib.mapAttrsToList (name: sopsPath: "${name}=${config.sops.placeholder.${sopsPath}}");
+      plainLines = allEnvVars |> lib.mapAttrsToList (name: value: "${name}=${value}");
     in
-    lib.concatStringsSep "\n" (secretLines ++ plainLines);
+    (secretLines ++ plainLines) |> lib.concatStringsSep "\n";
 in
 {
   imports = [
@@ -167,7 +171,7 @@ in
       environmentFiles = [
         config.sops.templates."mcp-proxy-env".path
       ];
-      extraOptions = map (h: "--add-host=${h}") allExtraHosts;
+      extraOptions = allExtraHosts |> map (h: "--add-host=${h}");
       labels = {
         "traefik.enable" = "true";
         "traefik.http.routers.${subdomain}-secure.entrypoints" = "websecure";
@@ -175,7 +179,7 @@ in
         "traefik.http.routers.${subdomain}-secure.tls" = "true";
         "traefik.http.routers.${subdomain}-secure.tls.certResolver" = "cloudflare";
         "traefik.http.routers.${subdomain}-secure.service" = "${subdomain}-svc";
-        "traefik.http.services.${subdomain}-svc.loadbalancer.server.port" = toString containerPort;
+        "traefik.http.services.${subdomain}-svc.loadbalancer.server.port" = containerPort |> toString;
       };
     };
   };

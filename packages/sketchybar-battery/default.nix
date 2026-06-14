@@ -2,5 +2,5 @@
 writeNuApplication {
   name = "sketchybar-battery";
   runtimeInputs = [ sketchybar ];
-  text = builtins.readFile ./sketchybar-battery.nu;
+  text = ./sketchybar-battery.nu |> builtins.readFile;
 }

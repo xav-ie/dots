@@ -9,7 +9,7 @@
     let
       inherit (fonts.configs.gtk) name size;
       # QFont::toString format: family,pointsize,-1,5,weight,italic,underline,strikeout,fixedpitch,rawmode
-      qtFont = family: ''"${family},${toString size},-1,5,50,0,0,0,0,0"'';
+      qtFont = family: ''"${family},${size |> toString},-1,5,50,0,0,0,0,0"'';
     in
     {
       config = {

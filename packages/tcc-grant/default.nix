@@ -7,5 +7,5 @@ writeNuApplication {
   runtimeInputs = [
     sqlite
   ];
-  text = builtins.readFile ./tcc-grant.nu;
+  text = ./tcc-grant.nu |> builtins.readFile;
 }

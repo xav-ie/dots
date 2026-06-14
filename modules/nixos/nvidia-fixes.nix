@@ -11,22 +11,23 @@
       options.services.udev.extraRules = lib.mkOption {
         apply =
           rules:
-          builtins.replaceStrings
-            [
-              "'mknod -m 666 /dev/nvidiactl c 195 255'"
-              "done"
-              "'mknod -m 666 /dev/nvidia-modeset c 195 254'"
-              "'mknod -m 666 /dev/nvidia-uvm c $$(grep nvidia-uvm /proc/devices | cut -d \\  -f 1) 0'"
-              "'mknod -m 666 /dev/nvidia-uvm-tools c $$(grep nvidia-uvm /proc/devices | cut -d \\  -f 1) 1'"
-            ]
-            [
-              "'mknod -m 666 /dev/nvidiactl c 195 255 2>/dev/null || :'"
-              "done 2>/dev/null || :"
-              "'mknod -m 666 /dev/nvidia-modeset c 195 254 2>/dev/null || :'"
-              "'mknod -m 666 /dev/nvidia-uvm c $$(grep nvidia-uvm /proc/devices | cut -d \\  -f 1) 0 2>/dev/null || :'"
-              "'mknod -m 666 /dev/nvidia-uvm-tools c $$(grep nvidia-uvm /proc/devices | cut -d \\  -f 1) 1 2>/dev/null || :'"
-            ]
-            rules;
+          rules
+          |>
+            builtins.replaceStrings
+              [
+                "'mknod -m 666 /dev/nvidiactl c 195 255'"
+                "done"
+                "'mknod -m 666 /dev/nvidia-modeset c 195 254'"
+                "'mknod -m 666 /dev/nvidia-uvm c $$(grep nvidia-uvm /proc/devices | cut -d \\  -f 1) 0'"
+                "'mknod -m 666 /dev/nvidia-uvm-tools c $$(grep nvidia-uvm /proc/devices | cut -d \\  -f 1) 1'"
+              ]
+              [
+                "'mknod -m 666 /dev/nvidiactl c 195 255 2>/dev/null || :'"
+                "done 2>/dev/null || :"
+                "'mknod -m 666 /dev/nvidia-modeset c 195 254 2>/dev/null || :'"
+                "'mknod -m 666 /dev/nvidia-uvm c $$(grep nvidia-uvm /proc/devices | cut -d \\  -f 1) 0 2>/dev/null || :'"
+                "'mknod -m 666 /dev/nvidia-uvm-tools c $$(grep nvidia-uvm /proc/devices | cut -d \\  -f 1) 1 2>/dev/null || :'"
+              ];
       };
 
       config = lib.mkIf config.hardware.nvidia-container-toolkit.enable {

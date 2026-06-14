@@ -3,5 +3,5 @@
 }:
 writeNuApplication {
   name = "tsc-filter";
-  text = builtins.readFile ./tsc-filter.nu;
+  text = ./tsc-filter.nu |> builtins.readFile;
 }

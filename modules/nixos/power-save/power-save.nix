@@ -81,7 +81,7 @@
           pkgs.systemd
           pkgs.pkgs-mine.is-sshed
         ];
-        text = builtins.readFile ./logind-power-monitor.nu;
+        text = ./logind-power-monitor.nu |> builtins.readFile;
       };
     in
     {

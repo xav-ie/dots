@@ -34,11 +34,10 @@ let
               (let\
                 m = builtins.match "https?://github.com/([^/]+)/([^/.]+)(\\.git)?/?" gitParts.url;\
                 knownHashes = { ${
-                  toString (
-                    builtins.map (k: ''"${k}" = "${knownOrphanTarballHashes.${k}}"; '') (
-                      builtins.attrNames knownOrphanTarballHashes
-                    )
-                  )
+                  knownOrphanTarballHashes
+                  |> builtins.attrNames
+                  |> builtins.map (k: ''"${k}" = "${knownOrphanTarballHashes.${k}}"; '')
+                  |> toString
                 } };\
               in\
                 if m != null && knownHashes ? ''${gitParts.sha} then\
@@ -188,38 +187,40 @@ in
           jammyDebPatchBase
           // {
             name = "voquill-gst-plugins";
-            srcs = map (args: fetchJammyDeb args.path args.hash) [
-              # Plugins
-              {
-                path = "pool/main/g/gst-plugins-base1.0/gstreamer1.0-plugins-base_1.20.1-1ubuntu0.6_amd64.deb";
-                hash = "sha256-f3oXX96vKnTW05nDz5TDeZetH836+Af5WeRsYDUFvqE=";
-              }
-              {
-                path = "pool/main/g/gst-plugins-good1.0/gstreamer1.0-plugins-good_1.20.3-0ubuntu1.5_amd64.deb";
-                hash = "sha256-S6GUKououaeWocKFQehNGsS6ygZ025qnD0S128ItXKo=";
-              }
-              {
-                path = "pool/universe/g/gst-plugins-bad1.0/gstreamer1.0-plugins-bad_1.20.3-0ubuntu1.1_amd64.deb";
-                hash = "sha256-Po5LJPfuKW0nNiXgQhXR+LePF38qaCpUTyYFW8cISao=";
-              }
-              {
-                path = "pool/main/g/gst-plugins-good1.0/gstreamer1.0-pulseaudio_1.20.3-0ubuntu1.5_amd64.deb";
-                hash = "sha256-iTcVcSlm3j26hg8OlywCvBd18/gR1jp7eb60wCkdEmg=";
-              }
-              # Runtime libraries (libgstriff, libgstnet, libgstrtp, etc.)
-              {
-                path = "pool/main/g/gst-plugins-base1.0/libgstreamer-plugins-base1.0-0_1.20.1-1ubuntu0.6_amd64.deb";
-                hash = "sha256-MJFTjtixk8Dbt1fFoRtQPZupfnx3v5OJFaJhj3NhclY=";
-              }
-              {
-                path = "pool/universe/g/gst-plugins-bad1.0/libgstreamer-plugins-bad1.0-0_1.20.3-0ubuntu1.1_amd64.deb";
-                hash = "sha256-K0Y9UVSEGVF+U1bziT+uo4bk9A+5GvLrCuhuRE02td0=";
-              }
-              {
-                path = "pool/main/g/gstreamer1.0/libgstreamer1.0-0_1.20.3-0ubuntu1.1_amd64.deb";
-                hash = "sha256-Ry0ldfnmuJQ2ECOZWw3NGuKP49QAXe2BIx1O/HgzRG0=";
-              }
-            ];
+            srcs =
+              [
+                # Plugins
+                {
+                  path = "pool/main/g/gst-plugins-base1.0/gstreamer1.0-plugins-base_1.20.1-1ubuntu0.6_amd64.deb";
+                  hash = "sha256-f3oXX96vKnTW05nDz5TDeZetH836+Af5WeRsYDUFvqE=";
+                }
+                {
+                  path = "pool/main/g/gst-plugins-good1.0/gstreamer1.0-plugins-good_1.20.3-0ubuntu1.5_amd64.deb";
+                  hash = "sha256-S6GUKououaeWocKFQehNGsS6ygZ025qnD0S128ItXKo=";
+                }
+                {
+                  path = "pool/universe/g/gst-plugins-bad1.0/gstreamer1.0-plugins-bad_1.20.3-0ubuntu1.1_amd64.deb";
+                  hash = "sha256-Po5LJPfuKW0nNiXgQhXR+LePF38qaCpUTyYFW8cISao=";
+                }
+                {
+                  path = "pool/main/g/gst-plugins-good1.0/gstreamer1.0-pulseaudio_1.20.3-0ubuntu1.5_amd64.deb";
+                  hash = "sha256-iTcVcSlm3j26hg8OlywCvBd18/gR1jp7eb60wCkdEmg=";
+                }
+                # Runtime libraries (libgstriff, libgstnet, libgstrtp, etc.)
+                {
+                  path = "pool/main/g/gst-plugins-base1.0/libgstreamer-plugins-base1.0-0_1.20.1-1ubuntu0.6_amd64.deb";
+                  hash = "sha256-MJFTjtixk8Dbt1fFoRtQPZupfnx3v5OJFaJhj3NhclY=";
+                }
+                {
+                  path = "pool/universe/g/gst-plugins-bad1.0/libgstreamer-plugins-bad1.0-0_1.20.3-0ubuntu1.1_amd64.deb";
+                  hash = "sha256-K0Y9UVSEGVF+U1bziT+uo4bk9A+5GvLrCuhuRE02td0=";
+                }
+                {
+                  path = "pool/main/g/gstreamer1.0/libgstreamer1.0-0_1.20.3-0ubuntu1.1_amd64.deb";
+                  hash = "sha256-Ry0ldfnmuJQ2ECOZWw3NGuKP49QAXe2BIx1O/HgzRG0=";
+                }
+              ]
+              |> map (args: fetchJammyDeb args.path args.hash);
             buildInputs = [
               final.alsa-lib
               final.bzip2
@@ -283,7 +284,7 @@ in
               # sh
               ''
                 mkdir -p $out/lib/gstreamer-1.0
-                for plugin in ${builtins.concatStringsSep " " neededPlugins}; do
+                for plugin in ${neededPlugins |> builtins.concatStringsSep " "}; do
                   [ -f "unpacked/${debLibDir}/gstreamer-1.0/$plugin.so" ] && \
                     cp "unpacked/${debLibDir}/gstreamer-1.0/$plugin.so" $out/lib/gstreamer-1.0/
                 done
@@ -356,21 +357,23 @@ in
           makeWrapper ${libexec}/bin/voquill-desktop $out/bin/voquill \
             --run "cd '${libexec}'" \
             --prefix LD_LIBRARY_PATH : "${
-              final.lib.makeLibraryPath [ gst-plugins ]
+              [ gst-plugins ] |> final.lib.makeLibraryPath
             }:${libexecBundled}:/run/opengl-driver/lib" \
             --prefix PATH : "${
-              final.lib.makeBinPath [
+              [
                 final.ydotool
                 final.wtype
               ]
+              |> final.lib.makeBinPath
             }" \
             --prefix XDG_DATA_DIRS : "${
-              final.lib.concatMapStringsSep ":" (p: "${p}/share") [
+              [
                 final.gsettings-desktop-schemas
                 final.gtk3
                 final.shared-mime-info
                 final.hicolor-icon-theme
               ]
+              |> final.lib.concatMapStringsSep ":" (p: "${p}/share")
             }:${final.gsettings-desktop-schemas}/share/gsettings-schemas/${final.gsettings-desktop-schemas.name}:${final.gtk3}/share/gsettings-schemas/${final.gtk3.name}" \
             --set GDK_PIXBUF_MODULE_FILE "${libexecBundled}/x86_64-linux-gnu/gdk-pixbuf-2.0/2.10.0/loaders.cache" \
             --set GIO_MODULE_DIR "${libexecBundled}/gio-modules-combined" \

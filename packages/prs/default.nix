@@ -11,5 +11,5 @@ writeNuApplication {
     gh
     git
   ];
-  text = builtins.readFile ./prs.nu;
+  text = ./prs.nu |> builtins.readFile;
 }

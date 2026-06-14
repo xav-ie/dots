@@ -8,20 +8,22 @@
     let
       cfg = config.programs.pi;
 
-      settingsJson = builtins.toJSON (
-        {
-          inherit (cfg)
-            defaultProvider
-            defaultModel
-            defaultThinkingLevel
-            lastChangelogVersion
-            ;
-        }
-        // lib.optionalAttrs (cfg.extensions != [ ]) {
-          extensions = map (pkg: "${pkg}") cfg.extensions;
-        }
-        // lib.optionalAttrs (cfg.extraSettings != { }) cfg.extraSettings
-      );
+      settingsJson =
+        (
+          {
+            inherit (cfg)
+              defaultProvider
+              defaultModel
+              defaultThinkingLevel
+              lastChangelogVersion
+              ;
+          }
+          // lib.optionalAttrs (cfg.extensions != [ ]) {
+            extensions = cfg.extensions |> map (pkg: "${pkg}");
+          }
+          // lib.optionalAttrs (cfg.extraSettings != { }) cfg.extraSettings
+        )
+        |> builtins.toJSON;
     in
     {
       options.programs.pi = {

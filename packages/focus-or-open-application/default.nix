@@ -7,5 +7,5 @@ writeNuApplication {
   runtimeInputs = [
     yabai
   ];
-  text = builtins.readFile ./focus-or-open-application.nu;
+  text = ./focus-or-open-application.nu |> builtins.readFile;
 }

@@ -36,11 +36,13 @@
               # Materialize the assets as standalone store paths (content read at
               # eval) rather than referencing them as subpaths of the flake tree,
               # which the build sandbox can't reliably read from a dirty checkout.
-              cfg = pkgs.writeText "firefox-favicons.cfg" (builtins.readFile ../../_lib/firefox/firefox.cfg);
-              icons = pkgs.writeText "favicon-icons.js" (builtins.readFile ../../_lib/firefox/favicon-icons.js);
+              cfg = pkgs.writeText "firefox-favicons.cfg" (../../_lib/firefox/firefox.cfg |> builtins.readFile);
+              icons = pkgs.writeText "favicon-icons.js" (
+                ../../_lib/firefox/favicon-icons.js |> builtins.readFile
+              );
               # Linux-only prefs (UI scaling). Materialized like cfg so the build
               # sandbox reads content at eval rather than a dirty-checkout subpath.
-              prefs = pkgs.writeText "firefox-linux-prefs.js" (builtins.readFile ./prefs.js);
+              prefs = pkgs.writeText "firefox-linux-prefs.js" (./prefs.js |> builtins.readFile);
             in
             (pkgs.pkgs-bleeding.firefox.override {
               # Appended (cat'd, no shell expansion) to the wrapper's mozilla.cfg.

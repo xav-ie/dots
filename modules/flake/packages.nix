@@ -33,7 +33,9 @@
         # `uairctl listen` is newline-delimited and flushed per line — the AGS bar
         # reads it as a stream. The package-set pkgs below has no overlays, so
         # apply them here (like atuin) and pull the patched uair out.
-        inherit ((pkgs.extend (lib.composeManyExtensions (builtins.attrValues inputs.self.overlays)))) uair;
+        inherit ((pkgs.extend (inputs.self.overlays |> builtins.attrValues |> lib.composeManyExtensions)))
+          uair
+          ;
         # Use regular nixpkgs - most packages are writeNuApplication wrappers
         # that don't need bleeding-edge.
         inherit pkgs;

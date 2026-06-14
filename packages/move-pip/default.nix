@@ -11,5 +11,5 @@ writeNuApplication {
     jq
     yabai
   ];
-  text = builtins.readFile ./move-pip.nu;
+  text = ./move-pip.nu |> builtins.readFile;
 }

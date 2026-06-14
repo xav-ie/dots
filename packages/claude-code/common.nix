@@ -48,17 +48,21 @@ in
   inherit envVars configDirExport;
 
   # Common wrapper arguments for wrapProgram (makeBinaryWrapper, no --run support)
-  wrapperArgs = lib.concatStringsSep " " (
-    (lib.mapAttrsToList (k: v: "--set ${k} ${v}") envVars)
-    ++ lib.optional stdenv.isLinux "--prefix PATH : ${linuxBinPath}"
-  );
+  wrapperArgs =
+    (
+      (envVars |> lib.mapAttrsToList (k: v: "--set ${k} ${v}"))
+      ++ lib.optional stdenv.isLinux "--prefix PATH : ${linuxBinPath}"
+    )
+    |> lib.concatStringsSep " ";
 
   # Wrapper script for tmux agent panes: exports env vars and starts /bin/sh
   # Much faster than zsh (no .zshrc) and avoids long env var strings in send-keys
   spawnWrapper = pkgs.writeScript "claude-agent-env" (
     "#!/bin/sh\n"
-    + lib.concatStringsSep "\n" (
-      lib.mapAttrsToList (k: v: "export ${k}=${lib.escapeShellArg v}") envVars
+    + (
+      envVars
+      |> lib.mapAttrsToList (k: v: "export ${k}=${lib.escapeShellArg v}")
+      |> lib.concatStringsSep "\n"
     )
     + "\nexport CLAUDE_CONFIG_DIR=\"$HOME/.claude\""
     + "\nexec /bin/sh\n"

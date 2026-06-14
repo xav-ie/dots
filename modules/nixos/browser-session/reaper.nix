@@ -37,8 +37,8 @@
 
           environment = {
             STATE_FILE = "${stateDir}/state.json";
-            BROWSER_URL = "http://127.0.0.1:${toString config.services.chrome-headless.port}";
-            MAX_IDLE_HOURS = toString cfg.maxIdleHours;
+            BROWSER_URL = "http://127.0.0.1:${config.services.chrome-headless.port |> toString}";
+            MAX_IDLE_HOURS = cfg.maxIdleHours |> toString;
           };
 
           serviceConfig = {

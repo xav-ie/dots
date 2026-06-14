@@ -494,19 +494,23 @@
                 "[a-z]+"
               ];
               suffix = ''\(.+\)'';
-              commitMessages = builtins.concatStringsSep "," (map (subject: "${subject}${suffix}") subjects);
-              multiColorHighlights = builtins.concatStringsSep "," [
-                commitMessages
-                "Merge pull request .+"
-                "https?://.+"
-              ];
-              delimiters = builtins.concatStringsSep "|" [
-                "commit"
-                "added:"
-                "removed:"
-                "renamed:"
-                "Δ"
-              ];
+              commitMessages = subjects |> map (subject: "${subject}${suffix}") |> builtins.concatStringsSep ",";
+              multiColorHighlights =
+                [
+                  commitMessages
+                  "Merge pull request .+"
+                  "https?://.+"
+                ]
+                |> builtins.concatStringsSep ",";
+              delimiters =
+                [
+                  "commit"
+                  "added:"
+                  "removed:"
+                  "renamed:"
+                  "Δ"
+                ]
+                |> builtins.concatStringsSep "|";
               ov-show-and-diff-pager = "ov --section-delimiter '^(${delimiters})' --section-header --pattern '•' -M '${multiColorHighlights}'";
             in
             lib.mkIf cfg.enableBatIntegration {

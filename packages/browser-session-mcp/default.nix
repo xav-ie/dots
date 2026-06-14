@@ -20,7 +20,7 @@ rustPlatform.buildRustPackage {
         || base == "target"
         || base == "result"
         || base == ".direnv"
-        || lib.hasSuffix ".log" base
+        || (base |> lib.hasSuffix ".log")
       );
   };
 

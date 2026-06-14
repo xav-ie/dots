@@ -9,5 +9,5 @@ writeNuApplication {
     gh
     git
   ];
-  text = builtins.readFile ./log-pr.nu;
+  text = ./log-pr.nu |> builtins.readFile;
 }

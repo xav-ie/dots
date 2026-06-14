@@ -12,7 +12,8 @@ writeNuApplication {
     jq
     nix
   ];
-  text = builtins.replaceStrings [ "\${stdenv.hostPlatform.system}" ] [ stdenv.hostPlatform.system ] (
-    builtins.readFile ./searcher.nu
-  );
+  text =
+    ./searcher.nu
+    |> builtins.readFile
+    |> builtins.replaceStrings [ "\${stdenv.hostPlatform.system}" ] [ stdenv.hostPlatform.system ];
 }

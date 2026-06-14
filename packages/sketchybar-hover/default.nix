@@ -13,7 +13,7 @@ rustPlatform.buildRustPackage {
       let
         base = baseNameOf path;
       in
-      !(type == "regular" && (base == "default.nix" || lib.hasSuffix ".nix" base));
+      !(type == "regular" && (base == "default.nix" || (base |> lib.hasSuffix ".nix")));
   };
 
   cargoLock = {

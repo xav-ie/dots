@@ -47,11 +47,10 @@ let
 
           # This will add each flake input as a registry
           # To make nix3 commands consistent with your flake
-          registry = lib.mapAttrs (_: value: { flake = value; }) (
+          registry =
             # very important, would otherwise cause full eval of git repo after
             # *any* change
-            lib.filterAttrs (name: _: name != "self") inputs
-          );
+            inputs |> lib.filterAttrs (name: _: name != "self") |> lib.mapAttrs (_: value: { flake = value; });
 
           # This will additionally add your inputs to the system's legacy channels
           # Making legacy nix commands consistent as well, awesome!
@@ -67,6 +66,7 @@ let
             experimental-features = [
               "nix-command"
               "flakes"
+              "pipe-operators"
             ];
             extra-trusted-substituters = [
               "https://nix-community.cachix.org"

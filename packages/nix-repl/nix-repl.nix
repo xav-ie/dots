@@ -1,6 +1,6 @@
 flakeRoot:
 let
-  flake = builtins.getFlake (toString flakeRoot);
+  flake = flakeRoot |> toString |> builtins.getFlake;
   system = builtins.currentSystem;
 in
 flake

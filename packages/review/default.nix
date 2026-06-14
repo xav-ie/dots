@@ -9,5 +9,5 @@ writeNuApplication {
     git
     gh
   ];
-  text = builtins.readFile ./review.nu;
+  text = ./review.nu |> builtins.readFile;
 }

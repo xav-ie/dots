@@ -33,11 +33,12 @@
         }).overrideAttrs
           (oldAttrs: {
             src = inputs.obs-backgroundremoval;
-            inherit ((builtins.fromJSON (builtins.readFile "${inputs.obs-backgroundremoval}/buildspec.json")))
+            inherit
+              (("${inputs.obs-backgroundremoval}/buildspec.json" |> builtins.readFile |> builtins.fromJSON))
               version
               ;
             nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ pkgs.pkg-config ];
-            cmakeFlags = builtins.filter (flag: !(lib.hasPrefix "--preset" flag)) oldAttrs.cmakeFlags;
+            cmakeFlags = oldAttrs.cmakeFlags |> builtins.filter (flag: !(lib.hasPrefix "--preset" flag));
             buildPhase = null;
             installPhase = null;
             patches = (oldAttrs.patches or [ ]) ++ [

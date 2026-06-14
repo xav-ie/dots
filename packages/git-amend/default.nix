@@ -9,5 +9,5 @@ writeNuApplication {
     git
     gnused
   ];
-  text = builtins.readFile ./git-amend.nu;
+  text = ./git-amend.nu |> builtins.readFile;
 }

@@ -29,7 +29,7 @@
             mkRules =
               account: folder: map (sub: "d %h/.mail/${account}/${folder.name}/${sub} 0700 - - -") subdirs;
           in
-          lib.concatMap (account: lib.concatMap (mkRules account) folders) accounts;
+          accounts |> lib.concatMap (account: lib.concatMap (mkRules account) folders);
 
         # Periodic mail sync — config at ~/.config/neverest/config.toml via sops template
         # flock prevents concurrent runs

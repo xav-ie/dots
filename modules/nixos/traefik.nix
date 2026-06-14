@@ -12,13 +12,14 @@
       allDomains = [
         baseDomain
       ]
-      ++ (map (subdomain: "${subdomain}.${baseDomain}") subdomains);
-      hostEntries = lib.concatStringsSep "\n" (
-        map (d: ''
+      ++ (subdomains |> map (subdomain: "${subdomain}.${baseDomain}"));
+      hostEntries =
+        allDomains
+        |> map (d: ''
           127.0.0.1 ${d}
           ::1       ${d}
-        '') allDomains
-      );
+        '')
+        |> lib.concatStringsSep "\n";
       # TODO: simplify... this works for now
       mkcertCAHelper = pkgs.writeNuApplication {
         name = "mkcert-ca-helper";

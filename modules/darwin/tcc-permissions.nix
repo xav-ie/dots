@@ -12,19 +12,23 @@
       tccGrant = pkgs.pkgs-mine.tcc-grant;
 
       # Generate grant commands for all apps and services
-      grantCommands = lib.concatMapStringsSep "\n" (
-        app:
-        let
-          services = lib.concatMapStringsSep "\n" (
-            service:
-            "${tccGrant}/bin/tcc-grant --service ${service} --bundle-id ${app.bundleId} --db \"$TCC_DB\""
-          ) app.services;
-        in
-        ''
-          # ${app.bundleId}
-          ${services}
-        ''
-      ) cfg.apps;
+      grantCommands =
+        cfg.apps
+        |> lib.concatMapStringsSep "\n" (
+          app:
+          let
+            services =
+              app.services
+              |> lib.concatMapStringsSep "\n" (
+                service:
+                "${tccGrant}/bin/tcc-grant --service ${service} --bundle-id ${app.bundleId} --db \"$TCC_DB\""
+              );
+          in
+          ''
+            # ${app.bundleId}
+            ${services}
+          ''
+        );
     in
     {
       options.security.tcc = {

@@ -12,10 +12,9 @@
       claude-plugins-src = inputs.claude-marketplace-outsmartly;
 
       # Find all .mcp.json files in claude-plugins repo and merge their mcpServers
-      mcpJsonFiles = lib.filter (f: lib.hasSuffix ".mcp.json" f) (
-        lib.filesystem.listFilesRecursive claude-plugins-src
-      );
-      allMcpConfigs = map (f: builtins.fromJSON (builtins.readFile f)) mcpJsonFiles;
+      mcpJsonFiles =
+        lib.filesystem.listFilesRecursive claude-plugins-src |> lib.filter (f: lib.hasSuffix ".mcp.json" f);
+      allMcpConfigs = map (f: f |> builtins.readFile |> builtins.fromJSON) mcpJsonFiles;
       mergedMcpServers = lib.foldl (acc: cfg: acc // (cfg.mcpServers or { })) { } allMcpConfigs;
 
       # Substitute ${CLAUDE_PLUGIN_ROOT} with nix store path

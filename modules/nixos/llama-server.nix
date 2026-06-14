@@ -161,7 +161,7 @@
             # /health responds OR if PID 1's comm is still `llama-server`
             # (i.e. the process is alive and just loading).
             "--health-cmd"
-            ''curl -fs --max-time 5 http://localhost:${toString containerPort}/health || [ "$(cat /proc/1/comm)" = llama-server ]''
+            ''curl -fs --max-time 5 http://localhost:${containerPort |> toString}/health || [ "$(cat /proc/1/comm)" = llama-server ]''
           ];
           cmd = [
             "-hf"
@@ -169,13 +169,13 @@
             "--host"
             "0.0.0.0"
             "--port"
-            (toString containerPort)
+            (containerPort |> toString)
             "-ngl"
-            (toString cfg.nGpuLayers)
+            (cfg.nGpuLayers |> toString)
             "-c"
-            (toString cfg.contextSize)
+            (cfg.contextSize |> toString)
             "-np"
-            (toString cfg.parallel)
+            (cfg.parallel |> toString)
           ]
           ++ [
             "-fa"
@@ -187,7 +187,7 @@
           ]
           ++ lib.optionals (cfg.cacheReuse > 0) [
             "--cache-reuse"
-            (toString cfg.cacheReuse)
+            (cfg.cacheReuse |> toString)
           ]
           ++ lib.optionals cfg.speculation.enable [
             "--spec-type"
@@ -195,7 +195,7 @@
           ]
           ++ lib.optionals (cfg.speculation.enable && cfg.speculation.draftNMax != null) [
             "--spec-draft-n-max"
-            (toString cfg.speculation.draftNMax)
+            (cfg.speculation.draftNMax |> toString)
           ]
           ++ cfg.extraArgs;
           labels = {
@@ -205,7 +205,7 @@
             "traefik.http.routers.${subdomain}-secure.tls" = "true";
             "traefik.http.routers.${subdomain}-secure.tls.certResolver" = "cloudflare";
             "traefik.http.routers.${subdomain}-secure.service" = "${subdomain}-svc";
-            "traefik.http.services.${subdomain}-svc.loadbalancer.server.port" = toString containerPort;
+            "traefik.http.services.${subdomain}-svc.loadbalancer.server.port" = containerPort |> toString;
           };
         };
 

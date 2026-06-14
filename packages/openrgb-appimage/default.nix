@@ -10,11 +10,13 @@ let
   release = "0.9";
   releaseCommit = "b5f46e3";
   arch = builtins.elemAt (builtins.split "-" stdenv.hostPlatform.system) 0;
-  version = builtins.concatStringsSep "_" [
-    release
-    arch
-    releaseCommit
-  ];
+  version =
+    [
+      release
+      arch
+      releaseCommit
+    ]
+    |> builtins.concatStringsSep "_";
 
   src = fetchurl {
     url = "https://openrgb.org/releases/release_${release}/OpenRGB_${version}.AppImage";

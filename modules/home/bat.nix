@@ -4,7 +4,7 @@
     let
       cfg = config.programs.bat;
       # Use bat package store path as cache key - only rebuild when bat updates
-      cacheKey = builtins.hashString "sha256" (toString cfg.package);
+      cacheKey = cfg.package |> toString |> builtins.hashString "sha256";
     in
     {
       config = {

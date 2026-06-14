@@ -7,5 +7,5 @@ writeNuApplication {
   runtimeInputs = [
     git
   ];
-  text = builtins.readFile ./better-branch.nu;
+  text = ./better-branch.nu |> builtins.readFile;
 }

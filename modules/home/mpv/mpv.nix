@@ -93,37 +93,17 @@
           };
         };
 
-        # Link Anime4K shaders from nixpkgs package
-        xdg.configFile =
-          lib.listToAttrs (
-            map
-              (shader: {
-                name = "mpv/shaders/${shader}";
-                value = {
-                  source = "${pkgs.anime4k}/${shader}";
-                };
-              })
-              [
-                "Anime4K_Clamp_Highlights.glsl"
-                "Anime4K_Restore_CNN_VL.glsl"
-                "Anime4K_Restore_CNN_Soft_VL.glsl"
-                "Anime4K_Restore_CNN_M.glsl"
-                "Anime4K_Restore_CNN_Soft_M.glsl"
-                "Anime4K_Upscale_CNN_x2_VL.glsl"
-                "Anime4K_Upscale_CNN_x2_M.glsl"
-                "Anime4K_Upscale_Denoise_CNN_x2_VL.glsl"
-                "Anime4K_AutoDownscalePre_x2.glsl"
-                "Anime4K_AutoDownscalePre_x4.glsl"
-              ]
-          )
-          // {
-            "mpv/script-opts/modernz.conf".source = ./modernz.conf;
-            "mpv/script-opts/thumbfast.conf".source = ./thumbfast.conf;
-            # Copy the fonts from the modernz package to mpv/fonts/
-            "mpv/fonts/fluent-system-icons.ttf".source = "${modernzPkg}/share/fonts/fluent-system-icons.ttf";
-            "mpv/fonts/material-design-icons.ttf".source =
-              "${modernzPkg}/share/fonts/material-design-icons.ttf";
-          };
+        xdg.configFile = {
+          # Link the whole Anime4K shader set; mpv resolves ~~/shaders/ to
+          # ~/.config/mpv/shaders, and the CTRL+1-6 bindings select specific files.
+          "mpv/shaders".source = "${pkgs.anime4k}";
+          "mpv/script-opts/modernz.conf".source = ./modernz.conf;
+          "mpv/script-opts/thumbfast.conf".source = ./thumbfast.conf;
+          # Fonts from the modernz package
+          "mpv/fonts/fluent-system-icons.ttf".source = "${modernzPkg}/share/fonts/fluent-system-icons.ttf";
+          "mpv/fonts/material-design-icons.ttf".source =
+            "${modernzPkg}/share/fonts/material-design-icons.ttf";
+        };
 
         # xdg.mimeApps is Linux-only; this module is cross-platform (common).
         xdg.mimeApps.defaultApplications = lib.optionalAttrs pkgs.stdenv.isLinux {

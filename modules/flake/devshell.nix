@@ -38,6 +38,7 @@
         shellHook = ''
           printf "\n🐢 Use \e[32;40mjust\e[0m to build the system."
           printf "\n💄 Use \e[32;40mtreefmt\e[0m to format the files."
+          export NIX_CONFIG="extra-experimental-features = flakes nix-command pipe-operators"
         '';
       };
     };

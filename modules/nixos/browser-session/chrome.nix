@@ -63,17 +63,19 @@
             WorkingDirectory = cfg.dataDir;
             Restart = "on-failure";
             RestartSec = 5;
-            ExecStart = lib.concatStringsSep " " [
-              "${pkgs.pkgs-mine.chrome-headless-shell}/bin/chrome-headless-shell"
-              "--no-sandbox"
-              "--disable-gpu"
-              "--disable-dev-shm-usage"
-              "--user-data-dir=${cfg.dataDir}"
-              "--remote-debugging-address=127.0.0.1"
-              "--remote-debugging-port=${toString cfg.port}"
-              # Pass Chrome's Origin check for WebSocket upgrades from Traefik.
-              "--remote-allow-origins=*"
-            ];
+            ExecStart =
+              [
+                "${pkgs.pkgs-mine.chrome-headless-shell}/bin/chrome-headless-shell"
+                "--no-sandbox"
+                "--disable-gpu"
+                "--disable-dev-shm-usage"
+                "--user-data-dir=${cfg.dataDir}"
+                "--remote-debugging-address=127.0.0.1"
+                "--remote-debugging-port=${cfg.port |> toString}"
+                # Pass Chrome's Origin check for WebSocket upgrades from Traefik.
+                "--remote-allow-origins=*"
+              ]
+              |> lib.concatStringsSep " ";
           };
         };
       };

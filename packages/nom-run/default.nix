@@ -9,5 +9,5 @@ writeNuApplication {
     nix
     nix-output-monitor
   ];
-  text = builtins.readFile ./nom-run.nu;
+  text = ./nom-run.nu |> builtins.readFile;
 }

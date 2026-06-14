@@ -10,7 +10,7 @@
       noisetorchInit = pkgs.writeNuApplication {
         name = "noisetorch-init";
         runtimeInputs = [ pkgs.pulseaudio ];
-        text = builtins.readFile ./noisetorch-init.nu;
+        text = ./noisetorch-init.nu |> builtins.readFile;
       };
     in
     {
