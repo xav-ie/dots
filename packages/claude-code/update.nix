@@ -13,5 +13,5 @@ writeNuApplication {
     gnutar
     nodejs
   ];
-  text = builtins.readFile ./update.nu;
+  text = ./update.nu |> builtins.readFile;
 }

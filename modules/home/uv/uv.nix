@@ -21,7 +21,7 @@
             runtimeEnv = {
               UV_TOOLS_CONFIG = "${config.dotFilesDir}/modules/home/uv/packages.json";
             };
-            text = builtins.readFile ./sync-uv-tools.nu;
+            text = ./sync-uv-tools.nu |> builtins.readFile;
           };
           defaultText = lib.literalExpression "pkgs.writeNuApplication { ... }";
           description = "The uv-tool-sync package";

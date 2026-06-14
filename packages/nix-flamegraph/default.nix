@@ -12,5 +12,5 @@ writeNuApplication {
     inferno
   ]
   ++ (if stdenv.isLinux then [ xdg-utils ] else [ ]);
-  text = builtins.readFile ./nix-flamegraph.nu;
+  text = ./nix-flamegraph.nu |> builtins.readFile;
 }

@@ -7,11 +7,11 @@
     }:
     let
       # Collect all paths with force = true (from home.file, xdg.configFile, etc.)
-      forcedPaths = lib.concatStringsSep "\n" (
-        lib.mapAttrsToList (_name: file: file.target) (
-          lib.filterAttrs (_name: file: file.force) config.home.file
-        )
-      );
+      forcedPaths =
+        config.home.file
+        |> lib.filterAttrs (_name: file: file.force)
+        |> lib.mapAttrsToList (_name: file: file.target)
+        |> lib.concatStringsSep "\n";
     in
     {
       options.programs.linkOptimization.enable =

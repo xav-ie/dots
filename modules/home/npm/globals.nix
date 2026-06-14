@@ -24,7 +24,7 @@
               NPM_GLOBALS_CONFIG = "${config.dotFilesDir}/modules/home/npm/packages.json";
               NPM_CONFIG_GLOBALCONFIG = ./.npmrc;
             };
-            text = builtins.readFile ./sync-npm-globals.nu;
+            text = ./sync-npm-globals.nu |> builtins.readFile;
           };
           defaultText = lib.literalExpression "pkgs.writeNuApplication { ... }";
           description = "The npm-global-sync package";

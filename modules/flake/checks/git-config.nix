@@ -30,12 +30,13 @@ let
     in
     {
       hasErrors = canonical.hasErrors || collision.hasErrors;
-      errorMessage = lib.concatStringsSep "\n" (
-        lib.filter (s: s != "") [
+      errorMessage =
+        [
           canonical.errorMessage
           collision.errorMessage
         ]
-      );
+        |> lib.filter (s: s != "")
+        |> lib.concatStringsSep "\n";
     };
 in
 {
@@ -47,33 +48,37 @@ in
 
       # Check all hosts for this system type
       # Each host may have different git settings due to overrides
-      hostChecks = lib.mapAttrs (
-        hostName: hostConfig:
-        let
-          # Get home-manager user configs for this host
-          hmUsers = hostConfig.config.home-manager.users or { };
-          # Check each user's git settings
-          userChecks = lib.mapAttrs (
-            _userName: userConfig:
-            let
-              gitSettings = userConfig.programs.git.settings or { };
-            in
-            checkGitSettings gitSettings
-          ) hmUsers;
-          # Collect errors from all users
-          usersWithErrors = lib.filterAttrs (_: check: check.hasErrors) userChecks;
-        in
-        {
-          hasErrors = usersWithErrors != { };
-          errorMessages = lib.mapAttrsToList (
-            userName: check: "  ${hostName} (${userName}):\n${check.errorMessage}"
-          ) usersWithErrors;
-        }
-      ) configs;
+      hostChecks =
+        configs
+        |> lib.mapAttrs (
+          hostName: hostConfig:
+          let
+            # Get home-manager user configs for this host
+            hmUsers = hostConfig.config.home-manager.users or { };
+            # Check each user's git settings
+            userChecks =
+              hmUsers
+              |> lib.mapAttrs (
+                _userName: userConfig:
+                let
+                  gitSettings = userConfig.programs.git.settings or { };
+                in
+                checkGitSettings gitSettings
+              );
+            # Collect errors from all users
+            usersWithErrors = userChecks |> lib.filterAttrs (_: check: check.hasErrors);
+          in
+          {
+            hasErrors = usersWithErrors != { };
+            errorMessages =
+              usersWithErrors
+              |> lib.mapAttrsToList (userName: check: "  ${hostName} (${userName}):\n${check.errorMessage}");
+          }
+        );
 
-      hostsWithErrors = lib.filterAttrs (_: h: h.hasErrors) hostChecks;
+      hostsWithErrors = hostChecks |> lib.filterAttrs (_: h: h.hasErrors);
       hasAnyErrors = hostsWithErrors != { };
-      allErrorMessages = lib.concatLists (lib.mapAttrsToList (_: h: h.errorMessages) hostsWithErrors);
+      allErrorMessages = hostsWithErrors |> lib.mapAttrsToList (_: h: h.errorMessages) |> lib.concatLists;
     in
     {
       checks = lib.optionalAttrs (osType != null && configs != { }) {
@@ -82,7 +87,7 @@ in
             ''
               echo "Git config validation failed:"
               echo ""
-              ${lib.concatMapStringsSep "\n" (msg: ''echo "${msg}"'') allErrorMessages}
+              ${allErrorMessages |> lib.concatMapStringsSep "\n" (msg: ''echo "${msg}"'')}
               exit 1
             ''
           else

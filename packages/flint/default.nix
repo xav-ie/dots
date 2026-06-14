@@ -10,5 +10,5 @@ writeNuApplication {
     lint-staged
   ];
   # just run with the current shell's `npx`
-  text = builtins.readFile ./flint.nu;
+  text = ./flint.nu |> builtins.readFile;
 }

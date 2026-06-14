@@ -6,15 +6,17 @@ stdenvNoCC.mkDerivation {
   pname = "car-edit";
   version = "0.1.0";
 
-  src = lib.cleanSourceWith {
-    src = ./.;
-    filter =
-      name: _type:
-      let
-        rel = lib.removePrefix (toString ./. + "/") (toString name);
-      in
-      !(lib.hasPrefix ".build" rel) && !(lib.hasSuffix "default.nix" rel);
-  };
+  src =
+    with lib.fileset;
+    toSource {
+      root = ./.;
+      fileset =
+        unions [
+          (maybeMissing ./.build)
+          ./default.nix
+        ]
+        |> difference ./.;
+    };
 
   # Apple Swift 6.3 (Xcode 26) refuses Nix's apple-sdk-14.4 (Swift 5.10
   # module interfaces). Reaching into /Applications/Xcode.app for the matched

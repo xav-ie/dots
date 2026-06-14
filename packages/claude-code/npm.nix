@@ -13,7 +13,7 @@
 let
   common = import ./common.nix { inherit pkgs; };
 
-  sourcesData = builtins.fromJSON (builtins.readFile ./sources.json);
+  sourcesData = ./sources.json |> builtins.readFile |> builtins.fromJSON;
   inherit (sourcesData.npm) version sources;
 
   sourceInfo =

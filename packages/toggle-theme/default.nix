@@ -9,5 +9,5 @@ writeNuApplication {
     tmux
     dconf
   ];
-  text = builtins.readFile ./toggle-theme.nu;
+  text = ./toggle-theme.nu |> builtins.readFile;
 }

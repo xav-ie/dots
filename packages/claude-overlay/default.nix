@@ -11,5 +11,5 @@ writeShellApplication {
     rsync # apply step
     findutils # find for diff review
   ];
-  text = builtins.readFile ./claude-overlay.sh;
+  text = ./claude-overlay.sh |> builtins.readFile;
 }

@@ -28,27 +28,33 @@
                     <string>${fonts.name "mono"}</string>
                   </test>
                   <edit name="fontfeatures" mode="append">
-                  ${lib.concatStringsSep "\n    " (
-                    map (feature: "  <string>${feature} on</string>") (fonts.features "mono")
-                  )}
+                  ${
+                    fonts.features "mono"
+                    |> map (feature: "  <string>${feature} on</string>")
+                    |> lib.concatStringsSep "\n    "
+                  }
                   </edit>
                 </match>
                 <alias>
                   <description>Some websites do not respect lacking Arial, use font-sans as fallback</description>
                   <family>Arial</family>
                   <prefer>
-                  ${lib.concatStringsSep "\n    " (
-                    map (font: "  <family>${font}</family>") fontCfg.defaultFonts.sansSerif
-                  )}
+                  ${
+                    fontCfg.defaultFonts.sansSerif
+                    |> map (font: "  <family>${font}</family>")
+                    |> lib.concatStringsSep "\n    "
+                  }
                   </prefer>
                 </alias>
                 <alias>
                   <description>Some websites do not respect sans-serif and demand a ui-sans-serif</description>
                   <family>ui-sans-serif</family>
                   <prefer>
-                  ${lib.concatStringsSep "\n    " (
-                    map (font: "  <family>${font}</family>") fontCfg.defaultFonts.sansSerif
-                  )}
+                  ${
+                    fontCfg.defaultFonts.sansSerif
+                    |> map (font: "  <family>${font}</family>")
+                    |> lib.concatStringsSep "\n    "
+                  }
                   </prefer>
                 </alias>
               </fontconfig>

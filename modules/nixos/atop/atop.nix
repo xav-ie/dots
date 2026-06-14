@@ -22,7 +22,7 @@
             ];
 
             hardeningDisable = [ "pic" ];
-            env.NIX_CFLAGS_COMPILE = toString [ "-Wno-error=implicit-fallthrough" ];
+            env.NIX_CFLAGS_COMPILE = [ "-Wno-error=implicit-fallthrough" ] |> toString;
 
             makeFlags = oldAttrs.makeFlags or [ ];
 

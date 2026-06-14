@@ -7,5 +7,5 @@ writeNuApplication {
   runtimeInputs = [
     pstree
   ];
-  text = builtins.readFile ./pgpod.nu;
+  text = ./pgpod.nu |> builtins.readFile;
 }

@@ -30,8 +30,9 @@
         });
     in
     {
-      checks = lib.mapAttrs' (name: pkg: lib.nameValuePair "clippy-${name}" (mkClippyCheck pkg)) (
-        lib.filterAttrs (_: pkg: pkg ? cargoDeps && !(pkg.passthru.skipClippy or false)) config.packages
-      );
+      checks =
+        config.packages
+        |> lib.filterAttrs (_: pkg: pkg ? cargoDeps && !(pkg.passthru.skipClippy or false))
+        |> lib.mapAttrs' (name: pkg: lib.nameValuePair "clippy-${name}" (mkClippyCheck pkg));
     };
 }

@@ -34,19 +34,21 @@
             advice.detachedHead = false;
             alias =
               let
-                diffTweaks = builtins.concatStringsSep " " [
-                  "--ignore-all-space"
-                  "--ignore-space-at-eol"
-                  "--ignore-space-change"
-                  "--ignore-blank-lines"
-                  "--patch-with-stat"
-                  "--"
-                  "."
-                  "':(exclude)*lock.json'"
-                  "--"
-                  "."
-                  "':(exclude)*.lock'"
-                ];
+                diffTweaks =
+                  [
+                    "--ignore-all-space"
+                    "--ignore-space-at-eol"
+                    "--ignore-space-change"
+                    "--ignore-blank-lines"
+                    "--patch-with-stat"
+                    "--"
+                    "."
+                    "':(exclude)*lock.json'"
+                    "--"
+                    "."
+                    "':(exclude)*.lock'"
+                  ]
+                  |> builtins.concatStringsSep " ";
               in
               {
                 # aliases are case-insensitive
@@ -65,13 +67,15 @@
                 ds = "!git d && git s";
                 graph =
                   let
-                    columns = builtins.concatStringsSep " " [
-                      "%C(bold blue)%h%Creset"
-                      "%s"
-                      "%C(bold green)%d%Creset"
-                      "%C(blue)<%an>%Creset"
-                      "%C(dim cyan)%cr"
-                    ];
+                    columns =
+                      [
+                        "%C(bold blue)%h%Creset"
+                        "%s"
+                        "%C(bold green)%d%Creset"
+                        "%C(blue)<%an>%Creset"
+                        "%C(dim cyan)%cr"
+                      ]
+                      |> builtins.concatStringsSep " ";
                   in
                   "log --graph --pretty=tformat:'${columns}' --abbrev-commit --decorate";
                 log-pr = "!${pkgs.pkgs-mine.log-pr}/bin/log-pr";
@@ -129,33 +133,34 @@
               # pair lockfiles to come after their source file
               # requires that these file types come first, but that is okay for me
               orderFile =
-                builtins.toFile "gitorderfile.conf" # gitignore
-                  ''
-                    # git lets you specify the order of the files in all commands
-                    # by setting up an order file! I use this to make it so all lock
-                    # files appear last fist specify every file can appear first then
-                    # lockfiles come after due to the glob matching, you have to
-                    # specify exact paths
-                    # * <- does not work, greedily matches everything
-                    package.json
-                    package-lock.json
-                    yarn.lock
-                    pnpm-lock.yaml
+                # gitignore
+                ''
+                  # git lets you specify the order of the files in all commands
+                  # by setting up an order file! I use this to make it so all lock
+                  # files appear last fist specify every file can appear first then
+                  # lockfiles come after due to the glob matching, you have to
+                  # specify exact paths
+                  # * <- does not work, greedily matches everything
+                  package.json
+                  package-lock.json
+                  yarn.lock
+                  pnpm-lock.yaml
 
-                    flake.nix
-                    flake.lock
-                    # you could try to match every other file type other than lock
-                    # files, but that is not robust. There will always be new file
-                    # types and some files don't even have extensions. Due to this. I
-                    # will opt for at least ordering the locks after their source. I
-                    # also don't want to greedy match locks because I want the source
-                    # to be tightly tied to the lock. I don't want to have unexpected
-                    # files appearing between the source and generated lock. By
-                    # setting explicit lock paths for each source, they are tightly
-                    # paired.
+                  flake.nix
+                  flake.lock
+                  # you could try to match every other file type other than lock
+                  # files, but that is not robust. There will always be new file
+                  # types and some files don't even have extensions. Due to this. I
+                  # will opt for at least ordering the locks after their source. I
+                  # also don't want to greedy match locks because I want the source
+                  # to be tightly tied to the lock. I don't want to have unexpected
+                  # files appearing between the source and generated lock. By
+                  # setting explicit lock paths for each source, they are tightly
+                  # paired.
 
-                    # * <- implied at end of file, no effect here
-                  '';
+                  # * <- implied at end of file, no effect here
+                ''
+                |> builtins.toFile "gitorderfile.conf";
               # ${./gitorderfile.conf}" ;
             };
             # configured by delta.enable=true

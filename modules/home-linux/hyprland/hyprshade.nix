@@ -11,7 +11,7 @@
           void main() {
               vec4 c = texture2D(tex, v_texcoord);
               vec3 linear = pow(c.rgb, vec3(2.2));
-              linear *= ${toString (level / 100.0)};
+              linear *= ${(level / 100.0) |> toString};
               vec3 srgb = pow(linear, vec3(1.0/2.2));
               gl_FragColor = vec4(srgb, c.a);
           }
@@ -25,7 +25,7 @@
           uniform sampler2D tex;
           void main() {
               vec4 c = texture2D(tex, v_texcoord);
-              float factor = ${toString (level / 100.0)};
+              float factor = ${(level / 100.0) |> toString};
               vec3 result = mix(c.rgb, vec3(c.r, 0.0, 0.0), factor);
               gl_FragColor = vec4(result, c.a);
           }
@@ -39,10 +39,10 @@
           uniform sampler2D tex;
           void main() {
               vec4 c = texture2D(tex, v_texcoord);
-              float redFactor = ${toString (redness / 100.0)};
+              float redFactor = ${(redness / 100.0) |> toString};
               vec3 redResult = mix(c.rgb, vec3(c.r, 0.0, 0.0), redFactor);
               vec3 linear = pow(redResult, vec3(2.2));
-              linear *= ${toString (brightness / 100.0)};
+              linear *= ${(brightness / 100.0) |> toString};
               vec3 srgb = pow(linear, vec3(1.0/2.2));
               gl_FragColor = vec4(srgb, c.a);
           }
@@ -62,31 +62,34 @@
         100
       ];
 
-      brightnessFiles = lib.listToAttrs (
-        map (level: {
-          name = "hypr/shaders/${toString level}.glsl";
-          value.text = brightnessShader level;
-        }) brightnessLevels
-      );
+      brightnessFiles =
+        brightnessLevels
+        |> map (level: {
+          name = "hypr/shaders/${level |> toString}.glsl";
+          value.text = level |> brightnessShader;
+        })
+        |> lib.listToAttrs;
 
-      rednessFiles = lib.listToAttrs (
-        map (level: {
-          name = "hypr/shaders/${toString level}-red.glsl";
-          value.text = rednessShader level;
-        }) brightnessLevels
-      );
+      rednessFiles =
+        brightnessLevels
+        |> map (level: {
+          name = "hypr/shaders/${level |> toString}-red.glsl";
+          value.text = level |> rednessShader;
+        })
+        |> lib.listToAttrs;
 
-      combinedFiles = lib.listToAttrs (
-        lib.flatten (
-          map (
-            redness:
-            map (brightness: {
-              name = "hypr/shaders/${toString redness}-red-${toString brightness}.glsl";
-              value.text = combinedShader redness brightness;
-            }) brightnessLevels
-          ) brightnessLevels
+      combinedFiles =
+        brightnessLevels
+        |> map (
+          redness:
+          brightnessLevels
+          |> map (brightness: {
+            name = "hypr/shaders/${redness |> toString}-red-${brightness |> toString}.glsl";
+            value.text = combinedShader redness brightness;
+          })
         )
-      );
+        |> lib.flatten
+        |> lib.listToAttrs;
     in
     {
       config = {

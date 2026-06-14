@@ -9,5 +9,5 @@ writeNuApplication {
     git
     nodejs
   ];
-  text = builtins.readFile ./update-package-lock.nu;
+  text = ./update-package-lock.nu |> builtins.readFile;
 }

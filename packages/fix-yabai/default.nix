@@ -10,5 +10,5 @@ writeNuApplication {
     jq
   ];
 
-  text = builtins.readFile ./fix-yabai.nu;
+  text = ./fix-yabai.nu |> builtins.readFile;
 }

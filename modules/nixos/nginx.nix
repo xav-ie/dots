@@ -120,21 +120,21 @@
                     executor-service = {
                       loadBalancer = {
                         servers = [
-                          { url = "http://127.0.0.1:${toString config.services.executor.port}"; }
+                          { url = "http://127.0.0.1:${config.services.executor.port |> toString}"; }
                         ];
                       };
                     };
                     ream-service = {
                       loadBalancer = {
                         servers = [
-                          { url = "http://127.0.0.1:${toString config.services.ream.port}"; }
+                          { url = "http://127.0.0.1:${config.services.ream.port |> toString}"; }
                         ];
                       };
                     };
                     snippets-service = {
                       loadBalancer = {
                         servers = [
-                          { url = "http://127.0.0.1:${toString config.services.snippet-mcp.port}"; }
+                          { url = "http://127.0.0.1:${config.services.snippet-mcp.port |> toString}"; }
                         ];
                       };
                     };
@@ -144,7 +144,7 @@
                         # public Host; the middleware below then sets it to localhost.
                         passHostHeader = false;
                         servers = [
-                          { url = "http://127.0.0.1:${toString config.services.chrome-headless.port}"; }
+                          { url = "http://127.0.0.1:${config.services.chrome-headless.port |> toString}"; }
                         ];
                       };
                     };

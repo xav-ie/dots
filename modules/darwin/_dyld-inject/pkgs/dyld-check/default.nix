@@ -5,5 +5,5 @@ writeNuApplication {
   name = "dyld-check";
   runtimeInputs = [ ];
 
-  text = builtins.readFile ./dyld-check.nu;
+  text = ./dyld-check.nu |> builtins.readFile;
 }

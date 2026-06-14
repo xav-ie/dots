@@ -29,7 +29,7 @@
 
       # Find input name by matching src path against inputs (pure function, safe)
       findInputName =
-        src: lib.findFirst (name: inputs.${name}.outPath or null == "${src}") null (lib.attrNames inputs);
+        src: lib.attrNames inputs |> lib.findFirst (name: inputs.${name}.outPath or null == "${src}") null;
 
     in
     {
@@ -98,9 +98,8 @@
           # The update script package (in overlay)
           inherit (pkgs) claude-code-update;
 
-          marketplaceInputNames = lib.filter (x: x != null) (
-            lib.mapAttrsToList (_: m: findInputName m.src) cfg.marketplaces
-          );
+          marketplaceInputNames =
+            cfg.marketplaces |> lib.mapAttrsToList (_: m: findInputName m.src) |> lib.filter (x: x != null);
 
           updateMarketplacesPackage = pkgs.writeShellScriptBin "claude-update-marketplaces" ''
             cd "${config.dotFilesDir}"
@@ -108,16 +107,19 @@
           '';
 
           # Generate known_marketplaces.json from configured marketplaces
-          knownMarketplacesJson = builtins.toJSON (
-            lib.mapAttrs (name: marketplace: {
-              source = {
-                source = "github";
-                inherit (marketplace) repo;
-              };
-              installLocation = "${config.home.homeDirectory}/.claude/plugins/marketplaces/${name}";
-              lastUpdated = "1970-01-01T00:00:00.000Z"; # Managed by Nix, not runtime updates
-            }) cfg.marketplaces
-          );
+          knownMarketplacesJson =
+            cfg.marketplaces
+            |> lib.mapAttrs (
+              name: marketplace: {
+                source = {
+                  source = "github";
+                  inherit (marketplace) repo;
+                };
+                installLocation = "${config.home.homeDirectory}/.claude/plugins/marketplaces/${name}";
+                lastUpdated = "1970-01-01T00:00:00.000Z"; # Managed by Nix, not runtime updates
+              }
+            )
+            |> builtins.toJSON;
 
           # osgrep ships a SessionStart hook (hooks/start.js) that launches a
           # long-lived `osgrep serve` daemon. Its worker pool busy-loops at 100%

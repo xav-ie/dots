@@ -32,7 +32,7 @@
           wantedBy = [ "multi-user.target" ];
 
           environment = {
-            BROWSER_URL = "http://127.0.0.1:${toString config.services.chrome-headless.port}";
+            BROWSER_URL = "http://127.0.0.1:${config.services.chrome-headless.port |> toString}";
             LOGS_DIR = "${stateDir}/logs";
           };
 

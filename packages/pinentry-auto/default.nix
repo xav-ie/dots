@@ -11,5 +11,5 @@ writeShellApplication {
     pinentry-curses
     pinentry-gnome3
   ];
-  text = builtins.readFile ./pinentry-auto.sh;
+  text = ./pinentry-auto.sh |> builtins.readFile;
 }

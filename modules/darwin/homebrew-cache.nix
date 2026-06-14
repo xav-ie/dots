@@ -10,7 +10,7 @@
     let
       cfg = config.homebrew;
       cacheDir = "/var/lib/nix-darwin-homebrew";
-      brewfileHash = builtins.hashString "sha256" cfg.brewfile;
+      brewfileHash = cfg.brewfile |> builtins.hashString "sha256";
     in
     {
       config = lib.mkIf cfg.enable {

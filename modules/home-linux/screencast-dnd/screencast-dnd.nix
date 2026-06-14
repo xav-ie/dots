@@ -12,7 +12,7 @@
           pkgs.pkgs-mine.notification-center
           pkgs.pipewire
         ];
-        text = builtins.readFile ./screencast-dnd.nu;
+        text = ./screencast-dnd.nu |> builtins.readFile;
       };
     in
     {

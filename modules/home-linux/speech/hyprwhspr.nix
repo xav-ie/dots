@@ -16,7 +16,7 @@
       };
 
       configFile = pkgs.writeText "hyprwhspr-rs-config.jsonc" (
-        builtins.toJSON {
+        {
           shortcuts = {
             hold = "${cfg.pushToTalk.modifier}+${cfg.pushToTalk.key}";
           };
@@ -39,6 +39,7 @@
             };
           };
         }
+        |> builtins.toJSON
       );
     in
     {

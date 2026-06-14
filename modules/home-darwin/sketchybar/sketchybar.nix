@@ -78,19 +78,20 @@
           enable = true;
           config = {
             Debug = true;
-            Program = builtins.toString sketchybarWrapper;
+            Program = sketchybarWrapper |> builtins.toString;
             KeepAlive = true;
             RunAtLoad = true;
             StandardOutPath = "/tmp/sketchybar.log";
             StandardErrorPath = "/tmp/sketchybar.err";
             StartInterval = 5;
             EnvironmentVariables.PATH = "${
-              lib.makeBinPath [
+              [
                 pkgs.nushell
                 pkgs.sketchybar
                 pkgs.bash
                 pkgs.pkgs-mine.sketchybar-hover
               ]
+              |> lib.makeBinPath
             }:/usr/bin";
           };
         };
@@ -122,7 +123,7 @@
             StandardOutPath = "/tmp/sketchybar-hover.log";
             StandardErrorPath = "/tmp/sketchybar-hover.err";
             EnvironmentVariables = {
-              PATH = "${lib.makeBinPath [ pkgs.sketchybar ]}:/usr/bin";
+              PATH = "${[ pkgs.sketchybar ] |> lib.makeBinPath}:/usr/bin";
               # Set to "1" to log every event/state/sketchybar invocation to
               # /tmp/sketchybar-hover.err. Off by default to keep the log file
               # small in normal use.

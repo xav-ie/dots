@@ -46,6 +46,6 @@ stdenv.mkDerivation {
     description = "Prebuilt Node.js 25 binary from nodejs.org";
     homepage = "https://nodejs.org";
     license = lib.licenses.mit;
-    platforms = builtins.attrNames platformMap;
+    platforms = platformMap |> builtins.attrNames;
   };
 }

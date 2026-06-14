@@ -8,7 +8,8 @@
 }:
 let
   # Hash all user agents at build time to detect changes
-  launchdUserAgentsHash = builtins.hashString "sha256" (builtins.toJSON config.launchd.user.agents);
+  launchdUserAgentsHash =
+    config.launchd.user.agents |> builtins.toJSON |> builtins.hashString "sha256";
 in
 {
   config = {

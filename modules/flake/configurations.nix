@@ -43,26 +43,28 @@ in
       );
     in
     {
-      nixosConfigurations = forActiveSystems (
-        lib.mapAttrs (
+      nixosConfigurations =
+        config.configurations.nixos
+        |> lib.mapAttrs (
           _name:
           { module }:
           inputs.nixpkgs.lib.nixosSystem {
             specialArgs = { inherit inputs; };
             modules = [ module ];
           }
-        ) config.configurations.nixos
-      );
+        )
+        |> forActiveSystems;
 
-      darwinConfigurations = forActiveSystems (
-        lib.mapAttrs (
+      darwinConfigurations =
+        config.configurations.darwin
+        |> lib.mapAttrs (
           _name:
           { module }:
           inputs.nix-darwin.lib.darwinSystem {
             specialArgs = { inherit inputs; };
             modules = [ module ];
           }
-        ) config.configurations.darwin
-      );
+        )
+        |> forActiveSystems;
     };
 }

@@ -11,5 +11,5 @@ writeNuApplication {
     hyprland
     jq
   ];
-  text = builtins.readFile ./move-active.nu;
+  text = ./move-active.nu |> builtins.readFile;
 }

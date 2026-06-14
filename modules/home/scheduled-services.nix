@@ -81,7 +81,7 @@
           };
         };
 
-      enabledServices = lib.filterAttrs (_: svc: svc.enable) cfg;
+      enabledServices = cfg |> lib.filterAttrs (_: svc: svc.enable);
 
       inherit (pkgs.stdenv) isLinux isDarwin;
 
@@ -118,57 +118,66 @@
       config = lib.mkIf (enabledServices != { }) {
         # Linux - systemd user services and timers
         systemd.user.services = lib.mkIf isLinux (
-          lib.mapAttrs (_name: svc: {
-            Unit.Description = svc.description;
-            Service = {
-              Type = "oneshot";
-              ExecStart = svc.command;
+          enabledServices
+          |> lib.mapAttrs (
+            _name: svc: {
+              Unit.Description = svc.description;
+              Service = {
+                Type = "oneshot";
+                ExecStart = svc.command;
+              }
+              // lib.optionalAttrs (svc.workingDirectory != null) {
+                WorkingDirectory = svc.workingDirectory;
+              };
             }
-            // lib.optionalAttrs (svc.workingDirectory != null) {
-              WorkingDirectory = svc.workingDirectory;
-            };
-          }) enabledServices
+          )
         );
 
         systemd.user.timers = lib.mkIf isLinux (
-          lib.mapAttrs (_name: svc: {
-            Unit.Description = "${svc.description} timer";
-            Timer =
-              if svc.interval != null then
-                {
-                  OnBootSec = "${toString svc.interval}s";
-                  OnUnitActiveSec = "${toString svc.interval}s";
-                }
-              else
-                {
-                  OnCalendar = svc.calendar;
-                  Persistent = svc.persistent;
-                  RandomizedDelaySec = svc.randomDelay;
-                };
-            Install.WantedBy = [ "timers.target" ];
-          }) enabledServices
+          enabledServices
+          |> lib.mapAttrs (
+            _name: svc: {
+              Unit.Description = "${svc.description} timer";
+              Timer =
+                if svc.interval != null then
+                  {
+                    OnBootSec = "${svc.interval |> toString}s";
+                    OnUnitActiveSec = "${svc.interval |> toString}s";
+                  }
+                else
+                  {
+                    OnCalendar = svc.calendar;
+                    Persistent = svc.persistent;
+                    RandomizedDelaySec = svc.randomDelay;
+                  };
+              Install.WantedBy = [ "timers.target" ];
+            }
+          )
         );
 
         # macOS - launchd agents
         launchd.agents = lib.mkIf isDarwin (
-          lib.mapAttrs (name: svc: {
-            enable = true;
-            config = {
-              Label = "com.user.${name}";
-              ProgramArguments = [ svc.command ];
-              StandardOutPath = "${config.home.homeDirectory}/Library/Logs/${name}.log";
-              StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/${name}.log";
+          enabledServices
+          |> lib.mapAttrs (
+            name: svc: {
+              enable = true;
+              config = {
+                Label = "com.user.${name}";
+                ProgramArguments = [ svc.command ];
+                StandardOutPath = "${config.home.homeDirectory}/Library/Logs/${name}.log";
+                StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/${name}.log";
+              }
+              // (
+                if svc.interval != null then
+                  { StartInterval = svc.interval; }
+                else
+                  { StartCalendarInterval = mkLaunchdInterval svc; }
+              )
+              // lib.optionalAttrs (svc.workingDirectory != null) {
+                WorkingDirectory = svc.workingDirectory;
+              };
             }
-            // (
-              if svc.interval != null then
-                { StartInterval = svc.interval; }
-              else
-                { StartCalendarInterval = mkLaunchdInterval svc; }
-            )
-            // lib.optionalAttrs (svc.workingDirectory != null) {
-              WorkingDirectory = svc.workingDirectory;
-            };
-          }) enabledServices
+          )
         );
       };
     };

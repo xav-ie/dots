@@ -33,32 +33,34 @@ let
   findConflicts =
     attrs:
     let
-      keys = lib.attrNames attrs;
-      grouped = builtins.groupBy lib.strings.toLower keys;
+      keys = attrs |> lib.attrNames;
+      grouped = keys |> builtins.groupBy lib.strings.toLower;
       # Only groups with multiple keys (case collisions)
-      collisions = lib.filterAttrs (_: v: lib.length v > 1) grouped;
+      collisions = grouped |> lib.filterAttrs (_: v: (v |> lib.length) > 1);
       # Filter to only those where values actually differ
-      conflicting = lib.filterAttrs (
-        _lower: keyList:
-        let
-          values = map (k: attrs.${k}) keyList;
-          firstValue = lib.head values;
-        in
-        !lib.all (v: v == firstValue) values
-      ) collisions;
+      conflicting =
+        collisions
+        |> lib.filterAttrs (
+          _lower: keyList:
+          let
+            values = keyList |> map (k: attrs.${k});
+            firstValue = values |> lib.head;
+          in
+          !(values |> lib.all (v: v == firstValue))
+        );
       # Format each conflict with keys and values
       formatConflict =
         _lower: keyList:
         let
-          keyValues = map (k: "${k} = ${lib.generators.toPretty { } attrs.${k}}") keyList;
+          keyValues = keyList |> map (k: "${k} = ${lib.generators.toPretty { } attrs.${k}}");
         in
-        lib.concatStringsSep "\n" keyValues;
+        keyValues |> lib.concatStringsSep "\n";
     in
-    lib.mapAttrsToList formatConflict conflicting;
+    conflicting |> lib.mapAttrsToList formatConflict;
 
   # Group sections by lowercase name to find collisions
-  sectionKeys = lib.attrNames gitSettings;
-  sectionsByLower = builtins.groupBy lib.strings.toLower sectionKeys;
+  sectionKeys = gitSettings |> lib.attrNames;
+  sectionsByLower = sectionKeys |> builtins.groupBy lib.strings.toLower;
 
   # For each group of case-colliding sections, merge their contents and check
   # for variable conflicts across all of them
@@ -72,35 +74,40 @@ let
         let
           sectionAttrs = gitSettings.${sectionName};
           isSubsection = _name: val: builtins.isAttrs val;
-          variables = lib.filterAttrs (n: v: !isSubsection n v) sectionAttrs;
+          variables = sectionAttrs |> lib.filterAttrs (n: v: !isSubsection n v);
         in
-        lib.mapAttrsToList (varName: val: {
-          inherit val varName;
-          path = "${sectionName}.${varName}";
-        }) variables;
+        variables
+        |> lib.mapAttrsToList (
+          varName: val: {
+            inherit val varName;
+            path = "${sectionName}.${varName}";
+          }
+        );
 
       # Merge all tagged variables from all section variants
-      allTaggedVars = lib.concatLists (map collectTaggedVars sectionNames);
+      allTaggedVars = sectionNames |> map collectTaggedVars |> lib.concatLists;
 
       # Group by lowercase variable name (not full path!)
       # This catches merge.f vs MERGE.f as the same variable
-      varsByLower = builtins.groupBy (tv: lib.strings.toLower tv.varName) allTaggedVars;
+      varsByLower = allTaggedVars |> builtins.groupBy (tv: lib.strings.toLower tv.varName);
 
       # Find groups where values differ
-      findVarConflicts = lib.filterAttrs (
-        _lower: tvList:
-        let
-          values = map (tv: tv.val) tvList;
-          firstValue = lib.head values;
-        in
-        lib.length tvList > 1 && !lib.all (v: v == firstValue) values
-      ) varsByLower;
+      findVarConflicts =
+        varsByLower
+        |> lib.filterAttrs (
+          _lower: tvList:
+          let
+            values = tvList |> map (tv: tv.val);
+            firstValue = values |> lib.head;
+          in
+          (tvList |> lib.length) > 1 && !(values |> lib.all (v: v == firstValue))
+        );
 
       formatVarConflict =
         _lower: tvList:
-        lib.concatMapStringsSep "\n" (tv: "${tv.path} = ${lib.generators.toPretty { } tv.val}") tvList;
+        tvList |> lib.concatMapStringsSep "\n" (tv: "${tv.path} = ${lib.generators.toPretty { } tv.val}");
 
-      varConflicts = lib.mapAttrsToList formatVarConflict findVarConflicts;
+      varConflicts = findVarConflicts |> lib.mapAttrsToList formatVarConflict;
 
       # Also check subsections within each section
       # Subsection NAMES are case-sensitive, so we check each section independently
@@ -109,31 +116,31 @@ let
         let
           sectionAttrs = gitSettings.${sectionName};
           isSubsection = _name: val: builtins.isAttrs val;
-          subsections = lib.filterAttrs isSubsection sectionAttrs;
+          subsections = sectionAttrs |> lib.filterAttrs isSubsection;
           addSubsectionPrefix =
             subName: c:
-            lib.concatMapStringsSep "\n" (line: "${sectionName}.${subName}.${line}") (lib.splitString "\n" c);
+            lib.splitString "\n" c |> lib.concatMapStringsSep "\n" (line: "${sectionName}.${subName}.${line}");
         in
-        lib.concatLists (
-          lib.mapAttrsToList (
-            subName: subAttrs: map (addSubsectionPrefix subName) (findConflicts subAttrs)
-          ) subsections
-        );
+        subsections
+        |> lib.mapAttrsToList (
+          subName: subAttrs: findConflicts subAttrs |> map (addSubsectionPrefix subName)
+        )
+        |> lib.concatLists;
 
-      subsectionConflicts = lib.concatLists (map checkSubsections sectionNames);
+      subsectionConflicts = sectionNames |> map checkSubsections |> lib.concatLists;
     in
     varConflicts ++ subsectionConflicts;
 
   # Check variables within each section (handles single sections)
   # For colliding sections, checkSectionGroup handles cross-section conflicts
-  withinSectionConflicts = lib.concatLists (lib.mapAttrsToList checkSectionGroup sectionsByLower);
+  withinSectionConflicts = sectionsByLower |> lib.mapAttrsToList checkSectionGroup |> lib.concatLists;
 
   # Section name conflicts (just list the names for awareness)
   sectionConflicts =
     let
-      collisions = lib.filterAttrs (_: v: lib.length v > 1) sectionsByLower;
+      collisions = sectionsByLower |> lib.filterAttrs (_: v: (v |> lib.length) > 1);
     in
-    lib.mapAttrsToList (_: keyList: lib.concatStringsSep ", " keyList) collisions;
+    collisions |> lib.mapAttrsToList (_: keyList: keyList |> lib.concatStringsSep ", ");
 
   allConflicts = sectionConflicts ++ withinSectionConflicts;
 
@@ -144,7 +151,7 @@ let
     else
       ''
         Section conflicts:
-        ${lib.concatMapStringsSep "\n" (s: "  ${s}") sectionConflicts}
+        ${sectionConflicts |> lib.concatMapStringsSep "\n" (s: "  ${s}")}
       '';
 
   # Format variable conflicts (show full paths with values)
@@ -155,17 +162,21 @@ let
       # txt
       ''
         Variable conflicts:
-        ${lib.concatMapStringsSep "\n" (
-          c: lib.concatMapStringsSep "\n" (line: "  ${line}") (lib.splitString "\n" c)
-        ) withinSectionConflicts}
+        ${
+          withinSectionConflicts
+          |> lib.concatMapStringsSep "\n" (
+            c: c |> lib.splitString "\n" |> lib.concatMapStringsSep "\n" (line: "  ${line}")
+          )
+        }
       '';
 
-  formattedConflicts = lib.concatStringsSep "\n" (
-    lib.filter (s: s != "") [
+  formattedConflicts =
+    [
       formatSectionConflicts
       formatVariableConflicts
     ]
-  );
+    |> lib.filter (s: s != "")
+    |> lib.concatStringsSep "\n";
 in
 {
   issues = allConflicts;

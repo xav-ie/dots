@@ -31,7 +31,7 @@
         # systemd holds the socket; nothing runs until a connection arrives.
         systemd.sockets.ream = {
           wantedBy = [ "sockets.target" ];
-          socketConfig.ListenStream = "127.0.0.1:${toString cfg.port}";
+          socketConfig.ListenStream = "127.0.0.1:${cfg.port |> toString}";
         };
 
         # No wantedBy: started on demand by ream.socket, self-exits when idle.

@@ -9,5 +9,5 @@ writeNuApplication {
     libnotify
     generate-kaomoji
   ];
-  text = builtins.readFile ./notify.nu;
+  text = ./notify.nu |> builtins.readFile;
 }

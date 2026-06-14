@@ -5,7 +5,7 @@
       delta-jj = pkgs.writeNuApplication {
         name = "delta-jj";
         runtimeInputs = [ pkgs.delta ];
-        text = builtins.readFile ./delta-jj.nu;
+        text = ./delta-jj.nu |> builtins.readFile;
       };
     in
     {

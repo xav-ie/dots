@@ -12,9 +12,9 @@
       ghostty-dir = "ghostty";
 
       # Generate font-feature lines from the features list
-      fontFeatureLines = lib.concatMapStringsSep "\n" (
-        feature: "font-feature = ${feature}"
-      ) fonts.configs.ghostty.font-features;
+      fontFeatureLines =
+        fonts.configs.ghostty.font-features
+        |> lib.concatMapStringsSep "\n" (feature: "font-feature = ${feature}");
     in
     {
       config = {
@@ -34,7 +34,7 @@
                 font-family = "${fonts.configs.ghostty.font-family-1}"
                 font-family = "${fonts.configs.ghostty.font-family-2}"
                 font-family = "${fonts.configs.ghostty.font-family-3}"
-                font-size = ${toString fonts.configs.ghostty.font-size}
+                font-size = ${fonts.configs.ghostty.font-size |> toString}
                 ${fontFeatureLines}
               '';
             "${ghostty-dir}/config".source = config.lib.file.mkOutOfStoreSymlink "${ghosttyPath}/config.sh";
