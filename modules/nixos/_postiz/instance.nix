@@ -178,6 +178,21 @@ let
     history.visibilityProcessorUpdateAckInterval:
       - value: "5m"
         constraints: {}
+    # Disable the built-in maintenance scanner workflows. These periodically
+    # sweep task queues, history, and executions for orphaned/expired state —
+    # housekeeping aimed at busy clusters. At our volume (a handful of
+    # scheduled-post workflows) there is nothing to scavenge, so they are pure
+    # idle background work; turning them off removes the periodic CPU/DB churn
+    # they cause (e.g. the temporal-sys-tq-scanner-workflow activity).
+    worker.taskQueueScannerEnabled:
+      - value: false
+        constraints: {}
+    worker.historyScannerEnabled:
+      - value: false
+        constraints: {}
+    worker.executionsScannerEnabled:
+      - value: false
+        constraints: {}
   '';
 
   socialEnv =
@@ -512,6 +527,17 @@ in
                 # frontend/matching/history services form their cluster ring.
                 # Real problems still log at warn+.
                 LOG_LEVEL = "warn";
+                # Temporal is a Go program. Inside the pod it sees all host
+                # cores, so the Go runtime defaults GOMAXPROCS to the full core
+                # count and spreads its idle scheduler/GC work across that many
+                # OS threads (~24 threads observed). At our throughput a single
+                # P is plenty; pinning GOMAXPROCS=1 collapses the runtime to one
+                # scheduler thread and cuts the idle context-switch/GC overhead.
+                # GOGC=200 halves GC frequency (double the heap-growth target)
+                # to further trim idle GC cycles. Neither affects scheduled-post
+                # latency at this volume. Revert if workflow processing lags.
+                GOMAXPROCS = "1";
+                GOGC = "200";
               };
             };
             serviceConfig = {
