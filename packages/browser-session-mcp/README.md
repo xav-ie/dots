@@ -90,8 +90,13 @@ The package ships two companion binaries:
   `Restart=always` and `After=chrome-headless`.
 - `browser-session-reaper` — one-shot idle-session sweeper. Reads `STATE_FILE`,
   honors `MAX_IDLE_HOURS` (default 24). Run on a 12h timer.
+- `browser-session-takeover` — long-running HTTP server for the human-takeover
+  page. Env: `TAKEOVER_BIND` (default `127.0.0.1:9223`), `TAKEOVER_DIR` (default
+  `/var/lib/browser-session-mcp/takeover`), `CHROME_WS_BASE` (required, e.g.
+  `wss://chrome.<base>`). All CDP traffic is browser↔Chrome; this daemon only
+  serves the page and accepts the "Done" POST.
 
-## Tool surface (19 tools)
+## Tool surface (21 tools)
 
 **Session lifecycle**
 
@@ -134,6 +139,11 @@ subprocess restarts.
 - `list_console_messages({ sessionId, visit?, limit? })`
 - `list_network_requests({ sessionId, visit?, limit? })`
 
+**Human takeover** (login/passkey without the agent seeing credentials)
+
+- `request_human_takeover({ sessionId, ttl? })` → `{ url, token, expiresAtMs }` — non-blocking; mints a link
+- `await_human_takeover({ token, timeout? })` → `{ completed }` — blocks until the human clicks Done
+
 **Saved cookie states**
 
 - `save_browser_state({ sessionId, name })`
@@ -141,8 +151,49 @@ subprocess restarts.
 - `list_browser_states()`
 - `delete_browser_state({ name })`
 
-Most tools take `sessionId` as their first argument; the lifecycle and
-saved-state-listing tools don't.
+Most tools take `sessionId` as their first argument; the lifecycle,
+saved-state-listing, and `await_human_takeover` tools don't.
+
+## Human-takeover workflow
+
+When a flow needs credentials the agent must not handle (passwords, passkeys),
+hand the live page to a human instead of automating the login:
+
+```ts
+const sid = (await tools.browser_session_mcp.open_browser_session({}))
+  .structuredContent.sessionId;
+await tools.browser_session_mcp.navigate({
+  sessionId: sid,
+  url: "https://accounts.google.com",
+});
+
+// Mint a link and SHOW IT TO THE USER (this call returns immediately).
+const { url, token } = (
+  await tools.browser_session_mcp.request_human_takeover({ sessionId: sid })
+).structuredContent;
+// → present `url`; the user opens it, sees a live view of the page, logs in
+//   themselves (passkey/password/2FA), and clicks "Done".
+
+// Block until they finish, then continue against the now-authenticated session.
+await tools.browser_session_mcp.await_human_takeover({
+  token,
+  timeout: 600000,
+});
+await tools.browser_session_mcp.navigate({
+  sessionId: sid,
+  url: "https://tagmanager.google.com",
+});
+```
+
+How it works: `request_human_takeover` writes a ticket (sessionId + the active
+page's CDP targetId) to `${TAKEOVER_DIR}/tokens/<token>.json` and returns
+`${TAKEOVER_BASE_URL}/takeover/<token>`. The `browser-session-takeover` daemon
+serves that page; its JavaScript opens a WebSocket straight to `CHROME_WS_BASE`
+(the same `chrome.<base>` DevTools endpoint), runs `Page.startScreencast`,
+renders frames to a canvas, and forwards the human's mouse/keyboard as
+`Input.dispatch*` — so credentials go page-direct and never touch the agent or
+this daemon. "Done" POSTs back, dropping `${TAKEOVER_DIR}/done/<token>`, which
+unblocks `await_human_takeover`.
 
 ## Saved-state workflow
 

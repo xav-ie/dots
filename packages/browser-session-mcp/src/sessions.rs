@@ -203,6 +203,33 @@ impl SessionManager {
         Ok(page)
     }
 
+    /// The CDP targetId of the session's active page, creating a page if the
+    /// context has none yet. Used to build the `/devtools/page/<id>` WebSocket
+    /// path that the human-takeover page connects to directly. Mirrors
+    /// `active_page`'s "most-recently-opened tab" selection.
+    pub async fn active_target_id(&self, session_id: &str) -> Result<String> {
+        let _ctx = self.context_id_for(session_id).await?;
+        let pick = |targets: Vec<TargetInfo>| {
+            targets
+                .into_iter()
+                .filter(|t| {
+                    t.browser_context_id
+                        .as_ref()
+                        .map(|c| c.inner() == session_id)
+                        .unwrap_or(false)
+                })
+                .next_back()
+                .map(|t| t.target_id.inner().to_string())
+        };
+        if let Some(id) = pick(self.page_targets().await?) {
+            return Ok(id);
+        }
+        // No page in this context yet — open one, then re-resolve.
+        self.new_page(session_id, None).await?;
+        pick(self.page_targets().await?)
+            .ok_or_else(|| anyhow!("no page target for session {session_id} after creating one"))
+    }
+
     pub async fn new_page(&self, session_id: &str, url: Option<&str>) -> Result<Page> {
         let ctx_id = self.context_id_for(session_id).await?;
         let target_url = url.unwrap_or("about:blank").to_string();

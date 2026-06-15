@@ -17,6 +17,10 @@ path = "src/bin/listener.rs"
 name = "browser-session-reaper"
 path = "src/bin/reaper.rs"
 
+[[bin]]
+name = "browser-session-takeover"
+path = "src/bin/takeover.rs"
+
 [dependencies]
 rmcp = { version = "1.6", features = ["server", "transport-io"] }
 chromiumoxide = { version = "0.9", default-features = false }
@@ -25,11 +29,18 @@ tokio = { version = "1", features = [
   "macros",
   "rt-multi-thread",
   "io-std",
+  # "net" + "io-util": the takeover daemon's tiny HTTP server (TcpListener +
+  # AsyncRead/Write). All other binaries ignore them.
+  "net",
+  "io-util",
   "signal",
   "fs",
   "sync",
   "time",
 ] }
+# Random takeover tokens. Pinned to the 0.2 line already present in Cargo.lock
+# (transitively, via rustls) so adding it as a direct dep needs no lock regen.
+getrandom = "0.2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 anyhow = "1"
