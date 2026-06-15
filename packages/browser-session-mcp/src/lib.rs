@@ -6,4 +6,5 @@ pub mod server;
 pub mod sessions;
 pub mod snapshot;
 pub mod state;
+pub mod takeover;
 pub mod user_agent;

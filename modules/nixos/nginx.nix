@@ -101,6 +101,13 @@
                       # headers (DNS-rebinding protection). Rewrite to `localhost`.
                       middlewares = [ chromeLocalhostHost ];
                     };
+                    # Human-takeover page server (browser-session-takeover daemon).
+                    # No Host rewrite needed — it's our own plain HTTP daemon.
+                    chrome-takeover = {
+                      rule = "Host(`${config.services.browser-session-takeover.subdomain}.${baseDomain}`)";
+                      service = "chrome-takeover-service";
+                      tls.certResolver = "cloudflare";
+                    };
                   }
                   // lib.optionalAttrs cfg.enable {
                     ${cfg.name} = {
@@ -145,6 +152,13 @@
                         passHostHeader = false;
                         servers = [
                           { url = "http://127.0.0.1:${config.services.chrome-headless.port |> toString}"; }
+                        ];
+                      };
+                    };
+                    chrome-takeover-service = {
+                      loadBalancer = {
+                        servers = [
+                          { url = "http://127.0.0.1:${config.services.browser-session-takeover.port |> toString}"; }
                         ];
                       };
                     };

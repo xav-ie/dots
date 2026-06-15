@@ -13,6 +13,11 @@ in
       BROWSER_URL = browserURL;
       STATE_FILE = "${stateDir}/state.json";
       LOGS_DIR = "${stateDir}/logs";
+      # Human-takeover: where to drop tickets (shared with the host-side
+      # browser-session-takeover daemon via the volume below) and the public
+      # URL to hand the user. The MCP only embeds this URL; it never connects.
+      TAKEOVER_DIR = "${stateDir}/takeover";
+      TAKEOVER_BASE_URL = "https://${config.services.browser-session-takeover.subdomain}.${baseDomain}";
     };
     # Share state.json + logs/ with the host-side reaper and listener.
     volumes = [ "${stateDir}:${stateDir}" ];

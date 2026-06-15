@@ -29,6 +29,7 @@ use crate::logs::{self, LogKind, ReadOpts, SessionLogEntry};
 use crate::saved_states::SavedStateStore;
 use crate::sessions::Viewport;
 use crate::snapshot;
+use crate::takeover;
 
 #[derive(Clone)]
 pub struct BrowserSessionServer {
@@ -111,6 +112,8 @@ impl BrowserSessionServer {
             "list_visits" => self.list_visits(args).await,
             "list_console_messages" => self.list_console_messages(args).await,
             "list_network_requests" => self.list_network_requests(args).await,
+            "request_human_takeover" => self.request_human_takeover(args).await,
+            "await_human_takeover" => self.await_human_takeover(args).await,
             "save_browser_state" => self.save_state(args).await,
             "load_browser_state" => self.load_state(args).await,
             "list_browser_states" => self.list_states().await,
@@ -364,6 +367,62 @@ impl BrowserSessionServer {
         let value = result.into_value::<Value>().unwrap_or(Value::Null);
         let text = serde_json::to_string_pretty(&value).unwrap_or_else(|_| value.to_string());
         Ok(ok_text_struct(text, json!({ "result": value })))
+    }
+
+    // --- human takeover ---
+
+    async fn request_human_takeover(&self, args: JsonObject) -> Result<CallToolResult> {
+        let sessions = self.ctx.sessions().await?;
+        let session_id = required_str(&args, "sessionId")?.to_string();
+        // How long the link stays valid. The URL is a bearer credential (it
+        // grants live input to the session), so keep the default tight.
+        // Default 5 min, capped at 30.
+        let ttl_ms = optional_u64(&args, "ttl").unwrap_or(300_000).min(1_800_000);
+        let base = takeover::base_url().ok_or_else(|| {
+            anyhow!("TAKEOVER_BASE_URL is not configured — the takeover daemon/route isn't set up on this host")
+        })?;
+        // Resolve the session's active page; the human drives this exact target.
+        let target_id = sessions.active_target_id(&session_id).await?;
+        let token = takeover::mint_token()?;
+        let expires_at_ms = takeover::expiry_ms(ttl_ms);
+        takeover::write_ticket(
+            &token,
+            &takeover::Ticket {
+                session_id: session_id.clone(),
+                target_id,
+                expires_at_ms,
+            },
+        )
+        .await?;
+        let url = format!("{base}/takeover/{token}");
+        Ok(ok_text_struct(
+            format!(
+                "Human takeover ready. Show this URL to the user so they can log in themselves, \
+                 then call await_human_takeover with token \"{token}\" to block until they finish:\n{url}"
+            ),
+            json!({ "url": url, "token": token, "expiresAtMs": expires_at_ms }),
+        ))
+    }
+
+    async fn await_human_takeover(&self, args: JsonObject) -> Result<CallToolResult> {
+        let token = required_str(&args, "token")?.to_string();
+        // How long to block. Default 5 min; capped at 30 to match the max link TTL.
+        let timeout_ms = optional_u64(&args, "timeout")
+            .unwrap_or(300_000)
+            .min(1_800_000);
+        let completed = takeover::wait_for_done(&token, Duration::from_millis(timeout_ms)).await;
+        if completed {
+            takeover::cleanup(&token).await;
+        }
+        let body = if completed {
+            "Human signalled done — the session is authenticated; resuming."
+        } else {
+            "Timed out waiting for the human to finish. The link may still be valid; call await_human_takeover again or issue a new request_human_takeover."
+        };
+        Ok(ok_text_struct(
+            body.to_string(),
+            json!({ "completed": completed, "token": token }),
+        ))
     }
 
     // --- per-visit logs ---
@@ -854,6 +913,19 @@ fn tool_defs() -> Vec<Tool> {
                 ],
                 &["sessionId"],
             ),
+        ),
+        tool(
+            "request_human_takeover",
+            "Hand the session's active page to a human to log in themselves (passwords/passkeys the agent must not see). Returns a URL to show the user and a token. Does NOT block — after showing the URL, call await_human_takeover with the token to wait until they finish. `ttl` (ms, default 300000, max 1800000) bounds how long the link (a bearer credential) is valid.",
+            object_schema(
+                &[("sessionId", &str_t), ("ttl", &pos_int_t)],
+                &["sessionId"],
+            ),
+        ),
+        tool(
+            "await_human_takeover",
+            "Block until the human clicks Done in the takeover page (or until `timeout` ms, default 300000, max 1800000). Pass the token from request_human_takeover. Returns { completed }. On completion the session is authenticated and you can continue.",
+            object_schema(&[("token", &str_t), ("timeout", &pos_int_t)], &["token"]),
         ),
         tool(
             "save_browser_state",
