@@ -55,7 +55,7 @@ impl ServerHandler for BrowserSessionServer {
         info.capabilities = ServerCapabilities::builder().enable_tools().build();
         info.server_info = Implementation::new("browser-session-mcp", env!("CARGO_PKG_VERSION"));
         info.instructions = Some(
-            "Per-call isolated browser sessions against a shared persistent Chrome. Call open_browser_session to obtain a sessionId; pass it into every subsequent tool call.".into(),
+            "Per-call isolated browser sessions against a shared persistent Chrome. Call open_browser_session to obtain a sessionId; pass it into every subsequent tool call. For human-takeover (request_human_takeover/await_human_takeover): show the URL, then run await_human_takeover in a BACKGROUND task that polls with a short timeout — don't block your main loop waiting on the human.".into(),
         );
         info
     }
@@ -397,8 +397,10 @@ impl BrowserSessionServer {
         let url = format!("{base}/takeover/{token}");
         Ok(ok_text_struct(
             format!(
-                "Human takeover ready. Show this URL to the user so they can log in themselves, \
-                 then call await_human_takeover with token \"{token}\" to block until they finish:\n{url}"
+                "Human takeover ready. Show this URL to the user so they can log in themselves. \
+                 Then run await_human_takeover(token=\"{token}\") in a BACKGROUND task that polls \
+                 with a short timeout until completed — do NOT block your main loop; the human may \
+                 take several minutes:\n{url}"
             ),
             json!({ "url": url, "token": token, "expiresAtMs": expires_at_ms }),
         ))
@@ -916,7 +918,7 @@ fn tool_defs() -> Vec<Tool> {
         ),
         tool(
             "request_human_takeover",
-            "Hand the session's active page to a human to log in themselves (passwords/passkeys the agent must not see). Returns a URL to show the user and a token. Does NOT block — after showing the URL, call await_human_takeover with the token to wait until they finish. `ttl` (ms, default 300000, max 1800000) bounds how long the link (a bearer credential) is valid.",
+            "Hand the session's active page to a human to log in themselves (passwords/passkeys the agent must not see). Returns a URL to show the user and a token. Does NOT block. STRONGLY ADVISED: after showing the URL, run await_human_takeover in a BACKGROUND task (subagent/job) — not your main loop — because the human may take many minutes and you should stay responsive. `ttl` (ms, default 300000, max 1800000) bounds how long the link (a bearer credential) is valid.",
             object_schema(
                 &[("sessionId", &str_t), ("ttl", &pos_int_t)],
                 &["sessionId"],
@@ -924,7 +926,7 @@ fn tool_defs() -> Vec<Tool> {
         ),
         tool(
             "await_human_takeover",
-            "Block until the human clicks Done in the takeover page (or until `timeout` ms, default 300000, max 1800000). Pass the token from request_human_takeover. Returns { completed }. On completion the session is authenticated and you can continue.",
+            "Wait for the human to click Done in the takeover page. Returns { completed } — true if they finished, false on timeout. STRONGLY ADVISED: run this in a BACKGROUND task and POLL — call it in a loop with a SHORT `timeout` (e.g. 4000ms) until completed:true — rather than one long blocking call, which can exceed your MCP client's request timeout and make you miss the Done signal. The human may take several minutes; a background poller lets you be notified and resume. `timeout` ms: default 300000, max 1800000. Pass the token from request_human_takeover. On completion the session is authenticated and you can continue.",
             object_schema(&[("token", &str_t), ("timeout", &pos_int_t)], &["token"]),
         ),
         tool(

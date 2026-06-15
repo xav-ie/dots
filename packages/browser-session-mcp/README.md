@@ -174,11 +174,16 @@ const { url, token } = (
 // → present `url`; the user opens it, sees a live view of the page, logs in
 //   themselves (passkey/password/2FA), and clicks "Done".
 
-// Block until they finish, then continue against the now-authenticated session.
-await tools.browser_session_mcp.await_human_takeover({
-  token,
-  timeout: 600000,
-});
+// Wait for them to finish — IN A BACKGROUND TASK, polling with a short timeout.
+// A single long await can exceed the MCP client's request timeout (and you'd
+// miss the Done signal); the human may take minutes. Poll until completed:
+let done = false;
+while (!done) {
+  done = (
+    await tools.browser_session_mcp.await_human_takeover({ token, timeout: 4000 })
+  ).structuredContent.completed;
+}
+// Now authenticated — continue (and optionally save_browser_state to reuse it).
 await tools.browser_session_mcp.navigate({
   sessionId: sid,
   url: "https://tagmanager.google.com",
