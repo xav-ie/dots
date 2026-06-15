@@ -7,6 +7,11 @@
 }:
 {
   config = {
+    # Demand-driven CPU/GPU power save: full speed while in use (SSH / local
+    # seat / inbound HTTP to allowlisted hosts), drop to hardware minimum when
+    # all quiet. See modules/nixos/power-save/.
+    services.power-save.enable = true;
+
     nixpkgs.config = {
       cudaSupport = true;
       cudaCapabilities = [ "8.6" ];

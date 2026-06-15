@@ -169,6 +169,7 @@ rec {
     fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
   };
   pinentry-auto = pkgs.callPackage ./pinentry-auto { };
+  power-arbiter = pkgs.callPackage ./power-arbiter { };
   # Built upstream in the ream flake (extracted repo); consumed as-is.
   ream = ream-pkg;
   simulstreaming = pkgs.callPackage ./simulstreaming { src = simulstreaming-src; };

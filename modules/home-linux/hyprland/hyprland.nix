@@ -277,15 +277,62 @@
               ]
               ++ lib.optionals osConfig.services.power-save.enable [
                 {
-                  # After 30 minutes idle, enter power save mode
+                  # Demand-driven power save: after 30 min idle, drop the seat
+                  # stamp so the power-arbiter is free to fall to idle; on
+                  # return, clear it and wake to full speed instantly.
+                  #
+                  # Both hooks are single-token wrapper scripts: their logic
+                  # lives behind a shebang, so they're correct regardless of how
+                  # hypridle execs listener commands (and trivially extensible).
                   timeout = 1800;
-                  on-timeout = "${pkgs.systemd}/bin/systemctl start power-save-enter.service";
-                  on-resume = "${pkgs.systemd}/bin/systemctl start power-save-exit.service";
+                  on-timeout = "${pkgs.writeShellScript "power-seat-idle" ''
+                    ${pkgs.coreutils}/bin/touch /run/power-arbiter/seat-idle
+                  ''}";
+                  on-resume = "${pkgs.writeShellScript "power-seat-resume" ''
+                    ${pkgs.coreutils}/bin/rm -f /run/power-arbiter/seat-idle
+                    ${pkgs.systemd}/bin/systemctl start power-save-exit.service
+                  ''}";
                 }
               ];
             };
           };
 
+        };
+
+        # hypridle self-heal: an unmatched idle-uninhibit underflows hypridle's
+        # lock counter ("inhibit locks < 0", an upstream bug) and freezes its
+        # event loop — on-resume stops firing and stale state (e.g. our
+        # seat-idle stamp) never clears. Follow its journal and restart it the
+        # instant that line appears, so it can never stay wedged.
+        systemd.user.services.hypridle-watchdog = {
+          Unit = {
+            Description = "Restart hypridle when its inhibit-lock counter underflows (upstream bug)";
+            After = [ "hypridle.service" ];
+            PartOf = [ "graphical-session.target" ];
+          };
+          Service = {
+            Type = "simple";
+            Restart = "always";
+            RestartSec = 5;
+            ExecStart = "${pkgs.writeShellScript "hypridle-watchdog" ''
+              ${pkgs.systemd}/bin/journalctl --user -u hypridle -f -n 0 -o cat |
+                while read -r line; do
+                  case "$line" in
+                    *"inhibit locks < 0"*)
+                      now=$(${pkgs.coreutils}/bin/date +%s)
+                      last=$(${pkgs.coreutils}/bin/cat "$XDG_RUNTIME_DIR/hypridle-watchdog.stamp" 2>/dev/null || echo 0)
+                      # debounce so a restart can't thrash
+                      if [ $((now - last)) -ge 30 ]; then
+                        echo "$now" > "$XDG_RUNTIME_DIR/hypridle-watchdog.stamp"
+                        echo "hypridle-watchdog: inhibit-lock underflow -> restarting hypridle"
+                        ${pkgs.systemd}/bin/systemctl --user restart hypridle
+                      fi
+                      ;;
+                  esac
+                done
+            ''}";
+          };
+          Install.WantedBy = [ "graphical-session.target" ];
         };
 
         wayland.windowManager.hyprland =
