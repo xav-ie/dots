@@ -1,0 +1,17 @@
+[package]
+name = "power-arbiter"
+version = "0.1.0"
+edition = "2021"
+description = "Demand-driven CPU/GPU power arbiter (ssh/seat/http) for praesidium"
+
+[[bin]]
+name = "power-arbiter"
+path = "src/main.rs"
+
+# std-only, no dependencies — keeps the closure and Cargo.lock trivial.
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true
+codegen-units = 1
+panic = "abort"

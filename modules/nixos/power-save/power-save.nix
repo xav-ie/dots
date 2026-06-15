@@ -8,15 +8,23 @@
     }:
     let
       cfg = config.services.power-save;
+
+      # Shared scratch dir in tmpfs:
+      #   seat-idle        — touched/removed by the user's hypridle (seat demand)
+      #   state.json, …    — live snapshot/tallies written by the arbiter
+      # World-writable because writers span the root daemon and the user session;
+      # it's an ephemeral /run dir. (The arbiter watches traefik's access log for
+      # HTTP demand directly, so there's no separate http stamp file any more.)
+      stateDir = "/run/power-arbiter";
+
       power-save-enter-name = "power-save-enter";
       power-save-exit-name = "power-save-exit";
-      power-save-enter-delayed-name = "power-save-enter-delayed";
-      logind-power-monitor-name = "logind-power-monitor";
+      power-arbiter-name = "power-arbiter";
 
+      # Apply-primitive: pin CPU + GPU to their hardware minimums.
       power-save-enter-pkg = pkgs.writeNuApplication {
         name = power-save-enter-name;
         runtimeInputs = [
-          pkgs.pkgs-mine.is-sshed
           config.boot.kernelPackages.nvidiaPackages.production
         ];
         text = # nu
@@ -37,29 +45,14 @@
           '';
       };
 
-      power-save-enter-delayed-pkg = pkgs.writeNuApplication {
-        name = power-save-enter-delayed-name;
-        runtimeInputs = [ pkgs.systemd ];
-        text = # nu
-          ''
-            # Wait 30 minutes
-            sleep 30min
-            # Then try to enter power save (will check if SSH reconnected)
-            systemctl start ${power-save-enter-name}.service
-          '';
-      };
-
+      # Apply-primitive: restore CPU + GPU to full performance.
       power-save-exit-pkg = pkgs.writeNuApplication {
         name = power-save-exit-name;
         runtimeInputs = [
-          pkgs.systemd
           config.boot.kernelPackages.nvidiaPackages.production
         ];
         text = # nu
           ''
-            # Cancel any pending delayed power save
-            systemctl stop ${power-save-enter-delayed-name}.service
-
             # Restore full CPU performance
             "100" | save -f /sys/devices/system/cpu/intel_pstate/max_perf_pct
             print "CPU: Restored to 100%"
@@ -75,37 +68,61 @@
           '';
       };
 
-      logind-power-monitor-pkg = pkgs.writeNuApplication {
-        name = logind-power-monitor-name;
-        runtimeInputs = [
-          pkgs.systemd
-          pkgs.pkgs-mine.is-sshed
-        ];
-        text = ./logind-power-monitor.nu |> builtins.readFile;
-      };
+      # Brain + HTTP demand source, merged into one small std-only Rust binary
+      # (replaces the two persistent nushell daemons; ~47 MB resident -> ~MBs).
+      # It reconciles the enter/exit primitives to `ssh OR seat OR http`, tails
+      # traefik's access log itself, and bookkeeps transitions. Inspect with
+      # `power-arbiter status`; force with `power-arbiter save|wake|auto`.
+      power-arbiter-pkg = pkgs.pkgs-mine.power-arbiter;
     in
     {
-      options.services.power-save.enable = lib.mkEnableOption "power-save mode (CPU + GPU minimum on idle, with hypridle integration)";
+      options.services.power-save = {
+        enable = lib.mkEnableOption "demand-driven power save (CPU + GPU drop to hardware minimum when no SSH / seat / HTTP demand)";
+
+        httpWakeHosts = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          # Interactive / on-demand services only. Deliberately excludes the
+          # self-refreshing dashboards (hass, portainer, traefik) — a left-open
+          # tab there polls on a timer and would pin the box awake 24/7.
+          default = [
+            "postiz.lalala.casa"
+            "social.aztecahome.com"
+            "pdf.lalala.casa"
+            "executor.lalala.casa"
+            "fusion.lalala.casa"
+            "chrome.lalala.casa"
+            "mcp.lalala.casa"
+          ];
+          example = [ "postiz.lalala.casa" ];
+          description = "Public Host() names whose inbound traefik requests count as demand and wake the machine to full speed. Exact match; pollers like hass/portainer/traefik are intentionally omitted.";
+        };
+
+        httpCooldownSeconds = lib.mkOption {
+          type = lib.types.ints.positive;
+          default = 600;
+          description = "Seconds to stay at full speed after the last allowlisted inbound request before the arbiter may re-enter idle.";
+        };
+      };
 
       config = lib.mkIf cfg.enable {
-        # CPU power management with SSH-aware boosting
-        # Boots at full performance, only limits when explicitly triggered by idle timeout
+        # Ensure power saving features are enabled
+        powerManagement = {
+          enable = true;
+          cpuFreqGovernor = "powersave";
+        };
 
-        # Service to enter power save mode (hardware minimum) - checks if SSH is active first
+        environment.systemPackages = [ power-arbiter-pkg ];
+
+        systemd.tmpfiles.rules = [
+          "d ${stateDir} 0777 root root -"
+        ];
+
+        # Service to enter power save mode (hardware minimum)
         systemd.services.${power-save-enter-name} = {
           description = "Enter power save mode (limit CPU and GPU to minimum)";
           serviceConfig = {
             Type = "oneshot";
             ExecStart = "${power-save-enter-pkg}/bin/${power-save-enter-name}";
-          };
-        };
-
-        # Service to enter power save after delay (for SSH grace period)
-        systemd.services.${power-save-enter-delayed-name} = {
-          description = "Wait 30min then enter power save mode";
-          serviceConfig = {
-            Type = "simple";
-            ExecStart = "${power-save-enter-delayed-pkg}/bin/${power-save-enter-delayed-name}";
           };
         };
 
@@ -118,47 +135,52 @@
           };
         };
 
-        # Monitor logind for session changes and manage power save accordingly
-        systemd.services.${logind-power-monitor-name} = {
-          description = "Monitor logind session changes and manage power save state";
-          documentation = [
-            "man:loginctl(1)"
-            "man:busctl(1)"
+        # The brain: one daemon that watches all three demand sources (ssh via
+        # is-sshed, seat via hypridle's stamp, http by tailing traefik's access
+        # log) and drives the enter/exit units. Persists its history log under
+        # StateDirectory (/var/lib/power-arbiter) so it survives reboots.
+        systemd.services.${power-arbiter-name} = {
+          description = "Reconcile CPU/GPU power state from ssh/seat/http demand";
+          after = [
+            "systemd-logind.service"
+            "traefik.service"
           ];
-          after = [ "systemd-logind.service" ];
-          requires = [ "systemd-logind.service" ];
           wantedBy = [ "multi-user.target" ];
+          # is-sshed (demand probe) and systemctl (actuator) on PATH.
+          path = [
+            pkgs.pkgs-mine.is-sshed
+            pkgs.systemd
+          ];
+          environment = {
+            HTTP_COOLDOWN_SECONDS = toString cfg.httpCooldownSeconds;
+            ACCESS_LOG = "${config.services.traefik.dataDir}/access.log";
+            WAKE_HOSTS = lib.concatStringsSep "," cfg.httpWakeHosts;
+          };
           serviceConfig = {
             Type = "simple";
             Restart = "always";
             RestartSec = 5;
+            StateDirectory = power-arbiter-name;
             StandardOutput = "journal";
             StandardError = "journal";
-            SyslogIdentifier = logind-power-monitor-name;
-            ExecStart = "${logind-power-monitor-pkg}/bin/${logind-power-monitor-name}";
+            SyslogIdentifier = power-arbiter-name;
+            ExecStart = "${power-arbiter-pkg}/bin/${power-arbiter-name} daemon";
           };
         };
 
-        # Ensure power saving features are enabled
-        powerManagement = {
-          enable = true;
-          cpuFreqGovernor = "powersave";
-        };
-
-        # Allow user to start power save services without password
+        # Allow the user's hypridle to poke the system enter/exit units (on
+        # idle/resume) without a password prompt.
         security.polkit.extraConfig = # js
           ''
             polkit.addRule(function(action, subject) {
               if ((action.id == "org.freedesktop.systemd1.manage-units" &&
                    (action.lookup("unit") == "${power-save-enter-name}.service" ||
-                    action.lookup("unit") == "${power-save-enter-delayed-name}.service" ||
                     action.lookup("unit") == "${power-save-exit-name}.service")) &&
                   subject.user == "${config.defaultUser}") {
                 return polkit.Result.YES;
               }
             });
           '';
-
       };
     };
 }
