@@ -130,9 +130,43 @@ in
       });
     neverest = inputs.neverest.packages.${final.stdenv.hostPlatform.system}.default;
     zjstatus = inputs.zjstatus.packages.${final.stdenv.hostPlatform.system}.default;
-    atuin = inputs.atuin.packages.${final.stdenv.hostPlatform.system}.default.overrideAttrs (_: {
+    atuin = inputs.atuin.packages.${final.stdenv.hostPlatform.system}.default.overrideAttrs (old: {
       pname = "atuin";
       version = "18.16.0";
+      # Layer my unmerged PRs on top of upstream main: two pty-proxy fixes plus
+      # a nushell ESC-char fix. They touch non-overlapping regions and don't add
+      # vendored deps (percent-encoding is already in the lock), so they apply
+      # cleanly. Drop each patch once it merges upstream. (#3327 --shell already
+      # merged, so it's no longer here.)
+      patches = (old.patches or [ ]) ++ [
+        (final.fetchpatch {
+          name = "atuin-pr3529-pty-proxy-pixel-size.patch";
+          url = "https://github.com/atuinsh/atuin/pull/3529.patch";
+          hash = "sha256-2Bz8TMcDgz6qxAzwjSfyQf0pYn+LH/nAfWXPyZZGGmo=";
+        })
+        (final.fetchpatch {
+          name = "atuin-pr3461-pty-proxy-osc7.patch";
+          url = "https://github.com/atuinsh/atuin/pull/3461.patch";
+          hash = "sha256-TX8KlehDImXYm+FDVMByF+OUJ6IY2QatagkY5Q2/fr4=";
+        })
+        # #3510's OSC 133 nushell helpers call `(char esc)`, which is not a
+        # valid Nushell named character — `atuin init nu` errors on every nu
+        # version. This switches it to `(char -u 1b)`. Drop once merged.
+        (final.fetchpatch {
+          name = "atuin-pr3530-nu-char-esc.patch";
+          url = "https://github.com/atuinsh/atuin/pull/3530.patch";
+          hash = "sha256-c565RbIGBOUNi1fgmuqM/0xonS2PWyc80OlyuADLy7k=";
+        })
+      ];
+      # #3461 adds `percent-encoding` to atuin-pty-proxy's Cargo.lock dep list.
+      # The crate is already vendored (used transitively elsewhere), but
+      # importCargoLock's consistency check diffs the patched lockfile against
+      # the vendored copy and fails on the textual mismatch. Re-sync the
+      # vendored copy — runs before cargoSetupPostPatchHook validates. Drop
+      # this together with the #3461 patch once that PR merges.
+      postPatch = (old.postPatch or "") + ''
+        cp Cargo.lock "$cargoDepsCopy/Cargo.lock"
+      '';
     });
 
     voquill =
