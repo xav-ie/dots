@@ -89,6 +89,14 @@
             "text/html"
             "x-scheme-handler/http"
             "x-scheme-handler/https"
+            "image/png"
+            "image/jpeg"
+            "image/gif"
+            "image/webp"
+            "image/avif"
+            "image/svg+xml"
+            "image/bmp"
+            "image/tiff"
           ];
         };
 
@@ -136,7 +144,19 @@
           {
             "application/xhtml+xml" = browser;
             "application/xml" = browser;
-            "image/*" = browser;
+            # Open images via the profile router (firefox renders them; the
+            # router resolves a default profile and, with its bare-path->file://
+            # normalization, opens local files). NOTE: xdg mimeApps keys must be
+            # explicit MIME types — an "image/*" glob is silently ignored, which
+            # is why image/png previously fell through to chromium.
+            "image/png" = router;
+            "image/jpeg" = router;
+            "image/gif" = router;
+            "image/webp" = router;
+            "image/avif" = router;
+            "image/svg+xml" = router;
+            "image/bmp" = router;
+            "image/tiff" = router;
             "text/html" = router;
             "text/plain" = browser;
             "x-scheme-handler/ftp" = browser;
