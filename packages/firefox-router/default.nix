@@ -19,6 +19,7 @@ writers.writePython3Bin "firefox-router" { flakeIgnore = [ "E501" ]; } ''
   import glob
   import json
   import os
+  import pathlib
   import shutil
   import sqlite3
   import subprocess
@@ -125,8 +126,20 @@ writers.writePython3Bin "firefox-router" { flakeIgnore = [ "E501" ]; } ''
       return shutil.which("firefox") or "firefox"
 
 
+  def to_open_arg(a):
+      # URLs (have a scheme) pass through unchanged. A bare path to an existing
+      # local file becomes a file:// URI so things like `xdg-open foo.html` or
+      # `firefox-router /tmp/x.html` open the file instead of an empty window.
+      if "://" in a:
+          return a
+      p = pathlib.Path(a)
+      if p.exists():
+          return p.resolve().as_uri()
+      return None
+
+
   def main():
-      urls = [a for a in sys.argv[1:] if "://" in a]
+      urls = [u for u in (to_open_arg(a) for a in sys.argv[1:]) if u]
       ff = firefox_bin()
       root = ff_root()
       if not urls:
