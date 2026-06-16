@@ -7,7 +7,7 @@
     alacritty-theme.url = "github:alexghr/alacritty-theme.nix";
     astal.url = "github:aylur/astal";
     astal.inputs.nixpkgs.follows = "nixpkgs";
-    atuin.url = "github:xav-ie/atuin/feat/osc7-helper";
+    atuin.url = "github:atuinsh/atuin";
     beads.url = "github:steveyegge/beads";
     # LOCAL: extracted from packages/browser-session-mcp; testing via local path
     # before pushing to github:xav-ie/browser-session-mcp.
