@@ -74,6 +74,7 @@
           "d ${stateDir}/takeover/tokens 0700 root root - -"
           "d ${stateDir}/takeover/done 0700 root root - -"
           "d ${stateDir}/takeover/claims 0700 root root - -"
+          "d ${stateDir}/takeover/stealth 0700 root root - -"
         ];
       };
     };

@@ -22,6 +22,9 @@
   # The ream PDF-tools app (inputs.ream.packages.<system>.default); null on
   # darwin, where ream has no output and the consuming module isn't imported.
   ream-pkg ? null,
+  # browser-session-mcp, extracted to its own repo
+  # (inputs.browser-session-mcp.packages.<system>.default); linux-only.
+  browser-session-mcp-pkg ? null,
   # User's atuin fork, pulled from inputs at the flake level since the
   # overlay isn't applied to top-level `pkgs` here.
   atuin,
@@ -147,7 +150,7 @@ rec {
     uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
     fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
   };
-  browser-session-mcp = pkgs.callPackage ./browser-session-mcp { };
+  browser-session-mcp = browser-session-mcp-pkg;
   chrome-headless-shell = pkgs.callPackage ./chrome-headless-shell { };
   claude-overlay = pkgs.callPackage ./claude-overlay { };
   claude-yolo = pkgs.callPackage ./claude-yolo { };
