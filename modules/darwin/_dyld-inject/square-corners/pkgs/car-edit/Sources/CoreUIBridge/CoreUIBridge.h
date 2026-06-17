@@ -73,6 +73,11 @@ NS_ASSUME_NONNULL_BEGIN
                                       (const struct renditionkeytoken *)keyList
                                  version:(unsigned int)version;
 - (CGSize)unslicedSize;
+// Decoded full (unsliced) bitmap for the rendition. We sample its
+// fully-covered interior pixel to derive the GA8 mask fill instead of
+// hardcoding a magic alpha. +0 (not a create/copy), so Swift imports it as
+// Unmanaged and we take the unretained value.
+- (nullable CGImageRef)unslicedImage;
 - (CGRect)_destinationFrame;
 - (long long)type;
 - (unsigned int)subtype;
