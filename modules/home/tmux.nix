@@ -2,6 +2,16 @@
   flake.modules.homeManager.common =
     { pkgs, ... }:
     let
+      # Checks whether continuum's auto-save trigger is wired into status-right.
+      # Continuum skips injecting it when it detects another tmux server running
+      # (even on a different socket), so saves silently stop. This script makes
+      # that failure visible as a red "!SAVE" badge in the status bar.
+      continuum-check = pkgs.writeShellScript "continuum-check" ''
+        status_right=$(tmux show-option -gv status-right 2>/dev/null)
+        if [[ "$status_right" != *"continuum_save"* ]]; then
+          echo "#[fg=red,bold]!SAVE#[default]"
+        fi
+      '';
       # vim-tmux-navigator's default is_vim check is `ps -t <pane_tty>` +
       # regex on `comm`. atuin hex (see ../atuin) owns each pane's tty and
       # runs nu (and therefore nvim) on an inner pty — so the default check
@@ -115,7 +125,7 @@
               # does not drive saving. The actual periodic-save trigger is a separate
               # interpolation continuum prepends onto status-right when it loads, so
               # continuum must run after this set-option (see end of extraConfig).
-              set-option -g status-right "#{?client_prefix, PREFIX ,}#{?pane_in_mode, COPY ,}#{continuum_status}"
+              set-option -g status-right "#{?client_prefix, PREFIX ,}#{?pane_in_mode, COPY ,}#(${continuum-check})#{continuum_status}"
               # Conditionally prepend a colored Claude "needs attention" dot. The
               # color lives in the per-window @claude-dot user option (set by
               # ~/.claude/tmux-claude-indicator.nu) rather than embedded in the
