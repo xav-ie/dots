@@ -17,14 +17,21 @@
 #      clip windows to a rounded shape using corner-mask images stored
 #      in /System/…/Aqua.car (light) and DarkAqua.car (dark). The
 #      `car-edit` Swift CLI rewrites the WindowShapeEdges renditions in
-#      those files so the corner mask becomes a uniform rectangle —
-#      WindowServer then clips windows to a hard rectangle. The
-#      postActivation script below detects when the on-disk .car files
-#      differ from the patched version we'd produce (this happens after
-#      every macOS point update, which reseals the system snapshot back
-#      to Apple's originals), then mounts the system volume read-write,
-#      copies the patched files in, and creates a new bootable APFS
-#      snapshot via `bless`.
+#      those files so the rounding mask is gone — WindowServer then stops
+#      clipping to a rounded shape and the dylib's zero radius wins.
+#      (Through earlier Tahoe builds car-edit filled the mask to a uniform
+#      semi-opaque rectangle per the upstream recipe; macOS 26.5.x began
+#      *drawing* that fill as a bar across the window top, so we now clear
+#      the mask to fully transparent instead — see kGA8FillAlpha in
+#      car-edit's main.swift.)
+#      The postActivation script patches from Apple's PRISTINE .car, taken
+#      from the read-only `com.apple.os.update-*` APFS snapshot — NOT the
+#      live file: car-edit re-encodes the masks, so re-patching a patched
+#      file is not idempotent. It detects when the live .car differs from
+#      patched-from-pristine (true after every macOS point update, which
+#      reseals the snapshot to Apple's originals), mounts the system volume
+#      read-write, copies the patched files in, and creates a new bootable
+#      APFS snapshot via `bless`.
 #
 # Note: window *border* (the 1px Liquid-Glass rim) is a separate
 # concern handled by ../remove-window-rim/. You can enable square
@@ -134,25 +141,49 @@ in
 
         local STAGE=/var/aqua-patch/stage
         local MOUNT=/var/aqua-patch/mnt
-        local SYS_DIR=/System/Library/CoreServices/SystemAppearance.bundle/Contents/Resources
-        mkdir -p "$STAGE" "$MOUNT"
+        local PRISTINE=/var/aqua-patch/pristine
+        local RES_REL=System/Library/CoreServices/SystemAppearance.bundle/Contents/Resources
+        local SYS_DIR=/$RES_REL
+        mkdir -p "$STAGE" "$MOUNT" "$PRISTINE"
 
         local ROOT_DEVICE BASE_DISK
         ROOT_DEVICE=$(df / | tail -1 | awk '{print $1}')
         BASE_DISK=''${ROOT_DEVICE%s[0-9]*}
 
+        # car-edit MUST read Apple's PRISTINE .car, never the live (possibly
+        # already-patched) one. car-edit re-encodes the GA8 shape masks as
+        # ARGB, so a second pass over a patched file treats those masks as rim
+        # color and clears them — wiping the square-corner mask instead of
+        # re-squaring it (not idempotent). Apple's originals survive in the
+        # read-only OS-update APFS snapshot; mount it and patch from there.
+        local UPDATE_SNAP SRC_DIR
+        UPDATE_SNAP=$(/usr/sbin/diskutil apfs listSnapshots / 2>/dev/null \
+          | grep -oE 'com\.apple\.os\.update-[0-9A-F]+' | head -1)
+        if [ -n "$UPDATE_SNAP" ] && [ ! -d "$PRISTINE/$RES_REL" ]; then
+          /sbin/mount_apfs -o ro -s "$UPDATE_SNAP" "$BASE_DISK" "$PRISTINE" 2>/dev/null || true
+        fi
+        if [ -d "$PRISTINE/$RES_REL" ]; then
+          SRC_DIR="$PRISTINE/$RES_REL"
+          echo "    source: pristine OS-update snapshot"
+        else
+          SRC_DIR="$SYS_DIR"
+          echo "    warning: pristine snapshot unavailable; patching live system (may not be idempotent)"
+        fi
+
         local targets=(${targetsArg})
 
         local NEED_INSTALL=0
         for car in "''${targets[@]}"; do
-          local src="$SYS_DIR/$car"
+          local src="$SRC_DIR/$car"
           local out="$STAGE/$car"
           if [ ! -f "$src" ]; then
             echo "    warning: $src not found, skipping"
             continue
           fi
           ${carEditBin} "$src" -o "$out" >/dev/null
-          if [ "$(md5 -q "$src")" = "$(md5 -q "$out")" ]; then
+          # Compare patched-from-pristine against what is LIVE on the system, so
+          # we converge: once the live file equals our output, this is a no-op.
+          if [ "$(md5 -q "$SYS_DIR/$car")" = "$(md5 -q "$out")" ]; then
             echo "    $car: already patched"
           else
             echo "    $car: needs patching"
@@ -161,20 +192,21 @@ in
         done
 
         if [ "$NEED_INSTALL" -eq 0 ]; then
+          umount "$PRISTINE" 2>/dev/null || true
           return 0
         fi
 
         # Detect mount by content rather than `mount` output: if the system
         # tree is already visible through $MOUNT, we're good. Avoids
         # EINPROGRESS when a previous activation left the volume mounted.
-        if [ ! -d "$MOUNT/System/Library/CoreServices/SystemAppearance.bundle/Contents/Resources" ]; then
+        if [ ! -d "$MOUNT/$RES_REL" ]; then
           echo "    mounting $BASE_DISK at $MOUNT (RW)"
           mount -o nobrowse -t apfs "$BASE_DISK" "$MOUNT"
         fi
 
         for car in "''${targets[@]}"; do
           local out="$STAGE/$car"
-          local target="$MOUNT/System/Library/CoreServices/SystemAppearance.bundle/Contents/Resources/$car"
+          local target="$MOUNT/$RES_REL/$car"
           if [ -f "$out" ]; then
             cp "$out" "$target"
             echo "    installed: $car"
@@ -183,6 +215,7 @@ in
 
         echo "    blessing modified snapshot"
         bless --mount "$MOUNT" --bootefi --create-snapshot
+        umount "$PRISTINE" 2>/dev/null || true
         echo "    square-corners: REBOOT to apply"
       }
       _squareCornersPatchCars
