@@ -48,13 +48,72 @@ guard let storage = CUIMutableCommonAssetStorage(path: outputPath, forWriting: t
 
 // pixelFormat fourcc constants (big-endian Int32).
 //   ARGB = the visible rim color → we want fully transparent (no rim).
-//   GA8  = the shape-mask anti-aliased edge → we want uniform semi-opaque
-//          white at alpha 0.54902, matching ZimengXiong / Shiqi Mei's recipe.
-//          A fully-opaque fill (alpha=1.0) bleeds across edges as a white
-//          bar; alpha=0.54902 matches the original anti-aliased corner pixel
-//          and lets the rectangular AppKit chrome show through cleanly.
+//   GA8  = the shape-mask. The ZimengXiong / Shiqi Mei recipe fills it with
+//          `graya(255, 0.54902)` (white at ~55% alpha):
+//            https://shiqimei.github.io/posts/macos-square-corners.html
+//          A fully-opaque fill (alpha 1.0) renders as a solid white bar.
+//
+// NOTE (macOS 26.5.x): even the faithful 0.54902 recipe now renders the
+// 9-patch top-edge slice as a translucent bar across the window top. The
+// underlying WindowShapeEdges asset bytes are byte-identical to earlier
+// Tahoe builds, so this is a WindowServer compositing change, not a data
+// change — the published recipe has no fix yet. kGA8Fill* below is the knob.
 let kFormatARGB: Int32 = 0x4152_4742
 let kFormatGA8: Int32 = 0x4741_3820
+
+// GA8 shape-mask fill (grayscale white + alpha).
+//
+// The published ZimengXiong / Shiqi Mei recipe fills it graya(255, 0.54902).
+// That worked through earlier Tahoe builds, but macOS 26.5.x changed how
+// WindowServer composites this rendition: instead of an invisible clip, it
+// *draws* the 9-patch top-edge slice, so any opaque fill paints a band across
+// the window top (0.54902 → translucent gray bar, 1.0 → solid white bar). The
+// underlying asset bytes are byte-identical to older builds, so this is purely
+// a compositor change.
+//
+// FIX (verified on 26.5.1): fill the shape mask fully TRANSPARENT (alpha 0).
+// With no opaque slice there is nothing to draw, and the NSThemeFrame dylib
+// (../macos-corner-fix) already squares the corners — an empty WindowShapeEdges
+// mask yields a rectangular window with no top bar. If a future build rounds
+// the corners again with an empty mask, the mask is back to being the clip and
+// the value to revisit is kGA8FillAlpha (the legacy recipe used 0.54902).
+let kGA8FillGray: CGFloat = 1.0
+let kGA8FillAlpha: CGFloat = 0.0
+
+// Debug: print an ASCII map of the rendition's alpha (and gray) channels so
+// we can see the actual mask shape instead of guessing. ' '=transparent,
+// '.'<low '+'<mid '#'=opaque. Gated by CAR_EDIT_DUMP.
+func dumpAlphaMap(_ rendition: CUIThemeRendition) {
+  guard let unmanaged = rendition.unslicedImage() else {
+    print("dump \(rendition.name()): no image")
+    return
+  }
+  let image = unmanaged.takeUnretainedValue()
+  let w = image.width
+  let h = image.height
+  var buf = [UInt8](repeating: 0, count: w * h * 4)
+  guard
+    let ctx = CGContext(
+      data: &buf, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w * 4,
+      space: CGColorSpaceCreateDeviceRGB(),
+      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+  else { return }
+  ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
+  print("dump \(rendition.name()) \(w)x\(h)  alpha map:")
+  for y in 0..<h {
+    var row = "  "
+    for x in 0..<w {
+      let a = buf[(y * w + x) * 4 + 3]
+      switch a {
+      case 0: row += " "
+      case 1..<85: row += "."
+      case 85..<200: row += "+"
+      default: row += "#"
+      }
+    }
+    print(row)
+  }
+}
 
 func makeReplacementBitmap(
   width: UInt32, height: UInt32, pixelFormat: Int32
@@ -63,7 +122,8 @@ func makeReplacementBitmap(
   let ctx = wrapper.bitmapContext().takeUnretainedValue()
   let rect = CGRect(x: 0, y: 0, width: Int(width), height: Int(height))
   if pixelFormat == kFormatGA8 {
-    ctx.setFillColor(CGColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 0.54902))
+    ctx.setFillColor(
+      CGColor(red: kGA8FillGray, green: kGA8FillGray, blue: kGA8FillGray, alpha: kGA8FillAlpha))
     ctx.fill(rect)
   } else {
     ctx.clear(rect)
@@ -110,6 +170,10 @@ func replace(rendition: CUIThemeRendition, carKey: Data) -> Bool? {
   guard pf == kFormatARGB || pf == kFormatGA8 else { return nil }
 
   let size = rendition.unslicedSize()
+  if ProcessInfo.processInfo.environment["CAR_EDIT_INV"] != nil {
+    let fmt = pf == kFormatGA8 ? "GA8 " : "ARGB"
+    print("inv \(fmt) \(Int(size.width))x\(Int(size.height)) \(rendition.name())")
+  }
   let layoutRaw: Int64 = rendition.type() == 0 ? Int64(rendition.subtype()) : rendition.type()
   let layout = Int16(truncatingIfNeeded: layoutRaw)
 
@@ -142,6 +206,10 @@ func replace(rendition: CUIThemeRendition, carKey: Data) -> Bool? {
     }
     sliceRects = [CGRect(origin: .zero, size: size)]
     sliceCount = 1
+  }
+
+  if ProcessInfo.processInfo.environment["CAR_EDIT_DUMP"] != nil {
+    dumpAlphaMap(rendition)
   }
 
   guard
