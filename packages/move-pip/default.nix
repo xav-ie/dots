@@ -1,15 +1,4 @@
 {
-  writeNuApplication,
-  fzf,
-  jq,
-  yabai,
+  writeScriptBin,
 }:
-writeNuApplication {
-  name = "move-pip";
-  runtimeInputs = [
-    fzf
-    jq
-    yabai
-  ];
-  text = ./move-pip.nu |> builtins.readFile;
-}
+writeScriptBin "move-pip" (builtins.readFile ./move-pip.js)

@@ -97,6 +97,7 @@ rec {
   review = pkgs.callPackage ./review { inherit writeNuApplication; };
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
   slack-mcp-server = pkgs.callPackage ./slack-mcp-server { src = slack-mcp-server-src; };
+  ssh-praesidium-route = pkgs.callPackage ./ssh-praesidium-route { inherit writeNuApplication; };
   tm = pkgs.callPackage ./tm { };
   tmux-claude-resurrect = pkgs.callPackage ./tmux-claude-resurrect { };
   tmux-move-window = pkgs.callPackage ./tmux-move-window { inherit writeNuApplication; };
@@ -122,7 +123,7 @@ rec {
   focus-or-open-application = pkgs.callPackage ./focus-or-open-application {
     inherit writeNuApplication;
   };
-  move-pip = pkgs.callPackage ./move-pip { inherit writeNuApplication; };
+  move-pip = pkgs.callPackage ./move-pip { };
   sketchybar-battery = pkgs.callPackage ./sketchybar-battery { inherit writeNuApplication; };
   sketchybar-hover = pkgs.callPackage ./sketchybar-hover { };
   zerobrew = pkgs.callPackage ./zerobrew { src = zerobrew-src; };
