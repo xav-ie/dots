@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "target": "ES2019",
+    "lib": ["ES2019"],
+    "strict": true,
+    "skipLibCheck": true,
+    "types": []
+  },
+  "include": ["move-pip.js", "jxa.d.ts"]
+}
