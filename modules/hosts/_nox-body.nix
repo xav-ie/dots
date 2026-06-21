@@ -142,6 +142,22 @@ in
       StandardErrorPath = "/tmp/yabai_${config.defaultUser}.err.log";
     };
 
+    # Resident daemon behind the lcmd+<n> focus hotkeys. Tracks focus order via
+    # AppKit (NSWorkspace) and activates via NSRunningApplication, so switches
+    # are ~native-fast and held keys coalesce instead of backlogging. FOCUSD_YABAI
+    # points it at yabai for per-window cycling within a single app.
+    launchd.user.agents.focusd.serviceConfig = {
+      ProgramArguments = [
+        "${pkgs.pkgs-mine.focus-daemon}/bin/focusd"
+        "--daemon"
+      ];
+      RunAtLoad = true;
+      KeepAlive = true;
+      EnvironmentVariables.FOCUSD_YABAI = "${pkgs.yabai}/bin/yabai";
+      StandardOutPath = "/tmp/focusd.out.log";
+      StandardErrorPath = "/tmp/focusd.err.log";
+    };
+
     services = {
       openssh = {
         enable = true;
@@ -154,7 +170,10 @@ in
         skhdConfig =
           let
             # Direct path references - evaluated once
-            focus = "${pkgs.pkgs-mine.focus-or-open-application}/bin/focus-or-open-application";
+            # Thin client for the resident focus-daemon (launchd agent below);
+            # sends the app name(s) over a unix socket and exits in ~1ms, so a
+            # held key never backlogs.
+            focus = "${pkgs.pkgs-mine.focus-daemon}/bin/focusd";
             move-pip = "${pkgs.pkgs-mine.move-pip}/bin/move-pip";
           in
           # sh

@@ -120,9 +120,7 @@ rec {
 }
 // (optionalAttrs isDarwin {
   fix-yabai = pkgs.callPackage ./fix-yabai { inherit writeNuApplication; };
-  focus-or-open-application = pkgs.callPackage ./focus-or-open-application {
-    inherit writeNuApplication;
-  };
+  focus-daemon = pkgs.callPackage ./focus-daemon { };
   move-pip = pkgs.callPackage ./move-pip { };
   sketchybar-battery = pkgs.callPackage ./sketchybar-battery { inherit writeNuApplication; };
   sketchybar-hover = pkgs.callPackage ./sketchybar-hover { };
