@@ -272,3 +272,4 @@ if args.first == "--daemon" {
   fputs("usage: focusd --daemon | focusd <AppName>...\n", stderr)
   exit(2)
 }
+
