@@ -11,6 +11,19 @@
 
       tccGrant = pkgs.pkgs-mine.tcc-grant;
 
+      # These services live in the SYSTEM TCC.db (/Library/...); everything else
+      # (Camera, Microphone, AppleEvents, …) lives in the per-user db. A grant to
+      # the wrong db is silently inert — the long-standing bug this fixes.
+      systemServices = [
+        "Accessibility"
+        "FullDiskAccess"
+        "ScreenCapture"
+        "DeveloperTool"
+        "InputMonitoring"
+        "PostEvent"
+      ];
+      dbFor = service: if builtins.elem service systemServices then "$SYS_TCC_DB" else "$USER_TCC_DB";
+
       # Generate grant commands for all apps and services
       grantCommands =
         cfg.apps
@@ -21,7 +34,7 @@
               app.services
               |> lib.concatMapStringsSep "\n" (
                 service:
-                "${tccGrant}/bin/tcc-grant --service ${service} --bundle-id ${app.bundleId} --db \"$TCC_DB\""
+                "${tccGrant}/bin/tcc-grant --service ${service} --bundle-id ${app.bundleId} --db \"${dbFor service}\""
               );
           in
           ''
@@ -90,11 +103,16 @@
       };
 
       config = lib.mkIf (cfg.enable && cfg.apps != [ ]) {
-        # Grant permissions during system activation (runs as root, so use explicit user path)
+        # Grant at activation (runs as root). System-db writes work because SIP is
+        # off; reload tccd so it picks them up without a logout. tcc-grant skips
+        # already-allowed entries, so existing System-Settings grants are safe.
         system.activationScripts.postActivation.text = lib.mkAfter ''
           echo "Ensuring TCC permissions for ${config.defaultUser}..."
-          TCC_DB="/Users/${config.defaultUser}/Library/Application Support/com.apple.TCC/TCC.db"
+          USER_TCC_DB="/Users/${config.defaultUser}/Library/Application Support/com.apple.TCC/TCC.db"
+          SYS_TCC_DB="/Library/Application Support/com.apple.TCC/TCC.db"
           ${grantCommands}
+          sudo -u ${config.defaultUser} launchctl kickstart -k \
+            "gui/$(id -u ${config.defaultUser})/com.apple.tccd" 2>/dev/null || true
         '';
       };
     };

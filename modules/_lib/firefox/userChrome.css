@@ -15,6 +15,14 @@
   .titlebar-spacer[type="pre-tabs"] {
     display: none !important;
   }
+
+  /* Notch cutoff (nox): the focus-daemon holds Firefox's fullscreen window 32px
+   * below the notch, so its bottom 32px is off-screen. Inset the content area in
+   * DOM fullscreen so the page viewport (100vh) shrinks to the visible region and
+   * sites size video + controls to fit. Keep in sync with FOCUSD_BAR_HEIGHT. */
+  :root[inDOMFullscreen] #tabbrowser-tabpanels {
+    margin-bottom: 32px !important;
+  }
 }
 
 @media (-moz-platform: linux) {

@@ -14,9 +14,12 @@
         # so we can't hardcode a path. This activation script discovers every
         # profile present on the machine and drops symlinks into each:
         #   <profile>/user.js                — enables legacy stylesheets
-        #   <profile>/chrome/userChrome.css  — the actual style overrides
+        #   <profile>/chrome/userChrome.css  — style overrides (incl. the macOS
+        #     fullscreen notch inset)
         # Both are mkOutOfStoreSymlink-equivalent: pointing at the live dots repo
         # so edits show up after a Firefox restart with no rebuild needed.
+        # NB: userContent.css does NOT load in this build — the fullscreen fix is in
+        # userChrome.css instead.
         home.activation.firefox-userchrome = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
           profilesRoot="$HOME/${ffDir}/Profiles"
           [ -d "$profilesRoot" ] || exit 0
@@ -26,6 +29,8 @@
             mkdir -p "$profile/chrome"
             ln -sfn "${shared}/userChrome.css" "$profile/chrome/userChrome.css"
             ln -sfn "${shared}/user.js"         "$profile/user.js"
+            # Drop the dead userContent.css symlink from earlier attempts.
+            rm -f "$profile/chrome/userContent.css"
           done
         '';
 
