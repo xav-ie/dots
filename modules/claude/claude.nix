@@ -149,16 +149,23 @@
             };
           }) cfg.marketplaces;
 
+          shared_exports = # sh
+            ''
+              export CLAUDE_CODE_DISABLE_FAST_MODE=1
+              export CLAUDE_CONFIG_DIR="$HOME/.claude"
+              export ENABLE_LSP_TOOL=0
+            '';
+
           # Native binary wrapper
           claude-native = pkgs.writeShellScriptBin "claude-native" ''
-            export CLAUDE_CONFIG_DIR="$HOME/.claude"
+            ${shared_exports}
             export PATH="${config.home.homeDirectory}/.local/bin:$PATH"
             exec ${pkgs.claude-code}/bin/claude "$@"
           '';
 
           # NPM-based binary wrapper (provides the claude-npm command name)
           claude-npm = pkgs.writeShellScriptBin "claude-npm" ''
-            export CLAUDE_CONFIG_DIR="$HOME/.claude"
+            ${shared_exports}
             exec ${pkgs.claude-code-npm}/bin/claude "$@"
           '';
 
