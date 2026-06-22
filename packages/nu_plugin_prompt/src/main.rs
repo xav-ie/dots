@@ -101,8 +101,9 @@ fn render(pwd: &Path) -> String {
             s.push_str("]\x1b[0m");
         }
     }
-    // Trailing newline so the indicator lands on its own line.
-    s.push('\n');
+    // \x1b[0m after the newline prevents reedline's trim_end_matches('\n') in
+    // the large_buffer paint path from stripping it and collapsing the prompt.
+    s.push_str("\n\x1b[0m");
     s
 }
 

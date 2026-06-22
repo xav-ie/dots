@@ -175,3 +175,42 @@ def --env --wrapped z [...rest: string] {
   }
 }
 
+# gcot: git checkout tag — tab-completes only tags, with <base>latest alias
+# for the most recent tag per prefix. Resolves *latest at checkout time.
+def "nu-complete git tags" [context: string] {
+  let token = ($context | split row " " | last)
+  let recent = (^git tag --sort=-creatordate | lines | where {|x| $x != ""})
+  let matches = ($recent | where {|t| $t | str starts-with $token})
+  let normal  = ($matches | each {|t| { value: $t, description: "" } })
+  mut bases = ($matches
+    | each {|t| if ($t | str contains "@") { ($t | split row "@" | first) + "@" } }
+    | compact | uniq)
+  for p in ["latest" "lates" "late" "lat" "la" "l"] {
+    if ($token | str ends-with $p) {
+      $bases = ($bases | append ($token | str substring 0..<(($token | str length) - ($p | str length))))
+      break
+    }
+  }
+  $bases = ($bases | where {|b| $b != ""} | uniq)
+  let latest = ($bases | each {|b|
+      let real = ($recent | where {|t| $t | str starts-with $b} | first)
+      let alias = $"($b)latest"
+      if ($real != null) and (($alias | str starts-with $token) or ($token | str starts-with $alias)) {
+        { value: $alias, description: $"→ ($real)" }
+      }
+    } | compact)
+  {
+    options: { filter: false, sort: false }
+    completions: ($latest | append $normal | uniq-by value)
+  }
+}
+
+def gcot [tag: string@"nu-complete git tags"] {
+  let resolved = if ($tag | str ends-with "latest") {
+    let base = ($tag | str substring 0..<(($tag | str length) - 6))
+    ^git tag --sort=-creatordate --list $"($base)*" | lines | where {|x| $x != ""} | first
+      | default $tag
+  } else { $tag }
+  git checkout $resolved
+}
+

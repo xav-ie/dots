@@ -23,7 +23,7 @@ $env.PROMPT_INDICATOR = ""
 $env.PROMPT_COMMAND = { || prompt-render }
 # timestamps the prompt line after running
 $env.TRANSIENT_PROMPT_COMMAND = { ||
-  prompt-render | str replace -r "\n$" $" (ansi wi)(get_time)(ansi reset)\n"
+  prompt-render | str replace "\n" $" (ansi wi)(get_time)(ansi reset)\n"
 }
 
 $env.PROMPT_INDICATOR_VI_INSERT = { || make_prompt_indicator "" }
