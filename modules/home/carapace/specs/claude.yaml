@@ -64,9 +64,20 @@ completion:
     debug-file: ["$files"]
     effort: ["low", "medium", "high", "xhigh", "max"]
     input-format: ["text", "stream-json"]
-    model: ["fable", "opus", "sonnet", "haiku", "claude-fable-5", "claude-opus-4-8", "claude-sonnet-4-6", "claude-haiku-4-5-20251001"]
+    model:
+      [
+        "fable",
+        "opus",
+        "sonnet",
+        "haiku",
+        "claude-fable-5",
+        "claude-opus-4-8",
+        "claude-sonnet-4-6",
+        "claude-haiku-4-5-20251001",
+      ]
     output-format: ["text", "json", "stream-json"]
-    permission-mode: ["acceptEdits", "auto", "bypassPermissions", "default", "dontAsk", "plan"]
+    permission-mode:
+      ["acceptEdits", "auto", "bypassPermissions", "default", "dontAsk", "plan"]
     prompt-suggestions: ["true", "false", "on", "off", "yes", "no", "1", "0"]
     setting-sources: ["user", "project", "local"]
     settings: ["$files"]

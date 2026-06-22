@@ -10,8 +10,64 @@
 
 $env.config.color_config.search_result = { bg: "#dd2200" fg: white }
 
+# claude-sessions: resumable sessions for the current dir, newest first.
+# Claude stores one <uuid>.jsonl per session under
+# ~/.claude/projects/<cwd-with-every-non-alnum-as-dash>/. We surface the
+# generated title + latest prompt + mtime as the *display*, while the value
+# inserted is the bare session id (see the completer below).
+def claude-sessions [] {
+  let base = ($env.CLAUDE_CONFIG_DIR? | default ([$env.HOME ".claude"] | path join)) | path join "projects"
+  let dir = ([$base (pwd | str replace -ra '[^a-zA-Z0-9]' '-')] | path join)
+  if not ($dir | path exists) { return [] }
+  let files = (ls ($"($dir)/*.jsonl" | into glob) | sort-by modified -r)
+  # One ripgrep pass pulls just the two small marker line-types out of every
+  # transcript (cheaper than parsing the multi-MB files), grouped by file.
+  # -g '*.jsonl' keeps rg from recursing into sibling files (e.g. a memory/
+  # dir whose notes mention these very type strings); the per-line guard means
+  # any stray non-record match is skipped rather than killing completion.
+  let hits = (rg -N --no-heading -H -g '*.jsonl' '"type":"(ai-title|last-prompt)"' $dir
+    | lines
+    | parse --regex '^(?<f>[^:]+):(?<j>.+)$'
+    | each {|r|
+        let o = (try { $r.j | from json } catch { {} })
+        let t = ($o.type? | default "")
+        if $t in ["ai-title" "last-prompt"] {
+          { f: ($r.f | path basename), kind: $t
+            text: (if $t == "ai-title" { $o.aiTitle? | default "" } else { $o.lastPrompt? | default "" }) }
+        }
+      }
+    | compact
+    | group-by f)
+  # Precompute the ANSI codes once: datetime + title are colored distinctly
+  # from the dimmed last-message "description". display_override keeps the raw
+  # codes (nushell doesn't strip them there) and the terminal renders them.
+  let col = { time: (ansi cyan), title: (ansi green_bold), desc: (ansi dark_gray), reset: (ansi reset) }
+  $files | each {|file|
+    let key = ($file.name | path basename)
+    let rows = ($hits | get -o $key | default [])
+    let titles = ($rows | where kind == "ai-title" | get text)
+    let lasts  = ($rows | where kind == "last-prompt" | get text)
+    let title = (if ($titles | is-empty) { "(untitled)" } else { $titles | last })
+    let last  = (if ($lasts | is-empty) { "" } else { $lasts | last | str replace -ra '\s+' ' ' | str substring 0..80 })
+    let date  = ($file.modified | format date '%m-%d %H:%M')
+    let disp = $"($col.time)($date)($col.reset)  ($col.title)($title)($col.reset)  ($col.desc)($last)($col.reset)"
+    { value: ($key | str replace '.jsonl' ''), display_override: $disp }
+  }
+}
+
 let carapace_completer = {|spans|
-  carapace $spans.0 nushell ...$spans | from json
+  # `claude --resume <id>` / `-r <id>`: serve our own session list. carapace
+  # force-sorts alphabetically and can only show the inserted value (the uuid),
+  # so we return records with display_override (title shown, id inserted). The
+  # config external completer must return a *plain list* — a {completions,
+  # options} record is rejected as invalid (that form is only for `@`-attached
+  # completers) — and it preserves list order, so claude-sessions' newest-first
+  # ordering is what the menu shows.
+  if $spans.0 == "claude" and ($spans | length) >= 2 and (($spans | get (($spans | length) - 2)) in ["-r" "--resume"]) {
+    claude-sessions
+  } else {
+    carapace $spans.0 nushell ...$spans | from json
+  }
 }
 $env.config.completions.external = {
   # set to false to prevent nushell looking into $env.PATH to find more
