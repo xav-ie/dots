@@ -156,6 +156,13 @@
               # tmux-claude-resurrect post-restore hook re-runs it with --resume.
               set -g @resurrect-processes 'ssh'
 
+              # atuin hex owns each pane's tty (see isVimInTree above), so
+              # #{pane_current_command} is always 'atuin'. Without this the
+              # claude-resurrect restore hook sees every pane as "not a shell"
+              # and restores nothing; this tells it to look through atuin to the
+              # real shell (nu) before deciding a pane is safe to replay into.
+              set -g @assistant-resurrect-pty-wrappers 'atuin'
+
               # tmux-continuum: auto-save every 15 min, restore on server start
               set -g @continuum-restore 'on'
               set -g @continuum-save-interval '15'
