@@ -29,13 +29,15 @@
         ream-pkg = inputs.ream.packages.${system}.default or null;
         # browser-session-mcp (extracted to its own repo); linux-only.
         browser-session-mcp-pkg = inputs.browser-session-mcp.packages.${system}.default or null;
-        atuin = inputs.atuin.packages.${system}.default;
         generate-kaomoji = inputs.generate-kaomoji.packages.${system}.default;
-        # uair patched with PR#31 (overlays/default.nix `modifications`), so
-        # `uairctl listen` is newline-delimited and flushed per line — the AGS bar
-        # reads it as a stream. The package-set pkgs below has no overlays, so
-        # apply them here (like atuin) and pull the patched uair out.
+        # atuin and uair carry unmerged PR patches from overlays/default.nix:
+        # atuin's pty-proxy OSC-7 cwd tracking (#3461) — without it tmux-shell's
+        # proxy never chdir's and pane_current_path stays at $HOME — and uair's
+        # PR#31 newline-flushed `uairctl listen` for the AGS bar. The package-set
+        # pkgs below has no overlays applied, so extend it with them and pull the
+        # patched builds out.
         inherit ((pkgs.extend (inputs.self.overlays |> builtins.attrValues |> lib.composeManyExtensions)))
+          atuin
           uair
           ;
         # Use regular nixpkgs - most packages are writeNuApplication wrappers

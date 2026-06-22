@@ -10,9 +10,23 @@
 # shared cache).
 writeCBin "tmux-shell" ''
   #include <stdio.h>
+  #include <stdlib.h>
   #include <unistd.h>
 
   int main(int argc, char **argv) {
+      // We launch the atuin pty-proxy here, so nu's `atuin hex init` (sourced
+      // in modules/home/atuin.nix) must NOT launch a second, nested one. The
+      // proxy chdir's itself to track the shell's cwd (parsed from OSC 7) and
+      // tmux reads `pane_current_path` from it — so the pane must be exactly
+      // one proxy. nu's init relaunches the proxy when ATUIN_PTY_PROXY_ACTIVE
+      // is unset OR $TMUX != $ATUIN_PTY_PROXY_TMUX; the proxy stamps the former
+      // but not the latter, so under tmux nu would always nest a second proxy.
+      // Stamp both here (matching what nu's init does before it launches the
+      // proxy itself) so the guard passes and we stay at one.
+      setenv("ATUIN_PTY_PROXY_ACTIVE", "1", 1);
+      const char *tmux = getenv("TMUX");
+      setenv("ATUIN_PTY_PROXY_TMUX", tmux ? tmux : "", 1);
+
       char *new_argv[argc + 4];
       new_argv[0] = "atuin";
       new_argv[1] = "hex";
