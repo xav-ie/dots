@@ -20,10 +20,14 @@
 //   focusd Messages Signal  client: cycle across several apps
 
 import AppKit
+import ApplicationServices
+import CoreGraphics
 import Foundation
 
 let SOCK_PATH = "/tmp/focusd.sock"
 let YABAI = ProcessInfo.processInfo.environment["FOCUSD_YABAI"] ?? "yabai"
+// How far below the notch to hold the fullscreen Firefox window (= sketchybar height).
+let BAR_HEIGHT = Int(ProcessInfo.processInfo.environment["FOCUSD_BAR_HEIGHT"] ?? "32") ?? 32
 
 // MARK: - small helpers
 
@@ -101,6 +105,75 @@ final class Daemon {
 
   func mruRank(_ pid: pid_t) -> Int {
     mru.firstIndex(of: pid) ?? Int.max
+  }
+
+  // MARK: hold the fullscreen Firefox below the notch (the "cutoff")
+  //
+  // Non-native fullscreen Firefox sits at (0,0) over the notch and macOS won't
+  // auto-hide the menu bar for it, so it chins itself and every other app. Hold
+  // it at y=BAR_HEIGHT; the off-screen bottom strip is absorbed by the
+  // userChrome.css DOM-fullscreen inset (see modules/_lib/firefox). Matched via AX
+  // (AXUnknown subrole + full AX size), not CGWindowList — a moved Firefox's
+  // rendered bounds shrink while AX still reports full size. Only kAXPosition is
+  // settable (kAXSize errors -25200; AX also clamps y >= 0).
+
+  // The non-native fullscreen Firefox windows, as (AX element, origin Y).
+  func fullscreenFirefoxWindows() -> [(win: AXUIElement, y: Int)] {
+    let bounds = CGDisplayBounds(CGMainDisplayID())
+    let W = bounds.width
+    let H = bounds.height
+    var out: [(AXUIElement, Int)] = []
+    for app in NSWorkspace.shared.runningApplications
+    where app.bundleIdentifier == "org.mozilla.firefox" {
+      let axApp = AXUIElementCreateApplication(app.processIdentifier)
+      var wv: CFTypeRef?
+      guard AXUIElementCopyAttributeValue(axApp, kAXWindowsAttribute as CFString, &wv) == .success,
+        let wins = wv as? [AXUIElement]
+      else { continue }
+      for w in wins {
+        var sv: CFTypeRef?
+        AXUIElementCopyAttributeValue(w, kAXSubroleAttribute as CFString, &sv)
+        guard (sv as? String) == (kAXUnknownSubrole as String) else { continue }
+        var szV: CFTypeRef?
+        var size = CGSize.zero
+        if AXUIElementCopyAttributeValue(w, kAXSizeAttribute as CFString, &szV) == .success,
+          let s = szV, CFGetTypeID(s) == AXValueGetTypeID()
+        {
+          AXValueGetValue(s as! AXValue, .cgSize, &size)
+        }
+        guard size.width >= W - 2 && size.height >= H - 12 else { continue }
+        var pv: CFTypeRef?
+        var pos = CGPoint.zero
+        if AXUIElementCopyAttributeValue(w, kAXPositionAttribute as CFString, &pv) == .success,
+          let p = pv, CFGetTypeID(p) == AXValueGetTypeID()
+        {
+          AXValueGetValue(p as! AXValue, .cgPoint, &pos)
+        }
+        out.append((w, Int(pos.y)))
+      }
+    }
+    return out
+  }
+
+  func setWindowOriginY(_ win: AXUIElement, _ y: Int) {
+    var p = CGPoint(x: 0, y: CGFloat(y))
+    if let v = AXValueCreate(.cgPoint, &p) {
+      AXUIElementSetAttributeValue(win, kAXPositionAttribute as CFString, v)
+    }
+  }
+
+  // Off the main queue so it never blocks a focus switch.
+  func reconcileFirefox() {
+    DispatchQueue.global(qos: .userInitiated).async {
+      for w in self.fullscreenFirefoxWindows() {
+        if w.y != BAR_HEIGHT { self.setWindowOriginY(w.win, BAR_HEIGHT) }
+      }
+    }
+  }
+
+  func onFront(_ pid: pid_t) {
+    recordFront(pid)
+    reconcileFirefox()
   }
 
   // Running, regular (dock-visible) apps whose executable name matches `name`
@@ -182,6 +255,12 @@ final class Daemon {
   func handle(_ msg: String) {
     let key = msg.trimmingCharacters(in: .whitespacesAndNewlines)
     if key.isEmpty { return }
+    // yabai window create/destroy poke: a fullscreen enter/exit with no app
+    // switch. Not a focus request, so skip coalescing/cycling.
+    if key == "--recheck-bar" {
+      reconcileFirefox()
+      return
+    }
     let now = Date()
     if let t = lastHandled[key], now.timeIntervalSince(t) < coalesceWindow {
       lastHandled[key] = now  // slide the window so the whole burst is dropped
@@ -233,10 +312,10 @@ final class Daemon {
       forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
     ) { [weak self] note in
       if let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication {
-        self?.recordFront(app.processIdentifier)
+        self?.onFront(app.processIdentifier)
       }
     }
-    if let f = NSWorkspace.shared.frontmostApplication { recordFront(f.processIdentifier) }
+    if let f = NSWorkspace.shared.frontmostApplication { onFront(f.processIdentifier) }
     startSocketServer()
   }
 }

@@ -146,14 +146,22 @@ in
     # AppKit (NSWorkspace) and activates via NSRunningApplication, so switches
     # are ~native-fast and held keys coalesce instead of backlogging. FOCUSD_YABAI
     # points it at yabai for per-window cycling within a single app.
+    #
+    # Runs from the ~/Applications/focusd.app copy (installed + re-signed + granted
+    # Accessibility by the activation block below), NOT the store binary, because
+    # the notch move needs Accessibility pinned to that bundle's cdhash. FOCUSD_PKG
+    # flips the launchd config hash so it restarts when focusd's code changes.
     launchd.user.agents.focusd.serviceConfig = {
       ProgramArguments = [
-        "${pkgs.pkgs-mine.focus-daemon}/bin/focusd"
+        "/Users/${config.defaultUser}/Applications/focusd.app/Contents/MacOS/focusd"
         "--daemon"
       ];
       RunAtLoad = true;
       KeepAlive = true;
-      EnvironmentVariables.FOCUSD_YABAI = "${pkgs.yabai}/bin/yabai";
+      EnvironmentVariables = {
+        FOCUSD_YABAI = "${pkgs.yabai}/bin/yabai";
+        FOCUSD_PKG = "${pkgs.pkgs-mine.focus-daemon}";
+      };
       StandardOutPath = "/tmp/focusd.out.log";
       StandardErrorPath = "/tmp/focusd.err.log";
     };
@@ -326,6 +334,14 @@ in
             # sketchybar spacing, ensure windows do not overlap on monitors
             # without foreheads
             yabai -m config external_bar all:32:0
+
+            # Poke the focus-daemon when a Firefox video enters/exits fullscreen
+            # without an app switch (yabai sees it as a window create/destroy), so
+            # it re-pins the window below the notch.
+            yabai -m signal --add event=window_created label=focusd_recheck_c \
+              action="${pkgs.pkgs-mine.focus-daemon}/bin/focusd --recheck-bar"
+            yabai -m signal --add event=window_destroyed label=focusd_recheck_d \
+              action="${pkgs.pkgs-mine.focus-daemon}/bin/focusd --recheck-bar"
             # fix sketchybar bar not showing up on wake
             # https://github.com/FelixKratz/SketchyBar/issues/512#issuecomment-2409228441
             yabai -m signal --add event=system_woke \
@@ -409,6 +425,34 @@ in
         postActivation.text =
           lib.mkAfter # sh
             ''
+              # Install focusd.app to ~/Applications and grant it Accessibility (the
+              # notch move needs it). Copy out of the read-only store, re-sign ad-hoc
+              # (deterministic → stable cdhash), then tcc-grant pins that cdhash in the
+              # SYSTEM db (writable since SIP is off). Marker-guarded: re-runs only when
+              # focusd changes, which moves the cdhash, so the grant re-pins.
+              focusd_pkg="${pkgs.pkgs-mine.focus-daemon}"
+              focusd_marker="/var/lib/nix-darwin/focusd-pkg"
+              if [ "$(cat "$focusd_marker" 2>/dev/null)" != "$focusd_pkg" ]; then
+                echo "🍃 Installing + re-signing + granting ~/Applications/focusd.app"
+                focusd_uid=$(id -u ${config.defaultUser})
+                focusd_app="/Users/${config.defaultUser}/Applications/focusd.app"
+                sudo -u ${config.defaultUser} mkdir -p "/Users/${config.defaultUser}/Applications"
+                sudo -u ${config.defaultUser} rm -rf "$focusd_app"
+                sudo -u ${config.defaultUser} cp -R "$focusd_pkg/Applications/focusd.app" "$focusd_app"
+                sudo -u ${config.defaultUser} chmod -R u+w "$focusd_app"
+                sudo -u ${config.defaultUser} /usr/bin/codesign --force --sign - \
+                  --identifier com.x.focusd "$focusd_app" 2>/dev/null || true
+                ${pkgs.pkgs-mine.tcc-grant}/bin/tcc-grant --service Accessibility \
+                  --bundle-id com.x.focusd --app-path "$focusd_app" \
+                  --db "/Library/Application Support/com.apple.TCC/TCC.db" || true
+                sudo -u ${config.defaultUser} launchctl kickstart -k \
+                  "gui/$focusd_uid/com.apple.tccd" 2>/dev/null || true
+                sudo -u ${config.defaultUser} launchctl kickstart -k \
+                  "gui/$focusd_uid/org.nixos.focusd" 2>/dev/null || true
+                mkdir -p "$(dirname "$focusd_marker")"
+                echo "$focusd_pkg" > "$focusd_marker"
+              fi
+
               # Relaunch org.nixos user agents only if config changed
               hash_file="/var/lib/nix-darwin/launchd-user-agents.hash"
               current_hash="${launchdUserAgentsHash}"
