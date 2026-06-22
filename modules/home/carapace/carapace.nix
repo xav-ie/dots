@@ -11,10 +11,13 @@
     in
     {
       config = lib.mkIf cfg.enable {
-        # Generate bd.yaml spec when beads is enabled
+        # bd is a cobra binary, so its spec bridges to cobra; claude is a
+        # commander (Node) CLI with no bridge, so it ships a hand-written spec.
         xdg.configFile."carapace/specs/bd.yaml" = lib.mkIf beadsCfg.enable {
           source = config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home/carapace/specs/bd.yaml";
         };
+        xdg.configFile."carapace/specs/claude.yaml".source =
+          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home/carapace/specs/claude.yaml";
       };
     };
 }
