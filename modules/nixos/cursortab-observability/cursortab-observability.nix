@@ -206,9 +206,14 @@
                   ];
                   # Replaces the image's default CMD, so the full flag set is
                   # required. --web.enable-otlp-receiver turns on native OTLP
-                  # ingest at /api/v1/otlp/v1/metrics.
+                  # ingest at /api/v1/otlp/v1/metrics. otlp-deltatocumulative
+                  # accumulates the daemon's delta-temporality counters into one
+                  # stable cumulative series that survives its per-session
+                  # restarts (the daemon exports deltas precisely because it is
+                  # short-lived); without it the delta samples are rejected.
                   exec = [
                     "--config.file=/etc/prometheus/prometheus.yml"
+                    "--enable-feature=otlp-deltatocumulative"
                     "--storage.tsdb.path=/prometheus"
                     "--storage.tsdb.retention.time=${cfg.retention}"
                     "--web.enable-otlp-receiver"
