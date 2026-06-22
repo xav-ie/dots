@@ -313,6 +313,13 @@
               config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/lib-focus.nu";
             ".claude/statusline.nu".source =
               config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/statusline.nu";
+            # Pin the interpreter to the session nushell that nu_plugin_prompt is
+            # compiled against — statusline.nu calls `prompt-render`, which breaks
+            # under a mismatched `nu` on PATH (e.g. a devshell's older nushell).
+            # The wrapper carries the store path; statusline.nu stays editable live.
+            ".claude/statusline".source = pkgs.writeShellScript "claude-statusline" ''
+              exec ${lib.getExe config.programs.nushell.package} --stdin ${config.dotFilesDir}/modules/claude/statusline.nu
+            '';
             ".claude/format-and-lint.nu".source =
               config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/format-and-lint.nu";
             ".claude/tmux-claude-indicator.nu".source =
