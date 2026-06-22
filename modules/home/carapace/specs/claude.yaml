@@ -1,0 +1,100 @@
+# yaml-language-server: $schema=https://carapace.sh/schemas/command.json
+name: claude
+description: Claude Code - agentic coding in the terminal
+flags:
+  --add-dir=*: Additional directories to allow tool access to
+  --agent=: Agent for the current session
+  --agents=: JSON object defining custom agents
+  --allow-dangerously-skip-permissions: Enable bypassing all permission checks as an option
+  --allowedTools=*: Comma or space-separated list of tool names to allow
+  --append-system-prompt=: Append a system prompt to the default system prompt
+  --ax-screen-reader: Render screen-reader friendly output
+  --bare: Minimal mode - skip hooks, LSP, plugin sync, auto-memory, CLAUDE.md discovery
+  --betas=*: Beta headers to include in API requests
+  --brief: Enable SendUserMessage tool for agent-to-user communication
+  --chrome: Enable Claude in Chrome integration
+  -c, --continue: Continue the most recent conversation in the current directory
+  --dangerously-skip-permissions: Bypass all permission checks
+  -d, --debug=: Enable debug mode with optional category filtering
+  --debug-file=: Write debug logs to a specific file path
+  --disable-slash-commands: Disable all skills
+  --disallowedTools=*: Comma or space-separated list of tool names to deny
+  --effort=: Effort level for the current session
+  --exclude-dynamic-system-prompt-sections: Move per-machine sections into the first user message
+  --fallback-model=: Fallback model(s) when the default is overloaded or unavailable
+  --file=*: File resources to download at startup (file_id:relative_path)
+  --fork-session: When resuming, create a new session ID instead of reusing the original
+  --from-pr=: Resume a session linked to a PR by number/URL
+  -h, --help: Display help for command
+  --ide: Automatically connect to IDE on startup if exactly one valid IDE is available
+  --include-hook-events: Include all hook lifecycle events in the output stream
+  --include-partial-messages: Include partial message chunks as they arrive
+  --input-format=: Input format (print mode)
+  --json-schema=: JSON Schema for structured output validation
+  --max-budget-usd=: Maximum dollar amount to spend on API calls (print mode)
+  --mcp-config=*: Load MCP servers from JSON files or strings
+  --model=: Model for the current session
+  -n, --name=: Set a display name for this session
+  --no-chrome: Disable Claude in Chrome integration
+  --no-session-persistence: Disable session persistence (print mode)
+  --output-format=: Output format (print mode)
+  --permission-mode=: Permission mode to use for the session
+  --plugin-dir=*: Load a plugin from a directory or .zip for this session only
+  --plugin-url=*: Fetch a plugin .zip from a URL for this session only
+  -p, --print: Print response and exit (useful for pipes)
+  --prompt-suggestions=: Enable prompt suggestions
+  --remote-control=: Start an interactive session with Remote Control enabled
+  --remote-control-session-name-prefix=: Prefix for auto-generated Remote Control session names
+  --replay-user-messages: Re-emit user messages from stdin back on stdout
+  -r, --resume=: Resume a conversation by session ID
+  --safe-mode: Start with all customizations disabled (troubleshooting)
+  --session-id=: Use a specific session ID for the conversation (UUID)
+  --setting-sources=: Comma-separated list of setting sources to load
+  --settings=: Path to a settings JSON file or a JSON string
+  --strict-mcp-config: Only use MCP servers from --mcp-config
+  --system-prompt=: System prompt to use for the session
+  --tmux: Create a tmux session for the worktree (requires --worktree)
+  --tools=*: Specify the list of available tools from the built-in set
+  --verbose: Override verbose mode setting from config
+  -v, --version: Output the version number
+  -w, --worktree=: Create a new git worktree for this session
+completion:
+  flag:
+    add-dir: ["$files"]
+    debug-file: ["$files"]
+    effort: ["low", "medium", "high", "xhigh", "max"]
+    input-format: ["text", "stream-json"]
+    model: ["fable", "opus", "sonnet", "haiku", "claude-fable-5", "claude-opus-4-8", "claude-sonnet-4-6", "claude-haiku-4-5-20251001"]
+    output-format: ["text", "json", "stream-json"]
+    permission-mode: ["acceptEdits", "auto", "bypassPermissions", "default", "dontAsk", "plan"]
+    prompt-suggestions: ["true", "false", "on", "off", "yes", "no", "1", "0"]
+    setting-sources: ["user", "project", "local"]
+    settings: ["$files"]
+commands:
+  - name: agents
+    description: Manage background agents
+  - name: auth
+    description: Manage authentication
+  - name: auto-mode
+    description: Inspect auto mode classifier configuration
+  - name: doctor
+    description: Check the health of your Claude Code auto-updater
+  - name: install
+    description: Install Claude Code native build
+    completion:
+      positional:
+        - ["stable", "latest"]
+  - name: mcp
+    description: Configure and manage MCP servers
+  - name: plugin
+    aliases: [plugins]
+    description: Manage Claude Code plugins
+  - name: project
+    description: Manage Claude Code project state
+  - name: setup-token
+    description: Set up a long-lived authentication token
+  - name: ultrareview
+    description: Run a cloud-hosted multi-agent code review of the current branch
+  - name: update
+    aliases: [upgrade]
+    description: Check for updates and install if available
