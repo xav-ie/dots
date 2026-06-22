@@ -25,8 +25,9 @@
   # browser-session-mcp, extracted to its own repo
   # (inputs.browser-session-mcp.packages.<system>.default); linux-only.
   browser-session-mcp-pkg ? null,
-  # User's atuin fork, pulled from inputs at the flake level since the
-  # overlay isn't applied to top-level `pkgs` here.
+  # Overlay-patched atuin (pty-proxy OSC-7 cwd tracking, #3461) built at the
+  # flake level; must be the same patched build the profile uses so tmux-shell's
+  # proxy chdir's and pane_current_path tracks the shell's cwd.
   atuin,
   # uair patched with PR#31 (overlays/default.nix), threaded in from packages.nix
   # for the same reason: `uairctl listen` must be newline-delimited and flushed so
