@@ -9,7 +9,7 @@ stdenv.mkDerivation {
   nativeBuildInputs = [ swift ];
   buildPhase = ''
     runHook preBuild
-    swiftc -O focusd.swift -o focusd
+    swiftc -O *.swift -o focusd
     runHook postBuild
   '';
   # Ship as a .app bundle with a stable bundle id: the daemon needs Accessibility

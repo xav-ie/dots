@@ -143,9 +143,11 @@ in
     };
 
     # Resident daemon behind the lcmd+<n> focus hotkeys. Tracks focus order via
-    # AppKit (NSWorkspace) and activates via NSRunningApplication, so switches
-    # are ~native-fast and held keys coalesce instead of backlogging. FOCUSD_YABAI
-    # points it at yabai for per-window cycling within a single app.
+    # AppKit (NSWorkspace) and activates via NSRunningApplication; per-window
+    # cycling is done in-process through the Accessibility API, so switches are
+    # ~native-fast and held keys coalesce instead of backlogging. AX is
+    # Space-scoped, so the rare cross-desktop jump shells out to yabai (FOCUSD_YABAI)
+    # for `space --focus` only — never on the hot path.
     #
     # Runs from the ~/Applications/focusd.app copy (installed + re-signed + granted
     # Accessibility by the activation block below), NOT the store binary, because
@@ -335,12 +337,15 @@ in
             # without foreheads
             yabai -m config external_bar all:32:0
 
-            # Poke the focus-daemon when a Firefox video enters/exits fullscreen
-            # without an app switch (yabai sees it as a window create/destroy), so
-            # it re-pins the window below the notch.
+            # Poke the focus-daemon on window create/destroy/move: it re-pins the
+            # notch-held fullscreen window (yabai sees a fullscreen enter/exit as a
+            # window create/destroy) and refreshes its cross-Space window cache so
+            # lcmd+<n> can jump to a window on another desktop without a live query.
             yabai -m signal --add event=window_created label=focusd_recheck_c \
               action="${pkgs.pkgs-mine.focus-daemon}/bin/focusd --recheck-bar"
             yabai -m signal --add event=window_destroyed label=focusd_recheck_d \
+              action="${pkgs.pkgs-mine.focus-daemon}/bin/focusd --recheck-bar"
+            yabai -m signal --add event=window_moved label=focusd_recheck_m \
               action="${pkgs.pkgs-mine.focus-daemon}/bin/focusd --recheck-bar"
             # fix sketchybar bar not showing up on wake
             # https://github.com/FelixKratz/SketchyBar/issues/512#issuecomment-2409228441
