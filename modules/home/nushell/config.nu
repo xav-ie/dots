@@ -47,12 +47,15 @@ def claude-sessions [] {
     let rows = ($hits | get -o $key | default [])
     let titles = ($rows | where kind == "ai-title" | get text)
     let lasts  = ($rows | where kind == "last-prompt" | get text)
-    let title = (if ($titles | is-empty) { "(untitled)" } else { $titles | last })
+    let title = (if ($titles | is-empty) { "" } else { $titles | last })
     let last  = (if ($lasts | is-empty) { "" } else { $lasts | last | str replace -ra '\s+' ' ' | str substring 0..80 })
-    let date  = ($file.modified | format date '%m-%d %H:%M')
-    let disp = $"($col.time)($date)($col.reset)  ($col.title)($title)($col.reset)  ($col.desc)($last)($col.reset)"
+    # Skip stub sessions (aborted/empty: no generated title and no prompt).
+    if $title == "" and $last == "" { return }
+    let when = ($file.modified | date humanize)
+    let titleDisp = (if $title == "" { "(untitled)" } else { $title })
+    let disp = $"($col.time)($when)($col.reset)  ($col.title)($titleDisp)($col.reset)  ($col.desc)($last)($col.reset)"
     { value: ($key | str replace '.jsonl' ''), display_override: $disp }
-  }
+  } | compact
 }
 
 let carapace_completer = {|spans|
