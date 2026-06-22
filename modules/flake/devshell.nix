@@ -9,10 +9,19 @@
       system,
       ...
     }:
+    let
+      # The perSystem `pkgs` carries no overlays and tracks the (intentionally
+      # lagging) main nixpkgs pin, so the dev CLIs go stale there. Pull them from
+      # nixpkgs-bleeding instead, matching the `pkgs-bleeding` set used elsewhere.
+      pkgs-bleeding = import inputs.nixpkgs-bleeding {
+        inherit system;
+        config.allowUnfree = true;
+      };
+    in
     {
       devShells.default = pkgs.mkShell {
         packages =
-          (with pkgs; [
+          (with pkgs-bleeding; [
             just
             nix-diff
             nushell
@@ -22,7 +31,7 @@
             nix-output-monitor
           ])
           ++ lib.optionals pkgs.stdenv.isLinux (
-            with pkgs;
+            with pkgs-bleeding;
             [
               nh
               nixos-rebuild
