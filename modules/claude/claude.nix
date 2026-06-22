@@ -186,6 +186,17 @@
             exec ${selectedClaude.pkg}/bin/${selectedClaude.bin} "$@"
           '';
 
+          claudeCarapaceSpec =
+            pkgs.runCommand "claude-carapace-spec.yaml"
+              {
+                nativeBuildInputs = [ pkgs.nushell ];
+              }
+              ''
+                export HOME=$(mktemp -d)
+                ${pkgs.claude-code}/bin/claude --help > help.txt
+                nu ${./gen-carapace-spec.nu} help.txt > $out
+              '';
+
           # Default plugin sync package (set via mkDefault below)
           defaultPluginSyncPackage = pkgs.writeNuApplication {
             name = "claude-plugin-sync";
@@ -277,6 +288,12 @@
             pkgs.pkgs-mine.claude-yolo
             pkgs.pkgs-mine.claude-overlay
           ];
+
+          # Carapace flag/subcommand completions, generated from `claude --help`.
+          # (--resume values are served natively in nushell; see nushell config.)
+          xdg.configFile."carapace/specs/claude.yaml" = lib.mkIf config.programs.carapace.enable {
+            source = claudeCarapaceSpec;
+          };
 
           home.file = {
             ".local/bin/claude".source = "${claude-package}/bin/claude";
