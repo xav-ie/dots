@@ -1,8 +1,107 @@
+diff --git a/scripts/lib-detect.sh b/scripts/lib-detect.sh
+index 40250f3..e5b88b0 100755
+--- a/scripts/lib-detect.sh
++++ b/scripts/lib-detect.sh
+@@ -5,6 +5,7 @@
+ # Provides:
+ #   detect_tool <args>           — returns tool name or empty string
+ #   pane_has_assistant <pane_pid> [ps_snapshot] — returns 0 + prints PID if found
++#   innermost_command <pid> [ps_snapshot] — comm of the deepest single-child descendant
+ 
+ # --- detect_tool ---
+ # Match binary name with optional path prefix, standalone or with arguments.
+@@ -31,6 +32,32 @@ detect_tool() {
+ 	esac
+ }
+ 
++# --- innermost_command ---
++# Follow the single-child process chain from <pid> and print the comm of the
++# deepest descendant reached. Used to see past pty-proxy wrappers that own the
++# pane tty — e.g. `atuin hex --shell nu`, where tmux's #{pane_current_command}
++# is always "atuin": the chain resolves atuin -> nu (idle, a leaf), or
++# atuin -> nu -> nvim when a program is running on top of the shell.
++#
++# Stops at the first process with zero or multiple children, so a shell sitting
++# at its prompt (a leaf) resolves to the shell itself. Branching (e.g. a shell
++# with background jobs) also stops the walk at the shell, which is the safe
++# "treat as idle shell" outcome here.
++#
++# Usage: innermost_command <pid> [ps_snapshot]
++innermost_command() {
++	local root="$1"
++	local snapshot="${2:-$(ps -eo pid=,ppid=,comm= 2>/dev/null)}"
++	echo "$snapshot" | awk -v root="$root" '
++		{ comm[$1] = $3; nkids[$2]++; kid[$2] = $1 }
++		END {
++			cur = root
++			while ((cur in nkids) && nkids[cur] == 1) cur = kid[cur]
++			print comm[cur]
++		}
++	'
++}
++
+ # --- pane_has_assistant ---
+ # Check if a pane has a running assistant anywhere in its process tree.
+ # Checks the pane PID itself (exec-replaced shells) AND walks the full
 diff --git a/scripts/restore-assistant-sessions.sh b/scripts/restore-assistant-sessions.sh
-index 854bdea..7ed4c8c 100755
+index 854bdea..686070c 100755
 --- a/scripts/restore-assistant-sessions.sh
 +++ b/scripts/restore-assistant-sessions.sh
-@@ -177,10 +177,13 @@ while read -r entry; do
+@@ -7,6 +7,17 @@
+ 
+ set -euo pipefail
+ 
++# Detach from tmux-resurrect's restore. resurrect runs this hook synchronously
++# between start_spinner "Restoring..." and stop_spinner, so anything slow or
++# blocked in here (the client-wait loop, send-keys, a wedged `tmux` call)
++# leaves the "Restoring..." spinner stuck on screen forever. Re-exec ourselves
++# in a detached background child and return immediately; the real replay then
++# runs decoupled from the spinner. nohup (not setsid) for macOS portability.
++if [ -z "${ASSISTANT_RESURRECT_DETACHED:-}" ]; then
++	ASSISTANT_RESURRECT_DETACHED=1 nohup "$0" "$@" >/dev/null 2>&1 </dev/null &
++	exit 0
++fi
++
+ # Source shared detection library (detect_tool, pane_has_assistant, posix_quote)
+ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ # shellcheck source=lib-detect.sh
+@@ -91,7 +102,10 @@ while read -r entry; do
+ 	# kitty/wezterm/etc auto-attaches via `tmux new-session -A`, the wait
+ 	# resolves in < 200ms.
+ 	client_wait=0
+-	while [ "$(tmux list-clients -t "$tmux_session" 2>/dev/null | wc -l)" -eq 0 ] && [ $client_wait -lt 50 ]; do
++	# `timeout` guards against a wedged tmux client (seen in the wild: the
++	# list-clients call hung in poll and never returned, blocking the whole
++	# restore). Bounded either way by the 50-iteration (5s) cap below.
++	while [ "$(timeout 2 tmux list-clients -t "$tmux_session" 2>/dev/null | wc -l)" -eq 0 ] && [ $client_wait -lt 50 ]; do
+ 		sleep 0.1
+ 		client_wait=$((client_wait + 1))
+ 	done
+@@ -107,6 +121,23 @@ while read -r entry; do
+ 	pane_cmd=$(tmux display-message -t "$pane" -p '#{pane_current_command}' 2>/dev/null || true)
+ 	# Strip leading '-' from login shells (e.g., -bash -> bash, -zsh -> zsh)
+ 	pane_cmd="${pane_cmd#-}"
++
++	# A pty-proxy wrapper (e.g. `atuin hex --shell nu`) owns the pane tty, so
++	# #{pane_current_command} reports the wrapper, never the shell running
++	# inside it — every pane would look "not a shell" and get skipped. When the
++	# pane command is a configured wrapper, resolve the real foreground command
++	# by following the process chain inside it (atuin -> nu when idle).
++	# Wrappers are listed (space-separated) in @assistant-resurrect-pty-wrappers;
++	# unset by default, so stock setups are unaffected.
++	pty_wrappers=$(tmux show-option -gqv @assistant-resurrect-pty-wrappers 2>/dev/null || true)
++	for _wrapper in $pty_wrappers; do
++		if [ "$pane_cmd" = "$_wrapper" ]; then
++			pane_root_pid=$(tmux display-message -t "$pane" -p '#{pane_pid}' 2>/dev/null || true)
++			[ -n "$pane_root_pid" ] && pane_cmd=$(innermost_command "$pane_root_pid")
++			break
++		fi
++	done
++
+ 	case "$pane_cmd" in
+ 	bash | zsh | fish | sh | dash | ksh | tcsh | csh | nu) ;;
+ 	*)
+@@ -177,10 +208,13 @@ while read -r entry; do
  	resume_cmd=""
  	case "$tool" in
  	claude)
@@ -18,7 +117,7 @@ index 854bdea..7ed4c8c 100755
  		fi
  		;;
  	opencode)
-@@ -223,7 +226,7 @@ while read -r entry; do
+@@ -223,7 +257,7 @@ while read -r entry; do
  	# Use POSIX single-quote escaping (safe for bash, zsh, sh, dash, fish).
  	if [ -n "$cwd" ] && [ "$cwd" != "null" ]; then
  		safe_cwd=$(posix_quote "$cwd")
