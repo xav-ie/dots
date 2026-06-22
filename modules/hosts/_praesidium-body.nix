@@ -12,6 +12,11 @@
     # all quiet. See modules/nixos/power-save/.
     services.power-save.enable = true;
 
+    # Local Prometheus + Grafana for cursortab/Mercury usage metrics. Exports
+    # the OTEL_* env that switches the (forked) cursortab daemon's telemetry on.
+    # See modules/nixos/cursortab-observability/.
+    services.cursortab-observability.enable = true;
+
     nixpkgs.config = {
       cudaSupport = true;
       cudaCapabilities = [ "8.6" ];

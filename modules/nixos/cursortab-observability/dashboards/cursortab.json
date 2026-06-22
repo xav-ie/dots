@@ -1,0 +1,316 @@
+{
+  "uid": "cursortab-mercury",
+  "title": "cursortab → Mercury usage",
+  "tags": ["cursortab", "mercury", "gen_ai"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "refresh": "30s",
+  "time": { "from": "now-7d", "to": "now" },
+  "templating": { "list": [] },
+  "annotations": { "list": [] },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Accept rate (range)",
+      "description": "accepted / shown over the selected time range",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "cursortab-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "cursortab-prometheus" },
+          "expr": "sum(increase(cursortab_completion_outcome_total{cursortab_outcome=\"accepted\"}[$__range])) / clamp_min(sum(increase(cursortab_completion_outcome_total{cursortab_outcome=\"shown\"}[$__range])), 1)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 0.2 },
+              { "color": "green", "value": 0.4 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Wasted-upload rate (range)",
+      "description": "requests that produced nothing / total requests. Lower is better.",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "cursortab-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "cursortab-prometheus" },
+          "expr": "sum(increase(cursortab_completion_requests_total{cursortab_produced=\"false\"}[$__range])) / clamp_min(sum(increase(cursortab_completion_requests_total[$__range])), 1)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.3 },
+              { "color": "red", "value": 0.5 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Est. cost (range)",
+      "description": "Mercury Edit pricing: $0.25/M input + $0.75/M output. Cached input not separately discounted here.",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "cursortab-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "cursortab-prometheus" },
+          "expr": "sum(increase(gen_ai_client_token_usage_sum{gen_ai_token_type=\"input\"}[$__range]))/1e6*0.25 + sum(increase(gen_ai_client_token_usage_sum{gen_ai_token_type=\"output\"}[$__range]))/1e6*0.75"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 4,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "area",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Requests (range)",
+      "description": "Total API requests fired to Mercury over the range.",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "cursortab-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "cursortab-prometheus" },
+          "expr": "sum(increase(cursortab_completion_requests_total[$__range]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "blue", "value": null }]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Token usage rate (per second)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "cursortab-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "input",
+          "datasource": { "type": "prometheus", "uid": "cursortab-prometheus" },
+          "expr": "sum(rate(gen_ai_client_token_usage_sum{gen_ai_token_type=\"input\"}[$__rate_interval]))"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "output",
+          "datasource": { "type": "prometheus", "uid": "cursortab-prometheus" },
+          "expr": "sum(rate(gen_ai_client_token_usage_sum{gen_ai_token_type=\"output\"}[$__rate_interval]))"
+        },
+        {
+          "refId": "C",
+          "legendFormat": "cached_input",
+          "datasource": { "type": "prometheus", "uid": "cursortab-prometheus" },
+          "expr": "sum(rate(gen_ai_client_token_usage_sum{gen_ai_token_type=\"cached_input\"}[$__rate_interval]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "showPoints": "auto",
+            "lineWidth": 1,
+            "stacking": { "mode": "none" }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["sum"]
+        },
+        "tooltip": { "mode": "multi" }
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Request rate by outcome (produced vs wasted)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "cursortab-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "produced={{cursortab_produced}}",
+          "datasource": { "type": "prometheus", "uid": "cursortab-prometheus" },
+          "expr": "sum by (cursortab_produced) (rate(cursortab_completion_requests_total[$__rate_interval]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "showPoints": "auto",
+            "lineWidth": 1,
+            "stacking": { "mode": "normal" }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Request latency (p50 / p95)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "cursortab-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "p50",
+          "datasource": { "type": "prometheus", "uid": "cursortab-prometheus" },
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(gen_ai_client_operation_duration_seconds_bucket[$__rate_interval])))"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "p95",
+          "datasource": { "type": "prometheus", "uid": "cursortab-prometheus" },
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(gen_ai_client_operation_duration_seconds_bucket[$__rate_interval])))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "showPoints": "auto",
+            "lineWidth": 1
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      }
+    },
+    {
+      "id": 8,
+      "type": "piechart",
+      "title": "Outcomes (range)",
+      "description": "shown / accepted / rejected / ignored over the range.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "cursortab-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "{{cursortab_outcome}}",
+          "datasource": { "type": "prometheus", "uid": "cursortab-prometheus" },
+          "expr": "sum by (cursortab_outcome) (increase(cursortab_completion_outcome_total[$__range]))"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "pieType": "donut",
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": ["value", "percent"]
+        }
+      }
+    }
+  ]
+}

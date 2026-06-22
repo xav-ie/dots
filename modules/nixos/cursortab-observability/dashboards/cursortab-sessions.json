@@ -1,0 +1,352 @@
+{
+  "uid": "cursortab-sessions",
+  "title": "cursortab → Mercury sessions & files",
+  "tags": ["cursortab", "mercury", "loki", "sessions"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "refresh": "30s",
+  "time": { "from": "now-24h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "session",
+        "type": "textbox",
+        "label": "Session id (regex; .* = all)",
+        "query": ".*",
+        "current": { "text": ".*", "value": ".*" }
+      }
+    ]
+  },
+  "annotations": { "list": [] },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Requests (range)",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "loki", "uid": "cursortab-loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "cursortab-loki" },
+          "editorMode": "code",
+          "queryType": "instant",
+          "expr": "sum(count_over_time({service_name=\"cursortab\"} | event=\"completion.request\" | cursortab_session_id=~\"$session\" [$__range]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0 },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Input tokens (range)",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "loki", "uid": "cursortab-loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "cursortab-loki" },
+          "editorMode": "code",
+          "queryType": "instant",
+          "expr": "sum(sum_over_time({service_name=\"cursortab\"} | event=\"completion.request\" | cursortab_session_id=~\"$session\" | unwrap gen_ai_usage_input_tokens [$__range]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0 },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Output tokens (range)",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "loki", "uid": "cursortab-loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "cursortab-loki" },
+          "editorMode": "code",
+          "queryType": "instant",
+          "expr": "sum(sum_over_time({service_name=\"cursortab\"} | event=\"completion.request\" | cursortab_session_id=~\"$session\" | unwrap gen_ai_usage_output_tokens [$__range]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0 },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Sessions (range)",
+      "description": "Distinct nvim sessions (client connections) in range.",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "loki", "uid": "cursortab-loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "cursortab-loki" },
+          "editorMode": "code",
+          "queryType": "instant",
+          "expr": "count(sum by (cursortab_session_id) (count_over_time({service_name=\"cursortab\"} | event=\"session.start\" [$__range])))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0 },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Requests over time (produced vs wasted)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "datasource": { "type": "loki", "uid": "cursortab-loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "cursortab-loki" },
+          "editorMode": "code",
+          "queryType": "range",
+          "legendFormat": "produced={{cursortab_produced}}",
+          "expr": "sum by (cursortab_produced) (count_over_time({service_name=\"cursortab\"} | event=\"completion.request\" | cursortab_session_id=~\"$session\" [$__auto]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 40,
+            "lineWidth": 1,
+            "stacking": { "mode": "normal" }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Outcomes over time",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "datasource": { "type": "loki", "uid": "cursortab-loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "cursortab-loki" },
+          "editorMode": "code",
+          "queryType": "range",
+          "legendFormat": "{{cursortab_outcome}}",
+          "expr": "sum by (cursortab_outcome) (count_over_time({service_name=\"cursortab\"} | event=\"completion.outcome\" | cursortab_session_id=~\"$session\" [$__auto]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 40,
+            "lineWidth": 1,
+            "stacking": { "mode": "normal" }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      }
+    },
+    {
+      "id": 7,
+      "type": "table",
+      "title": "Tokens sent per file (input, range)",
+      "description": "Which files cost the most upload tokens.",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 12 },
+      "datasource": { "type": "loki", "uid": "cursortab-loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "cursortab-loki" },
+          "editorMode": "code",
+          "queryType": "instant",
+          "expr": "sum by (cursortab_file) (sum_over_time({service_name=\"cursortab\"} | event=\"completion.request\" | cursortab_session_id=~\"$session\" | unwrap gen_ai_usage_input_tokens [$__range]))"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": { "Time": true },
+            "renameByName": {
+              "cursortab_file": "file",
+              "Value #A": "input tokens",
+              "Value": "input tokens"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": { "sort": [{ "field": "input tokens", "desc": true }] }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "align": "auto" } },
+        "overrides": []
+      },
+      "options": { "showHeader": true }
+    },
+    {
+      "id": 8,
+      "type": "table",
+      "title": "Requests per file (produced vs wasted, range)",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 12 },
+      "datasource": { "type": "loki", "uid": "cursortab-loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "cursortab-loki" },
+          "editorMode": "code",
+          "queryType": "instant",
+          "expr": "sum by (cursortab_file, cursortab_produced) (count_over_time({service_name=\"cursortab\"} | event=\"completion.request\" | cursortab_session_id=~\"$session\" [$__range]))"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": { "Time": true },
+            "renameByName": {
+              "cursortab_file": "file",
+              "cursortab_produced": "produced",
+              "Value #A": "requests",
+              "Value": "requests"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": { "sort": [{ "field": "requests", "desc": true }] }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "align": "auto" } },
+        "overrides": []
+      },
+      "options": { "showHeader": true }
+    },
+    {
+      "id": 9,
+      "type": "table",
+      "title": "Outcomes per file (accepts/rejects, range)",
+      "description": "Outcome events joined to their request's file via gen_ai_response_id. Built with a transformation, so verify field names against live data if empty.",
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 21 },
+      "datasource": { "type": "loki", "uid": "cursortab-loki" },
+      "targets": [
+        {
+          "refId": "REQ",
+          "datasource": { "type": "loki", "uid": "cursortab-loki" },
+          "editorMode": "code",
+          "queryType": "instant",
+          "expr": "sum by (gen_ai_response_id, cursortab_file) (count_over_time({service_name=\"cursortab\"} | event=\"completion.request\" | cursortab_session_id=~\"$session\" [$__range]))"
+        },
+        {
+          "refId": "OUT",
+          "datasource": { "type": "loki", "uid": "cursortab-loki" },
+          "editorMode": "code",
+          "queryType": "instant",
+          "expr": "sum by (gen_ai_response_id, cursortab_outcome) (count_over_time({service_name=\"cursortab\"} | event=\"completion.outcome\" | cursortab_session_id=~\"$session\" [$__range]))"
+        }
+      ],
+      "transformations": [
+        { "id": "merge", "options": {} },
+        {
+          "id": "groupBy",
+          "options": {
+            "fields": {
+              "cursortab_file": { "operation": "groupby" },
+              "cursortab_outcome": { "operation": "groupby" },
+              "Value #OUT": { "operation": "sum", "aggregations": ["sum"] }
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "align": "auto" } },
+        "overrides": []
+      },
+      "options": { "showHeader": true }
+    },
+    {
+      "id": 10,
+      "type": "logs",
+      "title": "Event stream (the launch narrative)",
+      "gridPos": { "h": 11, "w": 24, "x": 0, "y": 30 },
+      "datasource": { "type": "loki", "uid": "cursortab-loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "cursortab-loki" },
+          "editorMode": "code",
+          "queryType": "range",
+          "expr": "{service_name=\"cursortab\"} | cursortab_session_id=~\"$session\""
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      }
+    }
+  ]
+}
