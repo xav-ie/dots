@@ -3,7 +3,8 @@
 def main [] {
   let input = $in | from json
   let model_display = $input.model.display_name
-  let starship_prompt = STARSHIP_SHELL=nu starship prompt | str replace --all '\n' ''
+  # prompt-render comes from nu_plugin_prompt — in-process, no subprocess
+  let prompt = prompt-render | str replace --all '\n' ''
 
-  print $"($starship_prompt) ($model_display)"
+  print $"($prompt) ($model_display)"
 }
