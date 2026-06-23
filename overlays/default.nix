@@ -133,11 +133,11 @@ in
     atuin = inputs.atuin.packages.${final.stdenv.hostPlatform.system}.default.overrideAttrs (old: {
       pname = "atuin";
       version = "18.16.0";
-      # Layer my unmerged PRs on top of upstream main: two pty-proxy fixes plus
-      # a nushell ESC-char fix. They touch non-overlapping regions and don't add
-      # vendored deps (percent-encoding is already in the lock), so they apply
-      # cleanly. Drop each patch once it merges upstream. (#3327 --shell already
-      # merged, so it's no longer here.)
+      # Layer my unmerged PRs on top of upstream main: three pty-proxy fixes
+      # plus a nushell ESC-char fix. They touch non-overlapping regions and
+      # don't add vendored deps (percent-encoding is already in the lock), so
+      # they apply cleanly. Drop each patch once it merges upstream. (#3327
+      # --shell already merged, so it's no longer here.)
       patches = (old.patches or [ ]) ++ [
         (final.fetchpatch {
           name = "atuin-pr3529-pty-proxy-pixel-size.patch";
@@ -156,6 +156,14 @@ in
           name = "atuin-pr3530-nu-char-esc.patch";
           url = "https://github.com/atuinsh/atuin/pull/3530.patch";
           hash = "sha256-c565RbIGBOUNi1fgmuqM/0xonS2PWyc80OlyuADLy7k=";
+        })
+        # pty-proxy spawns the inner shell but never sets SHELL on it, so the
+        # child — and `$SHELL -c` consumers like fzf's `become` — inherit a
+        # stale shell from the parent env. Point SHELL at the shell we spawn.
+        (final.fetchpatch {
+          name = "atuin-pty-proxy-shell-env.patch";
+          url = "https://github.com/atuinsh/atuin/pull/3548.patch";
+          hash = "sha256-WRibHKn9Xd3OdsbcAkd8xqMfJJHrV2lja2XSkx39cxU=";
         })
       ];
       # #3461 adds `percent-encoding` to atuin-pty-proxy's Cargo.lock dep list.
