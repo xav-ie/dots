@@ -59,16 +59,32 @@ def main [] {
     "Created At"
   ] | str join " "
 
-  let git_status = (git status --porcelain)
-  let $enter_action = if ($git_status | str trim | str length) > 0 {
-    'enter:become(gh pr view {1}; print "Clean your git directory in order to checkout.")'
-  } else {
-    # `gh pr checkout {1}` is flaky and unreliable :(
-    'enter:become(git fetch origin ; git checkout -B (gh pr view {1} --json headRefName -q .headRefName) $"origin/(gh pr view {1} --json headRefName -q .headRefName)")'
-  }
-
   let preview_action = 'GH_FORCE_TTY=100% gh pr view {1}'
 
-  $formattedOut
-  | fzf --ansi --header $header --bind $enter_action --preview $preview_action --preview-window up
+  # Capture fzf's selection and act on it here in nushell. fzf's `become`
+  # would run its body through `$SHELL -c`, which is not guaranteed to be
+  # nushell (the tmux/atuin pty stack can export SHELL=bash), so any
+  # nu-specific syntax in a `become` string breaks unpredictably.
+  let selection = (
+    $formattedOut
+    | fzf --ansi --header $header --preview $preview_action --preview-window up
+    | complete
+  )
+  if $selection.exit_code != 0 {
+    return
+  }
+
+  # The number is the first column (ansi-colored, left-filled to width 6).
+  let number = ($selection.stdout | ansi strip | str trim | split row ' ' | first)
+
+  if (git status --porcelain | str trim | str length) > 0 {
+    GH_FORCE_TTY=100% gh pr view $number
+    print "Clean your git directory in order to checkout."
+    return
+  }
+
+  # `gh pr checkout` is flaky and unreliable, so check out by branch name.
+  git fetch origin
+  let branch = (gh pr view $number --json headRefName -q .headRefName | str trim)
+  git checkout -B $branch $"origin/($branch)"
 }
