@@ -1,0 +1,8 @@
+# Pin the torch stack to the matched CUDA wave the base image ships
+# (pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime). Without these, pip's resolver
+# upgrades torch to the newest PyPI release while torchvision stays at the base's
+# 0.20.1 → ABI mismatch → "torchvision has no attribute 'extension'" circular
+# import that crashes the service at startup. Applied via `pip install -c`.
+torch==2.5.1
+torchvision==0.20.1
+torchaudio==2.5.1

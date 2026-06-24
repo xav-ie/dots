@@ -297,6 +297,12 @@
           type = "ngram-simple";
         };
       };
+
+      # WhisperX transcription + diarization, https://whisperx.lalala.casa.
+      # Audio-capture clients (the Chrome Zoom extension) POST audio and get
+      # back speaker-labelled segments. large-v3/float16 on the GPU; needs the
+      # `whisperx/hf_token` sops secret. See nixos/whisperx/.
+      whisperx.enable = true;
     };
 
     location = {
