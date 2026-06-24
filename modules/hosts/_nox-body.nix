@@ -106,6 +106,16 @@ in
         }
         {
           bundleId = "org.mozilla.firefox";
+          # Firefox's bundle is mutated in place (autoconfig injection in
+          # home-darwin/firefox), which breaks its Apple seal — under
+          # amfi_get_out_of_my_way=1 tccd then denies camera/mic/screen-capture.
+          # home-darwin/firefox re-signs the bundle (user-level, for keychain access)
+          # with whatever codesigning identity matches resignIdentity at runtime, and
+          # we pin the bundle's resulting designated requirement. The coarse matcher
+          # (not a pinned CN) means a rotated/renewed Apple Development cert just works
+          # on the next `just system` — no config edit.
+          appPath = "/Applications/Firefox.app";
+          resignIdentity = "Apple Development";
           services = [
             "Camera"
             "Microphone"

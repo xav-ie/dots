@@ -3,7 +3,8 @@ def main [
   --bundle-id: string      # client value: a bundle identifier, or an absolute path when --client-type 1
   --db: string             # Path to the TCC database (system or user — caller routes by service)
   --client-type: int = 0   # 0 = bundle identifier, 1 = absolute path
-  --app-path: string = ""  # optional .app bundle to derive a cdhash csreq from (REQUIRED for ad-hoc / nix-signed apps)
+  --app-path: string = ""        # optional .app bundle to derive a cdhash csreq from (for ad-hoc / nix-signed apps)
+  --designated-from: string = "" # .app whose current designated requirement is read + pinned as the csreq (re-signed apps); takes precedence over --app-path
 ] {
   let service_key = match $service {
     # Media
@@ -32,11 +33,37 @@ def main [
     _ => { error make { msg: $"Unknown service: ($service)" } }
   }
 
-  # With --app-path, pin the binary's cdhash as the code requirement: tccd rejects
-  # a no-csreq grant for an ad-hoc / nix-signed binary (no trusted anchor). This is
-  # what System Settings stores. codesign isn't on the wrapper PATH (call it
-  # absolutely) and prints to stderr.
-  let csreq = if ($app_path | is-empty) {
+  # csreq precedence: --designated-from (the bundle's own DR) > --app-path (cdhash) > NULL.
+  #
+  # --designated-from reads the bundle's current designated requirement (codesign
+  # -d -r-) and pins it. Prefer this for re-signed apps: it auto-tracks whatever
+  # Apple-anchored cert the bundle is signed with, so cert rotation needs no config
+  # change. A cert-anchored requirement is also the only thing that works under
+  # `amfi_get_out_of_my_way=1` — an ad-hoc cdhash pin is platform-flagged, and the
+  # cdhash opcode is legacy-SHA-1 so it never matches a SHA-256-only signature.
+  # /usr/bin/csreq compiles the requirement text from stdin (-r-); we hex-encode the
+  # blob with xxd so it inlines as an X'..' literal (no readfile() dependency).
+  let csreq = if ($designated_from | is-not-empty) {
+    let info = (^/usr/bin/codesign -d -r- $designated_from | complete)
+    let dr = (
+      $"($info.stdout)\n($info.stderr)" | lines
+      | where { |l| $l =~ 'designated => ' }
+      | get 0?
+      | default ""
+      | str replace -r '^.*designated => ' ''
+      | str trim
+    )
+    if ($dr | is-empty) {
+      error make { msg: $"could not read designated requirement from ($designated_from)" }
+    }
+    let blob = $"/tmp/tcc-grant-($bundle_id)-($service_key).csreq"
+    $dr | ^/usr/bin/csreq -r- -b $blob
+    let hex = (^/usr/bin/xxd -p $blob | lines | str join "" | str trim | str upcase)
+    if ($hex | is-empty) {
+      error make { msg: $"could not compile designated requirement: ($dr)" }
+    }
+    $"X'($hex)'"
+  } else if ($app_path | is-empty) {
     "NULL"
   } else {
     let info = (^/usr/bin/codesign -dvvv $app_path | complete)
@@ -61,14 +88,14 @@ def main [
     | str trim
   )
 
-  if ($app_path | is-empty) {
-    # Signed app: don't clobber a prior allow (it may carry a stronger csreq).
+  if ($designated_from | is-empty) and ($app_path | is-empty) {
+    # Bundle-id only: don't clobber a prior allow (it may carry a stronger csreq).
     if $cur_auth == "2" {
       print $"✓ ($bundle_id) already has ($service)"
       return
     }
   } else {
-    # Ad-hoc app: re-pin unless already allowed with our exact cdhash.
+    # csreq-pinned (DR or cdhash): re-pin unless already allowed with our exact blob.
     let cur_csreq = (
       sqlite3 $db $"SELECT quote\(csreq\) FROM access WHERE service='($service_key)' AND client='($bundle_id)' AND client_type=($client_type);"
       | str trim
