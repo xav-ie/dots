@@ -1,0 +1,22 @@
+# Pinned so the built image is reproducible. WhisperX moves fast and its
+# diarization API (DiarizationPipeline import path, pyannote compatibility)
+# shifts between releases — bump these together and re-confirm the imports in
+# transcribe_service.py still resolve.
+#
+# torch/torchvision/torchaudio are pinned in constraints.txt (installed with
+# `pip install -c`), NOT here: they come from the CUDA base image as a matched
+# set and must not be bumped by the resolver. (numpy is left to whisperx, which
+# requires >=2.0.2.)
+whisperx==3.4.2
+# Cap the ML stack to the majors whisperx 3.4.2 was built against. Left
+# uncapped, pip pulls transformers 5.x / pyannote-audio 4.x, which demand a
+# newer torch than the base image's pinned 2.5.1 and drag in torchcodec — the
+# combination that produced the torchvision/torch ABI-mismatch crash.
+#
+# ctranslate2 is NOT pinned here: whisperx forces <4.5 (cuDNN 8), which the
+# Dockerfile overrides to >=4.5 (cuDNN 9) to match the base image — see there.
+transformers<5
+pyannote.audio<4
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
