@@ -190,6 +190,12 @@
             pkgs.runCommand "claude-carapace-spec.yaml"
               {
                 nativeBuildInputs = [ pkgs.nushell ];
+                # claude-code is now a Bun-compiled Mach-O binary; its JIT
+                # (MAP_JIT executable mappings) is SIGKILLed by the macOS
+                # sandbox-exec profile. Run outside the chroot to scrape
+                # `--help`. Linux's sandbox permits JIT, so keep it sandboxed
+                # there (requires sandbox = "relaxed", set in modules/common.nix).
+                __noChroot = pkgs.stdenv.isDarwin;
               }
               ''
                 export HOME=$(mktemp -d)
