@@ -123,6 +123,17 @@ in
           ];
         }
         {
+          # Chrome ships a proper Developer ID seal (Google LLC) and its bundle
+          # isn't mutated, so a plain bundle-id grant is enough — no re-sign/csreq
+          # pin like Firefox needs.
+          bundleId = "com.google.Chrome";
+          services = [
+            "Camera"
+            "Microphone"
+            "ScreenCapture"
+          ];
+        }
+        {
           bundleId = "us.zoom.xos";
           services = [
             "Camera"
