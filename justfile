@@ -137,3 +137,16 @@ notifd-reset:
     systemctl --user start bar
     echo "done — daemon owner:"
     busctl --user status org.freedesktop.Notifications 2>/dev/null | grep -E '^(PID|Comm)=' || true
+
+# run the Firefox PiP mover tests: TS geometry/animation (vitest) + Rust client
+test-pip:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd packages/firefox-pip-mover
+    npm install --no-audit --no-fund
+    npm run typecheck
+    npm test
+    cd ../move-pip
+    nix shell nixpkgs#rustc -c rustc --test --edition 2021 \
+      --crate-name move_pip_test move-pip.rs -o /tmp/move-pip-test
+    /tmp/move-pip-test

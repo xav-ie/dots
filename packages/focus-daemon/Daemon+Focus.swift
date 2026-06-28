@@ -246,7 +246,9 @@ extension Daemon {
     // Target is off-space (or no on-space windows exist) — find it via yabai.
     // Do NOT fall back to an on-space window of the same pid: that would flash the
     // wrong window before drain corrects it.
-    if let yw = yabaiWindows(for: [pid], in: winCache).first(where: { targetId == nil || $0.id == targetId! }) {
+    if let yw = yabaiWindows(for: [pid], in: winCache).first(where: {
+      targetId == nil || $0.id == targetId!
+    }) {
       dbg("focusReal space --focus \(yw.space) (cache) pid=\(pid)")
       jumpToSpace(yw.space, pid: pid, wid: CGWindowID(yw.id))
       scheduleRefresh()
@@ -254,7 +256,9 @@ extension Daemon {
     }
     DispatchQueue.global(qos: .userInitiated).async {
       let full = fetchYabaiWindows()
-      let yw = self.yabaiWindows(for: [pid], in: full).first { targetId == nil || $0.id == targetId! }
+      let yw = self.yabaiWindows(for: [pid], in: full).first {
+        targetId == nil || $0.id == targetId!
+      }
       dbg("focusReal live pid=\(pid) found=\(yw != nil) space=\(yw?.space ?? -1)")
       DispatchQueue.main.async {
         self.winCache = full

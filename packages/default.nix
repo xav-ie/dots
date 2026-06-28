@@ -122,6 +122,7 @@ rec {
 // (optionalAttrs isDarwin {
   fix-yabai = pkgs.callPackage ./fix-yabai { inherit writeNuApplication; };
   focus-daemon = pkgs.callPackage ./focus-daemon { };
+  firefox-pip-mover = pkgs.callPackage ./firefox-pip-mover { };
   move-pip = pkgs.callPackage ./move-pip { };
   sketchybar-battery = pkgs.callPackage ./sketchybar-battery { inherit writeNuApplication; };
   sketchybar-hover = pkgs.callPackage ./sketchybar-hover { };
