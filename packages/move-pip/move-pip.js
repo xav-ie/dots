@@ -2,14 +2,16 @@
 // @ts-check
 /// <reference path="./jxa.d.ts" />
 
-// Move the Firefox Picture-in-Picture window (or iPhone Mirroring) around the
-// screen, in a single osascript process (no shell/nushell wrapper).
+// Move a Chromium/Chrome Picture-in-Picture window (or the iPhone Mirroring
+// window) around the current display via the macOS Accessibility API.
 //
-// Locate the window via the macOS Accessibility API (System Events), disable the
-// move animation, read the displays via Cocoa NSScreen, compute the target and
-// reposition. We use AX rather than `yabai -m query` because yabai frequently
-// never registers the PiP panel (missed window-created notification), which
-// silently breaks these hotkeys. No external dependencies.
+// Firefox is intentionally NOT handled here. Firefox 152's PiP window corrupts
+// that process's ENTIRE accessibility tree (every window's AX attributes throw),
+// so AX can neither read nor move it. Firefox PiP is moved out-of-band by a
+// chrome-privileged TCP listener in firefox.cfg, which the `move-pip` wrapper
+// pings alongside running this script. Chromium/Chrome expose the PiP to AX
+// normally — only the window title differs ("Picture in Picture", spaces) — so
+// they work fine here.
 //
 // Usage: move-pip <top-left|top-right|bottom-right|bottom-left
 //                  |top-middle|middle-middle|bottom-middle|grow|shrink>
@@ -22,17 +24,41 @@ function run(argv) {
   ObjC.import("AppKit");
   const se = Application("System Events");
 
-  // Locate the PiP (Firefox) or iPhone Mirroring window via AX.
+  // Chromium/Chrome title it "Picture in Picture"; match loosely to also cover
+  // other Chromium forks and locale variants. (Firefox's hyphenated title would
+  // match too, but Firefox processes are never queried here — broken AX.)
+  const PIP_RE = /picture[\s-]?in[\s-]?picture/i;
+  const BROWSERS = [
+    "Chromium",
+    "Google Chrome",
+    "Google Chrome Canary",
+    "Brave Browser",
+    "Microsoft Edge",
+    "Arc",
+  ];
+
   /** @type {any} */
   let win = null;
   /** @type {any} */
   let proc = null;
-  const fox = se.processes.byName("Firefox");
-  if (fox.exists()) {
-    const m = fox.windows.whose({ name: "Picture-in-Picture" });
-    if (m.length > 0) {
-      win = m[0];
-      proc = fox;
+
+  for (let b = 0; b < BROWSERS.length && !win; b++) {
+    const procs = se.processes.whose({ name: BROWSERS[b] })();
+    for (let i = 0; i < procs.length && !win; i++) {
+      const ws = procs[i].windows();
+      for (let j = 0; j < ws.length; j++) {
+        let nm;
+        try {
+          nm = ws[j].name();
+        } catch (e) {
+          continue;
+        }
+        if (PIP_RE.test(nm)) {
+          win = ws[j];
+          proc = procs[i];
+          break;
+        }
+      }
     }
   }
   if (!win) {
@@ -42,9 +68,9 @@ function run(argv) {
       proc = im;
     }
   }
-  if (!win) {
-    throw new Error("Could not find any PiP or iPhone Mirroring windows.");
-  }
+  // No AX-movable PiP present: Firefox (handled over TCP by the wrapper) may
+  // hold it, or there's none open. Exit quietly rather than erroring.
+  if (!win) return;
 
   // Apps exposing AXEnhancedUserInterface animate programmatic moves; off = instant.
   try {

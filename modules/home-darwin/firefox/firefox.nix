@@ -4,10 +4,14 @@
       config,
       lib,
       osConfig,
+      pkgs,
       ...
     }:
     let
       ffDir = "Library/Application Support/Firefox";
+      # PiP mover, authored in TypeScript and bundled to a chrome subscript
+      # (packages/firefox-pip-mover). firefox.cfg loadSubScript's it at startup.
+      pipMover = "${pkgs.pkgs-mine.firefox-pip-mover}/pip-mover.js";
       # Platform-agnostic assets (firefox.cfg, favicon-icons.js, userChrome.css,
       # user.js) live in the shared dir; autoconfig.js below is macOS-specific.
       shared = "${config.dotFilesDir}/modules/_lib/firefox";
@@ -74,6 +78,7 @@
           mkdir -p "$res/defaults/pref"
           ln -sfn "${shared}/firefox.cfg"      "$res/firefox.cfg"
           ln -sfn "${shared}/favicon-icons.js" "$res/favicon-icons.js"
+          ln -sfn "${pipMover}"                "$res/pip-mover.js"
           ln -sfn "${src}/autoconfig.js"       "$res/defaults/pref/autoconfig.js"
           ${lib.optionalString (resignIdentity != "") ''
             if ! /usr/bin/codesign --verify "${ffApp}" >/dev/null 2>&1; then
