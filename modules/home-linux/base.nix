@@ -48,6 +48,7 @@
               playerctl # play, pause, next
               pulseaudio # provides pactl for volume control
               # qutebrowser
+              telegram-desktop
               zoom-us
             ])
             ++ (with pkgs.pkgs-bleeding; [

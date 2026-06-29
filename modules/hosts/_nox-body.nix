@@ -55,6 +55,7 @@ in
         "protonvpn"
         "sf-symbols"
         "signal"
+        "telegram"
         "transmission"
         "vlc"
         "vnc-viewer"
