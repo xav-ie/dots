@@ -298,11 +298,30 @@
         };
       };
 
-      # WhisperX transcription + diarization, https://whisperx.lalala.casa.
-      # Audio-capture clients (the Chrome Zoom extension) POST audio and get
-      # back speaker-labelled segments. large-v3/float16 on the GPU; needs the
-      # `whisperx/hf_token` sops secret. See nixos/whisperx/.
-      whisperx.enable = true;
+      # WhisperX batch transcription + diarization, https://whisperx.lalala.casa.
+      # Disabled: the scribe streaming service + extension-side active-speaker
+      # diarization covers the meeting use case. Kept as an off-by-default
+      # fallback for non-meeting audio (no DOM to scrape → pyannote does
+      # unlimited-speaker diarization). Flip to `true` to bring it back; needs
+      # the `whisperx/hf_token` sops secret. See nixos/whisperx/.
+      whisperx.enable = false;
+
+      # Live streaming ASR, wss://scribe.lalala.casa/ws. The Chrome extension
+      # streams meeting audio for real-time captions; speaker attribution is
+      # done client-side by joining word timestamps against the meeting's
+      # active-speaker timeline (no audio diarization here). NeMo cache-aware
+      # FastConformer on the GPU; needs the `ngc/api_key` sops secret to pull
+      # the NeMo base image. See nixos/scribe/.
+      scribe = {
+        enable = true;
+        # Larger 0.6B streaming model (vs the default 114M FastConformer) for
+        # higher English accuracy. Revert to the default model id if it's not
+        # clearly better.
+        model = "nvidia/nemotron-speech-streaming-en-0.6b";
+        # Max lookahead (most accurate of {0,80,480,1040}ms) — we favour accuracy
+        # over latency for meeting notes.
+        lookaheadMs = 1040;
+      };
     };
 
     location = {

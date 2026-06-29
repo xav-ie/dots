@@ -3,6 +3,7 @@ result*
 .pijul
 .devenv
 .direnv
+__pycache__/
 
 # Unignore tracked CLAUDE.md
 !home-manager/modules/claude/CLAUDE.md
