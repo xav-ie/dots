@@ -79,6 +79,8 @@
               excludes = [ "*.glsl" ];
             };
             deadnix.enable = true;
+            # dockerfmt is broken on Darwin; Dockerfiles are excluded there below.
+            dockerfmt.enable = pkgs.stdenv.isLinux;
             glsl_analyzer = {
               enable = true;
               package = glsl_analyzer;
@@ -110,9 +112,10 @@
           settings = {
             on-unmatched = "fatal";
             excludes = [
+              "**/*.modulemap"
+              "**/*.txt"
               "**/.gitignore"
               "**/.inputrc"
-              "**/*.modulemap"
               "**/.npmrc"
               "**/Cargo.lock"
               "*.awk"
@@ -125,6 +128,9 @@
               ".gitignore"
               "flake.lock"
               "secrets/*.yaml" # sops has its own formatter
+            ]
+            ++ pkgs.lib.optionals pkgs.stdenv.isDarwin [
+              "**/Dockerfile" # dockerfmt broken on Darwin
             ];
           };
         };
