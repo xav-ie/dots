@@ -18,26 +18,27 @@
           pkgs.git
           pkgs.openssh
         ];
-        text = ''
-          repo=${notesDir}
-          cd "$repo"
+        text = # sh
+          ''
+            repo=${notesDir}
+            cd "$repo"
 
-          # Nothing to do if the working tree is clean.
-          if git diff --quiet && git diff --cached --quiet && \
-             [ -z "$(git status --porcelain)" ]; then
-            echo "notes-push: clean tree, nothing to commit"
-            exit 0
-          fi
+            # Nothing to do if the working tree is clean.
+            if git diff --quiet && git diff --cached --quiet && \
+               [ -z "$(git status --porcelain)" ]; then
+              echo "notes-push: clean tree, nothing to commit"
+              exit 0
+            fi
 
-          git add -A
-          git commit -m "chore(notes): daily sync $(date +%Y-%m-%d)"
+            git add -A
+            git commit -m "chore(notes): daily sync $(date +%Y-%m-%d)"
 
-          # Integrate remote changes first so the push isn't rejected; the commit
-          # above means there's nothing to autostash, but it's cheap insurance.
-          git pull --rebase --autostash
-          git push
-          echo "notes-push: pushed"
-        '';
+            # Integrate remote changes first so the push isn't rejected; the commit
+            # above means there's nothing to autostash, but it's cheap insurance.
+            git pull --rebase --autostash
+            git push
+            echo "notes-push: pushed"
+          '';
       };
     in
     {

@@ -209,7 +209,7 @@ def main [] {
       "branch": $r.label,
       ($base): (fmt-counts $r.main $dim_dash $cw.0 $cw.1),
       "upstream": (fmt-counts $r.upstream $dim_dash $cw.0 $cw.1),
-      "last-commited": (heat-time $r.time $r.timestamp $min_ts $span $heat0 $heat1),
+      "last-committed": (heat-time $r.time $r.timestamp $min_ts $span $heat0 $heat1),
       "timestamp": $r.timestamp
     }
   }
