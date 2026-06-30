@@ -314,23 +314,25 @@
             Type = "simple";
             Restart = "always";
             RestartSec = 5;
-            ExecStart = "${pkgs.writeShellScript "hypridle-watchdog" ''
-              ${pkgs.systemd}/bin/journalctl --user -u hypridle -f -n 0 -o cat |
-                while read -r line; do
-                  case "$line" in
-                    *"inhibit locks < 0"*)
-                      now=$(${pkgs.coreutils}/bin/date +%s)
-                      last=$(${pkgs.coreutils}/bin/cat "$XDG_RUNTIME_DIR/hypridle-watchdog.stamp" 2>/dev/null || echo 0)
-                      # debounce so a restart can't thrash
-                      if [ $((now - last)) -ge 30 ]; then
-                        echo "$now" > "$XDG_RUNTIME_DIR/hypridle-watchdog.stamp"
-                        echo "hypridle-watchdog: inhibit-lock underflow -> restarting hypridle"
-                        ${pkgs.systemd}/bin/systemctl --user restart hypridle
-                      fi
-                      ;;
-                  esac
-                done
-            ''}";
+            ExecStart = "${pkgs.writeShellScript "hypridle-watchdog" # sh
+              ''
+                ${pkgs.systemd}/bin/journalctl --user -u hypridle -f -n 0 -o cat |
+                  while read -r line; do
+                    case "$line" in
+                      *"inhibit locks < 0"*)
+                        now=$(${pkgs.coreutils}/bin/date +%s)
+                        last=$(${pkgs.coreutils}/bin/cat "$XDG_RUNTIME_DIR/hypridle-watchdog.stamp" 2>/dev/null || echo 0)
+                        # debounce so a restart can't thrash
+                        if [ $((now - last)) -ge 30 ]; then
+                          echo "$now" > "$XDG_RUNTIME_DIR/hypridle-watchdog.stamp"
+                          echo "hypridle-watchdog: inhibit-lock underflow -> restarting hypridle"
+                          ${pkgs.systemd}/bin/systemctl --user restart hypridle
+                        fi
+                        ;;
+                    esac
+                  done
+              ''
+            }";
           };
           Install.WantedBy = [ "graphical-session.target" ];
         };

@@ -244,7 +244,11 @@ def "nu-complete git tags" [context: string] {
   mut bases = ($matches
     | each {|t| if ($t | str contains "@") { ($t | split row "@" | first) + "@" } }
     | compact | uniq)
-  for p in ["latest" "lates" "late" "lat" "la" "l"] {
+  # Prefixes of "latest", longest-first, so a partially-typed alias suffix
+  # (e.g. "v1@lat") still resolves to its base ("v1@").
+  let latest_word = "latest"
+  let partials = (1..($latest_word | str length) | each {|n| $latest_word | str substring 0..<$n } | reverse)
+  for p in $partials {
     if ($token | str ends-with $p) {
       $bases = ($bases | append ($token | str substring 0..<(($token | str length) - ($p | str length))))
       break

@@ -22,11 +22,13 @@
             runHook postBuild
           '';
           doCheck = false;
+          # Clippy produces no binary, so skip the package's own install/fixup
+          # hooks (e.g. wrapProgram) that would expect one to exist.
           installPhase = ''
-            runHook preInstall
             mkdir -p $out
-            runHook postInstall
           '';
+          postInstall = "";
+          dontFixup = true;
         });
     in
     {
