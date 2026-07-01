@@ -71,6 +71,7 @@
           clauhist-src
           executor-src
           mcp-atlassian-src
+          muscat-src
           simulstreaming-src
           zerobrew-src
           ;

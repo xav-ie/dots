@@ -1286,6 +1286,22 @@
         "url": "ssh://git@github.com/xav-ie/morrow"
       }
     },
+    "muscat-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782685231,
+        "narHash": "sha256-mcrO/EBN7vnimxT4OGNdwqOvs+TCZjtvXIrypESYKfM=",
+        "ref": "refs/heads/main",
+        "rev": "8e88aaf991add775315dcefb8292b39852bd3f67",
+        "revCount": 23,
+        "type": "git",
+        "url": "ssh://git@github.com/xav-ie/Muscat"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/xav-ie/Muscat"
+      }
+    },
     "neverest": {
       "inputs": {
         "fenix": [
@@ -1921,6 +1937,7 @@
         "mcp-nixos": "mcp-nixos",
         "morlana": "morlana",
         "morrow": "morrow",
+        "muscat-src": "muscat-src",
         "neverest": "neverest",
         "nix-auto-follow": "nix-auto-follow",
         "nix-darwin": "nix-darwin",
