@@ -29,6 +29,7 @@
         ream-pkg = inputs.ream.packages.${system}.default or null;
         # browser-session-mcp (extracted to its own repo); linux-only.
         browser-session-mcp-pkg = inputs.browser-session-mcp.packages.${system}.default or null;
+        sketchybar-icons-pkg = inputs.sketchybar-icons.packages.${system}.default or null;
         generate-kaomoji = inputs.generate-kaomoji.packages.${system}.default;
         # atuin and uair carry unmerged PR patches from overlays/default.nix:
         # atuin's pty-proxy OSC-7 cwd tracking (#3461) — without it tmux-shell's

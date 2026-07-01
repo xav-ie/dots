@@ -20,7 +20,9 @@ sketchybar --bar "position=top" $"height=(get_bar_height)" "blur_radius=30" "col
 let default_props = [
   "padding_left=-10",
   "padding_right=-10",
-  $"icon.font=(get_icon_font)",
+  # No icon.font: every bar icon is now a PNG rendered by `sketchybar-icons`
+  # (battery/wifi/clock/control_center/volume), so the mono Nerd icon font is no
+  # longer needed. Labels still use the tabular font below.
   $"label.font=(get_label_font)",
   "icon.color=0xffffffff",
   "label.color=0xffffffff",
@@ -71,10 +73,16 @@ sketchybar --bar "font_smoothing=on"
   --subscribe clock_icon mouse.entered mouse.exited)
 
 # wifi
-(sketchybar --add item wifi_background right --set wifi_background $"script=($PLUGIN_DIR)/wifi_background.nu")
-(sketchybar --add alias "Control Center,WiFi" right
-  --set "Control Center,WiFi" $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/wifi.nu"
-  --subscribe "Control Center,WiFi" mouse.entered mouse.exited)
+# Native icon rendered by `sketchybar-icons` (SF Symbol -> PNG via CoreWLAN
+# signal), replacing the old `Control Center,WiFi` alias that screen-recorded the
+# menu bar. `network_change` is the com.apple.system.config.network_change
+# distributed notification (instant connect/disconnect); `update_freq` refreshes
+# signal bars. The item paints its own background as the hover highlight, so no
+# separate wifi_background item is needed.
+(sketchybar --add event network_change com.apple.system.config.network_change)
+(sketchybar --add item wifi right
+  --set wifi $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/wifi.nu" update_freq=30
+  --subscribe wifi network_change mouse.entered mouse.exited)
 
 # control center
 (sketchybar --add item control_center right
@@ -86,10 +94,11 @@ sketchybar --bar "font_smoothing=on"
 (sketchybar --add item battery right
   --set battery $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/battery.nu"
   --subscribe battery battery_change mouse.entered mouse.exited)
-# Control Center,Battery
-(sketchybar --add alias "Control Center,Battery" right
-  --set "Control Center,Battery" $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/battery_icon.nu"
-  --subscribe "Control Center,Battery" battery_change mouse.entered mouse.exited)
+# battery icon: native SF Symbol rendered by `sketchybar-icons`, replacing the
+# old `Control Center,Battery` alias that screen-recorded the menu bar.
+(sketchybar --add item battery_icon right
+  --set battery_icon $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/battery_icon.nu"
+  --subscribe battery_icon battery_change mouse.entered mouse.exited)
 
 # volume
 (sketchybar --add item volume right

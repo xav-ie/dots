@@ -5,10 +5,15 @@ def main [] {
     "click_script=$HOME/.config/sketchybar/select_control_center.nu \"Battery\""
     "icon.padding_left=0"
     "icon.padding_right=0"
-    "label.padding_left=35"
-    "label.padding_right=5"
-    "label.width=75"
-    "padding_left=-35"
+    # Reserves space for the battery icon, with a small margin so the icon isn't
+    # flush against the hover box's left edge. Keep label.padding_left paired with
+    # the negative padding_left below (that pairing sets the reserved-zone width).
+    "label.padding_left=40"
+    "label.padding_right=4"
+    # No fixed label.width: the label (and its hover highlight) hugs the text so
+    # the % sits close to the button's right edge. The icon only shifts when the
+    # digit count changes (e.g. 100 -> 99).
+    "padding_left=-40"
     "padding_right=0"
   ]
 
@@ -20,13 +25,12 @@ def main [] {
       let percentage = (pmset -g batt
                        | parse -r '(?<percent>\d?\d?\d)%'
                        | get percent
-                       | first
-                       | fill --alignment right --character ' ' --width 3)
+                       | first)
 
       sketchybar --set $"($env.NAME)" ...$item_props $"label=($percentage)%"
     }
     "battery_change" => {
-      sketchybar --set $"($env.NAME)" $"label=($env.BATTERY | fill --alignment right --character ' ' --width 3)%"
+      sketchybar --set $"($env.NAME)" $"label=($env.BATTERY)%"
     }
   }
 }

@@ -33,9 +33,6 @@
         xdg.configFile = {
           "sketchybar/nix-settings.nu".text = # nu
             ''
-              def get_icon_font [] {
-                "${fonts.configs.sketchybar.icon-font}"
-              }
               def get_label_font [] {
                 "${fonts.configs.sketchybar.label-font}"
               }
@@ -70,8 +67,6 @@
             config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/plugins/volume_icon.nu";
           "sketchybar/plugins/wifi.nu".source =
             config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/plugins/wifi.nu";
-          "sketchybar/plugins/wifi_background.nu".source =
-            config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/plugins/wifi_background.nu";
         };
 
         launchd.agents.sketchybar = {
@@ -90,6 +85,10 @@
                 pkgs.sketchybar
                 pkgs.bash
                 pkgs.pkgs-mine.sketchybar-hover
+                # Renders the native Battery/Wi-Fi SF-Symbol PNGs used by the
+                # battery_icon.nu / wifi.nu plugins (replaces the screen-recording
+                # Control Center aliases).
+                pkgs.pkgs-mine.sketchybar-icons
               ]
               |> lib.makeBinPath
             }:/usr/bin";

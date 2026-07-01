@@ -115,6 +115,89 @@ in
       '';
     });
     writeNuApplication = final.nuenv.writeShellApplication;
+
+    # sketchybar built from my fork, which aligns right/center text by the
+    # typographic advance width instead of the glyph-path (ink) width. Without
+    # it, right-aligned tabular-figure labels (e.g. the volume "25%"/"31%")
+    # wobble ±1px between values because ink width differs even when advances
+    # match. Same v2.23.0 base as nixpkgs (no extra nixpkgs patches to preserve),
+    # just a different src. Drop once the fix is upstream.
+    # Version string is left as-is: sketchybar bakes "v2.23.0" into its
+    # --version output, and nixpkgs' versionCheckPhase greps for it, so a
+    # suffixed version would fail the check. The store hash already marks this
+    # as the fork build.
+    sketchybar = prev.sketchybar.overrideAttrs (_old: {
+      src = inputs.sketchybar-src;
+    });
+
+    # Inter with tabular figures (`tnum`) baked in as the default, as a single
+    # static Light instance. Used only by sketchybar's label font so the clock/
+    # battery digits stop jittering; plain `inter` is left untouched for
+    # hyprlock et al. We freeze the feature by hand with fonttools (remap the
+    # cmap through the tnum SingleSubst lookup) because opentype-feature-freezer
+    # 1.32 is broken against current fonttools. Family is renamed to
+    # "Inter Tabular" so it never collides with the real Inter.
+    inter-tabular =
+      let
+        py = final.python3.withPackages (ps: [ ps.fonttools ]);
+        freeze = final.writeText "freeze-tnum.py" ''
+          import sys
+          from fontTools.ttLib import TTFont
+
+          infile, outfile, family, style = sys.argv[1:5]
+          f = TTFont(infile)
+
+          # Collect glyph->glyph substitutions from the tnum feature's
+          # SingleSubst lookups (Inter's tabular figures are a 1:1 mapping).
+          gsub = f["GSUB"].table
+          lks = set()
+          for fr in gsub.FeatureList.FeatureRecord:
+              if fr.FeatureTag == "tnum":
+                  lks.update(fr.Feature.LookupListIndex)
+          m = {}
+          for li in sorted(lks):
+              lk = gsub.LookupList.Lookup[li]
+              if lk.LookupType == 1:
+                  for st in lk.SubTable:
+                      m.update(getattr(st, "mapping", {}))
+          if not m:
+              raise SystemExit("no tnum substitutions found")
+
+          # Remap every cmap subtable so default codepoints resolve to the
+          # tabular glyphs.
+          for st in f["cmap"].tables:
+              for cp, g in list(st.cmap.items()):
+                  if g in m:
+                      st.cmap[cp] = m[g]
+
+          # Rewrite the name table to a clean, collision-free identity.
+          ps = family.replace(" ", "") + "-" + style.replace(" ", "")
+          full = family if style == "Regular" else family + " " + style
+          name = f["name"]
+          name.names = []
+          vals = {1: family, 2: style, 4: full, 6: ps, 16: family, 17: style}
+          for nid, v in vals.items():
+              name.setName(v, nid, 3, 1, 0x409)  # Windows / Unicode / en-US
+              name.setName(v, nid, 1, 0, 0)      # Mac / Roman / en
+
+          f.save(outfile)
+        '';
+      in
+      final.runCommand "inter-tabular"
+        {
+          nativeBuildInputs = [ py ];
+          meta.description = "Inter Light with tabular figures frozen on (sketchybar labels)";
+        }
+        ''
+          light=light.ttf
+          # Instance a static Light (wght=300) cut from the variable font.
+          ${py}/bin/fonttools varLib.instancer \
+            ${final.inter}/share/fonts/truetype/InterVariable.ttf \
+            wght=300 -o "$light"
+          out=$out/share/fonts/truetype
+          mkdir -p "$out"
+          ${py}/bin/python3 ${freeze} "$light" "$out/InterTabular.ttf" "Inter Tabular" "Regular"
+        '';
     beads = inputs.beads.packages.${final.stdenv.hostPlatform.system}.default;
     himalaya =
       let

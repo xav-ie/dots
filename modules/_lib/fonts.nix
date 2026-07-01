@@ -10,6 +10,15 @@ let
       package = pkgs.inter;
       features = [ ];
     };
+    # Inter Light with tabular figures (`tnum`) frozen on — used for the
+    # sketchybar labels so numeric readouts (clock, battery) don't jitter.
+    # Renamed family (see the `inter-tabular` overlay) so it never clashes
+    # with the proportional `sans` above that hyprlock uses.
+    sans-tabular = {
+      name = "Inter Tabular";
+      package = pkgs.inter-tabular;
+      features = [ ];
+    };
     serif = {
       name = "Libertinus Serif";
       package = pkgs.libertinus;
@@ -99,8 +108,11 @@ in
         font-features = fontFeatures "mono";
       };
       sketchybar = {
-        icon-font = "${fontName "mono"}:Normal:24.0";
-        label-font = "${fontName "mono"}:Normal:14.0";
+        # No icon-font: every bar icon is a PNG rendered by `sketchybar-icons`,
+        # so the mono Nerd icon font is no longer needed. Labels use the
+        # tabular-figures Inter (already baked to Light weight) so numbers stay
+        # mono-width. See `sans-tabular` above / the `inter-tabular` overlay.
+        label-font = "${fontName "sans-tabular"}:Regular:14.0";
       };
     };
   };
