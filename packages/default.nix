@@ -25,6 +25,9 @@
   # browser-session-mcp, extracted to its own repo
   # (inputs.browser-session-mcp.packages.<system>.default); linux-only.
   browser-session-mcp-pkg ? null,
+  # sketchybar-icons, extracted to its own repo
+  # (inputs.sketchybar-icons.packages.<system>.default); darwin-only.
+  sketchybar-icons-pkg ? null,
   # Overlay-patched atuin (pty-proxy OSC-7 cwd tracking, #3461) built at the
   # flake level; must be the same patched build the profile uses so tmux-shell's
   # proxy chdir's and pane_current_path tracks the shell's cwd.
@@ -128,6 +131,7 @@ rec {
   move-pip = pkgs.callPackage ./move-pip { };
   sketchybar-battery = pkgs.callPackage ./sketchybar-battery { inherit writeNuApplication; };
   sketchybar-hover = pkgs.callPackage ./sketchybar-hover { };
+  sketchybar-icons = sketchybar-icons-pkg;
   zerobrew = pkgs.callPackage ./zerobrew { src = zerobrew-src; };
   tcc-grant = pkgs.callPackage ./tcc-grant { inherit writeNuApplication; };
 })

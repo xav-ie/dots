@@ -144,22 +144,25 @@ fn item_configs() -> (NameToTarget, TargetKeys) {
     let clock_keys: &[&str] = &["label.background.color", "icon.background.color"];
     let label_only: &[&str] = &["label.background.color"];
     let icon_only: &[&str] = &["icon.background.color"];
+    // The wifi icon is an image with no label, so it paints its own item
+    // background (see wifi.nu) rather than a sibling highlight item.
+    let bg_only: &[&str] = &["background.color"];
 
     let name_to_target: NameToTarget = HashMap::from([
         ("clock", "clock"),
         ("clock_icon", "clock"),
         ("front_app", "front_app"),
-        ("Control Center,WiFi", "wifi_background"),
+        ("wifi", "wifi"),
         ("control_center", "control_center"),
         ("battery", "battery"),
-        ("Control Center,Battery", "battery"),
+        ("battery_icon", "battery"),
         ("volume", "volume"),
         ("volume_icon", "volume"),
     ]);
     let target_keys: TargetKeys = HashMap::from([
         ("clock", clock_keys),
         ("front_app", label_only),
-        ("wifi_background", label_only),
+        ("wifi", bg_only),
         ("control_center", icon_only),
         ("battery", label_only),
         ("volume", label_only),

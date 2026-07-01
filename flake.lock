@@ -1969,6 +1969,8 @@
         "rust-analyzer-src": "rust-analyzer-src_4",
         "rust-overlay": "rust-overlay",
         "simulstreaming-src": "simulstreaming-src",
+        "sketchybar-icons": "sketchybar-icons",
+        "sketchybar-src": "sketchybar-src",
         "slack-mcp-server": "slack-mcp-server",
         "sops-nix": "sops-nix",
         "systems": "systems_2",
@@ -2095,6 +2097,43 @@
       "original": {
         "owner": "ufal",
         "repo": "SimulStreaming",
+        "type": "github"
+      }
+    },
+    "sketchybar-icons": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1783034577,
+        "narHash": "sha256-+3JwSq3CGQI5VIY7ERPMfnr7+Okk+VbCVNcYQH8L7nk=",
+        "owner": "xav-ie",
+        "repo": "sketchybar-icons",
+        "rev": "2b32ad7c0c1562e9aa35db9ed8f27807eb7e6a46",
+        "type": "github"
+      },
+      "original": {
+        "owner": "xav-ie",
+        "repo": "sketchybar-icons",
+        "type": "github"
+      }
+    },
+    "sketchybar-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783034599,
+        "narHash": "sha256-p8EBdYxRCgwRcHS1XNu82L5ikgYAeTUSoR8j/LWBDeM=",
+        "owner": "xav-ie",
+        "repo": "SketchyBar",
+        "rev": "fa70d6bb5fe765aee4f8681a1eef0f2e3cc6e59a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "xav-ie",
+        "ref": "fix/tabular-align-advance-width",
+        "repo": "SketchyBar",
         "type": "github"
       }
     },
