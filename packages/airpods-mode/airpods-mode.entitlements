@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <!-- Lets sharedSystemAudioContext hand us the real output devices; AVFoundation
+       checks this entitlement in-process. Restricted (com.apple.*), so it only
+       takes effect because this machine boots amfi_get_out_of_my_way=1. -->
+  <key>com.apple.avfoundation.allow-system-wide-context</key>
+  <true/>
+  <!-- IOBluetooth pairedDevices() (used by `list`) is gated by the Bluetooth TCC
+       permission; this private entitlement grants it without a prompt/DB row. -->
+  <key>com.apple.private.tcc.allow</key>
+  <array>
+    <string>kTCCServiceBluetoothAlways</string>
+  </array>
+  <!-- MediaRemote gates now-playing reads/notifications (mediaremoted computes an
+       entitlements bitmask; without these our client is entitlements=0 and gets no
+       play/pause notifications). Granting the full com.apple.mediaremote.* set;
+       honored only under amfi_get_out_of_my_way=1. -->
+  <key>com.apple.mediaremote.send-commands</key>
+  <true/>
+  <key>com.apple.mediaremote.set-playback-state</key>
+  <true/>
+  <key>com.apple.mediaremote.set-now-playing-app</key>
+  <true/>
+  <key>com.apple.mediaremote.ui-control</key>
+  <true/>
+  <key>com.apple.mediaremote.ui-server-connection</key>
+  <true/>
+  <key>com.apple.mediaremote.nearby-device</key>
+  <true/>
+  <key>com.apple.mediaremote.remote-control-discovery</key>
+  <true/>
+  <key>com.apple.mediaremote.group-sessions</key>
+  <true/>
+</dict></plist>
