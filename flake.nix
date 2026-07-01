@@ -25,6 +25,10 @@
     morrow.url = "git+ssh://git@github.com/xav-ie/morrow";
     morrow.inputs.nixpkgs.follows = "nixpkgs";
     morrow.inputs.ags.follows = "ags";
+    # Static board-poster generator; builds a single self-contained board.html
+    # served at muscat.lalala.casa. Source-only (no flake.nix); built in packages/muscat.
+    muscat-src.url = "git+ssh://git@github.com/xav-ie/Muscat";
+    muscat-src.flake = false;
     himalaya-latest.url = "github:xav-ie/himalaya?ref=xav/fix-deprecation-warnings";
     pimalaya-core.url = "github:pimalaya/core";
     pimalaya-core.flake = false;

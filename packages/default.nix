@@ -38,6 +38,7 @@
   executor-src,
   generate-kaomoji,
   mcp-atlassian-src,
+  muscat-src,
   nuenv,
   simulstreaming-src,
   slack-mcp-server-src,
@@ -163,6 +164,7 @@ rec {
     fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
     monoFont = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "mono";
   };
+  muscat = pkgs.callPackage ./muscat { inherit muscat-src; };
   notification-center = pkgs.callPackage ./notification-center {
     inherit agsPackages;
     fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";

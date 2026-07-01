@@ -79,6 +79,11 @@
                       service = "ream-service";
                       tls.certResolver = "cloudflare";
                     };
+                    muscat = {
+                      rule = "Host(`${config.services.muscat.subdomain}.${baseDomain}`)";
+                      service = "muscat-service";
+                      tls.certResolver = "cloudflare";
+                    };
                     # Snippets MCP rides on the shared mcp.<base> host alongside
                     # the containerised mcp-proxy. The PathPrefix rule has higher
                     # default priority (longer matcher) than the docker-provider
@@ -135,6 +140,13 @@
                       loadBalancer = {
                         servers = [
                           { url = "http://127.0.0.1:${config.services.ream.port |> toString}"; }
+                        ];
+                      };
+                    };
+                    muscat-service = {
+                      loadBalancer = {
+                        servers = [
+                          { url = "http://127.0.0.1:${config.services.muscat.port |> toString}"; }
                         ];
                       };
                     };
