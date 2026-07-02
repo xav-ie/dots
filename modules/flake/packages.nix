@@ -66,12 +66,12 @@
           ];
         };
         nuenv = inputs.nuenv.lib;
+        muscat-pkg = inputs.muscat.packages.${system}.muscat;
         inherit (inputs)
           bun-demincer-src
           clauhist-src
           executor-src
           mcp-atlassian-src
-          muscat-src
           simulstreaming-src
           zerobrew-src
           ;
