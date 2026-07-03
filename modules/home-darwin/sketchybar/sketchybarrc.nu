@@ -104,9 +104,12 @@ sketchybar --bar "font_smoothing=on"
 (sketchybar --add item volume right
   --set volume $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/volume.nu"
   --subscribe volume volume_change mouse.entered mouse.exited)
+# volume_icon does NOT subscribe to volume_change: volume.nu owns the icon image
+# and drives it in lockstep with the number tween (see volume.nu). It still needs
+# mouse events for the shared hover highlight.
 (sketchybar --add item volume_icon right
   --set volume_icon $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/volume_icon.nu"
-  --subscribe volume_icon volume_change mouse.entered mouse.exited)
+  --subscribe volume_icon mouse.entered mouse.exited)
 
 ##### Force all scripts to run the first time (never do this in a script) #####
 sketchybar --update
