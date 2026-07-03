@@ -3,8 +3,9 @@
 # Native analog clock icon. Hands sketchybar a PNG rendered by `sketchybar-icons
 # clock`, replacing the old Nerd-Font `nf-md-clock_time_*` glyphs (Material Design
 # Icons that clashed with the natively-rendered battery/wifi icons and only snap
-# to the 12 hour poses). The drawn face has a real minute hand, so it's accurate
-# to the minute — white ring + white hour hand, red minute hand.
+# to the 12 hour poses). The drawn face is accurate to the minute — white ring +
+# white hour hand, and a filled red minute hand (kite-shaped, like the hour hand)
+# so it stays legible at this size (a bare red line all but vanished on the bar).
 #
 # Refreshed on the item's `update_freq` (routine); the cache key is the current
 # HH-MM so a given minute renders once and sketchybar reloads on the path change.
@@ -13,9 +14,13 @@ const CACHE_DIR = ("~/.cache/sketchybar" | path expand)
 # On-screen icon height in px (= the clock's diameter; rendered at 2x, drawn at
 # background.image.scale 0.5). Sized to sit alongside the wifi/battery glyphs.
 # In the cache filename so bumping it busts stale PNGs.
-const POINT_SIZE = 16
+const POINT_SIZE = 18
 const FACE_COLOR = "0xffffffff" # ring + hour hand (white)
 const MINUTE_COLOR = "0xffff453a" # minute hand (red — matches the low-battery red)
+# Bump when the renderer's clock design changes: it's in the cache filename, so a
+# new value forces already-rendered minutes to re-render instead of showing stale
+# PNGs from the previous look.
+const STYLE = "v2"
 
 # Render (or reuse) the PNG for the current time and return its path. The
 # filename encodes HH-MM so (a) each minute renders once, and (b) sketchybar
@@ -24,7 +29,7 @@ def render [] {
   let now = (date now)
   let hour = ($now | format date "%-H" | into int)
   let minute = ($now | format date "%-M" | into int)
-  let out = $"($CACHE_DIR)/clock-($hour)-($minute)-($POINT_SIZE).png"
+  let out = $"($CACHE_DIR)/clock-($hour)-($minute)-($POINT_SIZE)-($STYLE).png"
   if not ($out | path exists) {
     sketchybar-icons clock --hour $hour --minute $minute --point-size $POINT_SIZE --scale 2 --color $FACE_COLOR --minute-color $MINUTE_COLOR --out $out
   }

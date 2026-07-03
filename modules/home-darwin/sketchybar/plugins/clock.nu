@@ -9,7 +9,7 @@ def main [] {
     # Was -26 (a tight overlap tuned for the old Nerd-Font clock glyph, which
     # carried side-bearing whitespace). The native clock PNG has none, so -26
     # pulled "Thu" flush against it; -23 restores a clean gap to the clock icon.
-    "padding_left=-23"
+    "padding_left=-22"
     "padding_right=0"
     "update_freq=30"
     $"label=($label)"
