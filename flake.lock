@@ -232,17 +232,17 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1782835445,
-        "narHash": "sha256-IZNaGoihXylYUvXEsI0008YIprPaqmmVMQ9DcbPjlaU=",
-        "ref": "refs/heads/main",
-        "rev": "84902b8a813c5a252d5c44abfeb8709644b093ae",
-        "revCount": 2,
-        "type": "git",
-        "url": "ssh://git@github.com/xav-ie/browser-session-mcp"
+        "lastModified": 1783032338,
+        "narHash": "sha256-4devDCo3K9FJEVAdqFT1zJtzf1yx87G8kaQE17o9Eg0=",
+        "owner": "xav-ie",
+        "repo": "browser-session-mcp",
+        "rev": "97cefca1452e90845e58804801ae368051527c52",
+        "type": "github"
       },
       "original": {
-        "type": "git",
-        "url": "ssh://git@github.com/xav-ie/browser-session-mcp"
+        "owner": "xav-ie",
+        "repo": "browser-session-mcp",
+        "type": "github"
       }
     },
     "bun-demincer-src": {
