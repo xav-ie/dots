@@ -36,6 +36,9 @@
               def get_label_font [] {
                 "${fonts.configs.sketchybar.label-font}"
               }
+              def get_app_font [] {
+                "${fonts.configs.sketchybar.app-font}"
+              }
               def get_bar_height [] {
                 ${barHeight}
               }

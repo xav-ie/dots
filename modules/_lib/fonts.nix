@@ -113,6 +113,10 @@ in
         # tabular-figures Inter (already baked to Light weight) so numbers stay
         # mono-width. See `sans-tabular` above / the `inter-tabular` overlay.
         label-font = "${fontName "sans-tabular"}:Regular:14.0";
+        # The front_app name isn't numeric, so it doesn't need the tabular
+        # freeze. Use proportional Inter at a real Regular weight (the tabular
+        # build is frozen to Light and has no other weights).
+        app-font = "${fontName "sans"}:Regular:14.0";
       };
     };
   };

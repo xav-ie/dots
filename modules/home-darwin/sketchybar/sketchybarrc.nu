@@ -51,6 +51,7 @@ sketchybar --bar "font_smoothing=on"
 # only the properties deviating from the current defaults need to be set
 (sketchybar --add item front_app left
   --set front_app $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/front_app.nu"
+  $"label.font=(get_app_font)"
   --subscribe front_app front_app_switched mouse.entered mouse.exited mouse.exited.global)
 
 ##### Adding Right Items #####
