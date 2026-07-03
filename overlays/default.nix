@@ -116,18 +116,40 @@ in
     });
     writeNuApplication = final.nuenv.writeShellApplication;
 
-    # sketchybar built from my fork, which aligns right/center text by the
-    # typographic advance width instead of the glyph-path (ink) width. Without
-    # it, right-aligned tabular-figure labels (e.g. the volume "25%"/"31%")
-    # wobble ±1px between values because ink width differs even when advances
-    # match. Same v2.23.0 base as nixpkgs (no extra nixpkgs patches to preserve),
-    # just a different src. Drop once the fix is upstream.
+    # sketchybar built from the clean upstream v2.23.0 tag (sketchybar-src) with
+    # my fixes fetched straight from the xav-ie fork as `fetchpatch` diffs, each
+    # droppable on its own the moment it lands upstream. Pinned by BRANCH (via
+    # the GitHub `compare` endpoint) on purpose: pushing to a branch changes the
+    # diff and so breaks the hash, forcing a deliberate re-pin here rather than
+    # silently drifting. fetchpatch re-normalizes GitHub's generated diff so the
+    # output hash is stable unless the content actually changes. v2.23.0 matches
+    # nixpkgs' base (no extra nixpkgs patches to preserve).
     # Version string is left as-is: sketchybar bakes "v2.23.0" into its
     # --version output, and nixpkgs' versionCheckPhase greps for it, so a
-    # suffixed version would fail the check. The store hash already marks this
-    # as the fork build.
-    sketchybar = prev.sketchybar.overrideAttrs (_old: {
+    # suffixed version would fail the check.
+    sketchybar = prev.sketchybar.overrideAttrs (old: {
       src = inputs.sketchybar-src;
+      patches = (old.patches or [ ]) ++ [
+        # Align right/center text by the typographic advance width instead of
+        # the glyph-path (ink) width, so right-aligned tabular-figure labels
+        # (e.g. the volume "25%"/"31%") stop wobbling ±1px between values.
+        # Diff of the branch against the v2.23.0 base it forks from.
+        (final.fetchpatch {
+          name = "sketchybar-text-align-advance-width.patch";
+          url = "https://github.com/xav-ie/SketchyBar/compare/v2.23.0...fix/tabular-align-advance-width.diff";
+          hash = "sha256-Hg2vW+aGZLkKTD0d4Pncv51QfYpFZg0d3rQvlXxUZWc=";
+        })
+        # The bar context is kCGInterpolationNone globally to keep pixel-exact
+        # PNG icons crisp; app icons come from NSImage at native rep size and get
+        # scaled down, so they need kCGInterpolationHigh for the draw or they
+        # look jagged/aliased. Tracked as upstream PR #832 (diff against master);
+        # the hash breaks if the PR is updated. Drop this once it merges.
+        (final.fetchpatch {
+          name = "sketchybar-image-hq-app-icon-sampling.patch";
+          url = "https://github.com/FelixKratz/SketchyBar/pull/832.diff";
+          hash = "sha256-pgY6xGTmNu9o7TXxvECFqSCfNNmLBsj1ZoxKOh+ytao=";
+        })
+      ];
     });
 
     # Inter with tabular figures (`tnum`) baked in as the default, as a single
