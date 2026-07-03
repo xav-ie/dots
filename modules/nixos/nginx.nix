@@ -99,7 +99,7 @@
                       tls.certResolver = "cloudflare";
                     };
                     chrome = {
-                      rule = "Host(`${config.services.chrome-headless.subdomain}.${baseDomain}`)";
+                      rule = "Host(`${config.services.browser-session.chrome.subdomain}.${baseDomain}`)";
                       service = "chrome-service";
                       tls.certResolver = "cloudflare";
                       # Chrome's DevTools HTTP handler rejects non-loopback Host
@@ -109,7 +109,7 @@
                     # Human-takeover page server (browser-session-takeover daemon).
                     # No Host rewrite needed — it's our own plain HTTP daemon.
                     chrome-takeover = {
-                      rule = "Host(`${config.services.browser-session-takeover.subdomain}.${baseDomain}`)";
+                      rule = "Host(`${config.services.browser-session.takeover.subdomain}.${baseDomain}`)";
                       service = "chrome-takeover-service";
                       tls.certResolver = "cloudflare";
                     };
@@ -163,14 +163,14 @@
                         # public Host; the middleware below then sets it to localhost.
                         passHostHeader = false;
                         servers = [
-                          { url = "http://127.0.0.1:${config.services.chrome-headless.port |> toString}"; }
+                          { url = "http://127.0.0.1:${config.services.browser-session.chrome.port |> toString}"; }
                         ];
                       };
                     };
                     chrome-takeover-service = {
                       loadBalancer = {
                         servers = [
-                          { url = "http://127.0.0.1:${config.services.browser-session-takeover.port |> toString}"; }
+                          { url = "http://127.0.0.1:${config.services.browser-session.takeover.port |> toString}"; }
                         ];
                       };
                     };
