@@ -2123,16 +2123,16 @@
     "sketchybar-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1783034599,
-        "narHash": "sha256-p8EBdYxRCgwRcHS1XNu82L5ikgYAeTUSoR8j/LWBDeM=",
-        "owner": "xav-ie",
+        "lastModified": 1762104086,
+        "narHash": "sha256-PvKvevsSyRb6OfPWc2+1Bcfj2ngmgeP1URBoBiVeEdk=",
+        "owner": "FelixKratz",
         "repo": "SketchyBar",
-        "rev": "fa70d6bb5fe765aee4f8681a1eef0f2e3cc6e59a",
+        "rev": "031cdff653ff80b7d253e1de659088de827d68d1",
         "type": "github"
       },
       "original": {
-        "owner": "xav-ie",
-        "ref": "fix/tabular-align-advance-width",
+        "owner": "FelixKratz",
+        "ref": "v2.23.0",
         "repo": "SketchyBar",
         "type": "github"
       }

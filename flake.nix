@@ -46,10 +46,7 @@
     ream.inputs.nixpkgs.follows = "nixpkgs";
     sketchybar-icons.url = "github:xav-ie/sketchybar-icons";
     sketchybar-icons.inputs.nixpkgs.follows = "nixpkgs";
-    # Fork of sketchybar with the right/center-align advance-width fix (tabular
-    # figures stop wobbling). Plain source tree (no flake.nix) built by the
-    # `sketchybar` override in overlays/default.nix. Drop once upstreamed.
-    sketchybar-src.url = "github:xav-ie/SketchyBar/fix/tabular-align-advance-width";
+    sketchybar-src.url = "github:FelixKratz/SketchyBar/v2.23.0";
     sketchybar-src.flake = false;
     sops-nix.url = "github:Mic92/sops-nix";
     virtual-headset.url = "github:xav-ie/virtual-headset";
