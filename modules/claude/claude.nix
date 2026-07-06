@@ -58,6 +58,10 @@
         marketplaces = lib.mkOption {
           type = lib.types.attrsOf (lib.types.submodule marketplaceOpts);
           default = {
+            "browser-session-mcp" = {
+              repo = "xav-ie/browser-session-mcp";
+              src = inputs.browser-session-mcp;
+            };
             "claude-plugins-official" = {
               repo = "anthropics/claude-plugins-official";
               src = inputs.claude-marketplace-official;

@@ -225,18 +225,20 @@
     },
     "browser-session-mcp": {
       "inputs": {
+        "crane": "crane",
         "flake-parts": "flake-parts",
         "nixpkgs": [
           "nixpkgs"
         ],
+        "rust-overlay": "rust-overlay",
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1783032338,
-        "narHash": "sha256-4devDCo3K9FJEVAdqFT1zJtzf1yx87G8kaQE17o9Eg0=",
+        "lastModified": 1783375938,
+        "narHash": "sha256-ITbik6G6Xpj3ZIJlNDzBOBpV5iEHXrRmbQamDBNJPxc=",
         "owner": "xav-ie",
         "repo": "browser-session-mcp",
-        "rev": "97cefca1452e90845e58804801ae368051527c52",
+        "rev": "119a30ffcd137df800294e764172463a32717160",
         "type": "github"
       },
       "original": {
@@ -359,6 +361,21 @@
       }
     },
     "crane": {
+      "locked": {
+        "lastModified": 1783030479,
+        "narHash": "sha256-h9URleVAoxoA8cpC09rG6N3/q8XkRqDZ6NMSkOkoRh0=",
+        "owner": "ipetkov",
+        "repo": "crane",
+        "rev": "339845ec5132ef749654058f4dd6c810dd44b6d2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ipetkov",
+        "repo": "crane",
+        "type": "github"
+      }
+    },
+    "crane_2": {
       "locked": {
         "lastModified": 1766194365,
         "narHash": "sha256-4AFsUZ0kl6MXSm4BaQgItD0VGlEKR3iq7gIaL7TjBvc=",
@@ -586,11 +603,11 @@
         "nixpkgs-lib": "nixpkgs-lib"
       },
       "locked": {
-        "lastModified": 1765835352,
-        "narHash": "sha256-XswHlK/Qtjasvhd1nOa1e8MgZ8GS//jBoTqWtrS1Giw=",
+        "lastModified": 1778716662,
+        "narHash": "sha256-m1Yf0wZ8j1OHjTc2UwHwyQRSnNeSgLJOd7q5Y45hzi4=",
         "owner": "hercules-ci",
         "repo": "flake-parts",
-        "rev": "a34fae9c08a15ad73f295041fec82323541400a9",
+        "rev": "f7c1a2d347e4c52d5fb8d10cb4d94b5884e546fb",
         "type": "github"
       },
       "original": {
@@ -1482,11 +1499,11 @@
     },
     "nixpkgs-lib": {
       "locked": {
-        "lastModified": 1765674936,
-        "narHash": "sha256-k00uTP4JNfmejrCLJOwdObYC9jHRrr/5M/a/8L2EIdo=",
+        "lastModified": 1777168982,
+        "narHash": "sha256-GOkGPcboWE9BmGCRMLX3worL4EMnsnG8MyKmXNeYuhQ=",
         "owner": "nix-community",
         "repo": "nixpkgs.lib",
-        "rev": "2075416fcb47225d9b68ac469a5c4801a9c4dd85",
+        "rev": "f5901329dade4a6ea039af1433fb087bd9c1fe14",
         "type": "github"
       },
       "original": {
@@ -1960,7 +1977,7 @@
         "claude-marketplace-osgrep": "claude-marketplace-osgrep",
         "claude-marketplace-outsmartly": "claude-marketplace-outsmartly",
         "clauhist-src": "clauhist-src",
-        "crane": "crane",
+        "crane": "crane_2",
         "ctpv": "ctpv",
         "disko": "disko",
         "executor-src": "executor-src",
@@ -2008,7 +2025,7 @@
         "ralph-src": "ralph-src",
         "ream": "ream",
         "rust-analyzer-src": "rust-analyzer-src_4",
-        "rust-overlay": "rust-overlay",
+        "rust-overlay": "rust-overlay_2",
         "simulstreaming-src": "simulstreaming-src",
         "sketchybar-icons": "sketchybar-icons",
         "sketchybar-src": "sketchybar-src",
@@ -2107,6 +2124,27 @@
       }
     },
     "rust-overlay": {
+      "inputs": {
+        "nixpkgs": [
+          "browser-session-mcp",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1782962170,
+        "narHash": "sha256-HsaK9yDDypMB2TPxAYz0mPKtmYhgNwFQa72b3Ko6kRE=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "e3fa5cf86b93914b8f312b2a1ca14fbb139c655c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "rust-overlay_2": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"
@@ -2291,11 +2329,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1766000401,
-        "narHash": "sha256-+cqN4PJz9y0JQXfAK5J1drd0U05D5fcAGhzhfVrDlsI=",
+        "lastModified": 1780220602,
+        "narHash": "sha256-eynAfOmbmxJnkp7YewvCEbShNnnYJ9gLLqkzsYtBPeM=",
         "owner": "numtide",
         "repo": "treefmt-nix",
-        "rev": "42d96e75aa56a3f70cab7e7dc4a32868db28e8fd",
+        "rev": "db947814a175b7ca6ded66e21383d938df01c227",
         "type": "github"
       },
       "original": {
