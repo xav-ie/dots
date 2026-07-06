@@ -59,6 +59,10 @@
 
     # transitive deps that are used by multiple inputs
     crane.url = "github:ipetkov/crane";
+    disko.url = "github:nix-community/disko";
+    disko.inputs.nixpkgs.follows = "nixpkgs";
+    terranix.url = "github:terranix/terranix";
+    terranix.inputs.nixpkgs.follows = "nixpkgs";
     fenix.url = "github:nix-community/fenix";
     fenix-neverest.url = "github:soywod/fenix";
     flake-compat.url = "github:edolstra/flake-compat";

@@ -158,6 +158,7 @@ rec {
     fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
   };
   browser-session-mcp = browser-session-mcp-pkg;
+  cachectl = pkgs.callPackage ./cachectl { inherit writeNuApplication; };
   chrome-headless-shell = pkgs.callPackage ./chrome-headless-shell { };
   claude-overlay = pkgs.callPackage ./claude-overlay { };
   claude-yolo = pkgs.callPackage ./claude-yolo { };

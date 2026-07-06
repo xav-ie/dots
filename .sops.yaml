@@ -1,12 +1,19 @@
 # https://github.com/Mic92/sops-nix
 keys:
-  - &users:
-    - &admin_x age17muvhm5l3khzd2n5m64rge329n672sg20jad0u58rugvtwswhp6s6dfmd3
-  # TODO: add my hosts
-  # - &hosts:
-  #   - &praesidium:
-  #   - &stella:
+  - &admin_x age17muvhm5l3khzd2n5m64rge329n672sg20jad0u58rugvtwswhp6s6dfmd3
+  # Host keys — the age identity sops-nix derives from each host's SSH
+  # ed25519 key (ssh-to-age < /etc/ssh/ssh_host_ed25519_key.pub). Public hosts
+  # get their OWN secrets file so the admin master key never lands on them.
+  - &arca age13tddk5ctem57wmlh2mmfv03cc7y6z4pg4dtjhc6ft6nnxhtxkejsc39w6t
 creation_rules:
+  # arca (public cache server): its own secret, readable by the box's host key
+  # and the admin. Must precede the catch-all below (sops uses the first match).
+  - path_regex: secrets/arca\.yaml$
+    key_groups:
+      - age:
+          - *admin_x
+          - *arca
+  # Everything else → admin only.
   - path_regex: secrets/[^/]+\.(yaml|json|env|ini)$
     key_groups:
       - age:

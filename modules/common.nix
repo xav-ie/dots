@@ -17,7 +17,6 @@ let
     {
       config,
       inputs,
-      lib,
       pkgs,
       ...
     }:
@@ -44,17 +43,6 @@ let
             # dates = "weekly";
             options = "--delete-older-than 30d";
           };
-
-          # This will add each flake input as a registry
-          # To make nix3 commands consistent with your flake
-          registry =
-            # very important, would otherwise cause full eval of git repo after
-            # *any* change
-            inputs |> lib.filterAttrs (name: _: name != "self") |> lib.mapAttrs (_: value: { flake = value; });
-
-          # This will additionally add your inputs to the system's legacy channels
-          # Making legacy nix commands consistent as well, awesome!
-          nixPath = lib.mapAttrsToList (key: value: "${key}=${value.to.path}") config.nix.registry;
 
           settings = {
             # just run this every once in a while... auto-optimization slows down evaluation

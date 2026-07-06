@@ -7,3 +7,6 @@ __pycache__/
 
 # Unignore tracked CLAUDE.md
 !home-manager/modules/claude/CLAUDE.md
+
+# OpenTofu / terranix — disposable tofu workdir (state lives in R2, not here).
+/.terranix/

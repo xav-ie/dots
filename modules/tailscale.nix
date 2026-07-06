@@ -1,6 +1,6 @@
-# Tailscale, on both hosts.
+# Tailscale on every Linux host (via `base`) and on macOS.
 {
-  flake.modules.nixos.linux =
+  flake.modules.nixos.base =
     {
       config,
       pkgs,

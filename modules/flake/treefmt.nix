@@ -112,11 +112,14 @@
           settings = {
             on-unmatched = "fatal";
             excludes = [
+              "**/*.entitlements"
+              "**/*.env"
               "**/*.modulemap"
               "**/*.txt"
               "**/.gitignore"
               "**/.inputrc"
               "**/.npmrc"
+              "**/.terraform.lock.hcl"
               "**/Cargo.lock"
               "*.awk"
               "*.conf"
