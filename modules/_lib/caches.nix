@@ -8,6 +8,10 @@
     repo = "xav-ie/browser-session-mcp";
   }
   {
+    name = "nuenv";
+    repo = "xav-ie/nuenv";
+  }
+  {
     name = "xnixvim";
     repo = "xav-ie/xnixvim";
   }
