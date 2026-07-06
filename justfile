@@ -150,3 +150,44 @@ test-pip:
     nix shell nixpkgs#rustc -c rustc --test --edition 2021 \
       --crate-name move_pip_test move-pip.rs -o /tmp/move-pip-test
     /tmp/move-pip-test
+
+# refresh the Slack MCP tokens (xoxc/xoxd) from the Firefox "Work" profile into
+# sops. These are Slack browser-session tokens and expire periodically; when they
+# do, slack-mcp-server dies on startup. xoxd is the HttpOnly `d` cookie (read from
+# cookies.sqlite); xoxc lives in localStorage (snappy-compressed on disk), so it's
+
+# grabbed via a console snippet that copies it to the clipboard. Run `just` after.
+slack-tokens:
+    #!/usr/bin/env nu
+    let workdir = (firefox-router --profile-dir Work | str trim)
+    if ($workdir | is-empty) or (not ($workdir | path exists)) {
+      error make { msg: $"could not resolve the Firefox 'Work' profile: '($workdir)'" }
+    }
+
+    # Open Slack in the Work profile so the session is live/fresh.
+    job spawn { firefox --profile $workdir --profiles-activate "https://app.slack.com/" | ignore }
+    print $"Opened Slack in the Work profile \(($workdir | path basename)\)."
+    print ""
+    print "In the Slack tab: open DevTools (F12) -> Console and paste this (copies xoxc to your clipboard):"
+    print ""
+    print "    copy(Object.values(JSON.parse(localStorage.localConfig_v2).teams)[0].token)"
+    print ""
+    input "Then press Enter here to continue..."
+    let xoxc = (wl-paste | str trim)
+
+    # xoxd = the HttpOnly `d` cookie (not reachable from JS). Copy the DB + its WAL
+    # sidecars so a freshly-written cookie isn't missed, then read + URL-decode it.
+    let py = r#'import sys,os,sqlite3,urllib.parse,tempfile,shutil; wp=sys.argv[1]; d=tempfile.mkdtemp(); [shutil.copy2(os.path.join(wp,"cookies.sqlite"+e),os.path.join(d,"cookies.sqlite"+e)) for e in ("","-wal","-shm") if os.path.exists(os.path.join(wp,"cookies.sqlite"+e))]; c=sqlite3.connect(os.path.join(d,"cookies.sqlite")); r=c.execute("SELECT value FROM moz_cookies WHERE host LIKE '%slack.com' AND name='d'").fetchone(); print(urllib.parse.unquote(r[0]) if r else "")'#
+    let xoxd = (python3 -c $py $workdir | str trim)
+
+    if not ($xoxc | str starts-with "xoxc-") {
+      error make { msg: $"clipboard is not an xoxc- token \(got '($xoxc | str substring 0..8)'\). Re-run the console snippet, then retry." }
+    }
+    if not ($xoxd | str starts-with "xoxd-") {
+      error make { msg: "no valid xoxd- `d` cookie in the Work profile — are you logged into Slack there?" }
+    }
+
+    print $"  xoxc ($xoxc | str substring 0..12)…   xoxd ($xoxd | str substring 0..12)…"
+    sudo sops set secrets/main.yaml '["slack"]["xoxc_token"]' $'"($xoxc)"'
+    sudo sops set secrets/main.yaml '["slack"]["xoxd_token"]' $'"($xoxd)"'
+    print "Updated Slack tokens in secrets/main.yaml. Run `just` to re-render + restart the proxy."
