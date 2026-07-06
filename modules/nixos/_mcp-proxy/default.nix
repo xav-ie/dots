@@ -11,6 +11,14 @@ let
   fullHostName = "${subdomain}.${baseDomain}";
   containerPort = 18199;
 
+  # Per-server resilience shim: runs the real backend, and if it exits non-zero
+  # (e.g. an expired token) degrades to an empty MCP server instead of a dead
+  # pipe — so one bad backend can't crash the whole single-process proxy. See
+  # the file header for the failure mode this guards against.
+  mcp-resilient = pkgs.writers.writePython3Bin "mcp-resilient" { } (
+    builtins.readFile ./mcp-resilient.py
+  );
+
   serverOpts = {
     options = {
       command = lib.mkOption {
@@ -73,8 +81,11 @@ let
       mcpServers =
         allServers
         |> lib.mapAttrs (
+          # Front every backend with the resilience shim so a single crashing
+          # server degrades to empty instead of taking the whole proxy down.
           _: s: {
-            inherit (s) command args;
+            command = "${mcp-resilient}/bin/mcp-resilient";
+            args = [ s.command ] ++ s.args;
           }
         );
     }
@@ -87,6 +98,7 @@ let
     contents = [
       pkgs.mcp-proxy
       pkgs.coreutils
+      mcp-resilient
       combinedCACert
     ]
     ++ allPackages;
