@@ -1,5 +1,13 @@
 # Shared NixOS + darwin nix settings, flake registry, `defaultUser`, and gcroots.
 let
+  # Self-hosted atticd caches (single-sourced from _lib/caches.nix, same list the
+  # CI push actions and cachectl use). Wired as substituters so local builds pull
+  # prebuilt paths instead of rebuilding these repos from source.
+  selfCaches = import ./_lib/caches.nix;
+  cacheEndpoint = "https://cache.lalala.casa";
+  cacheSubstituters = map (c: "${cacheEndpoint}/${c.name}") selfCaches;
+  cachePublicKeys = map (c: c.key) selfCaches;
+
   userModule =
     { lib, ... }:
     {
@@ -56,6 +64,8 @@ let
               "flakes"
               "pipe-operators"
             ];
+            # Actively pull from the self-hosted caches (not just allow them).
+            extra-substituters = cacheSubstituters;
             extra-trusted-substituters = [
               "https://nix-community.cachix.org"
               "https://devenv.cachix.org"
@@ -65,7 +75,8 @@ let
               "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
               "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
               "cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M="
-            ];
+            ]
+            ++ cachePublicKeys;
             trusted-users = [ config.defaultUser ];
             fallback = true; # allow building from src
             # use max cores/threads when `enableParallelBuilding` is set for package
