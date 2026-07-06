@@ -8,7 +8,7 @@
     {
       config = {
         # Don't use programs.npm.settings - it manages ~/.npmrc which npm login needs to modify
-        programs.npm.package = pkgs.nodejs;
+        programs.npm.package = pkgs.nodejs_24;
         programs.npm.settings = { };
 
         # Tell npm to read globalconfig from custom location
