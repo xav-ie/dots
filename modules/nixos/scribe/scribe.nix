@@ -94,7 +94,14 @@
           description = "Build scribe streaming-ASR container image";
           wantedBy = [ "multi-user.target" ];
           before = [ "podman-${subdomain}.service" ];
-          path = [ pkgs.podman ];
+          # `podman login nvcr.io` needs DNS, so wait for the network — otherwise
+          # the boot-time run dies with `lookup nvcr.io: no such host` (exit 125).
+          after = [ "network-online.target" ];
+          wants = [ "network-online.target" ];
+          path = [
+            pkgs.podman
+            pkgs.getent
+          ];
           serviceConfig = {
             Type = "oneshot";
             RemainAfterExit = true;
@@ -102,10 +109,23 @@
             # First build pulls the ~20GB NeMo base image.
             TimeoutStartSec = "90min";
           };
+          # Only the FIRST build needs the network — to pull the nvcr.io NeMo base
+          # + apt/pip layers. Once localhost/scribe:latest exists, later boots
+          # rebuild from the local cache fully offline (`--pull=missing` never
+          # contacts the registry). network-online.target fires before DNS is
+          # actually ready on this NetworkManager desktop (wait-online disabled),
+          # so when a network build IS needed, wait for real name resolution
+          # before logging in — this makes the no-cache first boot succeed too.
           script = ''
-            printf '%s' "$NGC_API_KEY" \
-              | podman login nvcr.io --username '$oauthtoken' --password-stdin
-            podman build -f ${scribeSrc}/Dockerfile -t localhost/scribe:latest ${scribeSrc}
+            if ! podman image exists localhost/scribe:latest; then
+              until getent hosts nvcr.io >/dev/null 2>&1; do
+                echo "waiting for DNS to reach nvcr.io..."
+                sleep 3
+              done
+              printf '%s' "$NGC_API_KEY" \
+                | podman login nvcr.io --username '$oauthtoken' --password-stdin
+            fi
+            podman build --pull=missing -f ${scribeSrc}/Dockerfile -t localhost/scribe:latest ${scribeSrc}
           '';
         };
 
