@@ -31,11 +31,11 @@
             nix-output-monitor
           ])
           ++ lib.optionals pkgs.stdenv.isLinux (
-            with pkgs-bleeding;
-            [
+            (with pkgs-bleeding; [
               nh
               nixos-rebuild
-            ]
+            ])
+            ++ [ config.packages.cachectl ]
           )
           ++ lib.optionals pkgs.stdenv.isDarwin [
             inputs.morlana.packages.${system}.default

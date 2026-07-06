@@ -7,8 +7,7 @@
 # below, which are honored only because nox boots amfi_get_out_of_my_way=1. So
 # it's really a nox feature, but it rides darwin.macos (nox is the only darwin
 # host) and degrades to a harmless no-op daemon on any Mac without that boot-arg.
-_:
-{
+_: {
   flake.modules.darwin.macos =
     {
       config,
