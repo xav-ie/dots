@@ -8,5 +8,13 @@
     # kernel prefers reclaiming rebuildable page cache and only swaps anon
     # memory when genuinely pressured — cold idle pages still park in swap.
     boot.kernel.sysctl."vm.swappiness" = 10;
+
+    # Cap the build tree's memory so a runaway rebuild OOM-kills a build
+    # process, not the desktop. Builds run in nix-daemon.service's cgroup.
+    systemd.services.nix-daemon.serviceConfig = {
+      MemoryHigh = "14G";
+      MemoryMax = "18G";
+      MemorySwapMax = "8G";
+    };
   };
 }
