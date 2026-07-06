@@ -1,5 +1,6 @@
 {
   "plugins": [
+    "browser-session@browser-session-mcp",
     "dts@outsmartly-plugins",
     "pts@outsmartly-plugins",
     "vtsls@claude-code-lsps",
