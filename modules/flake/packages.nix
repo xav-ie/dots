@@ -48,9 +48,9 @@
         isDarwin = lib.hasSuffix "-darwin" system;
         isLinux = lib.hasSuffix "-linux" system;
         inherit pkgs-unfree;
-        pkgs-bleeding = import inputs.nixpkgs-bleeding {
+        pkgs-bleeding = import (inputs.self + "/overlays/_bleeding.nix") {
+          inherit (inputs) nixpkgs-bleeding;
           inherit system;
-          config.allowUnfree = true;
           overlays = [
             (_: bleedPrev: {
               pythonPackagesExtensions = bleedPrev.pythonPackagesExtensions ++ [

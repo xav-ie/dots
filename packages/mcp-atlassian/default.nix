@@ -7,7 +7,65 @@ let
   # due to py-key-value-aio pulling in aioboto3 → moto → cfn-lint →
   # aws-sam-translator which doesn't support 3.14
   python3Packages = pkgs-bleeding.python313Packages.overrideScope (
-    _final: prev: {
+    final: prev: {
+      # mcp-atlassian caps fastmcp <2.15.0, but nixpkgs-bleeding moved to the
+      # fastmcp 3.x line (a breaking major that also restructured the nixpkgs
+      # recipe into fastmcp + fastmcp-slim). Pin the last-known-good 2.14.5,
+      # mirroring the recipe bleeding shipped before the bump — all of its
+      # dependency bounds (mcp <2.0, cyclopts >=4, py-key-value-aio <0.4, …)
+      # are still satisfied by the current set. Deps come from `final` so the
+      # py-key-value-aio here uses the lupa/fakeredis overrides below. Its own
+      # test suite is skipped (we only consume it as a library). Drop once
+      # mcp-atlassian supports fastmcp 3.x.
+      fastmcp = prev.buildPythonPackage rec {
+        pname = "fastmcp";
+        version = "2.14.5";
+        pyproject = true;
+
+        src = pkgs-bleeding.fetchFromGitHub {
+          owner = "jlowin";
+          repo = "fastmcp";
+          tag = "v${version}";
+          hash = "sha256-j3aUvAKm0rW5X/l1VXoSBc5fCjSLxnyznwzj1D3E7Ck=";
+        };
+
+        env.UV_DYNAMIC_VERSIONING_BYPASS = version;
+
+        build-system = [
+          final.hatchling
+          final.uv-dynamic-versioning
+        ];
+
+        pythonRelaxDeps = [ "pydocket" ];
+        dependencies = [
+          final.authlib
+          final.cyclopts
+          final.exceptiongroup
+          final.httpx
+          final.jsonref
+          final.jsonschema-path
+          final.mcp
+          final.openapi-pydantic
+          final.packaging
+          final.platformdirs
+          final.py-key-value-aio
+          final.pydantic
+          final.pydocket
+          final.pyperclip
+          final.python-dotenv
+          final.rich
+          final.uvicorn
+          final.websockets
+        ]
+        ++ final.py-key-value-aio.optional-dependencies.disk
+        ++ final.py-key-value-aio.optional-dependencies.keyring
+        ++ final.py-key-value-aio.optional-dependencies.memory
+        ++ final.pydantic.optional-dependencies.email;
+
+        pythonImportsCheck = [ "fastmcp" ];
+        doCheck = false;
+      };
+
       # FastMCP >=2.13 starts a pydocket worker on a memory:// (fakeredis)
       # backend for every server, including stdio. fakeredis's async can_read
       # busy-polled the in-memory queue (sleep(0.01) loop), so the worker spun

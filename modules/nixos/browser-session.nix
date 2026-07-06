@@ -14,6 +14,7 @@
     let
       inherit (config.services.local-networking) baseDomain;
       cfg = config.services.browser-session;
+      gpu = import ../_lib/gpu.nix;
     in
     {
       imports = [ inputs.browser-session-mcp.nixosModules.default ];
@@ -54,7 +55,7 @@
             ];
             environment = {
               LD_LIBRARY_PATH = "/run/opengl-driver/lib:${pkgs.vulkan-loader}/lib";
-              VK_ICD_FILENAMES = "/run/opengl-driver/share/vulkan/icd.d/nvidia_icd.x86_64.json";
+              VK_ICD_FILENAMES = gpu.vulkanIcd;
             };
           };
 

@@ -11,8 +11,10 @@
       enabled = cfg.app == "hyprwhspr";
 
       hyprwhspr-rs = pkgs.pkgs-bleeding.hyprwhspr-rs.override {
-        whisper-cpp = pkgs.pkgs-bleeding.whisper-cpp.override { cudaSupport = true; };
-        onnxruntime = pkgs.pkgs-bleeding.onnxruntime.override { cudaSupport = true; };
+        whisper-cpp = pkgs.pkgs-bleeding-cuda.whisper-cpp;
+        # OpenVINO is Intel-only inference; unused here (CUDA does the work) and
+        # it drags in a full opencv build. Disable it to drop both.
+        onnxruntime = pkgs.pkgs-bleeding-cuda.onnxruntime.override { openvinoSupport = false; };
       };
 
       configFile = pkgs.writeText "hyprwhspr-rs-config.jsonc" (

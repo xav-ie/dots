@@ -13,9 +13,12 @@
       # The perSystem `pkgs` carries no overlays and tracks the (intentionally
       # lagging) main nixpkgs pin, so the dev CLIs go stale there. Pull them from
       # nixpkgs-bleeding instead, matching the `pkgs-bleeding` set used elsewhere.
-      pkgs-bleeding = import inputs.nixpkgs-bleeding {
+      # Route through the shared constructor so the direnv shell's nu matches
+      # the installed nu (home-manager) and nu_plugin_prompt (compiled against
+      # 0.114) — a minor mismatch breaks the plugin handshake.
+      pkgs-bleeding = import (inputs.self + "/overlays/_bleeding.nix") {
+        inherit (inputs) nixpkgs-bleeding;
         inherit system;
-        config.allowUnfree = true;
       };
     in
     {
