@@ -11,7 +11,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/notify-if-question.nu"
+            "command": "~/.claude/notify-if-question"
           }
         ]
       },
@@ -20,7 +20,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/notify.nu"
+            "command": "~/.claude/notify"
           }
         ]
       },
@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/tmux-claude-indicator.nu notification"
+            "command": "~/.claude/tmux-claude-indicator notification"
           }
         ]
       }
@@ -39,11 +39,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/tmux-claude-indicator.nu stop"
+            "command": "~/.claude/tmux-claude-indicator stop"
           },
           {
             "type": "command",
-            "command": "~/.claude/record-pending-tool.nu"
+            "command": "~/.claude/record-pending-tool"
           }
         ]
       }
@@ -54,7 +54,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/record-pending-tool.nu"
+            "command": "~/.claude/record-pending-tool"
           }
         ]
       }
@@ -65,7 +65,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/format-and-lint.nu"
+            "command": "~/.claude/format-and-lint"
           }
         ]
       }
@@ -91,7 +91,7 @@
           },
           {
             "type": "command",
-            "command": "~/.claude/record-pending-tool.nu"
+            "command": "~/.claude/record-pending-tool"
           }
         ]
       }

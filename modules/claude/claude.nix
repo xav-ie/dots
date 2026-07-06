@@ -31,6 +31,27 @@
       findInputName =
         src: lib.attrNames inputs |> lib.findFirst (name: inputs.${name}.outPath or null == "${src}") null;
 
+      # A nushell hook script, deployed as two files:
+      #   .claude/<name>.nu  -> live, out-of-store symlink (edit without rebuild)
+      #   .claude/<name>     -> store wrapper that execs the *pinned* nushell
+      #                         against that live source, passing args through.
+      # Hooks must be invoked via the wrapper (~/.claude/<name>), NOT the raw
+      # .nu, so the interpreter is always the session nushell rather than
+      # whatever `nu` a project's devshell happens to put on PATH first — a
+      # mismatched (e.g. older) `nu` otherwise breaks the scripts (this is the
+      # same reason statusline was already wrapped this way).
+      mkNuHook =
+        name:
+        let
+          src = "${config.dotFilesDir}/modules/claude/${name}.nu";
+        in
+        {
+          ".claude/${name}.nu".source = config.lib.file.mkOutOfStoreSymlink src;
+          ".claude/${name}".source = pkgs.writeShellScript "claude-${name}" ''
+            exec ${lib.getExe config.programs.nushell.package} --stdin ${src} "$@"
+          '';
+        };
+
     in
     {
       options.programs.claude = {
@@ -311,29 +332,13 @@
               config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/settings.json";
             ".claude/keybindings.json".source =
               config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/keybindings.json";
-            ".claude/notify.nu".source =
-              config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/notify.nu";
-            ".claude/notify-if-question.nu".source =
-              config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/notify-if-question.nu";
-            ".claude/record-pending-tool.nu".source =
-              config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/record-pending-tool.nu";
+            # Library modules — sourced via `use ~/.claude/lib-*.nu` from the
+            # hook wrappers, so they run under the same pinned nushell and need
+            # no wrapper of their own. Kept live-editable.
             ".claude/lib-transcript.nu".source =
               config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/lib-transcript.nu";
             ".claude/lib-focus.nu".source =
               config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/lib-focus.nu";
-            ".claude/statusline.nu".source =
-              config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/statusline.nu";
-            # Pin the interpreter to the session nushell that nu_plugin_prompt is
-            # compiled against — statusline.nu calls `prompt-render`, which breaks
-            # under a mismatched `nu` on PATH (e.g. a devshell's older nushell).
-            # The wrapper carries the store path; statusline.nu stays editable live.
-            ".claude/statusline".source = pkgs.writeShellScript "claude-statusline" ''
-              exec ${lib.getExe config.programs.nushell.package} --stdin ${config.dotFilesDir}/modules/claude/statusline.nu
-            '';
-            ".claude/format-and-lint.nu".source =
-              config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/format-and-lint.nu";
-            ".claude/tmux-claude-indicator.nu".source =
-              config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/tmux-claude-indicator.nu";
             ".claude/schemas/edit-hooks.schema.json".source =
               config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/edit-hooks.schema.json";
             ".claude/marketplaces.json".source =
@@ -381,6 +386,15 @@
               executable = true;
             };
           }
+          # Nushell hook scripts: each gets a live-editable .nu plus a store
+          # wrapper (~/.claude/<name>) that pins the interpreter. settings.json
+          # invokes the wrapper, never the raw .nu.
+          // (mkNuHook "notify")
+          // (mkNuHook "notify-if-question")
+          // (mkNuHook "record-pending-tool")
+          // (mkNuHook "format-and-lint")
+          // (mkNuHook "tmux-claude-indicator")
+          // (mkNuHook "statusline")
           // marketplaceFiles;
 
           # Daily update check for claude-code sources
