@@ -5,8 +5,29 @@
   pkgs,
   ...
 }:
+let
+  gpu = import ../_lib/gpu.nix;
+  # The nvidia module actually loaded (open vs proprietary). nixpkgs embeds the
+  # kernel version in its name only when it built a per-kernel module, so a name
+  # missing the kernel version means "no .ko for this kernel" — the exact silent
+  # failure that leaves a Wayland host with a blank simpledrm and Hyprland
+  # aborting in initServer. See the nvidia block and the assertion below.
+  nvidiaCfg = config.hardware.nvidia;
+  nvidiaModule = if nvidiaCfg.open then nvidiaCfg.package.open else nvidiaCfg.package.bin;
+in
 {
   config = {
+    assertions = [
+      {
+        assertion = lib.hasInfix config.boot.kernelPackages.kernel.version nvidiaModule.name;
+        message = ''
+          NVIDIA driver ${nvidiaCfg.package.version} has no kernel module for kernel ${config.boot.kernelPackages.kernel.version} (module package: ${nvidiaModule.name}).
+          nixpkgs did not build a .ko for this kernel — booting would give a blank screen (Hyprland aborts with no GPU backend).
+          Fixes: set hardware.nvidia.open = true (open modules track new kernels first), bump the driver, or pin boot.kernelPackages to a supported kernel.
+        '';
+      }
+    ];
+
     # Demand-driven CPU/GPU power save: full speed while in use (SSH / local
     # seat / inbound HTTP to allowlisted hosts), drop to hardware minimum when
     # all quiet. See modules/nixos/power-save/.
@@ -19,7 +40,7 @@
 
     nixpkgs.config = {
       cudaSupport = true;
-      cudaCapabilities = [ "8.6" ];
+      inherit (gpu) cudaCapabilities;
       cudaForwardCompat = true;
     };
 
@@ -48,6 +69,15 @@
       kernelModules = [
         # Virtual Camera
         "v4l2loopback"
+        # nixpkgs' nvidia.nix only adds these to boot.kernelModules when
+        # services.xserver.enable is true; this is a Wayland-only host (greetd +
+        # Hyprland, no X), so load them explicitly or the GPU driver never binds
+        # (blank simpledrm, Hyprland aborts in initServer). nvidia_uvm is for CUDA
+        # (scribe/llama/whisperx containers).
+        "nvidia"
+        "nvidia_modeset"
+        "nvidia_drm"
+        "nvidia_uvm"
       ];
       kernelPackages = pkgs.pkgs-bleeding.linuxPackages_latest;
       extraModulePackages = with config.boot.kernelPackages; [ v4l2loopback.out ];
@@ -197,7 +227,11 @@
       graphics = {
         enable = true;
         enable32Bit = true;
-        package = pkgs.nvidia-vaapi-driver; # For NVIDIA
+        # VA-API (NVDEC) belongs in extraPackages, NOT `package`: `package` is the
+        # primary GL/mesa driver, and overriding it with nvidia-vaapi-driver drops
+        # the libglvnd dispatch libs (libGL/libEGL/libgbm) from /run/opengl-driver,
+        # so GL apps (ghostty) fail with "Unable to acquire an opengl context".
+        extraPackages = [ pkgs.nvidia-vaapi-driver ];
       };
       nvidia = {
         modesetting.enable = true;
@@ -220,11 +254,19 @@
         #   # graphics next time (;´༎ຶД༎ຶ`)
         #   intelBusId = "N/A";
         # };
-        open = false;
+        # Open kernel modules (nvidia-open). Required on bleeding kernels: nixpkgs
+        # only builds the proprietary .bin module for kernels NVIDIA's closed
+        # source has caught up to, but the open module tracks new kernels
+        # promptly — e.g. 7.1.3 has nvidia-open but no proprietary .ko. The
+        # RTX 3060 Ti (Ampere/GA104) is fully supported by the open modules.
+        # The assertion below guards against a future kernel bump outpacing even
+        # this. gsp.enable is mandatory for open modules.
+        open = true;
+        gsp.enable = true;
         nvidiaSettings = true;
         # beta, production, stable (=production), or latest (=MAX(production,
         # some version))
-        package = config.boot.kernelPackages.nvidiaPackages.beta;
+        package = config.boot.kernelPackages.nvidiaPackages.production;
         # forceFullCompositionPipeline = true;
       };
       nvidia-container-toolkit.enable = true;
