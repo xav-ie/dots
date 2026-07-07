@@ -42,7 +42,20 @@ window {
 // blurred (it falls below the layerrule's ignore_alpha threshold).
 .bar-section {
   background-color: rgba($bg, 0.72);
-  border: 4px solid $outline;
+  // Clip the translucent fill to the *inside* of the border. Default border-box
+  // clipping paints the dark $bg under the 4px border out to the rounded outer
+  // edge; the border's antialiased corner is then partly transparent and reveals
+  // that dark fill beneath it as a black corner fringe.
+  background-clip: padding-box;
+  // Total outline weight stays 4px: a 3px border (opaque outer corner, no dark
+  // fringe thanks to padding-box) plus a 1px inset ring in the same colour that
+  // sits at the border's inner edge, painting over the ~1px transparent seam
+  // that padding-box clipping leaves between the fill and the border.
+  border: 3px solid $outline;
+  // 1px inset ring in the same colour continues the 3px border to a crisp 4px
+  // total (matching the original border weight) and paints over the ~1px
+  // transparent seam padding-box clipping leaves at the border's inner edge.
+  box-shadow: inset 0 0 0 1px $outline;
   border-radius: 12px;
   min-height: 28px;
 }
