@@ -19,7 +19,7 @@ const PLATFORMS = [
 ]
 
 # Fetch and compute hashes for native binaries
-def fetch_native [version: string, existing?: record, --unchanged: bool = false] {
+def fetch_native [version: string, existing?: record, --unchanged] {
   if $unchanged {
     print "  [Native] Reusing platform hashes (version unchanged)"
     return {version: $version, gcs_bucket: $GCS_BUCKET, sources: $existing.native.sources}
@@ -47,7 +47,7 @@ def fetch_native [version: string, existing?: record, --unchanged: bool = false]
 # Fetch and compute per-platform tarball hashes for the npm registry.
 # Since @anthropic-ai/claude-code 2.1.113, each platform ships its own tarball
 # containing a prebuilt Bun binary at `package/claude` (same binary as GCS).
-def fetch_npm [npm_version: string, existing?: record, --unchanged: bool = false] {
+def fetch_npm [npm_version: string, existing?: record, --unchanged] {
   if $unchanged {
     print "  [NPM] Reusing platform hashes (version unchanged)"
     return {version: $npm_version, sources: $existing.npm.sources}
