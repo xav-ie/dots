@@ -1,0 +1,4 @@
+{
+  # Match the repo's existing 2-space Nushell style (nufmt defaults to 4).
+  indent: 2
+}
