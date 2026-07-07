@@ -1,6 +1,7 @@
 #!/usr/bin/env -S nu --stdin
 
 def --wrapped main [...args] {
+
   # #200030
   let section_bg = $"(ansi -e '48;2;32;0;48m')"
   delta --width (term size | get columns) ...$args

@@ -19,6 +19,7 @@ def main [] {
 
   match $env.SENDER {
     "forced" => {
+
       # pmset can append extra lines (e.g. "Battery Warning: Early") below the
       # InternalBattery line, so don't rely on `lines | last`. Parse straight
       # for the percent token instead.

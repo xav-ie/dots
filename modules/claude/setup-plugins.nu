@@ -34,11 +34,15 @@ def main [
   for plugin in $config_plugins {
     if $plugin not-in $installed_plugins {
       print $"Installing plugin: ($plugin)"
-      try { claude plugin install $plugin; $changed = true }
+      try {
+        claude plugin install $plugin
+        $changed = true
+      }
     }
   }
 
   if $enforce {
+
     # Remove extras (config wins)
     let extra_plugins = $installed_plugins | where {|p| $p not-in $config_plugins }
 

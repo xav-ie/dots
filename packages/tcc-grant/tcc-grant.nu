@@ -7,30 +7,31 @@ def main [
   --designated-from: string = "" # .app whose current designated requirement is read + pinned as the csreq (re-signed apps); takes precedence over --app-path
 ] {
   let service_key = match $service {
+    Camera => "kTCCServiceCamera"
+    Microphone => "kTCCServiceMicrophone"
+    ScreenCapture => "kTCCServiceScreenCapture"
+    Accessibility => "kTCCServiceAccessibility"
+    AppleEvents => "kTCCServiceAppleEvents"
+    InputMonitoring => "kTCCServiceListenEvent"
+    PostEvent => "kTCCServicePostEvent"
+    DeveloperTool => "kTCCServiceDeveloperTool"
+    AddressBook => "kTCCServiceAddressBook"
+    Calendar => "kTCCServiceCalendar"
+    Reminders => "kTCCServiceReminders"
+    Photos => "kTCCServicePhotos"
+    SpeechRecognition => "kTCCServiceSpeechRecognition"
+    FullDiskAccess => "kTCCServiceSystemPolicyAllFiles"
+    DownloadsFolder => "kTCCServiceSystemPolicyDownloadsFolder"
+    DesktopFolder => "kTCCServiceSystemPolicyDesktopFolder"
+    DocumentsFolder => "kTCCServiceSystemPolicyDocumentsFolder"
+    Location => "kTCCServiceLiverpool"
+    FocusStatus => "kTCCServiceFocusStatus"
+    _ => { 
     # Media
-    "Camera" => "kTCCServiceCamera"
-    "Microphone" => "kTCCServiceMicrophone"
-    "ScreenCapture" => "kTCCServiceScreenCapture"
     # Automation / input
-    "Accessibility" => "kTCCServiceAccessibility"
-    "AppleEvents" => "kTCCServiceAppleEvents"
-    "InputMonitoring" => "kTCCServiceListenEvent"
-    "PostEvent" => "kTCCServicePostEvent"
-    "DeveloperTool" => "kTCCServiceDeveloperTool"
     # Data
-    "AddressBook" => "kTCCServiceAddressBook"
-    "Calendar" => "kTCCServiceCalendar"
-    "Reminders" => "kTCCServiceReminders"
-    "Photos" => "kTCCServicePhotos"
     # System
-    "SpeechRecognition" => "kTCCServiceSpeechRecognition"
-    "FullDiskAccess" => "kTCCServiceSystemPolicyAllFiles"
-    "DownloadsFolder" => "kTCCServiceSystemPolicyDownloadsFolder"
-    "DesktopFolder" => "kTCCServiceSystemPolicyDesktopFolder"
-    "DocumentsFolder" => "kTCCServiceSystemPolicyDocumentsFolder"
-    "Location" => "kTCCServiceLiverpool"
-    "FocusStatus" => "kTCCServiceFocusStatus"
-    _ => { error make { msg: $"Unknown service: ($service)" } }
+    error make {msg: $"Unknown service: ($service)"} }
   }
 
   # csreq precedence: --designated-from (the bundle's own DR) > --app-path (cdhash) > NULL.
@@ -47,20 +48,26 @@ def main [
     let info = (^/usr/bin/codesign -d -r- $designated_from | complete)
     let dr = (
       $"($info.stdout)\n($info.stderr)" | lines
-      | where { |l| $l =~ 'designated => ' }
+      | where {|l| $l =~ 'designated => ' }
       | get 0?
       | default ""
       | str replace -r '^.*designated => ' ''
       | str trim
     )
     if ($dr | is-empty) {
-      error make { msg: $"could not read designated requirement from ($designated_from)" }
+      error make {msg: $"could not read designated requirement from ($designated_from)"}
     }
     let blob = $"/tmp/tcc-grant-($bundle_id)-($service_key).csreq"
     $dr | ^/usr/bin/csreq -r- -b $blob
-    let hex = (^/usr/bin/xxd -p $blob | lines | str join "" | str trim | str upcase)
+    let hex = (
+      ^/usr/bin/xxd -p $blob
+      | lines
+      | str join ""
+      | str trim
+      | str upcase
+    )
     if ($hex | is-empty) {
-      error make { msg: $"could not compile designated requirement: ($dr)" }
+      error make {msg: $"could not compile designated requirement: ($dr)"}
     }
     $"X'($hex)'"
   } else if ($app_path | is-empty) {
@@ -69,7 +76,7 @@ def main [
     let info = (^/usr/bin/codesign -dvvv $app_path | complete)
     let cdhash = (
       $info.stderr | lines
-      | where { |l| $l | str starts-with "CDHash=" }
+      | where {|l| $l | str starts-with "CDHash=" }
       | get 0?
       | default ""
       | str replace "CDHash=" ""
@@ -77,7 +84,7 @@ def main [
       | str upcase
     )
     if ($cdhash | is-empty) {
-      error make { msg: $"could not read CDHash from ($app_path) — is it signed?" }
+      error make {msg: $"could not read CDHash from ($app_path) — is it signed?"}
     }
     # fade0c00 | total len 0x28 | cdhash match expr (sha1, 0x14 bytes) | <cdhash>
     $"X'FADE0C0000000028000000010000000800000014($cdhash)'"
@@ -100,7 +107,7 @@ def main [
       sqlite3 $db $"SELECT quote\(csreq\) FROM access WHERE service='($service_key)' AND client='($bundle_id)' AND client_type=($client_type);"
       | str trim
     )
-    if ($cur_auth == "2" and $cur_csreq == $csreq) {
+    if $cur_auth == "2" and $cur_csreq == $csreq {
       print $"✓ ($bundle_id) ($service) up to date"
       return
     }

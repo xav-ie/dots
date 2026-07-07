@@ -16,16 +16,16 @@
 #      hardened-runtime apps when amfi_get_out_of_my_way=1 is missing.
 
 const AGENT_PLIST = "~/Library/LaunchAgents/org.nix-community.home.dyld-inject.plist"
-const CRASH_DIR   = "~/Library/Logs/DiagnosticReports"
+const CRASH_DIR = "~/Library/Logs/DiagnosticReports"
 
 def header [msg: string] {
   print $"(ansi cyan)==>(ansi reset) ($msg)"
 }
 
-def ok    [msg: string] { print $"   (ansi green)ok:(ansi reset) ($msg)" }
-def warn  [msg: string] { print $"   (ansi yellow)warning:(ansi reset) ($msg)" }
-def fail  [msg: string] { print $"   (ansi red)fail:(ansi reset) ($msg)" }
-def info  [msg: string] { print $"   ($msg)" }
+def ok [msg: string] { print $"   (ansi green)ok:(ansi reset) ($msg)" }
+def warn [msg: string] { print $"   (ansi yellow)warning:(ansi reset) ($msg)" }
+def fail [msg: string] { print $"   (ansi red)fail:(ansi reset) ($msg)" }
+def info [msg: string] { print $"   ($msg)" }
 
 # BSD stat by absolute path — nuenv's PATH may have GNU coreutils ahead
 # of /usr/bin, and `stat -f` is BSD-only syntax.
@@ -42,12 +42,12 @@ def file_mtime [path: string] { bsd_stat_mtime $path }
 # Read DYLD_INSERT_LIBRARIES value from the dyld-inject agent's plist.
 # Returns null if the plist does not exist or has unexpected shape.
 def get_configured_value [] {
-  let path = ($AGENT_PLIST | path expand)
+  let path = $AGENT_PLIST | path expand
   if not ($path | path exists) {
     return null
   }
   let json = (^plutil -convert json -o - $path | from json)
-  let args = ($json | get --optional ProgramArguments)
+  let args = $json | get --optional ProgramArguments
   if $args == null { return null }
   if ($args | length) < 4 { return null }
   if $args.0 != "/bin/launchctl" { return null }
@@ -74,8 +74,8 @@ def section_env_sanity [] {
     return null
   }
 
-  let paths = ($configured | split row ":")
-  let n = ($paths | length)
+  let paths = $configured | split row ":"
+  let n = $paths | length
   info $"configured: ($n) librar(if $n == 1 { 'y' } else { 'ies' })"
   for p in $paths {
     info $"  - ($p)"
@@ -114,17 +114,17 @@ def crash_mentions_names [crash_path: string, names: list<string>] {
   false
 }
 
-def section_crashes [rebuild_time: datetime, configured_paths: any] {
+def section_crashes [rebuild_time: datetime, configured_paths] {
   header "2. crashes since rebuild"
 
-  let dir = ($CRASH_DIR | path expand)
+  let dir = $CRASH_DIR | path expand
   if not ($dir | path exists) {
     warn $"crash dir not found: ($dir)"
     return
   }
 
   let all = (glob $"($dir)/*.ips")
-  let total = ($all | length)
+  let total = $all | length
   let crashes = (
     $all
     | each { |p|
@@ -141,7 +141,7 @@ def section_crashes [rebuild_time: datetime, configured_paths: any] {
 
   let dylib_names = (
     if $configured_paths == null { [] }
-    else { $configured_paths | each { |p| $p | path basename | str replace -r '\.dylib$' '' } }
+    else { $configured_paths | each {|p| $p | path basename | str replace -r '\.dylib$' '' } }
   )
 
   let by_process = (
@@ -160,7 +160,7 @@ def section_crashes [rebuild_time: datetime, configured_paths: any] {
           process: $r.process,
           count: ($r.records | length),
           latest: ($r.records | get modified | sort | last | format date '%Y-%m-%d %H:%M'),
-          injected_dylib_in_stack: ($r.records | any { |x| $x.injected_dylib })
+          injected_dylib_in_stack: ($r.records | any {|x| $x.injected_dylib })
         }
       }
     | sort-by count --reverse
@@ -168,7 +168,7 @@ def section_crashes [rebuild_time: datetime, configured_paths: any] {
 
   print ($by_process | table)
 
-  let suspicious = ($by_process | where injected_dylib_in_stack)
+  let suspicious = $by_process | where injected_dylib_in_stack
   if not ($suspicious | is-empty) {
     print ""
     fail "injected dylib appears in the stack of:"
@@ -182,7 +182,7 @@ def section_crashes [rebuild_time: datetime, configured_paths: any] {
 def section_dyld_errors [rebuild_time: datetime] {
   header "3. dyld / AMFI errors in system log"
 
-  let start_str = ($rebuild_time | format date '%Y-%m-%d %H:%M:%S')
+  let start_str = $rebuild_time | format date '%Y-%m-%d %H:%M:%S'
   # Only Error/Fault messages — without this filter, every `log show`
   # invocation that mentions "DYLD_INSERT_LIBRARIES" in its own argv
   # shows up as a self-referential match.
@@ -213,12 +213,12 @@ def section_dyld_errors [rebuild_time: datetime] {
   let entries = (
     $r.stdout
     | lines
-    | each { |l| try { $l | from json } catch { null } }
+    | each {|l| try { $l | from json } catch { null } }
     | compact
     | where { |e|
-        let cols = (try { $e | columns } catch { [] })
+        let cols = try { $e | columns } catch { [] }
         if not ("eventMessage" in $cols) { return false }
-        let proc = ($e | get --optional processImagePath | default '')
+        let proc = $e | get --optional processImagePath | default ''
         not ($proc | str ends-with "/log")
       }
   )
@@ -241,7 +241,7 @@ def section_dyld_errors [rebuild_time: datetime] {
   )
   print ($summary | table)
 
-  let n = ($entries | length)
+  let n = $entries | length
   if $n > 30 {
     info $"... and ($n - 30) more entries; rerun `log show` directly to see all"
   }
@@ -249,7 +249,7 @@ def section_dyld_errors [rebuild_time: datetime] {
 
 def main [] {
   let rebuild_time = (get_rebuild_time)
-  let ts = ($rebuild_time | format date '%Y-%m-%d %H:%M:%S')
+  let ts = $rebuild_time | format date '%Y-%m-%d %H:%M:%S'
   print ""
   print $"(ansi cyan)dyld-check(ansi reset)  last rebuild: (ansi yellow)($ts)(ansi reset)"
   print ""

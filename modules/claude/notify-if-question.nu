@@ -33,15 +33,19 @@ def main [] {
   # Stop hook (record-pending-tool.nu) recorded it. idle_prompt fires later (on
   # idle / focus-loss), so we cannot judge "seen" from focus at this moment;
   # completion-time focus is the right signal.
-  let sid = ($input.session_id? | default "unknown")
-  let seen = (try { open $"/tmp/claude-turn-seen-($sid).json" | get -o seen | default false } catch { false })
+  let sid = $input.session_id? | default "unknown"
+  let seen = (
+    try {
+      open $"/tmp/claude-turn-seen-($sid).json" | get -o seen | default false
+    } catch { false }
+  )
   if $seen { exit 0 }
 
-  let last_text = (last-assistant-text ($input.transcript_path? | default ""))
+  let last_text = last-assistant-text ($input.transcript_path? | default "")
   let para = (last-paragraph $last_text)
 
   if ($para | str contains "?") {
-    let preview = ($para | str substring 0..200)
+    let preview = $para | str substring 0..200
     ^notify "Claude has a question" $preview
   }
 
