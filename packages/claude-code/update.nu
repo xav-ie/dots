@@ -12,25 +12,17 @@ const GCS_BUCKET = "https://storage.googleapis.com/claude-code-dist-86c565f3-f75
 const GCS_API = "https://storage.googleapis.com/storage/v1/b/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/o"
 
 const PLATFORMS = [
-  { nix: "x86_64-linux", platform: "linux-x64" }
-  { nix: "aarch64-linux", platform: "linux-arm64" }
-  { nix: "x86_64-darwin", platform: "darwin-x64" }
-  { nix: "aarch64-darwin", platform: "darwin-arm64" }
+  {nix: "x86_64-linux", platform: "linux-x64"}
+  {nix: "aarch64-linux", platform: "linux-arm64"}
+  {nix: "x86_64-darwin", platform: "darwin-x64"}
+  {nix: "aarch64-darwin", platform: "darwin-arm64"}
 ]
 
 # Fetch and compute hashes for native binaries
-def fetch_native [
-  version: string
-  existing?: record
-  --unchanged = false
-] {
+def fetch_native [version: string, existing?: record, --unchanged: bool = false] {
   if $unchanged {
     print "  [Native] Reusing platform hashes (version unchanged)"
-    return {
-      version: $version
-      gcs_bucket: $GCS_BUCKET
-      sources: $existing.native.sources
-    }
+    return {version: $version, gcs_bucket: $GCS_BUCKET, sources: $existing.native.sources}
   }
 
   print "  [Native] Computing hashes for all platforms..."
@@ -38,7 +30,7 @@ def fetch_native [
     print $"  [Native] Computing hash for ($p.platform)..."
     let tmp_file = (mktemp -t claude-XXXX)
     http get $"($GCS_BUCKET)/($version)/($p.platform)/claude" | save -f $tmp_file
-    let hash = (nix hash file $tmp_file --sri | str trim)
+    let hash = nix hash file $tmp_file --sri | str trim
     rm $tmp_file
     {
       key: $p.nix
@@ -49,27 +41,16 @@ def fetch_native [
     }
   } | transpose -r -d)
 
-  {
-    version: $version
-    gcs_bucket: $GCS_BUCKET
-    sources: $sources
-  }
+  {version: $version, gcs_bucket: $GCS_BUCKET, sources: $sources}
 }
 
 # Fetch and compute per-platform tarball hashes for the npm registry.
 # Since @anthropic-ai/claude-code 2.1.113, each platform ships its own tarball
 # containing a prebuilt Bun binary at `package/claude` (same binary as GCS).
-def fetch_npm [
-  npm_version: string
-  existing?: record
-  --unchanged = false
-] {
+def fetch_npm [npm_version: string, existing?: record, --unchanged: bool = false] {
   if $unchanged {
     print "  [NPM] Reusing platform hashes (version unchanged)"
-    return {
-      version: $npm_version
-      sources: $existing.npm.sources
-    }
+    return {version: $npm_version, sources: $existing.npm.sources}
   }
 
   print $"  [NPM] Computing per-platform tarball hashes for ($npm_version)..."
@@ -78,7 +59,7 @@ def fetch_npm [
     print $"  [NPM] Computing hash for ($p.platform)..."
     let tmp_file = (mktemp -t claude-npm-XXXX --suffix .tgz)
     http get $url | save -f $tmp_file
-    let hash = (nix hash file $tmp_file --sri | str trim)
+    let hash = nix hash file $tmp_file --sri | str trim
     rm $tmp_file
     {
       key: $p.nix
@@ -89,17 +70,14 @@ def fetch_npm [
     }
   } | transpose -r -d)
 
-  {
-    version: $npm_version
-    sources: $sources
-  }
+  {version: $npm_version, sources: $sources}
 }
 
 # Sort a list of "X.Y.Z" version strings ascending by numeric segment.
 def sort_versions [versions: list<string>] {
   $versions
-    | each {|v|
-        let parts = ($v | parse --regex '^(?P<a>\d+)\.(?P<b>\d+)\.(?P<c>\d+)$')
+  | each {|v|
+        let parts = $v | parse --regex '^(?P<a>\d+)\.(?P<b>\d+)\.(?P<c>\d+)$'
         if ($parts | is-empty) { null } else {
           {
             ver: $v
@@ -107,9 +85,9 @@ def sort_versions [versions: list<string>] {
           }
         }
       }
-    | where {|r| $r != null}
-    | sort-by key
-    | get ver
+  | where {|r| $r != null}
+  | sort-by key
+  | get ver
 }
 
 # Pick the newest GCS native version published at least cooldown_days ago.
@@ -124,33 +102,33 @@ def resolve_native_version [cooldown_days: int] {
     let url = $"($GCS_API)/claude-code-releases%2F($ver)%2Flinux-x64%2Fclaude"
     let meta = (try { http get $url } catch { null })
     if $meta == null { continue }
-    let created = ($meta.timeCreated | into datetime)
+    let created = $meta.timeCreated | into datetime
     if $created <= $cutoff {
-      let date_str = ($created | format date '%Y-%m-%d')
+      let date_str = $created | format date '%Y-%m-%d'
       print $"  [Native] Selected ($ver), published ($date_str)"
       return $ver
     }
   }
-  error make { msg: $"No native version older than ($cooldown_days) days found" }
+  error make {msg: $"No native version older than ($cooldown_days) days found"}
 }
 
 # Pick the newest npm version published at least cooldown_days ago.
 def resolve_npm_version [cooldown_days: int] {
   let cutoff = ((date now) - ($cooldown_days * 1day))
   print $"  [NPM] Selecting newest version older than ($cooldown_days) days..."
-  let times = (npm view @anthropic-ai/claude-code time --json | from json)
+  let times = npm view @anthropic-ai/claude-code time --json | from json
   let eligible = ($times
     | transpose version published
     | where version != "created" and version != "modified"
     | update published {|r| $r.published | into datetime}
     | where published <= $cutoff)
-  let ranked = (sort_versions ($eligible | get version))
+  let ranked = sort_versions ($eligible | get version)
   if ($ranked | is-empty) {
-    error make { msg: $"No npm version older than ($cooldown_days) days found" }
+    error make {msg: $"No npm version older than ($cooldown_days) days found"}
   }
-  let chosen = ($ranked | last)
-  let when = ($eligible | where version == $chosen | get 0.published)
-  let date_str = ($when | format date '%Y-%m-%d')
+  let chosen = $ranked | last
+  let when = $eligible | where version == $chosen | get 0.published
+  let date_str = $when | format date '%Y-%m-%d'
   print $"  [NPM] Selected ($chosen), published ($date_str)"
   $chosen
 }
@@ -162,7 +140,7 @@ def main [
   --npm-version: string = ""      # Pin npm version. Skips latest/cooldown.
 ] {
   # Resolve target native version
-  let ver = if (not ($version | is-empty)) {
+  let ver = if not ($version | is-empty) {
     $version
   } else if $cooldown_days > 0 {
     resolve_native_version $cooldown_days
@@ -172,7 +150,7 @@ def main [
   }
 
   # Resolve target npm version
-  let target_npm = if (not ($npm_version | is-empty)) {
+  let target_npm = if not ($npm_version | is-empty) {
     $npm_version
   } else if $cooldown_days > 0 {
     resolve_npm_version $cooldown_days
@@ -189,9 +167,9 @@ def main [
   }
 
   # Print version info
-  if ($existing != null and "native" in $existing) {
+  if $existing != null and "native" in $existing {
     print $"Previous native version: ($existing.native.version)"
-    if ("npm" in $existing and "version" in $existing.npm) {
+    if "npm" in $existing and "version" in $existing.npm {
       print $"Previous npm version: ($existing.npm.version)"
     }
   }
@@ -199,10 +177,14 @@ def main [
   print $"Target npm version: ($target_npm)"
 
   # Check if versions are unchanged
-  let native_unchanged = ($existing != null and "native" in $existing and $existing.native.version == $ver)
-  let npm_unchanged = ($existing != null and "npm" in $existing and "version" in $existing.npm and $existing.npm.version == $target_npm)
+  let native_unchanged = (
+    $existing != null and "native" in $existing and $existing.native.version == $ver
+  )
+  let npm_unchanged = (
+    $existing != null and "npm" in $existing and "version" in $existing.npm and $existing.npm.version == $target_npm
+  )
 
-  if ($native_unchanged and $npm_unchanged) {
+  if $native_unchanged and $npm_unchanged {
     print "✅ Both versions unchanged - sources.json is already up to date"
     return
   }
@@ -216,11 +198,11 @@ def main [
   # Run native and npm fetches in parallel
   let results = ([
     {
-      type: "native"
+      type: "native", 
       task: { fetch_native $ver $existing --unchanged=$native_unchanged }
     }
     {
-      type: "npm"
+      type: "npm", 
       task: { fetch_npm $target_npm $existing --unchanged=$npm_unchanged }
     }
   ] | par-each { |item|
@@ -230,14 +212,11 @@ def main [
     }
   })
 
-  let native = ($results | where type == "native" | get 0.result)
-  let npm = ($results | where type == "npm" | get 0.result)
+  let native = $results | where type == "native" | get 0.result
+  let npm = $results | where type == "npm" | get 0.result
 
   # Create output JSON with restructured format
-  let output = {
-    native: $native
-    npm: $npm
-  }
+  let output = {native: $native, npm: $npm}
 
   # Write to sources.json in current directory
   $output | to json --indent 2 | save -f sources.json

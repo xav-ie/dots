@@ -58,16 +58,28 @@
                 })
               ];
             };
+
+          # Custom Nushell formatter module (treefmt-nix has no nufmt yet)
+          nufmtFormatterModule =
+            { mkFormatterModule, ... }:
+            {
+              imports = [
+                (mkFormatterModule {
+                  name = "nufmt";
+                  mainProgram = "nufmt";
+                  includes = [ "*.nu" ];
+                })
+              ];
+            };
         in
         {
           imports = [
             glslFormatterModule
             goModFormatterModule
+            nufmtFormatterModule
           ];
 
           programs = {
-            # buggy so far...
-            # nufmt.enable = true;
             clang-format = {
               enable = true;
               # Default `includes` is C/C++/headers only; opt Objective-C in.
@@ -90,6 +102,10 @@
             go-mod-fmt.enable = true;
             gofmt.enable = true;
             nixfmt.enable = true;
+            nufmt = {
+              enable = true;
+              package = inputs.nufmt.packages.${system}.default;
+            };
             prettier = {
               enable = true;
               package = config.packages.prettier-with-toml;
@@ -123,7 +139,7 @@
               "**/Cargo.lock"
               "*.awk"
               "*.conf"
-              "*.nu" # formatter is borked
+              "*.nuon" # data/config format, no formatter
               "*.patch"
               "*.scpt" # no standard formatter for AppleScript
               "*.svg" # no standard formatter

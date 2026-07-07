@@ -1,9 +1,10 @@
 const bar_height = 34
 
-def floatingWindowOrActive [use_active = false] {
+def floatingWindowOrActive [use_active: bool = false] {
+
   # first, try and get active window if it is floating
   let active_window = hyprctl activewindow -j | from json
-  if ($active_window.floating == true or $use_active) {
+  if $active_window.floating == true or $use_active {
     $active_window
   } else {
     # now, try and find the first floating window on the current workspace
@@ -24,13 +25,13 @@ def getWindowBySelector [selector: string] {
 
   # Parse different selector types
   if ($selector | str starts-with "title:") {
-    let title_pattern = ($selector | str replace "title:" "")
+    let title_pattern = $selector | str replace "title:" ""
     $clients | where title =~ $title_pattern | first
   } else if ($selector | str starts-with "class:") {
-    let class_pattern = ($selector | str replace "class:" "")
+    let class_pattern = $selector | str replace "class:" ""
     $clients | where class =~ $class_pattern | first
   } else if ($selector | str starts-with "address:") {
-    let address = ($selector | str replace "address:" "")
+    let address = $selector | str replace "address:" ""
     $clients | where address == $address | first
   } else {
     # Default to class if no prefix
@@ -38,7 +39,7 @@ def getWindowBySelector [selector: string] {
   }
 }
 
-def windowDimensions [use_active = false, selector = ""] {
+def windowDimensions [use_active: bool = false, selector: string = ""] {
   let window = if ($selector | is-not-empty) {
     try { getWindowBySelector $selector } catch {
       print -e "Could not find window to act on"
@@ -57,10 +58,7 @@ def windowDimensions [use_active = false, selector = ""] {
   }
 }
 
-def windowInfo [
-  window_dimensions:
-    record<width: number, height: number, x: number, y: number, address: string>,
-] {
+def windowInfo [window_dimensions: record<width: number, height: number, x: number, y: number, address: string>] {
   let border_size = (hyprctl getoption general:border_size -j
                      | from json | get int)
   let gaps = (hyprctl getoption general:gaps_out -j
@@ -101,7 +99,7 @@ def windowInfo [
       | each {|c| { name: $c.name, dist: ($c.pos - $window_dimensions.y | math abs) } }
       | sort-by dist
       | first
-      | get name),
+      | get name)
     h: ([
         { name: "left", pos: $window_left },
         { name: "middle", pos: $window_h_middle },
@@ -110,19 +108,19 @@ def windowInfo [
       | each {|c| { name: $c.name, dist: ($c.pos - $window_dimensions.x | math abs) } }
       | sort-by dist
       | first
-      | get name),
+      | get name)
   }
 
   {
-    window_left: $window_left,
-    window_right: $window_right,
-    window_bottom: $window_bottom,
-    window_top: $window_top,
-    window_h_middle: $window_h_middle,
-    window_v_middle: $window_v_middle,
-    window_dimensions: $window_dimensions,
-    window_quadrant: $window_quadrant,
-    address: $window_dimensions.address,
+    window_left: $window_left
+    window_right: $window_right
+    window_bottom: $window_bottom
+    window_top: $window_top
+    window_h_middle: $window_h_middle
+    window_v_middle: $window_v_middle
+    window_dimensions: $window_dimensions
+    window_quadrant: $window_quadrant
+    address: $window_dimensions.address
   }
 }
 
@@ -131,29 +129,28 @@ def reset_position [] {
 }
 
 def move_position [
-  position: record<v: string, h: string>,
-  use_active = false,
-  selector = "",
-  window_dimensions_override?:
-    record<width: number, height: number, x: number, y: number, address: string>,
+  position: record<v: string, h: string>
+  use_active: bool = false
+  selector: string = ""
+  window_dimensions_override?: record<width: number, height: number, x: number, y: number, address: string>
 ] {
   let window_info = windowInfo ($window_dimensions_override | default
                                 (windowDimensions $use_active $selector))
   let y = match $position.v {
-    "top" => $window_info.window_top
-    "middle" => $window_info.window_v_middle
-    "bottom" => $window_info.window_bottom
+    top => $window_info.window_top
+    middle => $window_info.window_v_middle
+    bottom => $window_info.window_bottom
   } | math round
   let x = match $position.h {
-    "left" => $window_info.window_left
-    "middle" => $window_info.window_h_middle
-    "right" => $window_info.window_right
+    left => $window_info.window_left
+    middle => $window_info.window_h_middle
+    right => $window_info.window_right
   } | math round
   let resize_params = $"exact ($x) ($y)"
 
   let command = if $use_active {
     $"moveactive ($resize_params)"
-  } else if ($selector != "") {
+  } else if $selector != "" {
     $"movewindowpixel ($resize_params),($selector)"
   } else {
     $"movewindowpixel ($resize_params),address:($window_info.address)"
@@ -161,43 +158,43 @@ def move_position [
   $command
 }
 
-def move_window [position: record<v: string, h: string>, selector = ""] {
+def move_window [position: record<v: string, h: string>, selector: string = ""] {
   hyprctl dispatch (move_position $position false $selector)
 }
 
 # Move window to top left
-export def "main topLeft" [selector = ""] {
-  move_window { v: "top", h: "left" } $selector
+export def "main topLeft" [selector: string = ""] {
+  move_window {v: "top", h: "left"} $selector
 }
 
 # Move window to top right
-export def "main topRight" [selector = ""] {
-  move_window { v: "top", h: "right" } $selector
+export def "main topRight" [selector: string = ""] {
+  move_window {v: "top", h: "right"} $selector
 }
 
 # Move window to bottom right
-export def "main bottomRight" [selector = ""] {
-  move_window { v: "bottom", h: "right" } $selector
+export def "main bottomRight" [selector: string = ""] {
+  move_window {v: "bottom", h: "right"} $selector
 }
 
 # Move window to bottom left
-export def "main bottomLeft" [selector = ""] {
-  move_window { v: "bottom", h: "left" } $selector
+export def "main bottomLeft" [selector: string = ""] {
+  move_window {v: "bottom", h: "left"} $selector
 }
 
 # Move window to top middle
-export def "main topMiddle" [selector = ""] {
-  move_window { v: "top", h: "middle" } $selector
+export def "main topMiddle" [selector: string = ""] {
+  move_window {v: "top", h: "middle"} $selector
 }
 
 # Move window to middle middle (center)
-export def "main middleMiddle" [selector = ""] {
-  move_window { v: "middle", h: "middle" } $selector
+export def "main middleMiddle" [selector: string = ""] {
+  move_window {v: "middle", h: "middle"} $selector
 }
 
 # Move window to bottom middle
-export def "main bottomMiddle" [selector = ""] {
-  move_window { v: "bottom", h: "middle" } $selector
+export def "main bottomMiddle" [selector: string = ""] {
+  move_window {v: "bottom", h: "middle"} $selector
 }
 
 # If the active window cannot be grown or shrunk, then don't use it!
@@ -220,11 +217,11 @@ def resize [percentage: number] {
                         * (1 + $percentage) | math round)
   # pre-calculate the resized, desired window dimensions for moving
   let window_dimensions_override = {
-    width: $resized_width,
-    height: $resized_height,
-    x: $window_info.window_dimensions.x,
-    y: $window_info.window_dimensions.y,
-    address: $window_info.address,
+    width: $resized_width
+    height: $resized_height
+    x: $window_info.window_dimensions.x
+    y: $window_info.window_dimensions.y
+    address: $window_info.address
   }
 
   let move_command = (move_position $window_info.window_quadrant (should_use_active) ""

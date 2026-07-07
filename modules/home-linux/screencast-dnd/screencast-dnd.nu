@@ -5,13 +5,17 @@
 # media.name "xdph-streaming-<rand>" — see xdph src/portals/Screencopy.cpp.
 
 def dnd-get []: nothing -> bool {
-  let result = try { ^notifctl --get-dnd --skip-wait | str trim } catch { "" }
+  let result = try {
+    ^notifctl --get-dnd --skip-wait | str trim
+  } catch { "" }
   $result == "true"
 }
 
 def dnd-set [on: bool] {
   let arg = if $on { "--dnd-on" } else { "--dnd-off" }
-  try { ^notifctl $arg --skip-wait | ignore }
+  try {
+    ^notifctl $arg --skip-wait | ignore
+  }
 }
 
 def main [] {
@@ -27,7 +31,7 @@ def main [] {
 
   for line in (pw-mon --no-colors --hide-params --print-separator | lines) {
     if $line == "" {
-      let was_casting = (not ($active | is-empty))
+      let was_casting = not ($active | is-empty)
 
       if ($action == "added" or $action == "changed") and $is_node and $is_video_source and $is_xdph_stream and $id >= 0 {
         if not ($id in $active) {
@@ -37,7 +41,7 @@ def main [] {
         $active = ($active | where {|x| $x != $id })
       }
 
-      let now_casting = (not ($active | is-empty))
+      let now_casting = not ($active | is-empty)
       if $now_casting and not $was_casting {
         $pre_cast_dnd = (dnd-get)
         dnd-set true
@@ -53,7 +57,7 @@ def main [] {
       continue
     }
 
-    let t = ($line | str trim)
+    let t = $line | str trim
     if $t == "added:" {
       $action = "added"
     } else if $t == "removed:" {
@@ -61,9 +65,13 @@ def main [] {
     } else if $t == "changed:" {
       $action = "changed"
     } else if ($t | str starts-with "id:") {
-      let parts = ($t | split row " " | where {|p| $p != "" })
+      let parts = $t | split row " " | where {|p| $p != "" }
       if ($parts | length) >= 2 {
-        $id = (try { $parts | get 1 | into int } catch { -1 })
+        $id = (
+          try {
+            $parts | get 1 | into int
+          } catch { -1 }
+        )
       }
     } else if ($t | str starts-with "type:") {
       $is_node = ($t | str contains "PipeWire:Interface:Node")
