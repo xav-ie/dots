@@ -1648,11 +1648,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1752707024,
-        "narHash": "sha256-DAn1+h8TV66v0P1eGkZh1tAttj0L+fFh2N1QjIxEgxM=",
+        "lastModified": 1783389156,
+        "narHash": "sha256-5UnCFIayPRg5hU/Gp0aiNvN/YerO3hzizBWbmQVoI40=",
         "owner": "xav-ie",
         "repo": "nuenv",
-        "rev": "d860f88cfb9b2ded365554698488defa7e5e070c",
+        "rev": "ba517a66dc4e8322855617262c3972892190908b",
         "type": "github"
       },
       "original": {
