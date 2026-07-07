@@ -1,4 +1,4 @@
-const bar_height = 34
+const bar_height = 32
 
 def floatingWindowOrActive [use_active: bool = false] {
 
