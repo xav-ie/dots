@@ -1,7 +1,7 @@
 #!/usr/bin/env nu --stdin
 
 def main [] {
-  let label = (date now | format date "%a %b %-d %-I:%M%p")
+  let label = date now | format date "%a %b %-d %-I:%M%p"
   let item_props = [
     "click_script=$HOME/.config/sketchybar/select_control_center.nu \"Clock\""
     "icon.width=0"

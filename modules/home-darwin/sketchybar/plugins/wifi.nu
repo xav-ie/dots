@@ -12,7 +12,7 @@
 # connect/disconnect reaction, plus the item's `update_freq` for slow signal
 # refresh.
 
-const CACHE_DIR = ("~/.cache/sketchybar" | path expand)
+const CACHE_DIR = "~/.cache/sketchybar" | path expand
 # On-screen icon height in px (rendered at 2x, drawn at background.image.scale
 # 0.5). Sized to match the neighbouring control_center / clock glyphs. Included
 # in the cache filename so bumping it busts stale PNGs.
@@ -46,7 +46,7 @@ def read-wifi [] {
   | str trim
   | split row " "
   | reduce --fold {} {|it, acc|
-      let kv = ($it | split row "=")
+      let kv = $it | split row "="
       $acc | insert $kv.0 $kv.1
     }
 }
@@ -68,16 +68,20 @@ def render [] {
 
   # Hotspot takes priority (works even if Wi-Fi is off and it's USB/BT tethered).
   let spec = if (is-hotspot) {
-    { sym: "personalhotspot", value: null, key: "hotspot" }
+    {sym: "personalhotspot", value: null, key: "hotspot"}
   } else {
     let state = (read-wifi)
     if ($state.power? | default "on") != "on" {
-      { sym: "wifi.slash", value: null, key: "off" }
+      {sym: "wifi.slash", value: null, key: "off"}
     } else if ($state.associated? | default "no") != "yes" {
-      { sym: "wifi.exclamationmark", value: null, key: "noassoc" }
+      {sym: "wifi.exclamationmark", value: null, key: "noassoc"}
     } else {
-      let v = (signal-value ($state.fraction | into float))
-      { sym: "wifi", value: $v, key: $"on-($v)" }
+      let v = signal-value ($state.fraction | into float)
+      {
+        sym: "wifi"
+        value: $v
+        key: $"on-($v)"
+      }
     }
   }
 

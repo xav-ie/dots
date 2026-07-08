@@ -10,13 +10,13 @@
 # script reapplies the patch on every `darwin-rebuild activate` (the
 # logic is inlined there rather than going through this CLI).
 
-const BACKUP_PRIMARY   = "~/Documents/aqua-car-backup"
+const BACKUP_PRIMARY = "~/Documents/aqua-car-backup"
 const BACKUP_SECONDARY = "~/Desktop"
-const SYSTEM_DIR       = "/System/Library/CoreServices/SystemAppearance.bundle/Contents/Resources"
-const MOUNT_POINT      = "~/live_disk_mnt"
-const LIGHT_CAR        = "Aqua.car"
-const DARK_CAR         = "DarkAqua.car"
-const STAGE_DIR        = "/tmp/aqua-patcher"
+const SYSTEM_DIR = "/System/Library/CoreServices/SystemAppearance.bundle/Contents/Resources"
+const MOUNT_POINT = "~/live_disk_mnt"
+const LIGHT_CAR = "Aqua.car"
+const DARK_CAR = "DarkAqua.car"
+const STAGE_DIR = "/tmp/aqua-patcher"
 
 def log [msg: string] {
   print $"(ansi cyan)==>(ansi reset) ($msg)"
@@ -48,9 +48,14 @@ def base_disk [] {
 }
 
 def ensure_mount [] {
-  let mp = ($MOUNT_POINT | path expand)
+  let mp = $MOUNT_POINT | path expand
   mkdir $mp
-  let mounted = (^mount | lines | find $"on ($mp) " | length)
+  let mounted = (
+    ^mount
+    | lines
+    | find $"on ($mp) "
+    | length
+  )
   if $mounted == 0 {
     log $"mounting (base_disk) at ($mp)"
     ^sudo mount -o nobrowse -t apfs (base_disk) $mp

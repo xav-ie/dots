@@ -79,10 +79,10 @@ def mint-token [cache: string] {
 # to [a-z0-9-] — attic's own charset, and it blocks shell-metacharacter
 # injection into the `ssh … bash -s $cache` in mint-token.
 def declared-caches [] {
-  let caches = (nix eval --json --file $"(dots-dir)/modules/_lib/caches.nix" | from json)
+  let caches = nix eval --json --file $"(dots-dir)/modules/_lib/caches.nix" | from json
   for c in $caches {
     if not ($c.name =~ '^[a-z0-9-]+$') {
-      error make { msg: $"invalid cache name '($c.name)': must match [a-z0-9-]" }
+      error make {msg: $"invalid cache name '($c.name)': must match [a-z0-9-]"}
     }
   }
   $caches
@@ -95,7 +95,10 @@ def cache-domain [] {
 
 # Is `name` a live public cache on the box? Probed over HTTP, no auth.
 def cache-exists [name: string, domain: string] {
-  try { http get $"https://($domain)/($name)/nix-cache-info" | ignore; true } catch { false }
+  try {
+    http get $"https://($domain)/($name)/nix-cache-info" | ignore
+    true
+  } catch { false }
 }
 
 # Deploy the box (nixos-rebuild switch over the tailnet). Shared by `deploy` and
@@ -126,10 +129,12 @@ def "main infra" [
   action: string # plan | apply | destroy
 ] {
   let sub = match $action {
-    "plan" => ".plan"
-    "apply" => ""
-    "destroy" => ".destroy"
-    _ => (error make { msg: $"unknown action '($action)' — expected plan|apply|destroy" })
+    plan => ".plan"
+    apply => ""
+    destroy => ".destroy"
+    _ => (
+      error make {msg: $"unknown action '($action)' — expected plan|apply|destroy"}
+    )
   }
   run-infra $sub
 }
@@ -159,9 +164,14 @@ def "main deploy" [] {
   deploy-box
   let target = (arca-ssh)
   print "→ rebooting arca into the new generation..."
-  let before = (^ssh $target cat /proc/sys/kernel/random/boot_id | complete | get stdout | str trim)
+  let before = (
+    ^ssh $target cat /proc/sys/kernel/random/boot_id
+    | complete
+    | get stdout
+    | str trim
+  )
   if ($before | is-empty) {
-    error make { msg: "couldn't read arca's boot id before reboot" }
+    error make {msg: "couldn't read arca's boot id before reboot"}
   }
   # The connection drops as the box goes down, so ignore the result.
   ^ssh $target systemctl reboot | complete | ignore
@@ -169,14 +179,17 @@ def "main deploy" [] {
   mut back = false
   for _ in 1..60 {
     sleep 5sec
-    let r = (^ssh -o ConnectTimeout=5 -o BatchMode=yes $target cat /proc/sys/kernel/random/boot_id | complete)
+    let r = (
+      ^ssh -o ConnectTimeout=5 -o BatchMode=yes $target cat /proc/sys/kernel/random/boot_id
+      | complete
+    )
     if ($r.exit_code == 0) and (($r.stdout | str trim) != $before) {
       $back = true
       break
     }
   }
   if not $back {
-    error make { msg: "arca did not come back within ~5 min of the reboot" }
+    error make {msg: "arca did not come back within ~5 min of the reboot"}
   }
   print "→ collecting old generations..."
   ^ssh $target nix-collect-garbage --delete-old
@@ -190,7 +203,7 @@ def "main deploy" [] {
 def "main sync" [] {
   let caches = (declared-caches)
   let domain = (cache-domain)
-  let missing = ($caches | where {|c| not (cache-exists $c.name $domain) } | get name)
+  let missing = $caches | where {|c| not (cache-exists $c.name $domain) } | get name
   if ($missing | is-not-empty) {
     print $"Not on the box yet: ($missing | str join ', ') — deploying to create them first."
     deploy-box

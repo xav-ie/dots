@@ -32,7 +32,10 @@ def "main stream" [
   print $"Loading model ($model)..."
   let silent = (mktemp -t whisper-XXXX --suffix .wav)
   ffmpeg -f lavfi -i anullsrc=r=16000:cl=mono -t 0.1 -y $silent err> /dev/null
-  let result = (whisper-ctranslate2 --model $model --device $device --compute_type $compute_type --language $language $silent | complete)
+  let result = (
+    whisper-ctranslate2 --model $model --device $device --compute_type $compute_type --language $language $silent
+    | complete
+  )
   rm -f $silent
   if $result.exit_code != 0 {
     print -e $result.stderr
@@ -43,11 +46,16 @@ def "main stream" [
   print "Press Ctrl+C to stop"
 
   mut args = [
-    --model $model
-    --device $device
-    --compute_type $compute_type
-    --live_transcribe true
-    --live_volume_threshold $volume_threshold
+    --model
+    $model
+    --device
+    $device
+    --compute_type
+    $compute_type
+    --live_transcribe
+    true
+    --live_volume_threshold
+    $volume_threshold
   ]
 
   if $language != "auto" {
@@ -59,7 +67,10 @@ def "main stream" [
 
     # Auto-detect sample rate from the device if not explicitly set
     let rate = if $sample_rate == 0 {
-      let result = (python3 -c $"import sounddevice; print\(int\(sounddevice.query_devices\(($capture)\)['default_samplerate']\)\)" | complete)
+      let result = (
+        python3 -c $"import sounddevice; print\(int\(sounddevice.query_devices\(($capture)\)['default_samplerate']\)\)"
+        | complete
+      )
       if $result.exit_code != 0 {
         print -e $"Error: Invalid capture device ID ($capture)"
         print -e ""
@@ -120,7 +131,15 @@ def "main file" [
   }
 
   # Check if we need to extract audio from video
-  let video_extensions = [mp4 mkv avi mov wmv flv webm]
+  let video_extensions = [
+    mp4
+    mkv
+    avi
+    mov
+    wmv
+    flv
+    webm
+  ]
   let file_ext = $file_path | path parse | get extension | str downcase
   let needs_extraction = $file_ext in $video_extensions
 
@@ -136,7 +155,7 @@ def "main file" [
     if $audio_track == -1 {
       if ($audio_tracks | length) > 1 {
         print "Multiple audio tracks detected:"
-        $audio_tracks | each { |t| print $"  ($t.display)" }
+        $audio_tracks | each {|t| print $"  ($t.display)" }
         let selection = input $"Select audio track \(0-($audio_tracks | length | $in - 1)\): "
         $selection | into int
       } else {
@@ -156,12 +175,12 @@ def "main file" [
     let audio_path = $file_path | path parse | update extension "wav" | path join
     print $"Extracting audio track ($selected_track) to ($audio_path)..."
     ffmpeg -i $file_path -map $"0:a:($selected_track)" -ar 16000 -ac 1 -c:a pcm_s16le $audio_path -y
-      | complete
-      | get stderr
-      | lines
-      | where { $in !~ "^frame=" }
-      | str join "\n"
-      | print
+    | complete
+    | get stderr
+    | lines
+    | where { $in !~ "^frame=" }
+    | str join "\n"
+    | print
     print "Audio extraction completed"
     $audio_path
   } else if $needs_extraction {
@@ -175,12 +194,12 @@ def "main file" [
     let temp_audio = (mktemp -t whisper-XXXX --suffix .wav)
     print $"Extracting audio track ($selected_track) to temporary file..."
     ffmpeg -i $file_path -map $"0:a:($selected_track)" -ar 16000 -ac 1 -c:a pcm_s16le $temp_audio -y
-      | complete
-      | get stderr
-      | lines
-      | where { $in !~ "^frame=" }
-      | str join "\n"
-      | print
+    | complete
+    | get stderr
+    | lines
+    | where { $in !~ "^frame=" }
+    | str join "\n"
+    | print
     print "Audio extraction completed"
     $temp_audio
   } else {
@@ -188,11 +207,16 @@ def "main file" [
   }
 
   mut args = [
-    --model $model
-    --device $device
-    --compute_type $compute_type
-    --output_dir $output_dir
-    --output_format $format
+    --model
+    $model
+    --device
+    $device
+    --compute_type
+    $compute_type
+    --output_dir
+    $output_dir
+    --output_format
+    $format
   ]
 
   if $language != "auto" {
@@ -270,7 +294,7 @@ def "main list-tracks" [
 # Extract audio track metadata from a video file using ffprobe
 def get_audio_tracks [file_path: string] {
   let probe_result = ffprobe -v error -show_entries stream=index,codec_type,codec_name:stream_tags=language,title -of json $file_path
-    | complete
+  | complete
 
   if $probe_result.exit_code != 0 {
     print $"Error: Failed to probe file: ($probe_result.stderr)"
@@ -278,12 +302,12 @@ def get_audio_tracks [file_path: string] {
   }
 
   $probe_result.stdout
-    | from json
-    | get -o streams
-    | default []
-    | where codec_type == "audio"
-    | enumerate
-    | each { |track|
+  | from json
+  | get -o streams
+  | default []
+  | where codec_type == "audio"
+  | enumerate
+  | each { |track|
         let lang = $track.item.tags?.language? | default "unknown"
         let title = $track.item.tags?.title? | default ""
         let codec = $track.item.codec_name

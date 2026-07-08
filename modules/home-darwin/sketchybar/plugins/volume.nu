@@ -14,7 +14,7 @@ def vol-width [v: int] {
 # through its states — muted → no waves → 1 → 2 → 3 — in step with the counting
 # number. PNGs are cached by path, so after each symbol's first render this is a
 # cheap path lookup, fine to call per frame.
-const VOL_CACHE_DIR = ("~/.cache/sketchybar" | path expand)
+const VOL_CACHE_DIR = "~/.cache/sketchybar" | path expand
 const VOL_POINT_SIZE = 12
 
 def volume-symbol [pct: int] {
@@ -68,10 +68,11 @@ def main [] {
     "padding_left=-28"
     # Small right pad so the volume button sits just clear of the battery button.
     "padding_right=3"
-  ];
+  ]
 
   match $env.SENDER {
     "volume_change" => {
+
       # Tween the displayed number toward the new volume so e.g. 56→63 ticks up
       # instead of snapping. sketchybar can animate numeric *properties* (we use
       # that for label.width in set-vol, so the icon glides at 9→10 / 99→100) but
@@ -80,16 +81,20 @@ def main [] {
       # A per-event random token supersedes an in-flight tween: every frame bails
       # if the token has moved on (a newer volume_change wrote its own), so only
       # the latest change runs to its end and its final value is always correct.
-      let target = ($env.INFO | into int)
+      let target = $env.INFO | into int
       let gen = (random int 0..999999999)
       $gen | save -f /tmp/sketchybar_volume_gen
-      let current = (try { open --raw /tmp/sketchybar_volume_cur | str trim | into int } catch { $target })
+      let current = (
+        try {
+          open --raw /tmp/sketchybar_volume_cur | str trim | into int
+        } catch { $target }
+      )
 
       if $current == $target {
         set-vol $target
       } else {
         let delta = ($target - $current)
-        let mag = ($delta | math abs)
+        let mag = $delta | math abs
         # One integer per frame for small changes (real "counting"); cap the
         # frame count so big jumps still finish quickly. Tuning knobs: this cap
         # (max frames) and the sleep below (per-frame time) — lower either to
@@ -97,7 +102,7 @@ def main [] {
         let steps = (if $mag > 10 { 10 } else { $mag })
         for i in 1..$steps {
           if (open --raw /tmp/sketchybar_volume_gen | str trim | into int) != $gen { return }
-          let v = ($current + (($delta * $i / $steps) | math round | into int))
+          let v = $current + (($delta * $i / $steps) | math round | into int)
           set-vol $v
           sleep 5ms
         }
@@ -107,8 +112,18 @@ def main [] {
       sketchybar --set $"($env.NAME)" ...$item_props
       # Seed the number + icon from the current volume on (re)load, so the
       # readout is right before the first volume_change. Mute shows as 0.
-      let muted = ((osascript -e 'output muted of (get volume settings)' | str trim) == "true")
-      let cur = if $muted { 0 } else { (try { osascript -e 'output volume of (get volume settings)' | str trim | into int } catch { 0 }) }
+      let muted = (
+        (osascript -e 'output muted of (get volume settings)' | str trim) == "true"
+      )
+      let cur = if $muted { 0 } else {
+        (
+        try {
+          osascript -e 'output volume of (get volume settings)'
+          | str trim
+          | into int
+        } catch { 0 }
+      )
+      }
       set-vol $cur
     }
   }
