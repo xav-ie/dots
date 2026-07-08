@@ -1,5 +1,16 @@
 def spinner [] {
-  ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+  [
+    "⠋"
+    "⠙"
+    "⠹"
+    "⠸"
+    "⠼"
+    "⠴"
+    "⠦"
+    "⠧"
+    "⠇"
+    "⠏"
+  ]
   | each { |x|
     print -n $"(ansi green)($x)(ansi reset) Fetching remote data...\r"
     sleep 35ms
@@ -7,13 +18,13 @@ def spinner [] {
   return
 }
 def fmt_cell [width: int] {
-    let input = $in | into string
-    let trimmed = if ($input | str length) > $width {
-        $"($input | str substring 0..($width - 4))..."
-    } else {
-        $input
-    }
-    $trimmed | fill -w $width
+  let input = $in | into string
+  let trimmed = if ($input | str length) > $width {
+    $"($input | str substring 0..($width - 4))..."
+  } else {
+    $input
+  }
+  $trimmed | fill -w $width
 }
 def color [command: string] {
   let input = $in | into string
@@ -33,10 +44,10 @@ def main [] {
     spinner
   }
 
-  let $prs = (open $temp_out | from json)
+  let $prs = open $temp_out | from json
   rm $temp_out
-  if (($prs | length) == 0) {
-    error make --unspanned { msg: "Error: No pull requests found." }
+  if ($prs | length) == 0 {
+    error make --unspanned {msg: "Error: No pull requests found."}
   }
 
   let $formattedOut = $prs | each { |pr|
@@ -75,16 +86,22 @@ def main [] {
   }
 
   # The number is the first column (ansi-colored, left-filled to width 6).
-  let number = ($selection.stdout | ansi strip | str trim | split row ' ' | first)
+  let number = (
+    $selection.stdout
+    | ansi strip
+    | str trim
+    | split row ' '
+    | first
+  )
 
   if (git status --porcelain | str trim | str length) > 0 {
-    GH_FORCE_TTY=100% gh pr view $number
+    gh pr view $number
     print "Clean your git directory in order to checkout."
     return
   }
 
   # `gh pr checkout` is flaky and unreliable, so check out by branch name.
   git fetch origin
-  let branch = (gh pr view $number --json headRefName -q .headRefName | str trim)
+  let branch = gh pr view $number --json headRefName -q .headRefName | str trim
   git checkout -B $branch $"origin/($branch)"
 }

@@ -24,8 +24,8 @@ def main [
   }
   if ($files | is-empty) { return }
 
-  let config_abs = ($config | path expand)
-  let config_dir = ($config_abs | path dirname)
+  let config_abs = $config | path expand
+  let config_dir = $config_abs | path dirname
 
   # Prefer the git root as the cwd so tsc emits repo-root-relative paths
   # (uniform across monorepos). Falls back to the tsconfig dir if the project
@@ -36,12 +36,12 @@ def main [
   } catch { $config_dir })
 
   let rel_files = ($files | each {|f|
-    let abs = ($f | path expand)
+    let abs = $f | path expand
     try { $abs | path relative-to $run_cwd } catch { $abs }
   })
 
-  let local_tsc = ([$config_dir "node_modules" ".bin" "tsc"] | path join)
-  let root_tsc = ([$run_cwd "node_modules" ".bin" "tsc"] | path join)
+  let local_tsc = [$config_dir "node_modules" ".bin" "tsc"] | path join
+  let root_tsc = [$run_cwd "node_modules" ".bin" "tsc"] | path join
   let tsc_bin = if ($local_tsc | path exists) {
     $local_tsc
   } else if ($root_tsc | path exists) {

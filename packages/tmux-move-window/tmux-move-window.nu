@@ -1,7 +1,7 @@
 # Move current tmux window to target position by repeatedly swapping
 def main [target: int] {
   # Get current window index
-  let current: int = (tmux display-message -p "#{window_index}" | into int)
+  let current: int = tmux display-message -p "#{window_index}" | into int
 
   if $current == $target {
     print $"Already at position ($target)"

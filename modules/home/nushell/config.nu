@@ -8,7 +8,7 @@
 #
 # version = "0.96.1"
 
-$env.config.color_config.search_result = { bg: "#dd2200" fg: white }
+$env.config.color_config.search_result = {bg: "#dd2200", fg: white}
 
 # claude-sessions: resumable sessions for the current dir, newest first.
 # Claude stores one <uuid>.jsonl per session under
@@ -17,9 +17,12 @@ $env.config.color_config.search_result = { bg: "#dd2200" fg: white }
 # inserted is the bare session id (see the completer below).
 def claude-sessions [] {
   let base = ($env.CLAUDE_CONFIG_DIR? | default ([$env.HOME ".claude"] | path join)) | path join "projects"
-  let dir = ([$base (pwd | str replace -ra '[^a-zA-Z0-9]' '-')] | path join)
+  let dir = ([
+    $base
+    (pwd | str replace -ra '[^a-zA-Z0-9]' '-')
+  ] | path join)
   if not ($dir | path exists) { return [] }
-  let files = (ls ($"($dir)/*.jsonl" | into glob) | sort-by modified -r)
+  let files = ls ($"($dir)/*.jsonl" | into glob) | sort-by modified -r
   # One ripgrep pass pulls just the two small marker line-types out of every
   # transcript (cheaper than parsing the multi-MB files), grouped by file.
   # -g '*.jsonl' keeps rg from recursing into sibling files (e.g. a memory/
@@ -29,8 +32,8 @@ def claude-sessions [] {
     | lines
     | parse --regex '^(?<f>[^:]+):(?<j>.+)$'
     | each {|r|
-        let o = (try { $r.j | from json } catch { {} })
-        let t = ($o.type? | default "")
+        let o = try { $r.j | from json } catch { {} }
+        let t = $o.type? | default ""
         if $t in ["ai-title" "last-prompt"] {
           { f: ($r.f | path basename), kind: $t
             text: (if $t == "ai-title" { $o.aiTitle? | default "" } else { $o.lastPrompt? | default "" }) }
@@ -41,17 +44,22 @@ def claude-sessions [] {
   # Precompute the ANSI codes once: datetime + title are colored distinctly
   # from the dimmed last-message "description". display_override keeps the raw
   # codes (nushell doesn't strip them there) and the terminal renders them.
-  let col = { time: (ansi cyan), title: (ansi green_bold), desc: (ansi dark_gray), reset: (ansi reset) }
+  let col = {
+    time: (ansi cyan)
+    title: (ansi green_bold)
+    desc: (ansi dark_gray)
+    reset: (ansi reset)
+  }
   $files | each {|file|
-    let key = ($file.name | path basename)
-    let rows = ($hits | get -o $key | default [])
-    let titles = ($rows | where kind == "ai-title" | get text)
-    let lasts  = ($rows | where kind == "last-prompt" | get text)
-    let title = (if ($titles | is-empty) { "" } else { $titles | last })
-    let last  = (if ($lasts | is-empty) { "" } else { $lasts | last | str replace -ra '\s+' ' ' | str substring 0..80 })
+    let key = $file.name | path basename
+    let rows = $hits | get -o $key | default []
+    let titles = $rows | where kind == "ai-title" | get text
+    let lasts = $rows | where kind == "last-prompt" | get text
+    let title = if ($titles | is-empty) { "" } else { $titles | last }
+    let last = if ($lasts | is-empty) { "" } else { $lasts | last | str replace -ra '\s+' ' ' | str substring 0..80 }
     # Skip stub sessions (aborted/empty: no generated title and no prompt).
     if $title == "" and $last == "" { return }
-    let when = ($file.modified | date humanize)
+    let when = $file.modified | date humanize
     let titleDisp = (if $title == "" { "(untitled)" } else { $title })
     let disp = $"($col.time)($when)($col.reset)  ($col.title)($titleDisp)($col.reset)  ($col.desc)($last)($col.reset)"
     { value: ($key | str replace '.jsonl' ''), display_override: $disp }
@@ -59,6 +67,7 @@ def claude-sessions [] {
 }
 
 let carapace_completer = {|spans|
+
   # `claude --resume <id>` / `-r <id>`: serve our own session list. carapace
   # force-sorts alphabetically and can only show the inserted value (the uuid),
   # so we return records with display_override (title shown, id inserted). The
@@ -84,6 +93,7 @@ $env.config.completions.external = {
 }
 
 $env.config.cursor_shape = {
+
   # block, underscore, line, blink_block, blink_underscore, blink_line,
   # inherit to skip setting cursor shape (line is the default)
   emacs: line
@@ -98,21 +108,22 @@ $env.config.cursor_shape = {
 $env.config.edit_mode = "vi" # emacs, vi
 
 $env.config.explore = {
-  status_bar_background: { fg: white, bg: black },
-  command_bar_text: { fg: "#C4C9C6" },
-  highlight: { fg: "black", bg: "yellow" },
+  status_bar_background: {fg: white, bg: black}
+  command_bar_text: {fg: "#C4C9C6"}
+  highlight: {fg: "black", bg: "yellow"}
   status: {
-    error: { fg: "white", bg: "red" },
+    error: {fg: "white", bg: "red"}
     warn: {}
     info: {}
-  },
-  selected_cell: { bg: light_blue },
+  }
+  selected_cell: {bg: light_blue}
 }
 
 $env.config.hooks.pre_execution = [
-  { || if 'TMUX_PANE' in $env { $env.TMUX_TAB_UPDATE_PANE = $env.TMUX_PANE } }
+  {||
+    if 'TMUX_PANE' in $env { $env.TMUX_TAB_UPDATE_PANE = $env.TMUX_PANE }
+  }
 ]
-
 
 # tmux-tab-name-update only matters when $PWD changes (tab name is derived
 # from directory + git branch).  Move from pre_prompt (every prompt) to
@@ -124,7 +135,7 @@ $env.config.hooks.env_change = ($env.config.hooks.env_change? | default {})
 $env.config.hooks.env_change.PWD = (
     $env.config.hooks.env_change.PWD?
     | default []
-    | append { |_before, _after| tmux-tab-name-update }
+    | append {|_before, _after| tmux-tab-name-update }
 )
 
 # --- graphical session env ---------------------------------------------------
@@ -152,7 +163,7 @@ $env.config.keybindings ++= [
     modifier: control
     keycode: char_u
     mode: [emacs, vi_insert]
-    event: { edit: cutfromstart }
+    event: {edit: cutfromstart}
   }
 ]
 
@@ -163,6 +174,7 @@ $env.config.render_right_prompt_on_last_line = false
 $env.config.show_banner = false
 
 $env.config.table = {
+
   # basic, compact, compact_double, light, thin, with_love, rounded,
   # reinforced, heavy, none, other
   mode: compact
@@ -172,7 +184,7 @@ $env.config.table = {
   # show 'empty list' and 'empty record' placeholders for command output
   show_empty: true
   # a left right padding of each column in a table
-  padding: { left: 1, right: 1 }
+  padding: {left: 1, right: 1}
   trim: {
     # wrapping or truncating
     methodology: wrapping
@@ -217,9 +229,9 @@ def --env --wrapped zi [...rest: string] {
 # picker (seeded with your keywords) instead of just erroring. No db writes.
 def --env --wrapped z [...rest: string] {
   let path = match $rest {
-    [] => {'~'},
-    [ '-' ] => {'-'},
-    [ $arg ] if ($arg | path expand | path type) == 'dir' => {$arg}
+    [] => { '~' }
+    ['-'] => { '-' }
+    [$arg] if ($arg | path expand | path type) == 'dir' => { $arg }
     _ => {
       # `do {...} | complete` captures the exit code and swallows zoxide's
       # "no match found" stderr instead of aborting on a miss.
@@ -237,43 +249,52 @@ def --env --wrapped z [...rest: string] {
 # gcot: git checkout tag — tab-completes only tags, with <base>latest alias
 # for the most recent tag per prefix. Resolves *latest at checkout time.
 def "nu-complete git tags" [context: string] {
-  let token = ($context | split row " " | last)
+  let token = $context | split row " " | last
   let recent = (^git tag --sort=-creatordate | lines | where {|x| $x != ""})
-  let matches = ($recent | where {|t| $t | str starts-with $token})
-  let normal  = ($matches | each {|t| { value: $t, description: "" } })
+  let matches = $recent | where {|t| $t | str starts-with $token}
+  let normal = $matches | each {|t| { value: $t, description: "" } }
   mut bases = ($matches
     | each {|t| if ($t | str contains "@") { ($t | split row "@" | first) + "@" } }
     | compact | uniq)
   # Prefixes of "latest", longest-first, so a partially-typed alias suffix
   # (e.g. "v1@lat") still resolves to its base ("v1@").
   let latest_word = "latest"
-  let partials = (1..($latest_word | str length) | each {|n| $latest_word | str substring 0..<$n } | reverse)
+  let partials = (
+    1..($latest_word | str length)
+    | each {|n| $latest_word | str substring 0..<$n }
+    | reverse
+  )
   for p in $partials {
     if ($token | str ends-with $p) {
-      $bases = ($bases | append ($token | str substring 0..<(($token | str length) - ($p | str length))))
+      $bases = (
+        $bases
+        | append ($token | str substring 0..<(($token | str length) - ($p | str length)))
+      )
       break
     }
   }
   $bases = ($bases | where {|b| $b != ""} | uniq)
   let latest = ($bases | each {|b|
-      let real = ($recent | where {|t| $t | str starts-with $b} | first)
+      let real = $recent | where {|t| $t | str starts-with $b} | first
       let alias = $"($b)latest"
       if ($real != null) and (($alias | str starts-with $token) or ($token | str starts-with $alias)) {
         { value: $alias, description: $"→ ($real)" }
       }
     } | compact)
   {
-    options: { filter: false, sort: false }
+    options: {filter: false, sort: false}
     completions: ($latest | append $normal | uniq-by value)
   }
 }
 
 def gcot [tag: string@"nu-complete git tags"] {
   let resolved = if ($tag | str ends-with "latest") {
-    let base = ($tag | str substring 0..<(($tag | str length) - 6))
-    ^git tag --sort=-creatordate --list $"($base)*" | lines | where {|x| $x != ""} | first
-      | default $tag
+    let base = $tag | str substring 0..<(($tag | str length) - 6)
+    ^git tag --sort=-creatordate --list $"($base)*"
+    | lines
+    | where {|x| $x != ""}
+    | first
+    | default $tag
   } else { $tag }
   git checkout $resolved
 }
-

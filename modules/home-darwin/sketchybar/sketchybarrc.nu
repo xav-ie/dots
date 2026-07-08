@@ -18,17 +18,17 @@ sketchybar --bar "position=top" $"height=(get_bar_height)" "blur_radius=30" "col
 # https://felixkratz.github.io/SketchyBar/config/items
 
 let default_props = [
-  "padding_left=-10",
-  "padding_right=-10",
+  "padding_left=-10"
+  "padding_right=-10"
   # No icon.font: every bar icon is now a PNG rendered by `sketchybar-icons`
   # (battery/wifi/clock/control_center/volume), so the mono Nerd icon font is no
   # longer needed. Labels still use the tabular font below.
-  $"label.font=(get_label_font)",
-  "icon.color=0xffffffff",
-  "label.color=0xffffffff",
-  "icon.padding_left=24",
-  "icon.padding_right=2",
-  "label.padding_left=4",
+  $"label.font=(get_label_font)"
+  "icon.color=0xffffffff"
+  "label.color=0xffffffff"
+  "icon.padding_left=24"
+  "icon.padding_right=2"
+  "label.padding_left=4"
   "label.padding_right=4"
   "label.background.height=24"
   "icon.background.height=24"

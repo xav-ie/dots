@@ -6,13 +6,13 @@ def main [] {
   # pending tool_use is not yet in the transcript (the assistant turn is held
   # open while awaiting approval). The PreToolUse hook (record-pending-tool.nu)
   # stashes the tool that is about to run, keyed by session, so read it back.
-  let sid = ($input.session_id? | default "unknown")
+  let sid = $input.session_id? | default "unknown"
   let statefile = $"/tmp/claude-pending-tool-($sid).json"
   let pending = (try { open $statefile } catch { null })
 
   # No recorded tool: fall back to the raw hook message, the same generic ping
   # Claude Code would otherwise show.
-  if ($pending == null) {
+  if $pending == null {
     ^notify "Claude Code" $input.message
     exit 0
   }
@@ -29,13 +29,17 @@ def main [] {
   if ($pending.notified? | default false) { exit 0 }
   $pending | upsert notified true | to json | save -f $statefile
 
-  let content = { name: ($pending.tool_name? | default ""), input: ($pending.tool_input? | default {}) }
+  let content = {
+    name: ($pending.tool_name? | default "")
+    input: ($pending.tool_input? | default {})
+  }
 
   match $content.name {
     "AskUserQuestion" => {
+
       # input.questions is [{question, header, options, multiSelect}, ...];
       # surface the actual prompt text instead of a generic placeholder.
-      let questions = ($content.input.questions? | default [])
+      let questions = $content.input.questions? | default []
       let body = if ($questions | is-empty) {
         "Needs answers to some question(s)"
       } else {
@@ -44,7 +48,7 @@ def main [] {
       ^notify "Claude has a question" $body
     }
     "Edit" => {
-      let basepath = ($content.input.file_path | path basename)
+      let basepath = $content.input.file_path | path basename
       ^notify "Claude Code" $"Needs permission to edit ($basepath)"
     }
     "EnterPlanMode" => {
@@ -54,15 +58,15 @@ def main [] {
       ^notify "Claude Code" $"Bash: ($content.input.description)"
     }
     "Glob" => {
-      let basepath = ($content.input.path? | default "cwd" | path basename)
+      let basepath = $content.input.path? | default "cwd" | path basename
       ^notify "Claude Code" $"Needs permission to glob search ($basepath)"
     }
     "Grep" => {
-      let basepath = ($content.input.path? | default "cwd" | path basename)
+      let basepath = $content.input.path? | default "cwd" | path basename
       ^notify "Claude Code" $"Needs permission to search ($basepath)"
     }
     "Read" => {
-      let basepath = ($content.input.file_path | path basename)
+      let basepath = $content.input.file_path | path basename
       ^notify "Claude Code" $"Needs permission to read ($basepath)"
     }
     "SlashCommand" => {
@@ -75,7 +79,7 @@ def main [] {
       ^notify "Claude Code" $"Needs permission to fetch ($content.input.url)"
     }
     "Write" => {
-      let basepath = ($content.input.file_path | path basename)
+      let basepath = $content.input.file_path | path basename
       ^notify "Claude Code" $"Needs permission to create ($basepath)"
     }
     _ => {

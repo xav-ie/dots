@@ -3,7 +3,7 @@
 # Update current tmux tab name.
 def main [] {
   # Only run if we're in tmux.
-  if ('TMUX_PANE' not-in $env) {
+  if 'TMUX_PANE' not-in $env {
     return
   }
 

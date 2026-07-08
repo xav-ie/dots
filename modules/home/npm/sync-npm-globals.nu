@@ -16,7 +16,7 @@ def main [
   mut config = open $config_path
 
   # Get installed global packages via filesystem (faster than npm list)
-  let npm_prefix = (npm config get prefix | str trim)
+  let npm_prefix = npm config get prefix | str trim
   let node_modules = $npm_prefix | path join "lib" | path join "node_modules"
   let installed = if ($node_modules | path exists) {
     # Handle both scoped (@org/pkg) and regular packages
@@ -60,6 +60,7 @@ def main [
   }
 
   if $enforce {
+
     # Remove extras (config wins)
     let config_names = $config_packages | get name
     let extras = $installed | where {|row| $row.name not-in $config_names }

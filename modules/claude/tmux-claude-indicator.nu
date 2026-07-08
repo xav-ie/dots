@@ -20,7 +20,7 @@ def log [path: string, msg: string] {
   if ($env.TMUX_CLAUDE_INDICATOR_DEBUG? | default "" | is-empty) { return }
   try {
     let line = $"(date now | format date '%Y-%m-%dT%H:%M:%S%.3f') ($msg)\n"
-    let p = ($path | path expand)
+    let p = $path | path expand
     mkdir ($p | path dirname)
     $line | save --append $p
   }
@@ -33,12 +33,14 @@ def log [path: string, msg: string] {
 def stop_final_text [stdin_raw: string, log_path: string] {
   log $log_path $"stop_final_text: stdin len=($stdin_raw | str length)"
 
-  let payload = try { $stdin_raw | from json } catch { |e|
+  let payload = try {
+    $stdin_raw | from json
+  } catch {|e|
     log $log_path $"stop_final_text: stdin not JSON: ($e.msg)"
     return ""
   }
 
-  let transcript_path = ($payload | get -o transcript_path | default "")
+  let transcript_path = $payload | get -o transcript_path | default ""
   log $log_path $"stop_final_text: transcript_path=($transcript_path)"
 
   let text = (last-assistant-text $transcript_path)
@@ -51,22 +53,24 @@ def stop_final_text [stdin_raw: string, log_path: string] {
 # zoomed or zoomed onto this same pane.
 def pane_is_visible [pane: string] {
   let raw = try {
-    (^tmux display-message -t $pane -p "#{window_active}|#{window_zoomed_flag}|#{pane_active}|#{session_attached}") | str trim
+    (
+      ^tmux display-message -t $pane -p "#{window_active}|#{window_zoomed_flag}|#{pane_active}|#{session_attached}"
+    ) | str trim
   } catch { return false }
 
-  let parts = ($raw | split row "|")
+  let parts = $raw | split row "|"
   if ($parts | length) < 4 { return false }
 
-  let window_active = (($parts | get 0) == "1")
-  let window_zoomed = (($parts | get 1) == "1")
-  let pane_active = (($parts | get 2) == "1")
-  let attached = ((($parts | get 3) | into int) > 0)
+  let window_active = ($parts | get 0) == "1"
+  let window_zoomed = ($parts | get 1) == "1"
+  let pane_active = ($parts | get 2) == "1"
+  let attached = (($parts | get 3) | into int) > 0
 
   $window_active and $attached and ((not $window_zoomed) or $pane_active)
 }
 
 def main [event: string, pane_override?: string] {
-  let stdin_raw = ($in | default "")
+  let stdin_raw = $in | default ""
   let log_path = $env.TMUX_CLAUDE_INDICATOR_LOG? | default $LOG_DEFAULT
 
   let pane = if $pane_override == null or ($pane_override | is-empty) {
@@ -76,7 +80,7 @@ def main [event: string, pane_override?: string] {
   }
 
   let in_tmux = not ($env.TMUX? | default "" | is-empty)
-  let override_str = ($pane_override | default "<none>")
+  let override_str = $pane_override | default "<none>"
   log $log_path $"invoke event=($event) pane=($pane) override=($override_str) in_tmux=($in_tmux)"
 
   if ($pane | is-empty) {
@@ -104,15 +108,13 @@ def main [event: string, pane_override?: string] {
         "yellow"
       } else { "green" }
     }
-    "notification" => "yellow"
-    "clear" => "clear"
+    notification => "yellow"
+    clear => "clear"
     _ => "white"
   }
 
   try {
     ^tmux set-option -w -t $pane "@claude-dot" $color
     log $log_path $"set pane=($pane) color=($color)"
-  } catch { |e|
-    log $log_path $"error set-option failed: ($e.msg)"
-  }
+  } catch {|e| log $log_path $"error set-option failed: ($e.msg)" }
 }
