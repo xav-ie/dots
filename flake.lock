@@ -1703,16 +1703,15 @@
         "treefmt-nix": "treefmt-nix_3"
       },
       "locked": {
-        "lastModified": 1783541509,
+        "lastModified": 1783547087,
         "narHash": "sha256-7S6IKeaSfxRxD5LyuyIbh7OQ83zeaY6OYWO7JlXpmAc=",
-        "owner": "xav-ie",
+        "owner": "nushell",
         "repo": "nufmt",
-        "rev": "b0ed4b87a373f4cc4d885b42609b551e94a028d0",
+        "rev": "1a43bfdf209288c0683e3c1e5a047511e1d7f8b3",
         "type": "github"
       },
       "original": {
-        "owner": "xav-ie",
-        "ref": "fix/match-guard-comment-hoist",
+        "owner": "nushell",
         "repo": "nufmt",
         "type": "github"
       }

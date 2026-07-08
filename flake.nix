@@ -38,7 +38,7 @@
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-26.05";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nuenv.url = "github:xav-ie/nuenv";
-    nufmt.url = "github:xav-ie/nufmt/fix/match-guard-comment-hoist";
+    nufmt.url = "github:nushell/nufmt";
     plover-flake.url = "github:openstenoproject/plover-flake";
     quadlet-nix.url = "github:SEIAROTg/quadlet-nix";
     ream.url = "git+ssh://git@github.com/xav-ie/ream";
