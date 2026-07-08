@@ -23,8 +23,8 @@ use ~/.claude/lib-focus.nu pane-focused
 # SessionEnd: delete both files so /tmp does not accumulate state per session.
 def main [] {
   let input = $in | from json
-  let sid = $input.session_id? | default "unknown"
-  let event = $input.hook_event_name? | default ""
+  let sid = ($input.session_id? | default "unknown")
+  let event = ($input.hook_event_name? | default "")
   let toolfile = $"/tmp/claude-pending-tool-($sid).json"
   let seenfile = $"/tmp/claude-turn-seen-($sid).json"
 
@@ -33,13 +33,11 @@ def main [] {
       rm -f $toolfile $seenfile
     }
     "Stop" => {
-      {
-        seen: (pane-focused)
-      } | to json | save -f $seenfile
+      { seen: (pane-focused) } | to json | save -f $seenfile
     }
     _ => {
-      let tool = $input.tool_name? | default ""
-      let seen = (if $tool == "AskUserQuestion" { (pane-focused) } else { false })
+      let tool = ($input.tool_name? | default "")
+      let seen = (if ($tool == "AskUserQuestion") { (pane-focused) } else { false })
       {
         tool_name: $tool
         tool_input: ($input.tool_input? | default {})

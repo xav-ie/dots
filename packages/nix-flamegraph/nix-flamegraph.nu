@@ -25,11 +25,9 @@ def main [
   } | complete)
 
   # Parse stats from stderr (JSON format) - skip warning lines before JSON
-  let json_start = $eval_result.stderr | str index-of "{"
+  let json_start = ($eval_result.stderr | str index-of "{")
   let stats = if $json_start >= 0 {
-    try {
-      $eval_result.stderr | str substring $json_start.. | from json
-    } catch {|_| null }
+    try { $eval_result.stderr | str substring $json_start.. | from json } catch { |_| null }
   } else {
     null
   }
@@ -56,10 +54,8 @@ def main [
       | parse --regex '/nix/store/([a-z0-9]+)-source/lib/modules\.nix'
       | get capture0
       | uniq)
-    let non_nixpkgs = $flake_sources | where {|h| not ($nixpkgs_sources | any {|n| $n == $h }) }
-    if ($non_nixpkgs | is-empty) { "" } else {
-      $non_nixpkgs | first
-    }
+    let non_nixpkgs = ($flake_sources | where { |h| not ($nixpkgs_sources | any { |n| $n == $h }) })
+    if ($non_nixpkgs | is-empty) { "" } else { $non_nixpkgs | first }
   } else {
     $dots_candidates | first
   }
@@ -89,24 +85,16 @@ def main [
   $readable_content | save --force $readable_profile
 
   # Filter to only stacks that touch user code
-  let dots_content = (
-    $readable_content
-    | lines
-    | where {|line| $line | str contains "[dots]" }
-    | str join "\n"
-  )
+  let dots_content = ($readable_content | lines | where { |line| $line | str contains "[dots]" } | str join "\n")
   $dots_content | save --force $dots_profile
 
-  let sample_count = $dots_content | lines | length
+  let sample_count = ($dots_content | lines | length)
   print $"Found ($sample_count) samples touching your code"
 
   print "Generating flamegraph..."
 
   # Generate flamegraph
-  let flamegraph_result = (
-    do { inferno-flamegraph --title "Nix Eval Flamegraph - [dots] in blue" $dots_profile }
-    | complete
-  )
+  let flamegraph_result = (do { inferno-flamegraph --title "Nix Eval Flamegraph - [dots] in blue" $dots_profile } | complete)
   $flamegraph_result.stdout | save --force $output_svg
 
   # Highlight [dots] frames in blue (steel blue)
@@ -129,21 +117,21 @@ def main [
   let hotspots = ($dots_content
     | lines
     | par-each { |line|
-      let parts = $line | split row " "
-      let count = $parts | last | into int | default 0
-      let stack = $parts | drop 1 | str join " "
-      let frames = $stack | split row ";"
-      $frames | where {|f| $f | str contains "[dots]" } | each { |frame|
+      let parts = ($line | split row " ")
+      let count = ($parts | last | into int | default 0)
+      let stack = ($parts | drop 1 | str join " ")
+      let frames = ($stack | split row ";")
+      $frames | where { |f| $f | str contains "[dots]" } | each { |frame|
         { location: $frame, count: $count }
       }
     }
     | flatten
     | group-by location
-    | items {|loc, entries| { location: $loc, total: ($entries | get count | math sum) } }
+    | items { |loc, entries| { location: $loc, total: ($entries | get count | math sum) } }
     | sort-by total --reverse
     | take 20)
 
-  $hotspots | each {|h| print $"($h.total) ($h.location)" } | ignore
+  $hotspots | each { |h| print $"($h.total) ($h.location)" } | ignore
 
   # Show stats
   print ""
@@ -187,10 +175,10 @@ def open-file [path: string] {
 # Auto-detect the default flake output based on current host
 def get-default-flake-output [] {
   let hostname = (hostname)
-  let kernel = uname | get kernel-name
+  let kernel = (uname | get kernel-name)
   match $kernel {
-    Darwin => $".#darwinConfigurations.($hostname).system"
-    Linux => $".#nixosConfigurations.($hostname).config.system.build.toplevel"
+    "Darwin" => $".#darwinConfigurations.($hostname).system"
+    "Linux" => $".#nixosConfigurations.($hostname).config.system.build.toplevel"
     _ => ".#darwinConfigurations.nox.system"
   }
 }

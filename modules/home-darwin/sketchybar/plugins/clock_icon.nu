@@ -10,7 +10,7 @@
 # Refreshed on the item's `update_freq` (routine); the cache key is the current
 # HH-MM so a given minute renders once and sketchybar reloads on the path change.
 
-const CACHE_DIR = "~/.cache/sketchybar" | path expand
+const CACHE_DIR = ("~/.cache/sketchybar" | path expand)
 # On-screen icon height in px (= the clock's diameter; rendered at 2x, drawn at
 # background.image.scale 0.5). Sized to sit alongside the wifi/battery glyphs.
 # In the cache filename so bumping it busts stale PNGs.
@@ -27,8 +27,8 @@ const STYLE = "v2"
 # reloads whenever the path changes.
 def render [] {
   let now = (date now)
-  let hour = $now | format date "%-H" | into int
-  let minute = $now | format date "%-M" | into int
+  let hour = ($now | format date "%-H" | into int)
+  let minute = ($now | format date "%-M" | into int)
   let out = $"($CACHE_DIR)/clock-($hour)-($minute)-($POINT_SIZE)-($STYLE).png"
   if not ($out | path exists) {
     sketchybar-icons clock --hour $hour --minute $minute --point-size $POINT_SIZE --scale 2 --color $FACE_COLOR --minute-color $MINUTE_COLOR --out $out

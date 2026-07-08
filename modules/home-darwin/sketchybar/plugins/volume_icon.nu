@@ -28,6 +28,6 @@ def main [] {
     "forced" => {
       sketchybar --set $"($env.NAME)" ...$item_props
     }
-    _ => { }
+    _ => {}
   }
 }

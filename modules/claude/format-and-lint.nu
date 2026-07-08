@@ -13,14 +13,14 @@
 # Failures exit 2 so Claude sees the error.
 
 const TSC_FAST_THRESHOLD_MS = 10000
-const TSC_RETRY_AFTER_SEC = 900 # re-probe slow projects every 15m
+const TSC_RETRY_AFTER_SEC = 900  # re-probe slow projects every 15m
 
 def find-up [start: string, target: string]: nothing -> string {
   mut dir = $start
   loop {
-    let candidate = [$dir $target] | path join
+    let candidate = ([$dir $target] | path join)
     if ($candidate | path exists) { return $candidate }
-    let parent = $dir | path dirname
+    let parent = ($dir | path dirname)
     if $parent == $dir { return "" }
     $dir = $parent
   }
@@ -30,20 +30,12 @@ def find-up [start: string, target: string]: nothing -> string {
 def glob-to-regex [pattern: string]: nothing -> string {
   mut out = ""
   mut i = 0
-  let chars = $pattern | split chars
-  let n = $chars | length
+  let chars = ($pattern | split chars)
+  let n = ($chars | length)
   while $i < $n {
-    let c = $chars | get $i
-    let n1 = (
-      if ($i + 1) < $n {
-        $chars | get ($i + 1)
-      } else { "" }
-    )
-    let n2 = (
-      if ($i + 2) < $n {
-        $chars | get ($i + 2)
-      } else { "" }
-    )
+    let c = ($chars | get $i)
+    let n1 = (if ($i + 1) < $n { $chars | get ($i + 1) } else { "" })
+    let n2 = (if ($i + 2) < $n { $chars | get ($i + 2) } else { "" })
     if $c == "*" and $n1 == "*" {
       if $n2 == "/" {
         $out = $out ++ "(?:.*/)?"
@@ -62,15 +54,12 @@ def glob-to-regex [pattern: string]: nothing -> string {
       mut j = $i + 1
       mut found = false
       while $j < $n {
-        if ($chars | get $j) == "}" {
-          $found = true
-          break
-        }
+        if ($chars | get $j) == "}" { $found = true; break }
         $j = $j + 1
       }
       if $found {
-        let inner = $chars | slice ($i + 1)..($j - 1) | str join ""
-        let alts = $inner | split row "," | each {|a| $a | str trim }
+        let inner = ($chars | slice ($i + 1)..($j - 1) | str join "")
+        let alts = ($inner | split row "," | each {|a| $a | str trim })
         let esc = ($alts | each {|a|
           $a | split chars | each {|ch|
             if $ch in [".", "+", "(", ")", "$", "^", "|", "\\", "[", "]", "*", "?", "{", "}"] { $"\\($ch)" } else { $ch }
@@ -82,18 +71,7 @@ def glob-to-regex [pattern: string]: nothing -> string {
         $out = $out ++ '\{'
         $i = $i + 1
       }
-    } else if $c in [
-      "."
-      "+"
-      "("
-      ")"
-      "$"
-      "^"
-      "|"
-      "\\"
-      "["
-      "]"
-    ] {
+    } else if $c in [".", "+", "(", ")", "$", "^", "|", "\\", "[", "]"] {
       $out = $out ++ $"\\($c)"
       $i = $i + 1
     } else {
@@ -115,11 +93,7 @@ def filter-to-file [output: string, rel_path: string]: nothing -> string {
   mut kept = []
   mut keep_current = false
   for line in ($output | lines) {
-    let first = (
-      if ($line | str length) > 0 {
-        $line | str substring 0..<1
-      } else { " " }
-    )
+    let first = (if ($line | str length) > 0 { $line | str substring 0..<1 } else { " " })
     let is_header = $first != " " and $first != "\t"
     if $is_header {
       $keep_current = ($line | str starts-with $rel_path)
@@ -132,8 +106,8 @@ def filter-to-file [output: string, rel_path: string]: nothing -> string {
 }
 
 def tsc-cache-path [key: string]: nothing -> string {
-  let hash = $key | hash md5
-  let cache_dir = [$env.HOME ".cache" "claude-format-and-lint"] | path join
+  let hash = ($key | hash md5)
+  let cache_dir = ([$env.HOME ".cache" "claude-format-and-lint"] | path join)
   if not ($cache_dir | path exists) { mkdir $cache_dir }
   [$cache_dir $"($hash).json"] | path join
 }
@@ -165,22 +139,14 @@ def run-typecheck [
   cache_key: string
 ] {
   if not (should-run-tsc $cache_key) { return }
-  let rel_path = (
-    try {
-      $file_abs | path relative-to $cwd
-    } catch { $file_abs }
-  )
+  let rel_path = (try { $file_abs | path relative-to $cwd } catch { $file_abs })
   cd $cwd
   let start = (date now)
-  let result = with-env { FILE: $file_abs } { ^bash -c $command | complete }
-  let duration_ms = ((date now) - $start) / 1ms | into int
+  let result = (with-env { FILE: $file_abs } { ^bash -c $command | complete })
+  let duration_ms = (((date now) - $start) / 1ms | into int)
   record-tsc-duration $cache_key $duration_ms
   if $result.exit_code == 0 { return }
-  let combined = (
-    [$result.stdout $result.stderr]
-    | where {|s| ($s | str trim) != "" }
-    | str join "\n"
-  )
+  let combined = ([$result.stdout $result.stderr] | where {|s| ($s | str trim) != "" } | str join "\n")
   let filtered = (filter-to-file $combined $rel_path)
   if ($filtered | str trim | is-empty) { return }
   print -e $"typecheck failed for ($rel_path) in ($cwd):"
@@ -191,9 +157,7 @@ def run-typecheck [
 def git-root [start_dir: string]: nothing -> string {
   try {
     let result = (^git -C $start_dir rev-parse --show-toplevel | complete)
-    if $result.exit_code == 0 {
-      $result.stdout | str trim
-    } else { "" }
+    if $result.exit_code == 0 { $result.stdout | str trim } else { "" }
   } catch { "" }
 }
 
@@ -206,8 +170,8 @@ def main [] {
   if ($file_path | str contains "/node_modules/") { return }
   if ($file_path | str contains "/.git/") { return }
 
-  let file_abs = $file_path | path expand
-  let file_dir = $file_abs | path dirname
+  let file_abs = ($file_path | path expand)
+  let file_dir = ($file_abs | path dirname)
 
   # Anchor on git root when possible — one .edit-hooks.json per repo at the
   # root. Non-git projects fall back to the nearest package.json.
@@ -227,34 +191,18 @@ def main [] {
   }
 
   # Typecheck TS and JS variants (.d.ts has ext="ts" via path parse).
-  let ext = $file_abs | path parse | get extension
-  if not ($ext in [
-    "ts"
-    "tsx"
-    "mts"
-    "cts"
-    "js"
-    "jsx"
-    "mjs"
-    "cjs"
-  ]) { return }
+  let ext = ($file_abs | path parse | get extension)
+  if not ($ext in ["ts" "tsx" "mts" "cts" "js" "jsx" "mjs" "cjs"]) { return }
 
   let lint_config = $"($root)/.edit-hooks.json"
   if ($lint_config | path exists) {
     let config = try { open $lint_config } catch { return }
     let rules = try { $config.typecheck } catch { [] }
-    let rel_from_root = (
-      try {
-        $file_abs | path relative-to $root
-      } catch { "" }
-    )
+    let rel_from_root = (try { $file_abs | path relative-to $root } catch { "" })
     if ($rel_from_root | is-empty) { return }
     for rule in $rules {
       if (matches-glob $rel_from_root $rule.match) {
-        let cwd = ([
-          $root
-          ($rule.cwd? | default ".")
-        ] | path join | path expand)
+        let cwd = ([$root ($rule.cwd? | default ".")] | path join | path expand)
         run-typecheck $cwd $rule.command $file_abs $root
         return
       }

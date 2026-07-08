@@ -11,14 +11,10 @@
 # top-level `type`, which can also be "attachment", "summary", etc.
 export def last-assistant-text [transcript_path: string]: nothing -> string {
   if ($transcript_path | is-empty) { return "" }
-  let lines = try {
-    open $transcript_path | lines
-  } catch { return "" }
+  let lines = try { open $transcript_path | lines } catch { return "" }
   for line in ($lines | reverse) {
-    let parsed = try {
-      $line | from json
-    } catch { continue }
-    if ($parsed | get -o message.role | default "") != "assistant" { continue }
+    let parsed = try { $line | from json } catch { continue }
+    if (($parsed | get -o message.role | default "") != "assistant") { continue }
     let text = (
       $parsed | get -o message.content | default []
       | where type? == "text" | get -o text | default [] | str join (char nl)

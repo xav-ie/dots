@@ -74,7 +74,6 @@ def main [
   }
 
   if $enforce {
-
     # Remove extras (config wins)
     let config_names = $config_packages | get name
     let extras = $installed | where {|row| $row.name not-in $config_names }

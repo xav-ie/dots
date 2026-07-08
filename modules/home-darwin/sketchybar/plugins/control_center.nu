@@ -10,7 +10,7 @@
 # highlight is painted by sketchybar-hoverd onto this item's icon.background.color
 # (see the daemon's `control_center -> icon_only` mapping), behind the PNG.
 
-const CACHE_DIR = "~/.cache/sketchybar" | path expand
+const CACHE_DIR = ("~/.cache/sketchybar" | path expand)
 # Match wifi.nu: POINT_SIZE 14 glyph centred in a MIN_WIDTH-wide canvas, drawn at
 # background.image.scale 0.5 with icon.width = MIN_WIDTH so the button footprint
 # (and hover box) is identical to wifi's.
