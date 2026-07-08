@@ -7,32 +7,30 @@ def get_time []: nothing -> string {
 }
 
 def make_prompt_indicator [symbol: string]: nothing -> string {
-  let color = if $env.LAST_EXIT_CODE == 0 { (ansi gb) } else { (ansi rb) }
+  let color = if ($env.LAST_EXIT_CODE == 0) { (ansi gb) } else { (ansi rb) }
   $"(ansi reset)($color)($symbol)(ansi reset) "
 }
 
 $env.PROMPT_COMMAND_RIGHT = ""
-
 # ↓ implied from ↑
 # $env.TRANSIENT_PROMPT_COMMAND_RIGHT = ""
 
 $env.PROMPT_INDICATOR = ""
-
 # ↓ implied from ↑
 # $env.TRANSIENT_PROMPT_INDICATOR = ""
 
 # prompt-render comes from nu_plugin_prompt — in-process, no subprocess
-$env.PROMPT_COMMAND = {|| prompt-render }
+$env.PROMPT_COMMAND = { || prompt-render }
 # timestamps the prompt line after running
-$env.TRANSIENT_PROMPT_COMMAND = {||
+$env.TRANSIENT_PROMPT_COMMAND = { ||
   prompt-render | str replace "\n" $" (ansi wi)(get_time)(ansi reset)\n"
 }
 
-$env.PROMPT_INDICATOR_VI_INSERT = {|| make_prompt_indicator "" }
+$env.PROMPT_INDICATOR_VI_INSERT = { || make_prompt_indicator "" }
 # maintain the same prompt
 $env.TRANSIENT_PROMPT_INDICATOR_VI_NORMAL = null
 
-$env.PROMPT_INDICATOR_VI_NORMAL = {|| make_prompt_indicator "" }
+$env.PROMPT_INDICATOR_VI_NORMAL = { || make_prompt_indicator "" }
 # maintain the same prompt
 $env.TRANSIENT_PROMPT_INDICATOR_VI_INSERT = null
 
@@ -52,8 +50,8 @@ def to_string_simple [v] {
   $v | path expand --no-symlink | str join (char esep)
 }
 let SIMPLE_ENV_CONVERTER = {
-  from_string: {|s| from_string_simple $s }
-  to_string: {|v| to_string_simple $v }
+  from_string: { |s| from_string_simple $s }
+  to_string: { |v| to_string_simple $v }
 }
 
 # Path expansion breaks some envs
@@ -64,32 +62,33 @@ def to_string_simpler [v] {
   $v | str join (char esep)
 }
 let SIMPLER_ENV_CONVERTER = {
-  from_string: {|s| from_string_simpler $s }
-  to_string: {|v| to_string_simpler $v }
+  from_string: { |s| from_string_simpler $s }
+  to_string: { |v| to_string_simpler $v }
 }
 
 # add simple env conversions here
 let simple_envs = [
-  "XDG_CONFIG_DIRS"
-  "XDG_DATA_DIRS"
-  "PATH"
-  "Path"
-  "TERMINFO_DIRS"
+  "XDG_CONFIG_DIRS",
+  "XDG_DATA_DIRS",
+  "PATH",
+  "Path",
+  "TERMINFO_DIRS",
+];
+
+let simpler_envs = [
+  "NIX_PATH"
 ]
 
-let simpler_envs = ["NIX_PATH"]
-
 let simple_env_conversions = $simple_envs
-| each {|it| {($it): $SIMPLE_ENV_CONVERTER} }
-| into record
-
+                             | each { |it| {($it): $SIMPLE_ENV_CONVERTER} }
+                             | into record
 let simpler_env_conversions = $simpler_envs
-| each {|it| {($it): $SIMPLER_ENV_CONVERTER} }
-| into record
+                              | each { |it| {($it): $SIMPLER_ENV_CONVERTER} }
+                              | into record
 
 $env.ENV_CONVERSIONS = $simple_env_conversions
-| merge $simpler_env_conversions
-| merge {
+                       | merge $simpler_env_conversions
+                       | merge {
                            # add complicated env conversions here
                        }
 
@@ -129,6 +128,4 @@ def "from env" []: string -> record {
 
 # Secrets decrypted by sops-nix at activation (see lib/common/sops.nix).
 # Use --raw + `from env` since the rendered file has no .env extension.
-try {
-  open --raw /run/secrets/shell-env | from env | load-env
-}
+try { open --raw /run/secrets/shell-env | from env | load-env }

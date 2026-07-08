@@ -33,6 +33,7 @@
 const TRAILER = 0x[0A 2D 2D 2D 2D 20 42 75 6E 21 20 2D 2D 2D 2D 0A] # "\n---- Bun! ----\n"
 const OFFSETS_SIZE = 32
 const MODULE_STRUCT_SIZE = 52
+
 const MACHO_MAGIC_64 = 0xfeedfacf
 
 # --- fixed-width integer read/pack helpers ---
@@ -82,14 +83,8 @@ def parse-module-entry [entry: binary, full: binary, raw_start: int] {
   let cont_off = read-u32 $entry 8
   let cont_len = read-u32 $entry 12
   {
-    name: (
-      $full
-      | bytes at ($raw_start + $name_off)..<($raw_start + $name_off + $name_len)
-    )
-    content: (
-      $full
-      | bytes at ($raw_start + $cont_off)..<($raw_start + $cont_off + $cont_len)
-    )
+    name: ($full | bytes at ($raw_start + $name_off)..<($raw_start + $name_off + $name_len))
+    content: ($full | bytes at ($raw_start + $cont_off)..<($raw_start + $cont_off + $cont_len))
     encoding: (read-u8 $entry 48)
     loader: (read-u8 $entry 49)
     fmt: (read-u8 $entry 50)
@@ -101,7 +96,7 @@ def parse-module-entry [entry: binary, full: binary, raw_start: int] {
 
 def parse-binary [binary: binary] {
   let trailer_pos = $binary | bytes index-of --end $TRAILER
-  if $trailer_pos < 0 { error make {msg: "Bun trailer not found"} }
+  if $trailer_pos < 0 { error make { msg: "Bun trailer not found" } }
 
   # `bytes at` on a 236 MB binary re-walks the stream per call (~135 ms each).
   # Slice the two small metadata regions once, then parse from those.
@@ -135,14 +130,10 @@ def build-module-entry [m: record, name_off: int, cont_off: int]: nothing -> bin
     (pack-u32 ($m.name | bytes length))
     (pack-u32 $cont_off)
     (pack-u32 ($m.content | bytes length))
-    (pack-u32 0) # sourcemap
-    (pack-u32 0)
-    (pack-u32 0) # bytecode
-    (pack-u32 0)
-    (pack-u32 0) # module_info
-    (pack-u32 0)
-    (pack-u32 0) # bytecode_origin_path
-    (pack-u32 0)
+    (pack-u32 0) (pack-u32 0) # sourcemap
+    (pack-u32 0) (pack-u32 0) # bytecode
+    (pack-u32 0) (pack-u32 0) # module_info
+    (pack-u32 0) (pack-u32 0) # bytecode_origin_path
     (pack-u8 $m.encoding)
     (pack-u8 $m.loader)
     (pack-u8 $m.fmt)
@@ -164,19 +155,19 @@ def build-bun-payload [parsed: record, entry_content: binary]: nothing -> binary
 
   # Each name and each content is null-terminated; stored-length excludes the null.
   # Compute cumulative offsets into raw_bytes purely functionally.
-  let name_lens = $modules | each {|m| ($m.name | bytes length) + 1 }
-  let cont_lens = $modules | each {|m| ($m.content | bytes length) + 1 }
+  let name_lens = ($modules | each { |m| ($m.name | bytes length) + 1 })
+  let cont_lens = ($modules | each { |m| ($m.content | bytes length) + 1 })
   let name_offs = ($name_lens | reduce --fold [0] { |len, acc|
     $acc | append (($acc | last) + $len)
   })
-  let names_total = $name_offs | last
+  let names_total = ($name_offs | last)
   let cont_offs = ($cont_lens | reduce --fold [$names_total] { |len, acc|
     $acc | append (($acc | last) + $len)
   })
-  let mod_table_off = $cont_offs | last
+  let mod_table_off = ($cont_offs | last)
 
-  let names_blob = $modules | each {|m| $m.name | bytes add --end 0x[00] } | bytes collect
-  let contents_blob = $modules | each {|m| $m.content | bytes add --end 0x[00] } | bytes collect
+  let names_blob = ($modules | each { |m| $m.name | bytes add --end 0x[00] } | bytes collect)
+  let contents_blob = ($modules | each { |m| $m.content | bytes add --end 0x[00] } | bytes collect)
 
   let mod_table = ($modules | enumerate | each { |it|
     build-module-entry $it.item ($name_offs | get $it.index) ($cont_offs | get $it.index)
@@ -197,15 +188,12 @@ def build-bun-payload [parsed: record, entry_content: binary]: nothing -> binary
 
   let raw = [$names_blob $contents_blob $mod_table $offsets $TRAILER] | bytes collect
   let payload_len = $raw | bytes length
-  [
-    (pack-u64 $payload_len)
-    $raw
-  ] | bytes collect
+  [(pack-u64 $payload_len) $raw] | bytes collect
 }
 
 def main [original: path, patched: path, output: path] {
-  let binary = open --raw $original | into binary
-  let patched_content = open --raw $patched | into binary
+  let binary = (open --raw $original | into binary)
+  let patched_content = (open --raw $patched | into binary)
   let parsed = parse-binary $binary
   let entry = $parsed.modules | get $parsed.entry_id
   let orig_len = $entry.content | bytes length
@@ -227,11 +215,11 @@ def main [original: path, patched: path, output: path] {
     let tmp = $"($output).bun-payload"
     $bun_payload | save -f $tmp
     if ($bun_fileoff mod 4096) != 0 {
-      error make {msg: $"__BUN fileoff not 4K-aligned: ($bun_fileoff)"}
+      error make { msg: $"__BUN fileoff not 4K-aligned: ($bun_fileoff)" }
     }
     ^dd if=$tmp of=$output bs=4096 seek=($bun_fileoff // 4096) conv=notrunc err>| ignore
     rm $tmp
-    let final_size = ls $output | get 0.size | into int
+    let final_size = (ls $output | get 0.size | into int)
     print $"Patched __BUN at offset ($bun_fileoff); file size unchanged \(($final_size) bytes\)"
   } else {
     # ELF (Linux): original truncate-and-append behavior.

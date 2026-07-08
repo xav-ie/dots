@@ -1,13 +1,9 @@
 # log oneline commits with associated prs, max of 10 to reduce api usage.
 def --wrapped main [...args] {
-  let commits = (
-    ^git log --oneline -n 10 ...$args
-    | lines
-    | par-each -k {|| $in | split row ' ' -n 2}
-  )
+  let commits = (^git log --oneline -n 10 ...$args  | lines | par-each -k {|| $in | split row ' ' -n 2})
 
   let data = $commits | par-each -k {|commit|
-    let associated_prs = gh pr list --state all --limit 5 --search $"($commit.0)" --json title,headRefName,url | from json
+    let associated_prs = (gh pr list --state all --limit 5 --search $"($commit.0)" --json title,headRefName,url | from json)
     let prs_cleaned = $associated_prs | par-each -k {|pr|
       {
         title: (if ($pr.title == $pr.headRefName) { $pr.title } else { $"($pr.title) @($pr.headRefName)" }),
@@ -15,8 +11,8 @@ def --wrapped main [...args] {
       }
     }
     let prefix = "\n          "
-    let prs_joined = $prs_cleaned | par-each -k {|pr| $"➜ ($pr.title) ($pr.url)" } | str join $prefix
-    let prs_string = if (not ($prs_joined | is-empty)) { $"($prefix)($prs_joined)"} else { $prs_joined }
+    let prs_joined = ($prs_cleaned | par-each -k {|pr| $"➜ ($pr.title) ($pr.url)" } | str join $prefix)
+    let prs_string = (if (not ($prs_joined | is-empty)) { $"($prefix)($prs_joined)"} else { $prs_joined })
 
     {
       commit: $commit.0,
