@@ -47,8 +47,6 @@
           };
           # automatic merge conflicts resolver
           mergiraf.enable = true;
-          # f
-          pay-respects.enable = true;
           # autonomous AI agent loop
           ralph.enable = true;
           # fast grep

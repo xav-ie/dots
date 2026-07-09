@@ -1,0 +1,22 @@
+command = "just"
+
+[[match_err]]
+# pay-respects lowercases + whitespace-normalizes the error before matching
+# (core Data::update_error), so this pattern must be lowercase to match just's
+# "error: Justfile does not contain recipe `x`".
+pattern = ["justfile does not contain recipe"]
+# Fuzzy-match the mistyped recipe against the justfile's recipe list. We drive
+# the correction off `just --summary` rather than just's own "Did you mean `x`?"
+# hint because that same lowercasing would mangle any recipe name that isn't
+# already lowercase. `typo` preserves the candidate's original case and does the
+# distance matching itself.
+#
+# `{{shell(...)}}` runs under the *user's* shell (nushell here), so the command
+# must be shell-agnostic: no `2>/dev/null` (nushell parses it as a `null`
+# argument to just, breaking `--summary` → zero candidates → a `suggest_typo`
+# panic). A bare `just --summary | tr` works in bash and nu alike; the rule only
+# fires when a justfile exists, so there is no stderr to suppress anyway.
+suggest = [
+  '''
+{{command[0]}} {{typo[1]({{shell(just --summary | tr ' ' '\n')}})}} {{command[2:]}} ''',
+]
