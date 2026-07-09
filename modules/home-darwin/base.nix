@@ -7,7 +7,6 @@
         home = {
           packages = with pkgs.pkgs-mine; [
             fix-yabai
-            focus-daemon
             move-pip
             sketchybar-battery
           ];

@@ -35,18 +35,29 @@
             # then treats them as unsigned platform binaries and denies everything.
             # The fix is to re-sign them with an Apple-anchored cert — that re-sign
             # happens in the owning module's *user-level* activation (it needs
-            # keychain access) and runs before this one. Here we only pin the csreq:
-            # we read the bundle's *current* designated requirement (--designated-from)
-            # rather than a cdhash (a cdhash pin is legacy-SHA-1 and never matches a
-            # modern SHA-256 signature) — so it auto-tracks whatever cert the re-sign
-            # used and survives cert rotation with no config change.
-            drArg = lib.optionalString (app.appPath != "") " --designated-from \"${app.appPath}\"";
+            # keychain access) and runs before this one. Here we only pin the csreq.
+            #
+            # pin = "designated" (default): read the bundle's *current* designated
+            # requirement (--designated-from). Cert-anchored, so it auto-tracks
+            # whatever cert the re-sign used and survives rotation with no config
+            # change. Correct for cert-signed apps (Firefox).
+            #
+            # pin = "cdhash": pin the raw cdhash (--app-path). For ad-hoc/self-signed
+            # store bundles (e.g. focusd) that have no cert anchor for a DR; the
+            # legacy-SHA-1 cdhash matches because the bundle is itself ad-hoc signed.
+            pinArg =
+              if app.appPath == "" then
+                ""
+              else if app.pin == "cdhash" then
+                " --app-path \"${app.appPath}\""
+              else
+                " --designated-from \"${app.appPath}\"";
 
             services =
               app.services
               |> lib.concatMapStringsSep "\n" (
                 service:
-                "${tccGrant}/bin/tcc-grant --service ${service} --bundle-id ${app.bundleId} --db \"${dbFor service}\"${drArg}"
+                "${tccGrant}/bin/tcc-grant --service ${service} --bundle-id ${app.bundleId} --db \"${dbFor service}\"${pinArg}"
               );
           in
           ''
@@ -79,6 +90,22 @@
                     whose ad-hoc/cert seal has no anchor a bundle-id grant can trust.
                   '';
                   example = "/Applications/Firefox.app";
+                };
+
+                pin = lib.mkOption {
+                  type = lib.types.enum [
+                    "designated"
+                    "cdhash"
+                  ];
+                  default = "designated";
+                  description = ''
+                    How to pin the csreq when appPath is set. "designated" reads the
+                    bundle's current designated requirement (cert-anchored, survives
+                    cert rotation) — use for re-signed apps like Firefox. "cdhash"
+                    pins the raw cdhash — use for ad-hoc/self-signed store bundles
+                    (e.g. focusd) that have no cert anchor for a designated
+                    requirement. Only meaningful together with appPath.
+                  '';
                 };
 
                 resignIdentity = lib.mkOption {
