@@ -114,6 +114,7 @@ rec {
   uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
   update-package-lock = pkgs.callPackage ./update-package-lock { inherit writeNuApplication; };
   update-pr = pkgs.callPackage ./update-pr { inherit pr-summary writeNuApplication; };
+  wakatime-cli = pkgs.callPackage ./wakatime-cli { };
   whisper-transcribe = pkgs.callPackage ./whisper-transcribe {
     inherit pkgs-unfree writeNuApplication;
   };

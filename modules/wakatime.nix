@@ -6,7 +6,8 @@
 # (claude-code-wakatime, wired in modules/claude). This file owns everything
 # WakaTime needs *except* those integrations' own enable lines:
 #   - the sops-managed API key (declared here, decrypted per-host),
-#   - the ~/.wakatime.cfg the key is rendered into, and
+#   - the ~/.wakatime.cfg the key is rendered into,
+#   - the pinned wakatime-cli on PATH (packages/wakatime-cli), and
 #   - the macOS cask + its Accessibility grant.
 #
 # Dendritic: one file, several aggregates. The key + activation reach both
@@ -75,9 +76,17 @@ in
       lib,
       osConfig,
       inputs,
+      pkgs,
       ...
     }:
     {
+      # Pin wakatime-cli on PATH. Every WakaTime integration prefers a `which
+      # wakatime-cli` hit over its own bundled/downloaded copy — and the Claude
+      # plugin treats a PATH binary as always-current — so this keeps the CLI
+      # reproducible and stops the self-download into ~/.wakatime. Needed at all
+      # because nixpkgs' wakatime-cli is too old for `--sync-ai-activity`.
+      home.packages = [ pkgs.pkgs-mine.wakatime-cli ];
+
       # Claude Code plugin marketplace. Merges into the core set registered in
       # modules/claude/claude.nix (mergeable attrsOf option). The plugin itself
       # is enabled in the hand-edited marketplaces.json / settings.json.
