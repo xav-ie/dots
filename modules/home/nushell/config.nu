@@ -307,7 +307,7 @@ def gcot [tag: string@"nu-complete git tags"] {
     | first)
   # A branch already checked out in another worktree can't be checked out here,
   # so fall back to the tag when the branch checkout fails.
-  if ($branch != null) {
+  if $branch != null {
     try { ^git checkout $branch } catch { git checkout $resolved }
   } else {
     git checkout $resolved
