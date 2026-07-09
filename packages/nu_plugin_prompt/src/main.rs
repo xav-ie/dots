@@ -256,17 +256,16 @@ fn compute_git_status(repo: &gix::Repository) -> Option<String> {
                             ),
                         ..
                     } => modified = true,
-                    IwItem::DirectoryContents { entry, .. } => {
-                        // gix emits a directory as Untracked even when it
-                        // recursively contains zero files (e.g. `.turbo/cache/`
-                        // left behind after a clean). git ignores empty
-                        // directory trees entirely, so verify there's at least
-                        // one regular file before counting it.
+                    // gix emits a directory as Untracked even when it
+                    // recursively contains zero files (e.g. `.turbo/cache/`
+                    // left behind after a clean). git ignores empty
+                    // directory trees entirely, so verify there's at least
+                    // one regular file before counting it.
+                    IwItem::DirectoryContents { entry, .. }
                         if matches!(entry.status, gix::dir::entry::Status::Untracked)
-                            && entry_has_file(repo, &entry)
-                        {
-                            untracked = true;
-                        }
+                            && entry_has_file(repo, &entry) =>
+                    {
+                        untracked = true;
                     }
                     // EntryStatus::Change(Change::Type) => typechanged — no glyph in starship defaults
                     // EntryStatus::NeedsUpdate => not a real change, just a stat refresh hint

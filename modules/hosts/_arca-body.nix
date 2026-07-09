@@ -214,17 +214,18 @@ in
       enableACME = true;
       locations."/" = {
         proxyPass = "http://127.0.0.1:8080";
-        extraConfig = ''
-          limit_req zone=cachereq burst=200 nodelay;
-          limit_conn cacheconn 100;
-          # Real NAR pushes are large but not unbounded; a finite cap bounds
-          # upload abuse while allowing legit pushes. Streamed unbuffered, so
-          # nginx never spools the body to its own disk.
-          client_max_body_size 8g;
-          proxy_request_buffering off;
-          proxy_read_timeout 3600s;
-          proxy_send_timeout 3600s;
-        '';
+        extraConfig = # nginx
+          ''
+            limit_req zone=cachereq burst=200 nodelay;
+            limit_conn cacheconn 100;
+            # Real NAR pushes are large but not unbounded; a finite cap bounds
+            # upload abuse while allowing legit pushes. Streamed unbuffered, so
+            # nginx never spools the body to its own disk.
+            client_max_body_size 8g;
+            proxy_request_buffering off;
+            proxy_read_timeout 3600s;
+            proxy_send_timeout 3600s;
+          '';
       };
     };
   };
@@ -249,24 +250,25 @@ in
           pkgs.attic-client
           pkgs.curl
         ];
-        text = ''
-          export HOME="''${STATE_DIRECTORY:-$(mktemp -d)}"
-          # wait for atticd's API to answer (migrations done, DB reachable)
-          for _ in $(seq 1 60); do
-            curl -sf http://127.0.0.1:8080/ >/dev/null 2>&1 && break
-            sleep 2
-          done
-          # short-lived admin token, signed with the RS256 secret from the env
-          token=$(atticadm -f ${atticdConfig} make-token --sub ensure-caches \
-            --validity "1 hour" --create-cache '*' --pull '*')
-          attic login --set-default local http://127.0.0.1:8080 "$token"
-          # Set visibility at creation: `create --public` only needs the create
-          # permission, whereas `configure --public` needs one make-token can't grant.
-          ${lib.concatMapStringsSep "\n" (c: ''
-            attic cache info ${lib.escapeShellArg c} >/dev/null 2>&1 \
-              || attic cache create ${lib.escapeShellArg c} --public
-          '') caches}
-        '';
+        text = # sh
+          ''
+            export HOME="''${STATE_DIRECTORY:-$(mktemp -d)}"
+            # wait for atticd's API to answer (migrations done, DB reachable)
+            for _ in $(seq 1 60); do
+              curl -sf http://127.0.0.1:8080/ >/dev/null 2>&1 && break
+              sleep 2
+            done
+            # short-lived admin token, signed with the RS256 secret from the env
+            token=$(atticadm -f ${atticdConfig} make-token --sub ensure-caches \
+              --validity "1 hour" --create-cache '*' --pull '*')
+            attic login --set-default local http://127.0.0.1:8080 "$token"
+            # Set visibility at creation: `create --public` only needs the create
+            # permission, whereas `configure --public` needs one make-token can't grant.
+            ${lib.concatMapStringsSep "\n" (c: ''
+              attic cache info ${lib.escapeShellArg c} >/dev/null 2>&1 \
+                || attic cache create ${lib.escapeShellArg c} --public
+            '') caches}
+          '';
       };
     in
     {
