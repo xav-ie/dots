@@ -675,6 +675,24 @@
         "type": "github"
       }
     },
+    "flake-parts_5": {
+      "inputs": {
+        "nixpkgs-lib": "nixpkgs-lib_4"
+      },
+      "locked": {
+        "lastModified": 1782949081,
+        "narHash": "sha256-vp6Y/Grm98ESt6ceOkWiHWyZRDV3J1RID4w+6NWK9yA=",
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "rev": "17c9d6cdfc60c64f4ee8d306f9bc0b4ccb51481e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "type": "github"
+      }
+    },
     "flake-utils": {
       "inputs": {
         "systems": "systems"
@@ -1259,6 +1277,21 @@
         "type": "github"
       }
     },
+    "import-tree_2": {
+      "locked": {
+        "lastModified": 1778781969,
+        "narHash": "sha256-Jjuz5CmSkur8KvLDoGa+vylEp+RkQtv4mt/qcMznpH0=",
+        "owner": "vic",
+        "repo": "import-tree",
+        "rev": "d321337efd0f23a9eb14a42adb7b2c29313ab274",
+        "type": "github"
+      },
+      "original": {
+        "owner": "vic",
+        "repo": "import-tree",
+        "type": "github"
+      }
+    },
     "macos-corner-fix-src": {
       "flake": false,
       "locked": {
@@ -1467,6 +1500,26 @@
         "type": "github"
       }
     },
+    "nix-vscode-extensions": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1783568868,
+        "narHash": "sha256-JDOHfb/kr6+QZGDMLfQkSjL2VNYZJJAZ3bjeLhPEeaU=",
+        "owner": "nix-community",
+        "repo": "nix-vscode-extensions",
+        "rev": "d9ba7a11bb1d215da08df254a5c4f48c93f63a34",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "nix-vscode-extensions",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1766651565,
@@ -1576,6 +1629,21 @@
         "type": "github"
       }
     },
+    "nixpkgs-lib_4": {
+      "locked": {
+        "lastModified": 1782614948,
+        "narHash": "sha256-ePjCwr1sNm9NYUqywL7QfK3JnlS015msC+eBu2zKlp8=",
+        "owner": "nix-community",
+        "repo": "nixpkgs.lib",
+        "rev": "db3f255737b94216eb71cce308e2912cf6bc2d7c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "nixpkgs.lib",
+        "type": "github"
+      }
+    },
     "nixpkgs-stable": {
       "locked": {
         "lastModified": 1780453794,
@@ -1605,6 +1673,22 @@
         "owner": "nixos",
         "repo": "nixpkgs",
         "rev": "3c3988cce18bf31db263dd0374e34cb65e696def",
+        "type": "github"
+      }
+    },
+    "nixpkgs-vscode": {
+      "locked": {
+        "lastModified": 1783224372,
+        "narHash": "sha256-8i/87eeoqiGE4yOTjwSA3Eh/ziJRQEmd/unYU+K27sk=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "d407951447dcd00442e97087bf374aad70c04cea",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
         "type": "github"
       }
     },
@@ -2062,6 +2146,7 @@
         "nix-auto-follow": "nix-auto-follow",
         "nix-darwin": "nix-darwin",
         "nix-homebrew": "nix-homebrew",
+        "nix-vscode-extensions": "nix-vscode-extensions",
         "nixpkgs": "nixpkgs_4",
         "nixpkgs-bleeding": "nixpkgs-bleeding",
         "nixpkgs-homeassistant": "nixpkgs-homeassistant",
@@ -2069,6 +2154,7 @@
         "nixpkgs-lib-v1-merge": "nixpkgs-lib-v1-merge",
         "nixpkgs-stable": "nixpkgs-stable",
         "nixpkgs-swift": "nixpkgs-swift",
+        "nixpkgs-vscode": "nixpkgs-vscode",
         "nuenv": "nuenv",
         "nufmt": "nufmt",
         "obs-backgroundremoval": "obs-backgroundremoval",
@@ -2091,6 +2177,7 @@
         "terranix": "terranix",
         "treefmt-nix": "treefmt-nix_5",
         "virtual-headset": "virtual-headset",
+        "xdusk": "xdusk",
         "zerobrew-src": "zerobrew-src",
         "zjstatus": "zjstatus"
       }
@@ -2594,6 +2681,31 @@
       "original": {
         "owner": "hyprwm",
         "repo": "xdg-desktop-portal-hyprland",
+        "type": "github"
+      }
+    },
+    "xdusk": {
+      "inputs": {
+        "flake-parts": "flake-parts_5",
+        "import-tree": "import-tree_2",
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "treefmt-nix": [
+          "treefmt-nix"
+        ]
+      },
+      "locked": {
+        "lastModified": 1783590439,
+        "narHash": "sha256-Ng2VohGiBapC/OGPQ7uwHX6AgTNIFwkYb8hMzAyDIN8=",
+        "owner": "xav-ie",
+        "repo": "xdusk",
+        "rev": "7caac82cf955cd1bf9fe564237d63f6dc50d677b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "xav-ie",
+        "repo": "xdusk",
         "type": "github"
       }
     },
