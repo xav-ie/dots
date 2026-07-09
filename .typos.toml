@@ -1,7 +1,8 @@
 # Allowlist for the report-only typos check. typos never edits files.
 [files]
 # emoji shortcode data
-extend-exclude = ["packages/pickers/spotlight/modes/data.ts"]
+# SOPS-encrypted secrets are ciphertext, not prose
+extend-exclude = ["packages/pickers/spotlight/modes/data.ts", "secrets/"]
 
 [default.extend-words]
 ags = "ags"

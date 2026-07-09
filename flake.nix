@@ -107,6 +107,8 @@
     claude-marketplace-mgrep.url = "github:mixedbread-ai/mgrep";
     claude-marketplace-osgrep.flake = false;
     claude-marketplace-osgrep.url = "github:Ryandonofrio3/osgrep";
+    claude-marketplace-wakatime.flake = false;
+    claude-marketplace-wakatime.url = "github:wakatime/claude-code-wakatime";
 
     glsl_analyzer.flake = false;
     glsl_analyzer.url = "github:xav-ie/glsl_analyzer/format";

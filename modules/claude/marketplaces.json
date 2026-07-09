@@ -15,6 +15,7 @@
     "typescript-lsp@claude-plugins-official",
     "hookify@claude-plugins-official",
     "superpowers@claude-plugins-official",
-    "gopls-lsp@claude-plugins-official"
+    "gopls-lsp@claude-plugins-official",
+    "claude-code-wakatime@wakatime"
   ]
 }

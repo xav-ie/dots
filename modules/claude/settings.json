@@ -112,7 +112,8 @@
     "hookify@claude-plugins-official": false,
     "superpowers@claude-plugins-official": false,
     "dts@outsmartly-plugins": false,
-    "pts@outsmartly-plugins": false
+    "pts@outsmartly-plugins": false,
+    "claude-code-wakatime@wakatime": true
   },
   "alwaysThinkingEnabled": true,
   "effortLevel": "medium",
