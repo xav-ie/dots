@@ -188,54 +188,57 @@ in
       inter-tabular =
         let
           py = final.python3.withPackages (ps: [ ps.fonttools ]);
-          freeze = final.writeText "freeze-tnum.py" ''
-            import sys
-            from fontTools.ttLib import TTFont
+          freeze =
+            final.writeText "freeze-tnum.py" # py
+              ''
+                import sys
+                from fontTools.ttLib import TTFont
 
-            infile, outfile, family, style = sys.argv[1:5]
-            f = TTFont(infile)
+                infile, outfile, family, style = sys.argv[1:5]
+                f = TTFont(infile)
 
-            # Collect glyph->glyph substitutions from the tnum feature's
-            # SingleSubst lookups (Inter's tabular figures are a 1:1 mapping).
-            gsub = f["GSUB"].table
-            lks = set()
-            for fr in gsub.FeatureList.FeatureRecord:
-                if fr.FeatureTag == "tnum":
-                    lks.update(fr.Feature.LookupListIndex)
-            m = {}
-            for li in sorted(lks):
-                lk = gsub.LookupList.Lookup[li]
-                if lk.LookupType == 1:
-                    for st in lk.SubTable:
-                        m.update(getattr(st, "mapping", {}))
-            if not m:
-                raise SystemExit("no tnum substitutions found")
+                # Collect glyph->glyph substitutions from the tnum feature's
+                # SingleSubst lookups (Inter's tabular figures are a 1:1 mapping).
+                gsub = f["GSUB"].table
+                lks = set()
+                for fr in gsub.FeatureList.FeatureRecord:
+                    if fr.FeatureTag == "tnum":
+                        lks.update(fr.Feature.LookupListIndex)
+                m = {}
+                for li in sorted(lks):
+                    lk = gsub.LookupList.Lookup[li]
+                    if lk.LookupType == 1:
+                        for st in lk.SubTable:
+                            m.update(getattr(st, "mapping", {}))
+                if not m:
+                    raise SystemExit("no tnum substitutions found")
 
-            # Remap every cmap subtable so default codepoints resolve to the
-            # tabular glyphs.
-            for st in f["cmap"].tables:
-                for cp, g in list(st.cmap.items()):
-                    if g in m:
-                        st.cmap[cp] = m[g]
+                # Remap every cmap subtable so default codepoints resolve to the
+                # tabular glyphs.
+                for st in f["cmap"].tables:
+                    for cp, g in list(st.cmap.items()):
+                        if g in m:
+                            st.cmap[cp] = m[g]
 
-            # Rewrite the name table to a clean, collision-free identity.
-            ps = family.replace(" ", "") + "-" + style.replace(" ", "")
-            full = family if style == "Regular" else family + " " + style
-            name = f["name"]
-            name.names = []
-            vals = {1: family, 2: style, 4: full, 6: ps, 16: family, 17: style}
-            for nid, v in vals.items():
-                name.setName(v, nid, 3, 1, 0x409)  # Windows / Unicode / en-US
-                name.setName(v, nid, 1, 0, 0)      # Mac / Roman / en
+                # Rewrite the name table to a clean, collision-free identity.
+                ps = family.replace(" ", "") + "-" + style.replace(" ", "")
+                full = family if style == "Regular" else family + " " + style
+                name = f["name"]
+                name.names = []
+                vals = {1: family, 2: style, 4: full, 6: ps, 16: family, 17: style}
+                for nid, v in vals.items():
+                    name.setName(v, nid, 3, 1, 0x409)  # Windows / Unicode / en-US
+                    name.setName(v, nid, 1, 0, 0)      # Mac / Roman / en
 
-            f.save(outfile)
-          '';
+                f.save(outfile)
+              '';
         in
         final.runCommand "inter-tabular"
           {
             nativeBuildInputs = [ py ];
             meta.description = "Inter Light with tabular figures frozen on (sketchybar labels)";
           }
+          # sh
           ''
             light=light.ttf
             # Instance a static Light (wght=300) cut from the variable font.

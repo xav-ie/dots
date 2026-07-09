@@ -12,7 +12,11 @@ jsut = "jsut"
 # git typo-alias
 chekcout = "chekcout"
 DNE = "DNE"
+# AirPods active noise cancellation
+anc = "anc"
 
 [default.extend-identifiers]
 # gix field
 rela_path = "rela_path"
+# avoid camelCase split into PN + Gs
+PNGs = "PNGs"
