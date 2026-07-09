@@ -49,6 +49,12 @@
     sketchybar-src.flake = false;
     sops-nix.url = "github:Mic92/sops-nix";
     virtual-headset.url = "github:xav-ie/virtual-headset";
+    nix-vscode-extensions.url = "github:nix-community/nix-vscode-extensions";
+    nix-vscode-extensions.inputs.nixpkgs.follows = "nixpkgs";
+    nixpkgs-vscode.url = "github:nixos/nixpkgs/nixos-unstable";
+    xdusk.url = "github:xav-ie/xdusk";
+    xdusk.inputs.nixpkgs.follows = "nixpkgs";
+    xdusk.inputs.treefmt-nix.follows = "treefmt-nix";
     systems.url = "github:xav-ie/dots-systems";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     zjstatus.url = "github:dj95/zjstatus";
