@@ -344,6 +344,22 @@
         "url": "ssh://git@github.com/outsmartly/claude-plugins"
       }
     },
+    "claude-marketplace-wakatime": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1778860224,
+        "narHash": "sha256-zZGx6rYgVXtyhoLy7w4tDFVGioEUqpWcXVIzFN4NfAE=",
+        "owner": "wakatime",
+        "repo": "claude-code-wakatime",
+        "rev": "3915f4ec19d4fedf2a1a2a644f1138cd72e956da",
+        "type": "github"
+      },
+      "original": {
+        "owner": "wakatime",
+        "repo": "claude-code-wakatime",
+        "type": "github"
+      }
+    },
     "clauhist-src": {
       "flake": false,
       "locked": {
@@ -2115,6 +2131,7 @@
         "claude-marketplace-official": "claude-marketplace-official",
         "claude-marketplace-osgrep": "claude-marketplace-osgrep",
         "claude-marketplace-outsmartly": "claude-marketplace-outsmartly",
+        "claude-marketplace-wakatime": "claude-marketplace-wakatime",
         "clauhist-src": "clauhist-src",
         "crane": "crane_2",
         "ctpv": "ctpv",
