@@ -296,5 +296,20 @@ def gcot [tag: string@"nu-complete git tags"] {
     | first
     | default $tag
   } else { $tag }
-  git checkout $resolved
+  # Prefer a remote branch pointing at the tag's commit so we land on a real
+  # (tracking) branch instead of a detached HEAD. Fall back to the tag itself.
+  let sha = (^git rev-list -n1 $resolved | str trim)
+  let branch = (^git branch -r --points-at $sha --format "%(refname:short)"
+    | lines
+    | where {|b| ($b != "") and (not ($b | str ends-with "/HEAD"))}
+    | each {|b| $b | split row "/" | skip 1 | str join "/"}
+    | where {|b| $b != ""}
+    | first)
+  # A branch already checked out in another worktree can't be checked out here,
+  # so fall back to the tag when the branch checkout fails.
+  if ($branch != null) {
+    try { ^git checkout $branch } catch { git checkout $resolved }
+  } else {
+    git checkout $resolved
+  }
 }
