@@ -156,6 +156,18 @@ in
             "Accessibility"
           ];
         }
+        {
+          # focusd (self-built AX daemon) is ad-hoc signed as com.x.focusd at build
+          # time, so there's no cert to anchor a designated requirement — pin the
+          # raw cdhash instead. Read it from the store bundle (not the ~/Applications
+          # copy) so the grant doesn't depend on when the copy activation runs; the
+          # copy preserves the seal, so its cdhash matches. The copy + agent kick
+          # live in the focusd install snippet below.
+          bundleId = "com.x.focusd";
+          appPath = "${pkgs.pkgs-mine.focus-daemon}/Applications/focusd.app";
+          pin = "cdhash";
+          services = [ "Accessibility" ];
+        }
       ];
     };
 
@@ -452,28 +464,24 @@ in
         postActivation.text =
           lib.mkAfter # sh
             ''
-              # Install focusd.app to ~/Applications and grant it Accessibility (the
-              # notch move needs it). Copy out of the read-only store, re-sign ad-hoc
-              # (deterministic → stable cdhash), then tcc-grant pins that cdhash in the
-              # SYSTEM db (writable since SIP is off). Marker-guarded: re-runs only when
-              # focusd changes, which moves the cdhash, so the grant re-pins.
+              # Install focusd.app to ~/Applications (the notch move needs the daemon
+              # running from a stable path). The store bundle is already ad-hoc signed
+              # as com.x.focusd at build time, so we just copy it out — ditto preserves
+              # the code seal, so the copy's cdhash matches what the Accessibility grant
+              # pins. The grant itself lives in security.tcc.apps (pin = "cdhash", read
+              # from the store bundle), which also kicks tccd. Marker-guarded: re-copies
+              # only when focusd changes; the grant is idempotent and re-pins on its own.
               focusd_pkg="${pkgs.pkgs-mine.focus-daemon}"
               focusd_marker="/var/lib/nix-darwin/focusd-pkg"
               if [ "$(cat "$focusd_marker" 2>/dev/null)" != "$focusd_pkg" ]; then
-                echo "🍃 Installing + re-signing + granting ~/Applications/focusd.app"
+                echo "🍃 Installing ~/Applications/focusd.app"
                 focusd_uid=$(id -u ${config.defaultUser})
                 focusd_app="/Users/${config.defaultUser}/Applications/focusd.app"
                 sudo -u ${config.defaultUser} mkdir -p "/Users/${config.defaultUser}/Applications"
                 sudo -u ${config.defaultUser} rm -rf "$focusd_app"
-                sudo -u ${config.defaultUser} cp -R "$focusd_pkg/Applications/focusd.app" "$focusd_app"
+                sudo -u ${config.defaultUser} /usr/bin/ditto \
+                  "$focusd_pkg/Applications/focusd.app" "$focusd_app"
                 sudo -u ${config.defaultUser} chmod -R u+w "$focusd_app"
-                sudo -u ${config.defaultUser} /usr/bin/codesign --force --sign - \
-                  --identifier com.x.focusd "$focusd_app" 2>/dev/null || true
-                ${pkgs.pkgs-mine.tcc-grant}/bin/tcc-grant --service Accessibility \
-                  --bundle-id com.x.focusd --app-path "$focusd_app" \
-                  --db "/Library/Application Support/com.apple.TCC/TCC.db" || true
-                sudo -u ${config.defaultUser} launchctl kickstart -k \
-                  "gui/$focusd_uid/com.apple.tccd" 2>/dev/null || true
                 sudo -u ${config.defaultUser} launchctl kickstart -k \
                   "gui/$focusd_uid/org.nixos.focusd" 2>/dev/null || true
                 mkdir -p "$(dirname "$focusd_marker")"

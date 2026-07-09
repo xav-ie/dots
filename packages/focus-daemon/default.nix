@@ -36,5 +36,20 @@ stdenv.mkDerivation {
     ln -s "$app/Contents/MacOS/focusd" $out/bin/focusd
     runHook postInstall
   '';
+
+  # Ad-hoc sign the bundle with its final identity (com.x.focusd) at BUILD time.
+  # This must run in postFixup, not installPhase: stdenv's darwin fixup re-signs
+  # Mach-Os it touches (Swift rpaths) and would revert the identifier back to
+  # "focusd", breaking the pinned grant. Signing here bakes the exact cdhash the
+  # Accessibility grant pins into the store bundle, so any later copy (activation
+  # cp / spotlight ditto) preserves it — no install-time re-sign needed.
+  # Uses Apple's /usr/bin/codesign for a full bundle seal (matches the cdhash the
+  # grant already pins); needs __noChroot since the user has sandbox = "relaxed".
+  __noChroot = true;
+  postFixup = ''
+    /usr/bin/codesign --force --sign - --identifier com.x.focusd \
+      "$out/Applications/focusd.app"
+  '';
+
   meta.mainProgram = "focusd";
 }
