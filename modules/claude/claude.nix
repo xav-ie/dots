@@ -78,32 +78,11 @@
 
         marketplaces = lib.mkOption {
           type = lib.types.attrsOf (lib.types.submodule marketplaceOpts);
-          default = {
-            "browser-session-mcp" = {
-              repo = "xav-ie/browser-session-mcp";
-              src = inputs.browser-session-mcp;
-            };
-            "claude-plugins-official" = {
-              repo = "anthropics/claude-plugins-official";
-              src = inputs.claude-marketplace-official;
-            };
-            "outsmartly-plugins" = {
-              repo = "outsmartly/claude-plugins";
-              src = inputs.claude-marketplace-outsmartly;
-            };
-            "claude-code-lsps" = {
-              repo = "Piebald-AI/claude-code-lsps";
-              src = inputs.claude-marketplace-lsps;
-            };
-            "Mixedbread-Grep" = {
-              repo = "mixedbread-ai/mgrep";
-              src = inputs.claude-marketplace-mgrep;
-            };
-            "osgrep" = {
-              repo = "Ryandonofrio3/osgrep";
-              src = inputs.claude-marketplace-osgrep;
-            };
-          };
+          # Mergeable: the core set is registered below (config), and each
+          # feature module can add its own (e.g. modules/wakatime.nix). Defining
+          # it as an option `default` would make any per-key definition drop the
+          # whole default, so the base lives in config too.
+          default = { };
           description = "Claude Code marketplaces pinned from flake inputs";
           example = lib.literalExpression ''
             {
@@ -243,6 +222,35 @@
         {
           # Set the default for pluginSyncPackage (can be overridden by user)
           programs.claude.pluginSyncPackage = lib.mkDefault defaultPluginSyncPackage;
+
+          # Core marketplaces. Registered here (not as an option `default`) so
+          # feature modules can merge in their own — see modules/wakatime.nix.
+          programs.claude.marketplaces = {
+            "browser-session-mcp" = {
+              repo = "xav-ie/browser-session-mcp";
+              src = inputs.browser-session-mcp;
+            };
+            "claude-plugins-official" = {
+              repo = "anthropics/claude-plugins-official";
+              src = inputs.claude-marketplace-official;
+            };
+            "outsmartly-plugins" = {
+              repo = "outsmartly/claude-plugins";
+              src = inputs.claude-marketplace-outsmartly;
+            };
+            "claude-code-lsps" = {
+              repo = "Piebald-AI/claude-code-lsps";
+              src = inputs.claude-marketplace-lsps;
+            };
+            "Mixedbread-Grep" = {
+              repo = "mixedbread-ai/mgrep";
+              src = inputs.claude-marketplace-mgrep;
+            };
+            "osgrep" = {
+              repo = "Ryandonofrio3/osgrep";
+              src = inputs.claude-marketplace-osgrep;
+            };
+          };
 
           # MCP SSE client for connecting to the containerized proxy
           programs.mcp.enableProxy = true;
