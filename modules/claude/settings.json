@@ -104,7 +104,7 @@
   },
   "enabledPlugins": {
     "mgrep@Mixedbread-Grep": false,
-    "osgrep@osgrep": false,
+    "osgrep@osgrep": true,
     "vtsls@claude-code-lsps": false,
     "vscode-langservers@claude-code-lsps": false,
     "typescript-lsp@claude-plugins-official": false,
@@ -113,7 +113,9 @@
     "superpowers@claude-plugins-official": false,
     "dts@outsmartly-plugins": false,
     "pts@outsmartly-plugins": false,
-    "claude-code-wakatime@wakatime": true
+    "claude-code-wakatime@wakatime": true,
+    "ponytail@ponytail": true,
+    "browser-session@browser-session-mcp": true
   },
   "alwaysThinkingEnabled": true,
   "effortLevel": "medium",

@@ -250,10 +250,22 @@
               repo = "Ryandonofrio3/osgrep";
               src = inputs.claude-marketplace-osgrep;
             };
+            "ponytail" = {
+              repo = "DietrichGebert/ponytail";
+              src = inputs.claude-marketplace-ponytail;
+            };
           };
 
           # MCP SSE client for connecting to the containerized proxy
           programs.mcp.enableProxy = true;
+
+          # Single-hop out-of-store symlink for settings.json — see the note in
+          # home.file. Runs after linkGeneration so it survives that phase
+          # pruning the previously-managed symlink.
+          home.activation.claudeSettingsSymlink = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+            ln -sfn "${config.dotFilesDir}/modules/claude/settings.json" \
+              "${config.home.homeDirectory}/.claude/settings.json"
+          '';
 
           home.activation.claudePluginSync = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
             echo "Syncing claude plugins (background)..."
@@ -336,8 +348,13 @@
 
           home.file = {
             ".local/bin/claude".source = "${claude-package}/bin/claude";
-            ".claude/settings.json".source =
-              config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/settings.json";
+            # settings.json is symlinked via an activation script below, not
+            # here: `claude plugin install` atomically rewrites enabledPlugins
+            # (tmp + rename beside the target), and mkOutOfStoreSymlink routes
+            # through the read-only home-files store aggregate — a second hop
+            # that lands the tmp in /nix/store → EROFS. A direct single-hop
+            # symlink keeps the tmp in modules/claude/ (writable), so installs
+            # succeed and write enablement back into the tracked repo file.
             ".claude/keybindings.json".source =
               config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/keybindings.json";
             # Library modules — sourced via `use ~/.claude/lib-*.nu` from the

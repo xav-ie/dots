@@ -11,6 +11,7 @@
     "plugin-dev@claude-plugins-official",
     "mgrep@Mixedbread-Grep",
     "osgrep@osgrep",
+    "ponytail@ponytail",
     "beads@beads-marketplace",
     "typescript-lsp@claude-plugins-official",
     "hookify@claude-plugins-official",
