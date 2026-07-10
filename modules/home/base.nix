@@ -147,6 +147,7 @@
             ])
             ++ [
               inputs.nix-auto-follow.packages.${pkgs.stdenv.hostPlatform.system}.default
+              inputs.openspec.packages.${pkgs.stdenv.hostPlatform.system}.default
             ];
 
           # The state version is required and should stay at the version you

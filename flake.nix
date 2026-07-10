@@ -39,6 +39,8 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nuenv.url = "github:xav-ie/nuenv";
     nufmt.url = "github:nushell/nufmt";
+    openspec.url = "github:Fission-AI/OpenSpec";
+    openspec.inputs.nixpkgs.follows = "nixpkgs";
     plover-flake.url = "github:openstenoproject/plover-flake";
     quadlet-nix.url = "github:SEIAROTg/quadlet-nix";
     ream.url = "git+ssh://git@github.com/xav-ie/ream";

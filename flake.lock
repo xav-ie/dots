@@ -1941,6 +1941,26 @@
         "type": "github"
       }
     },
+    "openspec": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1783698404,
+        "narHash": "sha256-BfYeIFjxk/WpbmkyLP8wSNkTb+jpFhBim2I/himVtms=",
+        "owner": "Fission-AI",
+        "repo": "OpenSpec",
+        "rev": "0a99f410457271aa773d8b106f03f637f7c6b3c0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Fission-AI",
+        "repo": "OpenSpec",
+        "type": "github"
+      }
+    },
     "pimalaya": {
       "flake": false,
       "locked": {
@@ -2269,6 +2289,7 @@
         "nufmt": "nufmt",
         "obs-backgroundremoval": "obs-backgroundremoval",
         "ollama-src": "ollama-src",
+        "openspec": "openspec",
         "pimalaya-core": "pimalaya-core",
         "pimalaya-neverest": "pimalaya-neverest",
         "plover-flake": "plover-flake",
