@@ -99,6 +99,8 @@
 
     # vendored
     # Claude Code marketplaces (pinned for reproducibility)
+    claude-marketplace-context-mode.flake = false;
+    claude-marketplace-context-mode.url = "github:mksglu/context-mode";
     claude-marketplace-official.flake = false;
     claude-marketplace-official.url = "github:anthropics/claude-plugins-official";
     claude-marketplace-outsmartly.flake = false;
