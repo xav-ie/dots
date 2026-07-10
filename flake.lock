@@ -344,6 +344,22 @@
         "url": "ssh://git@github.com/outsmartly/claude-plugins"
       }
     },
+    "claude-marketplace-ponytail": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783651472,
+        "narHash": "sha256-aspTFUIRsyR2yiy3jqVsvwC/xiposWdM9j3DrVX06M8=",
+        "owner": "DietrichGebert",
+        "repo": "ponytail",
+        "rev": "14a0d79548d4de8fc2de95c1b94bb0de63a739d3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "DietrichGebert",
+        "repo": "ponytail",
+        "type": "github"
+      }
+    },
     "claude-marketplace-wakatime": {
       "flake": false,
       "locked": {
@@ -2207,6 +2223,7 @@
         "claude-marketplace-official": "claude-marketplace-official",
         "claude-marketplace-osgrep": "claude-marketplace-osgrep",
         "claude-marketplace-outsmartly": "claude-marketplace-outsmartly",
+        "claude-marketplace-ponytail": "claude-marketplace-ponytail",
         "claude-marketplace-wakatime": "claude-marketplace-wakatime",
         "clauhist-src": "clauhist-src",
         "crane": "crane_2",
