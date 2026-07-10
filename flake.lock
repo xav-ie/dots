@@ -264,6 +264,22 @@
         "type": "github"
       }
     },
+    "claude-marketplace-context-mode": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783687395,
+        "narHash": "sha256-RrMuwH2wxSJ7hI8GVGBC/V5mBHchmyD6ctV3b7zrEHg=",
+        "owner": "mksglu",
+        "repo": "context-mode",
+        "rev": "a6a990f0727c86ec126b6347123e3887dfa1d256",
+        "type": "github"
+      },
+      "original": {
+        "owner": "mksglu",
+        "repo": "context-mode",
+        "type": "github"
+      }
+    },
     "claude-marketplace-lsps": {
       "flake": false,
       "locked": {
@@ -2238,6 +2254,7 @@
         "beads": "beads",
         "browser-session-mcp": "browser-session-mcp",
         "bun-demincer-src": "bun-demincer-src",
+        "claude-marketplace-context-mode": "claude-marketplace-context-mode",
         "claude-marketplace-lsps": "claude-marketplace-lsps",
         "claude-marketplace-mgrep": "claude-marketplace-mgrep",
         "claude-marketplace-official": "claude-marketplace-official",

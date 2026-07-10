@@ -230,6 +230,10 @@
               repo = "xav-ie/browser-session-mcp";
               src = inputs.browser-session-mcp;
             };
+            "context-mode" = {
+              repo = "mksglu/context-mode";
+              src = inputs.claude-marketplace-context-mode;
+            };
             "claude-plugins-official" = {
               repo = "anthropics/claude-plugins-official";
               src = inputs.claude-marketplace-official;
@@ -267,7 +271,10 @@
               "${config.home.homeDirectory}/.claude/settings.json"
           '';
 
-          home.activation.claudePluginSync = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          # After claudeSettingsSymlink: `claude plugin install` writes
+          # enabledPlugins to settings.json, which only succeeds once the
+          # single-hop symlink is in place (see claudeSettingsSymlink).
+          home.activation.claudePluginSync = lib.hm.dag.entryAfter [ "claudeSettingsSymlink" ] ''
             echo "Syncing claude plugins (background)..."
             ${pluginSyncExe} &>/dev/null &
             disown
