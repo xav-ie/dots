@@ -141,6 +141,7 @@
             # wakapi's cache dir defaults under the (read-only) rootfs; point it
             # at the writable tmpfs so it stops erroring on startup.
             XDG_CACHE_HOME = "/tmp";
+            WAKAPI_HEARTBEAT_MAX_AGE = "876000h";
             WAKAPI_PORT = toString containerPort;
             WAKAPI_LISTEN_IPV4 = "0.0.0.0";
             WAKAPI_LISTEN_IPV6 = "-";
