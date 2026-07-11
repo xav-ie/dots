@@ -23,8 +23,6 @@ in
 
     homebrew = {
       enable = true;
-      # do not prompt for updates
-      caskArgs.no_quarantine = true;
       # track brews in a file
       global.brewfile = true;
       onActivation = {
