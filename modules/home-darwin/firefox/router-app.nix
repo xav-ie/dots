@@ -19,7 +19,6 @@
       # the default handler programmatically instead.
       config.home.activation.firefox-router-app = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         app="$HOME/Applications/FirefoxRouter.app"
-        plist="$app/Contents/Info.plist"
         plistbuddy="/usr/libexec/PlistBuddy"
         lsregister="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
 
@@ -35,10 +34,14 @@
         end run
         APPLESCRIPT
 
-        mkdir -p "$HOME/Applications"
-        rm -rf "$app"
-        /usr/bin/osacompile -o "$app" "$src"
-        rm -rf "$tmp"
+        # Compile into the temp dir first: a fresh output path can't hit
+        # osacompile's intermittent "duplicate filename (rename)" error the way
+        # writing straight over the existing ~/Applications/FirefoxRouter.app can
+        # (e.g. while Spotlight/LaunchServices is touching the folder). Configure
+        # it there, then atomically swap it into place at the end.
+        build="$tmp/FirefoxRouter.app"
+        /usr/bin/osacompile -o "$build" "$src"
+        plist="$build/Contents/Info.plist"
 
         # Identify the bundle and declare it an http/https handler so macOS lists
         # it as a default-browser candidate. Newer osacompile output may omit
@@ -53,6 +56,12 @@
         $plistbuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "$plist" 2>/dev/null || true
         $plistbuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string http" "$plist" 2>/dev/null || true
         $plistbuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:1 string https" "$plist" 2>/dev/null || true
+
+        # Swap the fully-configured temp bundle into place atomically.
+        mkdir -p "$HOME/Applications"
+        rm -rf "$app"
+        mv "$build" "$app"
+        rm -rf "$tmp"
 
         [ -x "$lsregister" ] && "$lsregister" -f "$app" || true
       '';
