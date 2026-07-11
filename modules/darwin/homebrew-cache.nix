@@ -18,10 +18,11 @@
         system.activationScripts.homebrew.text =
           lib.mkForce # sh
             ''
-              # Install Homebrew if not present
-              if [ ! -f "${cfg.brewPrefix}/brew" ]; then
-                ${config.system.activationScripts.setup-homebrew.text}
-              fi
+              # Re-link the prefix/taps/engine every activation (idempotent
+              # ln -shf). Guarding this behind "brew not installed" meant flake
+              # bumps changed store paths but never re-pointed /opt/homebrew, so
+              # brew bundle kept running the stale engine/tap.
+              ${config.system.activationScripts.setup-homebrew.text}
 
               # Homebrew Bundle (with caching)
               echo >&2 "Homebrew bundle..."
