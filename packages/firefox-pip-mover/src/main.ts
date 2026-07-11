@@ -235,7 +235,7 @@ function cancelAnim(): void {
   scaler = null;
 }
 
-function applyGeom(s: Geom): void {
+function applyGeom(s: Geom): Rect {
   // Snap size to the point grid (1pt steps) with a locked aspect, and snap the
   // position to the grid too. 1pt steps keep motion smooth; a center-anchored
   // axis then has a ≤1pt residual wobble (size/2 alternates whole/half point) —
@@ -256,6 +256,7 @@ function applyGeom(s: Geom): void {
       s.pip.moveTo(x, y);
     }
   } catch (_) {}
+  return { x, y, w: wr, h: hr };
 }
 
 function scaleStep(): void {
@@ -455,9 +456,25 @@ let pinch:
       tgtH: number;
       last: number;
       deadline: number;
+      fx: number;
+      fy: number; // cursor's fractional position within the window at pinch start
+      cursorX: number;
+      cursorY: number; // last warped cursor position (points)
+      cursorHidden: boolean; // true between hideCursor and the balancing showCursor
     })
   | null = null;
 let pinchRaf: number | null = null;
+let pinchRafTs = 0; // performance.now() of the last pinchStep; stale => rAF throttled
+
+// Keep the (hidden) cursor pinned to the same fractional spot inside the window
+// as it resizes, so a shrink can't slide the PiP out from under the pointer and
+// the window keeps receiving ctrl+wheel. Mirrors the scroll-to-move cursor warp.
+function warpPinchCursor(p: NonNullable<typeof pinch>, r: Rect): void {
+  if (!p.cursorHidden || !warpFn) return;
+  p.cursorX = (r.x + p.fx * r.w) / p.grid;
+  p.cursorY = (r.y + p.fy * r.h) / p.grid;
+  warpFn(p.cursorX, p.cursorY);
+}
 
 function pinchStop(): void {
   const p = pinch;
@@ -467,6 +484,13 @@ function pinchStop(): void {
     } catch (_) {}
   }
   pinchRaf = null;
+  // Show the (hidden) cursor again over the resized window — single chokepoint
+  // for every way a pinch ends, so the hide/show reference count stays balanced.
+  if (p && p.cursorHidden) {
+    p.cursorHidden = false;
+    if (warpFn) warpFn(p.cursorX, p.cursorY);
+    if (showCursorFn) showCursorFn();
+  }
   pinch = null;
 }
 
@@ -479,18 +503,19 @@ function pinchStep(): void {
     return;
   }
   const now = p.pip.performance.now();
+  pinchRafTs = now;
   const dt = Math.min((now - p.last) / 1000, MAX_DT);
   p.last = now;
   const a = PINCH_TAU > 0 ? 1 - Math.exp(-dt / PINCH_TAU) : 1;
   p.state.w += (p.tgtW - p.state.w) * a;
   p.state.h += (p.tgtH - p.state.h) * a;
-  applyGeom(p);
+  warpPinchCursor(p, applyGeom(p));
   const settled =
     Math.abs(p.state.w - p.tgtW) < 0.5 && Math.abs(p.state.h - p.tgtH) < 0.5;
   if (settled && now >= p.deadline) {
     p.state.w = p.tgtW;
     p.state.h = p.tgtH;
-    applyGeom(p);
+    warpPinchCursor(p, applyGeom(p));
     pinchStop();
     return;
   }
@@ -507,6 +532,17 @@ function onPinchWheel(pip: any, e: any): void {
     moverStop(); // ...and from any in-flight drag
     const { hx, hy } = pickEdges(winRect(pip), screenRect(pip));
     const g = calibrate(pip, hx, hy);
+    // Cursor's fractional position within the window (points), captured once at
+    // the start of the pinch; the loop warps the cursor to hold this fraction so
+    // a shrink can't slide the PiP out from under it.
+    const fx = Math.max(
+      0,
+      Math.min(1, (e.screenX - pip.screenX) / pip.outerWidth),
+    );
+    const fy = Math.max(
+      0,
+      Math.min(1, (e.screenY - pip.screenY) / pip.outerHeight),
+    );
     pinch = {
       pip,
       bw: g.bw,
@@ -524,16 +560,42 @@ function onPinchWheel(pip: any, e: any): void {
       tgtH: g.h0,
       last: pip.performance.now(),
       deadline: 0,
+      fx,
+      fy,
+      cursorX: e.screenX,
+      cursorY: e.screenY,
+      cursorHidden: false,
     };
+    // Hide the cursor for the duration of the pinch; pinchStop() shows it again
+    // (over the resized window) when the gesture ends.
+    if (getWarp() && hideCursorFn) {
+      hideCursorFn();
+      pinch.cursorHidden = true;
+    }
   }
   const p = pinch;
   const f = Math.exp(-e.deltaY * WHEEL_SENS); // dY<0 grows, dY>0 shrinks
   const c = clampSize(p.tgtW * f, p.tgtH * f, p.minW, p.maxW, p.maxH);
   p.tgtW = c.w;
   p.tgtH = c.h;
-  p.deadline = pip.performance.now() + PINCH_IDLE_MS;
+  const now = pip.performance.now();
+  p.deadline = now + PINCH_IDLE_MS;
+  // Firefox throttles requestAnimationFrame while it isn't the active app, so the
+  // ease-to-target loop stalls and the PiP wouldn't resize until you click to
+  // focus Firefox. Wheel events aren't throttled — when rAF has gone stale, step
+  // the size toward target and paint it synchronously here. Moves already "work"
+  // unfocused because they reach target in ~1 frame; the size ramp needs many.
+  // When rAF is healthy (focused) pinchRafTs is fresh, so this is skipped and the
+  // tuned feel is unchanged.
+  if (now - pinchRafTs > 32) {
+    const a = PINCH_TAU > 0 ? 1 - Math.exp(-1 / 60 / PINCH_TAU) : 1;
+    p.state.w += (p.tgtW - p.state.w) * a;
+    p.state.h += (p.tgtH - p.state.h) * a;
+    warpPinchCursor(p, applyGeom(p));
+    pinchRafTs = now; // pace synchronous steps to ~1 per frame-time, not per event
+  }
   if (pinchRaf === null) {
-    p.last = pip.performance.now();
+    p.last = now;
     pinchRaf = pip.requestAnimationFrame(pinchStep);
   }
 }
