@@ -47,6 +47,7 @@ in
         "ente"
         "figma"
         "firefox"
+        "fluidvoice"
         "ghostty"
         "google-chrome"
         "loom"
