@@ -39,12 +39,15 @@ def draw_app [name: string, cache: string] {
   # one (SecurityAgent, etc.), so `app-icon` can't be trusted to route those; we
   # must override by name. Only for unmapped apps do we ask app-icon whether
   # sketchybar has a real icon (0.80) or we should draw a questionmark (0.5).
-  let mapped = ($fallback_symbols | get --optional $name)
+  let mapped = $fallback_symbols | get --optional $name
   let image_args = if $mapped != null {
     let p = (render_glyph $mapped $"($cache)/($mapped).png")
     [$"icon.background.image=($p)" "icon.background.image.scale=0.5"]
   } else if (sketchybar-icons app-icon --name $name | str trim) == "native" {
-    [$"icon.background.image=app.($icon_key)" "icon.background.image.scale=0.80"]
+    [
+      $"icon.background.image=app.($icon_key)"
+      "icon.background.image.scale=0.80"
+    ]
   } else {
     let p = (render_glyph questionmark $"($cache)/questionmark.png")
     [$"icon.background.image=($p)" "icon.background.image.scale=0.5"]
