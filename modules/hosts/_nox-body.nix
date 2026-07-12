@@ -156,6 +156,13 @@ in
           ];
         }
         {
+          bundleId = "com.FluidApp.app";
+          services = [
+            "Microphone"
+            "Accessibility"
+          ];
+        }
+        {
           # focusd (self-built AX daemon) is ad-hoc signed as com.x.focusd at build
           # time, so there's no cert to anchor a designated requirement — pin the
           # raw cdhash instead. Read it from the store bundle (not the ~/Applications
