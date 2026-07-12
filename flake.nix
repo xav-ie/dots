@@ -33,6 +33,7 @@
     nix-auto-follow.url = "github:xav-ie/nix-auto-follow/feat-consolidation";
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
+    nix-homebrew.inputs.brew-src.follows = "brew-src";
     nixpkgs-bleeding.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-homeassistant.url = "github:nixos/nixpkgs/master";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-26.05";
@@ -118,6 +119,8 @@
 
     glsl_analyzer.flake = false;
     glsl_analyzer.url = "github:xav-ie/glsl_analyzer/format";
+    brew-src.flake = false;
+    brew-src.url = "github:Homebrew/brew/6.0.9";
     homebrew-bundle.flake = false;
     homebrew-bundle.url = "github:homebrew/homebrew-bundle";
     homebrew-cask.flake = false;
