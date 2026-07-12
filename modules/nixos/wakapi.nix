@@ -209,58 +209,59 @@
             EnvironmentFile = config.sops.templates."wakapi.env".path;
             TimeoutStartSec = "3min";
           };
-          script = ''
-            set -euo pipefail
+          script = # sh
+            ''
+              set -euo pipefail
 
-            db=${lib.escapeShellArg dbPath}
-            user=$(cat ${config.sops.secrets."wakapi/username".path})
-            pass=$(cat ${config.sops.secrets."wakapi/password".path})
-            key=$(cat ${config.sops.secrets."wakapi/api_key".path})
-            pepper="''${WAKAPI_PASSWORD_SALT:-}"
+              db=${lib.escapeShellArg dbPath}
+              user=$(cat ${config.sops.secrets."wakapi/username".path})
+              pass=$(cat ${config.sops.secrets."wakapi/password".path})
+              key=$(cat ${config.sops.secrets."wakapi/api_key".path})
+              pepper="''${WAKAPI_PASSWORD_SALT:-}"
 
-            # 1. Wait for wakapi's AutoMigrate to create the `users` table.
-            for _ in $(seq 1 60); do
-              if sqlite3 "$db" "SELECT 1 FROM users LIMIT 1;" >/dev/null 2>&1; then
-                break
+              # 1. Wait for wakapi's AutoMigrate to create the `users` table.
+              for _ in $(seq 1 60); do
+                if sqlite3 "$db" "SELECT 1 FROM users LIMIT 1;" >/dev/null 2>&1; then
+                  break
+                fi
+                sleep 2
+              done
+              # Final gate — fail the unit loudly if the schema never appeared.
+              sqlite3 "$db" "SELECT 1 FROM users LIMIT 1;" >/dev/null
+
+              # SQL single-quote escaping (double any single quote) for values
+              # from sops, via bash param expansion.
+              uq=''${user//\'/\'\'}
+              kq=''${key//\'/\'\'}
+
+              exists=$(sqlite3 "$db" "SELECT count(*) FROM users WHERE id = '$uq';")
+              if [ "$exists" = "0" ]; then
+                # argon2id of (password + pepper), matching wakapi's
+                # CompareArgon2Id(plain+pepper). wakapi reads the m/t/p params back
+                # out of the encoded hash, so ours only need to be valid, not equal
+                # to its defaults. `-e` prints just the PHC-encoded string, which
+                # is exactly what wakapi's decoder expects.
+                asalt=$(openssl rand -hex 8)
+                hash=$(printf '%s' "$pass$pepper" | argon2 "$asalt" -id -t 3 -m 16 -p 2 -l 32 -e)
+                hq=''${hash//\'/\'\'}
+                # created_at / last_logged_in_at are wakapi CustomTime columns whose
+                # Scan() errors on NULL, so both MUST be set. This exact layout
+                # (space + numeric offset) is one CustomTime.Scan parses.
+                now=$(date -u +'%Y-%m-%d %H:%M:%S+00:00')
+                email="$user@${baseDomain}"
+                eq=''${email//\'/\'\'}
+                sqlite3 "$db" "INSERT INTO users
+                  (id, api_key, password, email, is_admin, created_at, last_logged_in_at)
+                  VALUES ('$uq', '$kq', '$hq', '$eq', 1, '$now', '$now');"
+                echo "wakapi: seeded account '$user'"
+              else
+                # Account already present — only re-pin the api key if it drifted
+                # from sops (leave the password alone; rotate it by hand if needed).
+                sqlite3 "$db" "UPDATE users SET api_key = '$kq'
+                  WHERE id = '$uq' AND (api_key IS NULL OR api_key <> '$kq');"
+                echo "wakapi: account '$user' present; api key ensured"
               fi
-              sleep 2
-            done
-            # Final gate — fail the unit loudly if the schema never appeared.
-            sqlite3 "$db" "SELECT 1 FROM users LIMIT 1;" >/dev/null
-
-            # SQL single-quote escaping (double any single quote) for values
-            # from sops, via bash param expansion.
-            uq=''${user//\'/\'\'}
-            kq=''${key//\'/\'\'}
-
-            exists=$(sqlite3 "$db" "SELECT count(*) FROM users WHERE id = '$uq';")
-            if [ "$exists" = "0" ]; then
-              # argon2id of (password + pepper), matching wakapi's
-              # CompareArgon2Id(plain+pepper). wakapi reads the m/t/p params back
-              # out of the encoded hash, so ours only need to be valid, not equal
-              # to its defaults. `-e` prints just the PHC-encoded string, which
-              # is exactly what wakapi's decoder expects.
-              asalt=$(openssl rand -hex 8)
-              hash=$(printf '%s' "$pass$pepper" | argon2 "$asalt" -id -t 3 -m 16 -p 2 -l 32 -e)
-              hq=''${hash//\'/\'\'}
-              # created_at / last_logged_in_at are wakapi CustomTime columns whose
-              # Scan() errors on NULL, so both MUST be set. This exact layout
-              # (space + numeric offset) is one CustomTime.Scan parses.
-              now=$(date -u +'%Y-%m-%d %H:%M:%S+00:00')
-              email="$user@${baseDomain}"
-              eq=''${email//\'/\'\'}
-              sqlite3 "$db" "INSERT INTO users
-                (id, api_key, password, email, is_admin, created_at, last_logged_in_at)
-                VALUES ('$uq', '$kq', '$hq', '$eq', 1, '$now', '$now');"
-              echo "wakapi: seeded account '$user'"
-            else
-              # Account already present — only re-pin the api key if it drifted
-              # from sops (leave the password alone; rotate it by hand if needed).
-              sqlite3 "$db" "UPDATE users SET api_key = '$kq'
-                WHERE id = '$uq' AND (api_key IS NULL OR api_key <> '$kq');"
-              echo "wakapi: account '$user' present; api key ensured"
-            fi
-          '';
+            '';
         };
       };
     };
