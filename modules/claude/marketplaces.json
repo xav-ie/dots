@@ -1,6 +1,5 @@
 {
   "plugins": [
-    "browser-session@browser-session-mcp",
     "context-mode@context-mode",
     "dts@outsmartly-plugins",
     "pts@outsmartly-plugins",

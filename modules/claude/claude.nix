@@ -226,10 +226,6 @@
           # Core marketplaces. Registered here (not as an option `default`) so
           # feature modules can merge in their own — see modules/wakatime.nix.
           programs.claude.marketplaces = {
-            "browser-session-mcp" = {
-              repo = "xav-ie/browser-session-mcp";
-              src = inputs.browser-session-mcp;
-            };
             "context-mode" = {
               repo = "mksglu/context-mode";
               src = inputs.claude-marketplace-context-mode;

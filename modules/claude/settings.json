@@ -115,8 +115,7 @@
     "pts@outsmartly-plugins": false,
     "claude-code-wakatime@wakatime": true,
     "ponytail@ponytail": true,
-    "context-mode@context-mode": true,
-    "browser-session@browser-session-mcp": true
+    "context-mode@context-mode": true
   },
   "alwaysThinkingEnabled": true,
   "effortLevel": "medium",
