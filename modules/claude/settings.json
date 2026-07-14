@@ -79,6 +79,14 @@
             "command": "~/.claude/tmux-assistant-claude-track.sh"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"/Users/x/.claude/hooks/context-mode-cache-heal.mjs\""
+          }
+        ]
       }
     ],
     "SessionEnd": [
