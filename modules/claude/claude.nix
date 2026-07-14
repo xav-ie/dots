@@ -394,6 +394,8 @@
             ".claude/CLAUDE.md".source =
               config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/CLAUDE.md";
             ".claude/plugins/known_marketplaces.json".text = knownMarketplacesJson;
+            ".claude/hooks/context-mode-cache-heal.mjs".source =
+              "${inputs.claude-marketplace-context-mode}/hooks/cache-heal.mjs";
             # tmux-claude-resurrect Claude hooks: thin execs that point at the
             # plugin's bash scripts.  Direct symlinks won't work because the
             # hook scripts source a sibling `lib-claude-pid.sh` via

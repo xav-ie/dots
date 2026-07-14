@@ -101,7 +101,9 @@
     # vendored
     # Claude Code marketplaces (pinned for reproducibility)
     claude-marketplace-context-mode.flake = false;
-    claude-marketplace-context-mode.url = "github:mksglu/context-mode";
+    # PR mksglu/context-mode#958: standalone hooks/cache-heal.mjs so dots can
+    # symlink the hook straight from the input.
+    claude-marketplace-context-mode.url = "github:xav-ie/context-mode/extract-cache-heal-hook";
     claude-marketplace-official.flake = false;
     claude-marketplace-official.url = "github:anthropics/claude-plugins-official";
     claude-marketplace-outsmartly.flake = false;
