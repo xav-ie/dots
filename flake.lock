@@ -267,15 +267,16 @@
     "claude-marketplace-context-mode": {
       "flake": false,
       "locked": {
-        "lastModified": 1783687395,
-        "narHash": "sha256-RrMuwH2wxSJ7hI8GVGBC/V5mBHchmyD6ctV3b7zrEHg=",
-        "owner": "mksglu",
+        "lastModified": 1784063518,
+        "narHash": "sha256-HbdqEfey122TFbn0yG4n7hGYpZGIQSORZQw662SubuA=",
+        "owner": "xav-ie",
         "repo": "context-mode",
-        "rev": "a6a990f0727c86ec126b6347123e3887dfa1d256",
+        "rev": "6ffd713c14dcd95df3ee024692732d8f0b1ce693",
         "type": "github"
       },
       "original": {
-        "owner": "mksglu",
+        "owner": "xav-ie",
+        "ref": "extract-cache-heal-hook",
         "repo": "context-mode",
         "type": "github"
       }

@@ -1,35 +1,117 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "alwaysThinkingEnabled": true,
   "attribution": {
     "commit": "",
     "pr": ""
   },
+  "autoDream": {
+    "enabled": true,
+    "intervalHours": 24
+  },
+  "autoMemory": {
+    "enabled": true,
+    "scope": "user"
+  },
+  "editorMode": "vim",
+  "effortLevel": "medium",
+  "enabledPlugins": {
+    "claude-code-wakatime@wakatime": true,
+    "context-mode@context-mode": true,
+    "dts@outsmartly-plugins": false,
+    "hookify@claude-plugins-official": false,
+    "mgrep@Mixedbread-Grep": false,
+    "osgrep@osgrep": true,
+    "plugin-dev@claude-plugins-official": false,
+    "ponytail@ponytail": true,
+    "pts@outsmartly-plugins": false,
+    "superpowers@claude-plugins-official": false,
+    "typescript-lsp@claude-plugins-official": false,
+    "vscode-langservers@claude-code-lsps": false,
+    "vtsls@claude-code-lsps": false
+  },
   "hooks": {
     "Notification": [
       {
-        "matcher": "idle_prompt",
         "hooks": [
           {
-            "type": "command",
-            "command": "~/.claude/notify-if-question"
+            "command": "~/.claude/notify-if-question",
+            "type": "command"
           }
-        ]
+        ],
+        "matcher": "idle_prompt"
       },
       {
-        "matcher": "permission_prompt",
         "hooks": [
           {
-            "type": "command",
-            "command": "~/.claude/notify"
+            "command": "~/.claude/notify",
+            "type": "command"
           }
-        ]
+        ],
+        "matcher": "permission_prompt"
       },
       {
-        "matcher": "permission_prompt",
         "hooks": [
           {
-            "type": "command",
-            "command": "~/.claude/tmux-claude-indicator notification"
+            "command": "~/.claude/tmux-claude-indicator notification",
+            "type": "command"
+          }
+        ],
+        "matcher": "permission_prompt"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "~/.claude/format-and-lint",
+            "type": "command"
+          }
+        ],
+        "matcher": "Edit|Write"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "~/.claude/record-pending-tool",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "command": "~/.claude/tmux-assistant-claude-cleanup.sh",
+            "type": "command"
+          },
+          {
+            "command": "~/.claude/record-pending-tool",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "~/.claude/tmux-assistant-claude-track.sh",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      },
+      {
+        "hooks": [
+          {
+            "command": "~/.claude/hooks/context-mode-cache-heal.mjs",
+            "type": "command"
           }
         ]
       }
@@ -38,111 +120,29 @@
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "~/.claude/tmux-claude-indicator stop"
+            "command": "~/.claude/tmux-claude-indicator stop",
+            "type": "command"
           },
           {
-            "type": "command",
-            "command": "~/.claude/record-pending-tool"
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/record-pending-tool"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/format-and-lint"
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/tmux-assistant-claude-track.sh"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"/Users/x/.claude/hooks/context-mode-cache-heal.mjs\""
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/tmux-assistant-claude-cleanup.sh"
-          },
-          {
-            "type": "command",
-            "command": "~/.claude/record-pending-tool"
+            "command": "~/.claude/record-pending-tool",
+            "type": "command"
           }
         ]
       }
     ]
   },
+  "preferredNotifChannel": "notifications_disabled",
+  "prefersReducedMotion": true,
+  "skipDangerousModePermissionPrompt": true,
   "statusLine": {
-    "type": "command",
     "command": "~/.claude/statusline",
-    "padding": 0
+    "padding": 0,
+    "type": "command"
   },
-  "enabledPlugins": {
-    "mgrep@Mixedbread-Grep": false,
-    "osgrep@osgrep": true,
-    "vtsls@claude-code-lsps": false,
-    "vscode-langservers@claude-code-lsps": false,
-    "typescript-lsp@claude-plugins-official": false,
-    "plugin-dev@claude-plugins-official": false,
-    "hookify@claude-plugins-official": false,
-    "superpowers@claude-plugins-official": false,
-    "dts@outsmartly-plugins": false,
-    "pts@outsmartly-plugins": false,
-    "claude-code-wakatime@wakatime": true,
-    "ponytail@ponytail": true,
-    "context-mode@context-mode": true
-  },
-  "alwaysThinkingEnabled": true,
-  "effortLevel": "medium",
   "tui": "fullscreen",
   "voice": {
     "enabled": true,
     "mode": "hold"
   },
-  "prefersReducedMotion": true,
-  "skipDangerousModePermissionPrompt": true,
-  "editorMode": "vim",
-  "preferredNotifChannel": "notifications_disabled",
-  "voiceEnabled": true,
-  "autoMemory": {
-    "enabled": true,
-    "scope": "user"
-  },
-  "autoDream": {
-    "enabled": true,
-    "intervalHours": 24
-  }
+  "voiceEnabled": true
 }
