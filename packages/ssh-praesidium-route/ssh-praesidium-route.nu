@@ -37,6 +37,7 @@ const TS_FAST_THRESHOLD_MS = 150.0
 const SLOW_GRACE = 1sec
 
 def main [] {
+
   # Resolve praesidium's tailnet IP at runtime rather than hardcoding it — the
   # address is assigned by the tailnet and shouldn't live in the repo. If the
   # node is offline `tailscale ip` errors/empties, the ts probe simply fails and

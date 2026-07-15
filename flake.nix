@@ -48,7 +48,7 @@
     quadlet-nix.url = "github:SEIAROTg/quadlet-nix";
     ream.url = "git+ssh://git@github.com/xav-ie/ream";
     ream.inputs.nixpkgs.follows = "nixpkgs";
-    sketchybar-icons.url = "github:xav-ie/sketchybar-icons";
+    sketchybar-icons.url = "path:/Users/x/Projects/sketchybar-icons";
     sketchybar-icons.inputs.nixpkgs.follows = "nixpkgs";
     sketchybar-src.url = "github:FelixKratz/SketchyBar/v2.23.0";
     sketchybar-src.flake = false;
