@@ -719,5 +719,64 @@ in
             '
         '';
     };
+
+    # Self-heal the orchestrator, which hosts every Temporal publish worker.
+    # On a cold pod boot (pm2 launches backend + frontend + orchestrator at
+    # once) the orchestrator's Temporal worker init deadlocks before
+    # `app.listen` — it never binds the :3002 health port and no worker polls
+    # any task queue, so posts start a workflow that sits Running forever.
+    # Restarting the orchestrator alone, once the pod is warm, always comes up
+    # in ~5s. This gate polls the health port after boot and kicks pm2 until it
+    # serves. The deadlock is in upstream's worker init; this heals it without
+    # forking the image.
+    systemd.services."${subdomain}-orchestrator-heal" = {
+      description = "Heal deadlocked Postiz orchestrator (Temporal workers)";
+      after = [ "${subdomain}.service" ];
+      partOf = [ "${subdomain}.service" ];
+      wantedBy = [ "${subdomain}.service" ];
+      path = [ pkgs.podman ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        TimeoutStartSec = "6min";
+      };
+      script = # sh
+        ''
+          set -u
+          APP=${subdomain}
+
+          # A resolved fetch — even an HTTP 500 — means NestFactory finished
+          # and the app bound :3002, i.e. the workers registered. A rejected
+          # fetch means the deadlock (nothing listening). Don't treat 500 as
+          # down: it only means Temporal was briefly unreachable, app is fine.
+          healthy() {
+            podman exec "$APP" node -e \
+              'fetch("http://127.0.0.1:3002/health/status").then(()=>process.exit(0)).catch(()=>process.exit(1))' \
+              >/dev/null 2>&1
+          }
+
+          # Wait until the container accepts exec at all.
+          for _ in $(seq 1 30); do
+            podman exec "$APP" true 2>/dev/null && break
+            sleep 2
+          done
+
+          # A healthy cold boot binds :3002 within ~15s; a deadlocked one never
+          # does. Grace once, then kick and re-check a few times. An unneeded
+          # kick just re-boots a still-starting orchestrator (~5s, idempotent).
+          for attempt in 1 2 3 4 5; do
+            sleep 30
+            if healthy; then
+              echo "orchestrator serving on :3002 (check $attempt)"
+              exit 0
+            fi
+            echo "orchestrator not serving on :3002 — restarting pm2 orchestrator (attempt $attempt)"
+            podman exec "$APP" pm2 restart orchestrator >/dev/null 2>&1 || true
+          done
+
+          echo "orchestrator still not serving after retries; leaving for Restart=always"
+          exit 0
+        '';
+    };
   };
 }
