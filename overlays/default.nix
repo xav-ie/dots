@@ -250,6 +250,7 @@ in
             ${py}/bin/python3 ${freeze} "$light" "$out/InterTabular.ttf" "Inter Tabular" "Regular"
           '';
       beads = inputs.beads.packages.${final.stdenv.hostPlatform.system}.default;
+      herdr = inputs.herdr.packages.${final.stdenv.hostPlatform.system}.default;
       himalaya =
         let
           base = inputs.himalaya-latest.packages.${final.stdenv.hostPlatform.system}.default;
