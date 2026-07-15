@@ -46,6 +46,16 @@
         seed = ''mkdir -p "$HOME/.pi/agent/extensions"'';
       };
 
+      # Shell completions, generated from the binary (no drift). zsh lands in the
+      # standard site-functions dir so the profile fpath + compinit pick it up
+      # automatically; nushell has no such scan, so its module is `use`d by path
+      # below.
+      herdrCompletions = pkgs.runCommand "herdr-completions" { } ''
+        mkdir -p "$out/share/zsh/site-functions"
+        ${pkgs.herdr}/bin/herdr completion zsh > "$out/share/zsh/site-functions/_herdr"
+        ${pkgs.herdr}/bin/herdr completion nushell > "$out/herdr.nu"
+      '';
+
       # kimi is bespoke: the installer writes a hook .sh AND registers nine
       # SessionStart/Stop/… events in config.toml, referencing the hook by
       # absolute path. We keep both in one store dir and rewrite that path to
@@ -62,7 +72,16 @@
       '';
     in
     {
-      home.packages = [ pkgs.herdr ];
+      # herdrCompletions on PATH puts _herdr on the zsh fpath (auto-loaded by
+      # compinit via programs.zsh.enableCompletion).
+      home.packages = [
+        pkgs.herdr
+        herdrCompletions
+      ];
+
+      # Load herdr's nushell completions (env.nu already ran, so this just needs
+      # the module path). Merges with nushell.nix's extraConfig.
+      programs.nushell.extraConfig = "use ${herdrCompletions}/herdr.nu *";
 
       # Out-of-store symlink so `herdr server reload-config` picks up edits to
       # the live repo checkout without a rebuild.

@@ -2,6 +2,12 @@
 name = "vesper"
 auto_switch = false
 
+[terminal]
+default_shell = "nu"
+
+[keys]
+prefix = "ctrl+space"
+
 [ui.toast]
 delivery = "herdr"
 
