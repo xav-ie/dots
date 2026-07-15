@@ -934,6 +934,28 @@
         "type": "github"
       }
     },
+    "herdr": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-overlay": "rust-overlay_2"
+      },
+      "locked": {
+        "lastModified": 1784114872,
+        "narHash": "sha256-T2daR2+s8xod93hRfxBeqb8KcNOV7QkTtZEniXeNgBc=",
+        "owner": "xav-ie",
+        "repo": "herdr",
+        "rev": "00936613dddefd487d12ece4e22cf6cc641f5227",
+        "type": "github"
+      },
+      "original": {
+        "owner": "xav-ie",
+        "ref": "nushell-completions",
+        "repo": "herdr",
+        "type": "github"
+      }
+    },
     "himalaya-latest": {
       "inputs": {
         "fenix": "fenix_3",
@@ -1889,7 +1911,7 @@
       "inputs": {
         "flake-utils": "flake-utils_3",
         "nixpkgs": "nixpkgs_5",
-        "rust-overlay": "rust-overlay_2",
+        "rust-overlay": "rust-overlay_3",
         "treefmt-nix": "treefmt-nix_3"
       },
       "locked": {
@@ -1910,7 +1932,7 @@
       "inputs": {
         "flake-utils": "flake-utils_4",
         "nixpkgs": "nixpkgs_6",
-        "rust-overlay": "rust-overlay_4",
+        "rust-overlay": "rust-overlay_5",
         "treefmt-nix": "treefmt-nix_5"
       },
       "locked": {
@@ -2280,6 +2302,7 @@
         "gitignore": "gitignore",
         "glsl_analyzer": "glsl_analyzer",
         "hardware": "hardware",
+        "herdr": "herdr",
         "himalaya-latest": "himalaya-latest",
         "home-manager": "home-manager",
         "homebrew-bundle": "homebrew-bundle",
@@ -2319,7 +2342,7 @@
         "ralph-src": "ralph-src",
         "ream": "ream",
         "rust-analyzer-src": "rust-analyzer-src_4",
-        "rust-overlay": "rust-overlay_3",
+        "rust-overlay": "rust-overlay_4",
         "simulstreaming-src": "simulstreaming-src",
         "sketchybar-icons": "sketchybar-icons",
         "sketchybar-src": "sketchybar-src",
@@ -2442,6 +2465,27 @@
     "rust-overlay_2": {
       "inputs": {
         "nixpkgs": [
+          "herdr",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1783577481,
+        "narHash": "sha256-EWMxOWrJ031f8f/lrcEmhTRs4npw1/5N3Hcjin846c8=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "4cdea398dc491b082dccdce0fad1ed0b75fa3394",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "rust-overlay_3": {
+      "inputs": {
+        "nixpkgs": [
           "nufmt",
           "nixpkgs"
         ]
@@ -2460,7 +2504,7 @@
         "type": "github"
       }
     },
-    "rust-overlay_3": {
+    "rust-overlay_4": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"
@@ -2480,7 +2524,7 @@
         "type": "github"
       }
     },
-    "rust-overlay_4": {
+    "rust-overlay_5": {
       "inputs": {
         "nixpkgs": [
           "sketchybar-icons",
