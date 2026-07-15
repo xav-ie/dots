@@ -112,5 +112,17 @@ sketchybar --bar "font_smoothing=on"
   --set volume_icon $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/volume_icon.nu"
   --subscribe volume_icon mouse.entered mouse.exited)
 
+# zoom mute — shows ONLY during an active Zoom meeting: white mic.slash when
+# muted, red mic when LIVE. State is read/toggled from Zoom's own "Meeting" menu
+# over Accessibility (see plugins/zoom_mute.nu). Wrapped in sketchybar-hover like
+# the other items, so the hover daemon owns the highlight (zoom_mute -> bg_only in
+# its map); mouse.entered/exited go to the daemon, everything else (forced,
+# front_app_switched, mouse.clicked) execs the plugin. front_app_switched drives
+# show/hide, so there's no polling. Added LAST among right items so it sits
+# left-most in the right cluster (left of the volume icon). Hidden until a meeting.
+(sketchybar --add item zoom_mute right
+  --set zoom_mute $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/zoom_mute.nu" drawing=off
+  --subscribe zoom_mute front_app_switched mouse.entered mouse.exited mouse.clicked)
+
 ##### Force all scripts to run the first time (never do this in a script) #####
 sketchybar --update

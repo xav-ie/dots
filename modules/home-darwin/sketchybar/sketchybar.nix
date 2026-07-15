@@ -27,7 +27,17 @@
     {
       config = {
         home = {
-          packages = [ pkgs.pkgs-bleeding.sketchybar ];
+          # sketchybar plus its helper binaries. The helpers are ALSO on the
+          # launchd agent's PATH (below) — which is what the running bar uses —
+          # but putting them on the interactive PATH too lets you invoke
+          # `sketchybar` / plugins from a terminal without "sketchybar-hover:
+          # command not found" spam.
+          packages = [
+            pkgs.pkgs-bleeding.sketchybar
+            pkgs.pkgs-mine.sketchybar-hover
+            pkgs.pkgs-mine.sketchybar-icons
+            pkgs.pkgs-mine.sketchybar-battery
+          ];
         };
 
         xdg.configFile = {
@@ -70,6 +80,8 @@
             config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/plugins/volume_icon.nu";
           "sketchybar/plugins/wifi.nu".source =
             config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/plugins/wifi.nu";
+          "sketchybar/plugins/zoom_mute.nu".source =
+            config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/plugins/zoom_mute.nu";
         };
 
         launchd.agents.sketchybar = {

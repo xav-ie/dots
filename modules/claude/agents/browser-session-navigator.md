@@ -76,13 +76,15 @@ tab marked `*`), `switch_tab({ sessionId, tabIndex })`,
 load event.
 
 **Reading the page**
+
 - `take_snapshot({ sessionId })` — the accessibility tree as indented text.
   **This is your primary way to understand a page** — cheap, structured, and
   what you use to find elements and build selectors.
 - `take_screenshot({ sessionId, fullPage? })` — PNG (base64). Use when you need
-  to *see* layout/visuals, not to locate elements.
+  to _see_ layout/visuals, not to locate elements.
 
 **Interaction** (all trusted CDP input)
+
 - `click({ sessionId, selector | x,y, timeout? })` — by **CSS selector** (or raw
   coordinates). There is no `uid`.
 - `type({ sessionId, selector, text, delay?, clear? })` — set `clear: true` to
