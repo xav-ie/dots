@@ -1,6 +1,27 @@
 [theme]
-name = "vesper"
+name = "rose-pine"
 auto_switch = false
+
+# xdusk — violet + amber over deep-plum/black. Colors mirror
+# ~/Projects/xdusk/palette.nix (the theme's single source of truth); rose-pine
+# above is only the dark fallback for any token herdr doesn't expose here.
+[theme.custom]
+accent = "#9A5FEB" # base0D
+blue = "#1060ee" # base02
+green = "#00E756" # base0B
+mauve = "#9A5FEB" # base0D
+overlay0 = "#FFB20F" # base08
+overlay1 = "#a89984" # border
+panel_bg = "#000000" # bg_editor
+peach = "#FFB20F" # base08
+red = "#f06949" # base0F
+subtext0 = "#a090a0" # base03
+surface0 = "#200020" # bg_code
+surface1 = "#200030" # bg_header
+surface_dim = "#420f24" # statusline_b
+teal = "#00a0f0" # base09
+text = "#e0e0e0" # base05
+yellow = "#FFD242" # base0C
 
 [terminal]
 default_shell = "nu"
