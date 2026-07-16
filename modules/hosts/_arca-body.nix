@@ -205,8 +205,13 @@ in
     # client fires bursts of parallel narinfo/nar requests, so these throttle a
     # single abusive source without choking legit CI pulls. Distributed floods
     # need upstream scrubbing (Hetzner's baseline), not per-IP limits.
+    #
+    # A single cold build resolves thousands of narinfos in one HTTP/2 burst, so
+    # the old 100r/s + burst 200 throttled our own legit pulls (503s that then
+    # cascaded into source-build failures). Bumped ~10x: still bounds one abusive
+    # source, never chokes a real build.
     appendHttpConfig = ''
-      limit_req_zone $binary_remote_addr zone=cachereq:10m rate=100r/s;
+      limit_req_zone $binary_remote_addr zone=cachereq:10m rate=1000r/s;
       limit_conn_zone $binary_remote_addr zone=cacheconn:10m;
     '';
     virtualHosts.${arca.domain} = {
@@ -216,7 +221,7 @@ in
         proxyPass = "http://127.0.0.1:8080";
         extraConfig = # nginx
           ''
-            limit_req zone=cachereq burst=200 nodelay;
+            limit_req zone=cachereq burst=2000 nodelay;
             limit_conn cacheconn 100;
             # Real NAR pushes are large but not unbounded; a finite cap bounds
             # upload abuse while allowing legit pushes. Streamed unbuffered, so
