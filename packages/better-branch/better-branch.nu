@@ -21,10 +21,10 @@ def spinner [] {
 # [ahead, behind] of `branch` relative to `base`.
 def rev-counts [base: string, branch: string] {
   let ahead = (
-    git rev-list --count $"($base)..($branch)" | complete | $in.stdout | into int
+    git rev-list --count $"($base)..($branch)" | complete | $in.stdout | str trim | default -e "0" | into int
   )
   let behind = (
-    git rev-list --count $"($branch)..($base)" | complete | $in.stdout | into int
+    git rev-list --count $"($branch)..($base)" | complete | $in.stdout | str trim | default -e "0" | into int
   )
   [$ahead, $behind]
 }
@@ -134,7 +134,7 @@ def fmt-counts [
 def default-branch [] {
   let head = git symbolic-ref --quiet refs/remotes/origin/HEAD | complete
   if $head.exit_code == 0 {
-    return ($head.stdout | str trim | str replace "refs/remotes/origin/" "")
+    return ($head.stdout | str trim | str replace "refs/remotes/" "")
   }
   for candidate in [main master] {
     let exists = (
