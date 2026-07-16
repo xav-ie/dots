@@ -2572,14 +2572,17 @@
         "treefmt-nix": "treefmt-nix_6"
       },
       "locked": {
-        "lastModified": 1784141456,
-        "narHash": "sha256-aDM4m45oyDbp1tiEvXjKNGf6xg1NJ4uHx8voEZpl5TM=",
-        "path": "/Users/x/Projects/sketchybar-icons",
-        "type": "path"
+        "lastModified": 1784227649,
+        "narHash": "sha256-tuVJQ7PdZdljzc5CT3haMrvQXqJyoG1Z7rNrtRX8bhk=",
+        "owner": "xav-ie",
+        "repo": "sketchybar-icons",
+        "rev": "6a4be30c0297f67c8678a6453d78f5562edf85ac",
+        "type": "github"
       },
       "original": {
-        "path": "/Users/x/Projects/sketchybar-icons",
-        "type": "path"
+        "owner": "xav-ie",
+        "repo": "sketchybar-icons",
+        "type": "github"
       }
     },
     "sketchybar-src": {
