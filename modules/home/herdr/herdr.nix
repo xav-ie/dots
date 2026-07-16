@@ -2,8 +2,16 @@
 # flake (via the `herdr` overlay) so it tracks their releases directly.
 {
   flake.modules.homeManager.common =
-    { config, pkgs, ... }:
+    {
+      config,
+      pkgs,
+      lib,
+      inputs,
+      ...
+    }:
     let
+      xduskTheme = pkgs.writeText "herdr-xdusk-theme.toml" (inputs.xdusk.lib.herdrTheme pkgs.lib);
+
       # Run `herdr integration install <id>` in a throwaway HOME and lift the one
       # file it writes at `rel` (relative to HOME) into the store. `seed` creates
       # whatever dirs/files the installer demands first. We extract rather than
@@ -87,6 +95,12 @@
       # the live repo checkout without a rebuild.
       xdg.configFile."herdr/config.toml".source =
         config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home/herdr/config.toml";
+
+      home.activation.herdrTheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        run ${pkgs.pkgs-mine.toml-merge}/bin/toml-merge \
+          "${config.dotFilesDir}/modules/home/herdr/config.toml" \
+          ${xduskTheme}
+      '';
 
       # Deploy each integration where its agent auto-discovers it, so new
       # machines get herdr agent-state reporting without running any installer.
