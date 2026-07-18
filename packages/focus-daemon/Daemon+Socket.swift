@@ -101,5 +101,6 @@ extension Daemon {
     if let f = NSWorkspace.shared.frontmostApplication { onFront(f.processIdentifier) }
     scheduleRefresh()
     startSocketServer()
+    startPinchCapture()
   }
 }

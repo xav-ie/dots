@@ -223,6 +223,10 @@ let animId: number | null = null;
 let animWin: any = null;
 let scaler: Scaler | null = null;
 let warnedFallback = false;
+// Last geometry actually pushed to the OS in the current resize gesture, so a tick
+// that quantizes to the same rect can skip the (synchronous, forced-repaint) native
+// resize. Reset to null when a gesture starts. See applyGeom.
+let lastGeom: Rect | null = null;
 
 function cancelAnim(): void {
   if (animId !== null && animWin) {
@@ -236,27 +240,40 @@ function cancelAnim(): void {
 }
 
 function applyGeom(s: Geom): Rect {
-  // Snap size to the point grid (1pt steps) with a locked aspect, and snap the
-  // position to the grid too. 1pt steps keep motion smooth; a center-anchored
-  // axis then has a ≤1pt residual wobble (size/2 alternates whole/half point) —
-  // the pixel-grid floor, far less noticeable than the 2pt chunkiness of forcing
-  // exact-centering. Corner/edge anchors are exact (their pinned edge is fixed).
-  const { w: wr, h: hr } = quantizeSize(
-    s.state.w,
-    s.state.h,
-    s.aspect,
-    s.grid,
-    s.grid,
-  );
+  // Snap size to the grid (locked aspect) and snap the position too. A CENTER-
+  // anchored axis is snapped to TWICE the grid so size/2 stays grid-aligned and
+  // the anchor point holds exactly — otherwise size/2 alternates whole/half grid
+  // and the center jitters ±1px per size step while resizing. Corner/edge axes
+  // pin an edge, so the plain grid is already exact for them.
+  const gw = s.hx === "middle" ? 2 * s.grid : s.grid;
+  const gh = s.hy === "middle" ? 2 * s.grid : s.grid;
+  const { w: wr, h: hr } = quantizeSize(s.state.w, s.state.h, s.aspect, gw, gh);
   const { x, y } = anchoredPosition(s.hx, s.hy, s.edges, wr, hr, s.grid);
+  // Skip the native resize when the quantized geometry is unchanged. The ease runs
+  // at ~125Hz but size snaps to the device-px grid, so most ticks land on the same
+  // x/y/w/h as the previous frame — and every setPositionAndSize is a synchronous
+  // [NSWindow setFrame:display:YES] (a forced repaint) on macOS regardless of whether
+  // anything actually moved (nsCocoaWindow::DoResize ignores the repaint flag). Firing
+  // it only when a grid line is crossed kills that per-frame reflow storm — the last
+  // thing keeping the resize from feeling buttery. Cursor warp still gets the rect.
+  const lg = lastGeom;
+  if (lg && lg.x === x && lg.y === y && lg.w === wr && lg.h === hr) return lg;
+  const r: Rect = { x, y, w: wr, h: hr };
+  lastGeom = r;
   try {
-    if (s.useBW) s.bw.setPositionAndSize(x, y, wr, hr, true);
+    // flags=0 (NOT eRepaint=1): a size change with eRepaint forces the widget to
+    // repaint at the new size before the compositor's video IOSurface catches up,
+    // so the newly-grown region shows the PiP window's transparent background for
+    // one frame — the window underneath flashes through. Dropping eRepaint lets the
+    // resize ride the compositor's next commit (which already carries the video),
+    // closing the gap. Move keeps eRepaint since its content/size never changes.
+    if (s.useBW) s.bw.setPositionAndSize(x, y, wr, hr, 0);
     else {
       s.pip.resizeTo(wr, hr);
       s.pip.moveTo(x, y);
     }
   } catch (_) {}
-  return { x, y, w: wr, h: hr };
+  return r;
 }
 
 function scaleStep(): void {
@@ -348,13 +365,19 @@ function calibrate(pip: any, hx: HEdge, hy: VEdge): Calib {
     h0 = pip.outerHeight;
     dpr = 1;
   }
+  // Snap the anchor coordinates to the point grid ONCE here. anchoredPosition
+  // computes position = anchor − size×fraction and re-snaps to grid; if the anchor
+  // itself is off-grid, that snap rounds differently as the size steps, so the
+  // pinned edge/center jitters ±1px while resizing. Grid-aligning the anchor up
+  // front (paired with the 2×grid size step on a centered axis) keeps it exact.
+  const snap = (v: number) => Math.round(v / dpr) * dpr;
   const edges: AnchorEdges = {
-    left: x0!,
-    right: x0! + w0!,
-    top: y0!,
-    bottom: y0! + h0!,
-    midX: x0! + w0! / 2,
-    midY: y0! + h0! / 2,
+    left: snap(x0!),
+    right: snap(x0! + w0!),
+    top: snap(y0!),
+    bottom: snap(y0! + h0!),
+    midX: snap(x0! + w0! / 2),
+    midY: snap(y0! + h0! / 2),
   };
   // Screen available area in the same (device-px) units as `edges`. Cap growth
   // to what fits AT THIS ANCHOR so the window stops at the edge instead of
@@ -397,6 +420,7 @@ function scaleCommand(pip: any, dir: -1 | 1, hx: HEdge, hy: VEdge): void {
     return;
   }
   cancelAnim();
+  lastGeom = null; // new gesture: force the first frame to actually apply
 
   const g = calibrate(pip, hx, hy);
   const now = pip.performance.now();
@@ -433,77 +457,83 @@ function scaleCommand(pip: any, dir: -1 | 1, hx: HEdge, hy: VEdge): void {
 }
 
 // --- pinch (resize) + swipe (move) -------------------------------------------
-// On the PiP chrome window a trackpad pinch arrives as `wheel` + ctrlKey, and a
-// two-finger scroll as `wheel` without ctrl (MozMagnify/Swipe gesture events
-// don't fire here — APZ swallows them). Ctrl => smooth resize about the
-// magnetized anchor (actual size eases toward a wheel-driven target, so choppy
-// wheel input renders smoothly); plain => a directional swipe that snaps the PiP
-// one cell across the 3x3 position grid.
+// Two-finger SCROLL on the PiP chrome window arrives as a plain `wheel` and
+// drives a directional swipe that snaps the PiP across a 3x3 position grid.
+// PINCH can't be captured here: macOS routes magnify gestures only to the
+// frontmost app, never as a DOM/wheel event on a background window. So pinch is
+// captured out-of-process by focusd's CGEventTap and fed in via the `pinch` UDP
+// command (see pinchFromAgent), which scales the PiP about the cursor point.
 
-const WHEEL_SENS = 0.012; // log-scale change per unit of ctrl+wheel deltaY
-const PINCH_TAU = 0.06; // follow smoothing (s): actual size eases toward target
-const PINCH_IDLE_MS = 140; // end a pinch session this long after the last wheel
 const MOVE_TAU = 0.04; // follow smoothing (s) while dragging the window
 const MOVE_IDLE_MS = 60; // end a drag session this long after the last scroll
 const SNAP_THRESHOLD = 24; // points: magnet-snap when the free pos is this close
+const PINCH_TAU = 0.06; // follow smoothing (s): actual size eases toward target
+const PINCH_AGENT_MS = 250; // settle a pinch session this long after the last event
 
-let pinch:
-  | (Geom & {
-      minW: number;
-      maxW: number;
-      maxH: number;
-      tgtW: number;
-      tgtH: number;
-      last: number;
-      deadline: number;
-      fx: number;
-      fy: number; // cursor's fractional position within the window at pinch start
-      cursorX: number;
-      cursorY: number; // last warped cursor position (points)
-      cursorHidden: boolean; // true between hideCursor and the balancing showCursor
-    })
-  | null = null;
-let pinchRaf: number | null = null;
-let pinchRafTs = 0; // performance.now() of the last pinchStep; stale => rAF throttled
+// A pinch captured out-of-process (focusd's MultitouchSupport recognizer) and
+// streamed in over UDP. Each `pinch` carries a per-frame scale delta + the cursor
+// point (used only to gate — is the cursor over the PiP). We accumulate a target
+// size and EASE the actual size toward it (the lerp), scaling about the window's
+// magnetized 3x3 anchor so a shrink pulls toward the nearest hotspot — the same
+// anchored placement (via applyGeom) the keyboard grow/shrink uses.
+interface AgentPinch extends Geom {
+  minW: number;
+  maxW: number;
+  maxH: number;
+  tgtW: number;
+  tgtH: number;
+  fx: number; // cursor's fractional position within the window, captured at start
+  fy: number;
+  cursorX: number; // last warped cursor position (points)
+  cursorY: number;
+  cursorHidden: boolean; // true between hideCursor and the balancing showCursor
+  last: number;
+  deadline: number;
+}
+let agentPinch: AgentPinch | null = null;
+let agentPinchTimer: any = null;
+// The ease can't use requestAnimationFrame: the pinch is driven by external UDP,
+// not DOM events, so the PiP's refresh driver stays idle and rAF is throttled to a
+// near-stop (the mover escapes this only because real scroll events keep the
+// refresh driver ticking). A timer runs regardless — PRECISE_CAN_SKIP gives even,
+// animation-grade intervals (unlike SLACK, which drifts/coalesces and looks jerky).
+const PINCH_TICK_MS = 8;
 
-// Keep the (hidden) cursor pinned to the same fractional spot inside the window
-// as it resizes, so a shrink can't slide the PiP out from under the pointer and
-// the window keeps receiving ctrl+wheel. Mirrors the scroll-to-move cursor warp.
-function warpPinchCursor(p: NonNullable<typeof pinch>, r: Rect): void {
+// Keep the (hidden) cursor pinned to the same fractional spot inside the window as
+// it resizes, so a shrink toward the magnetized anchor doesn't slide the PiP out
+// from under the pointer — the pointer follows the window and stays over it.
+function warpPinchCursor(p: AgentPinch, r: Rect): void {
   if (!p.cursorHidden || !warpFn) return;
   p.cursorX = (r.x + p.fx * r.w) / p.grid;
   p.cursorY = (r.y + p.fy * r.h) / p.grid;
   warpFn(p.cursorX, p.cursorY);
 }
 
-function pinchStop(): void {
-  const p = pinch;
-  if (pinchRaf !== null && p) {
+function agentPinchStop(): void {
+  const p = agentPinch;
+  if (agentPinchTimer) {
     try {
-      p.pip.cancelAnimationFrame(pinchRaf);
+      agentPinchTimer.cancel();
     } catch (_) {}
   }
-  pinchRaf = null;
-  // Show the (hidden) cursor again over the resized window — single chokepoint
-  // for every way a pinch ends, so the hide/show reference count stays balanced.
+  agentPinchTimer = null;
+  // Show the (hidden) cursor again over the resized window — single chokepoint for
+  // every way a pinch ends, so the hide/show reference count stays balanced.
   if (p && p.cursorHidden) {
     p.cursorHidden = false;
     if (warpFn) warpFn(p.cursorX, p.cursorY);
     if (showCursorFn) showCursorFn();
   }
-  pinch = null;
+  agentPinch = null;
 }
 
-function pinchStep(): void {
-  pinchRaf = null;
-  const p = pinch;
-  if (!p) return;
-  if (p.pip.closed) {
-    pinchStop();
+function agentPinchTick(): void {
+  const p = agentPinch;
+  if (!p || p.pip.closed) {
+    agentPinchStop();
     return;
   }
   const now = p.pip.performance.now();
-  pinchRafTs = now;
   const dt = Math.min((now - p.last) / 1000, MAX_DT);
   p.last = now;
   const a = PINCH_TAU > 0 ? 1 - Math.exp(-dt / PINCH_TAU) : 1;
@@ -516,34 +546,37 @@ function pinchStep(): void {
     p.state.w = p.tgtW;
     p.state.h = p.tgtH;
     warpPinchCursor(p, applyGeom(p));
-    pinchStop();
-    return;
-  }
-  try {
-    pinchRaf = p.pip.requestAnimationFrame(pinchStep);
-  } catch (_) {
-    pinchStop();
+    agentPinchStop();
   }
 }
 
-function onPinchWheel(pip: any, e: any): void {
-  if (!pinch || pinch.pip !== pip || pinch.pip.closed) {
-    cancelAnim(); // a pinch takes over from any key-driven animation
-    moverStop(); // ...and from any in-flight drag
+function pinchFromAgent(pip: any, delta: number, cx: number, cy: number): void {
+  const now = pip.performance.now();
+  let p = agentPinch;
+  if (!p || p.pip !== pip || pip.closed) {
+    // Gate: only if the cursor is over THIS PiP. cx/cy and pip.screenX/Y are both
+    // global CSS points, so this compares cleanly across displays. focusd forwards
+    // every system pinch blindly; only Firefox knows the PiP's exact bounds.
+    if (
+      cx < pip.screenX ||
+      cx > pip.screenX + pip.outerWidth ||
+      cy < pip.screenY ||
+      cy > pip.screenY + pip.outerHeight
+    ) {
+      return;
+    }
+    cancelAnim(); // a pinch takes over from any key-driven grow/shrink
+    moverStop(); // ...and any in-flight drag
+    lastGeom = null; // new gesture: force the first frame to actually apply
+    // Magnetized 3x3 anchor from the window's current position, so a shrink pulls
+    // toward the nearest hotspot (corner/edge/center) rather than the cursor.
     const { hx, hy } = pickEdges(winRect(pip), screenRect(pip));
     const g = calibrate(pip, hx, hy);
-    // Cursor's fractional position within the window (points), captured once at
-    // the start of the pinch; the loop warps the cursor to hold this fraction so
-    // a shrink can't slide the PiP out from under it.
-    const fx = Math.max(
-      0,
-      Math.min(1, (e.screenX - pip.screenX) / pip.outerWidth),
-    );
-    const fy = Math.max(
-      0,
-      Math.min(1, (e.screenY - pip.screenY) / pip.outerHeight),
-    );
-    pinch = {
+    // Cursor's fractional position within the window; the loop warps the cursor to
+    // hold this fraction as the window resizes/moves, keeping it over the PiP.
+    const fx = Math.max(0, Math.min(1, (cx - pip.screenX) / pip.outerWidth));
+    const fy = Math.max(0, Math.min(1, (cy - pip.screenY) / pip.outerHeight));
+    p = agentPinch = {
       pip,
       bw: g.bw,
       useBW: g.useBW,
@@ -558,45 +591,40 @@ function onPinchWheel(pip: any, e: any): void {
       state: { w: g.w0, h: g.h0 },
       tgtW: g.w0,
       tgtH: g.h0,
-      last: pip.performance.now(),
-      deadline: 0,
       fx,
       fy,
-      cursorX: e.screenX,
-      cursorY: e.screenY,
+      cursorX: cx,
+      cursorY: cy,
       cursorHidden: false,
+      last: now,
+      deadline: 0,
     };
-    // Hide the cursor for the duration of the pinch; pinchStop() shows it again
-    // (over the resized window) when the gesture ends.
+    // Hide the cursor for the duration of the pinch; agentPinchStop() shows it
+    // again (over the resized window) when the gesture ends.
     if (getWarp() && hideCursorFn) {
       hideCursorFn();
-      pinch.cursorHidden = true;
+      p.cursorHidden = true;
     }
   }
-  const p = pinch;
-  const f = Math.exp(-e.deltaY * WHEEL_SENS); // dY<0 grows, dY>0 shrinks
-  const c = clampSize(p.tgtW * f, p.tgtH * f, p.minW, p.maxW, p.maxH);
+  const c = clampSize(
+    p.tgtW * (1 + delta),
+    p.tgtH * (1 + delta),
+    p.minW,
+    p.maxW,
+    p.maxH,
+  );
   p.tgtW = c.w;
   p.tgtH = c.h;
-  const now = pip.performance.now();
-  p.deadline = now + PINCH_IDLE_MS;
-  // Firefox throttles requestAnimationFrame while it isn't the active app, so the
-  // ease-to-target loop stalls and the PiP wouldn't resize until you click to
-  // focus Firefox. Wheel events aren't throttled — when rAF has gone stale, step
-  // the size toward target and paint it synchronously here. Moves already "work"
-  // unfocused because they reach target in ~1 frame; the size ramp needs many.
-  // When rAF is healthy (focused) pinchRafTs is fresh, so this is skipped and the
-  // tuned feel is unchanged.
-  if (now - pinchRafTs > 32) {
-    const a = PINCH_TAU > 0 ? 1 - Math.exp(-1 / 60 / PINCH_TAU) : 1;
-    p.state.w += (p.tgtW - p.state.w) * a;
-    p.state.h += (p.tgtH - p.state.h) * a;
-    warpPinchCursor(p, applyGeom(p));
-    pinchRafTs = now; // pace synchronous steps to ~1 per frame-time, not per event
-  }
-  if (pinchRaf === null) {
+  p.deadline = now + PINCH_AGENT_MS;
+  if (!agentPinchTimer) {
     p.last = now;
-    pinchRaf = pip.requestAnimationFrame(pinchStep);
+    const timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
+    timer.initWithCallback(
+      { notify: agentPinchTick },
+      PINCH_TICK_MS,
+      Ci.nsITimer.TYPE_REPEATING_PRECISE_CAN_SKIP,
+    );
+    agentPinchTimer = timer;
   }
 }
 
@@ -711,7 +739,7 @@ function moverStep(): void {
 function onScrollWheel(pip: any, e: any): void {
   if (!mover || mover.pip !== pip || mover.pip.closed) {
     cancelAnim();
-    pinchStop();
+    agentPinchStop(); // a drag takes over from any in-flight pinch
     const g = calibrate(pip, "left", "top"); // anchor irrelevant; we use raw pos
     const x0 = g.edges.left;
     const y0 = g.edges.top;
@@ -783,11 +811,13 @@ function attachPinch(pip: any): void {
     pip.addEventListener(
       "wheel",
       (e: any) => {
+        // Always swallow the PiP's wheel: plain two-finger scroll is our
+        // swipe-to-move; ctrl+wheel (a focused pinch surfaces as one) would
+        // otherwise trigger Firefox's page-zoom on top of the tap-driven resize.
         try {
           e.preventDefault();
         } catch (_) {}
-        if (e.ctrlKey) onPinchWheel(pip, e);
-        else onScrollWheel(pip, e);
+        if (!e.ctrlKey) onScrollWheel(pip, e);
       },
       { capture: true, passive: false },
     );
@@ -825,7 +855,7 @@ function setupPinch(): void {
 function applyAnchor(anchor: Anchor): string {
   const pip = findPiP();
   if (!pip) return "nopip";
-  pinchStop(); // a key command takes over from any in-flight pinch
+  agentPinchStop(); // a key command takes over from any in-flight pinch
   moverStop(); // ...and from any in-flight drag
 
   if (anchor === "grow" || anchor === "shrink") {
@@ -842,12 +872,26 @@ function applyAnchor(anchor: Anchor): string {
 }
 
 function onLine(line: string): string {
-  const anchor = String(line).trim();
-  if (isAnchor(anchor)) {
+  const s = String(line).trim();
+  // `pinch <delta> <cx> <cy>` — from focusd's magnify tap: scale delta and the
+  // cursor's screen point (points). Scales the PiP about the cursor.
+  if (s.startsWith("pinch ")) {
+    const [, d, cx, cy] = s.split(/\s+/);
+    const pip = findPiP();
+    if (!pip) return "nopip";
     try {
-      return applyAnchor(anchor);
+      pinchFromAgent(pip, parseFloat(d), parseFloat(cx), parseFloat(cy));
+      return "ok";
     } catch (e) {
-      err("apply " + anchor + ": " + e);
+      err("pinch: " + e);
+      return "err";
+    }
+  }
+  if (isAnchor(s)) {
+    try {
+      return applyAnchor(s);
+    } catch (e) {
+      err("apply " + s + ": " + e);
     }
   }
   return "err";
