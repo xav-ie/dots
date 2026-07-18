@@ -353,16 +353,21 @@ in
                   ${get_window}
                   def main [] {
                     let current_window = (get_window)
-                    if (not $current_window.is-floating) {
-                      if ($current_window.title | str starts-with "Extension:") {
-                        print (date now)
-                        print $current_window.title
+                    if ($current_window.title | str starts-with "Extension:") {
+                      print (date now)
+                      print $current_window.title
+                      # The creation rule already floats the popup, so re-grid it
+                      # unconditionally: extension popups spawn ~480px wide and the
+                      # creation-time grid only pins x (leaving the width overflowing
+                      # off the right edge). Re-gridding here on title_changed, once
+                      # the window has settled, is what actually shrinks it to fit.
+                      if (not $current_window.is-floating) {
                         (yabai -m window $env.YABAI_WINDOW_ID
                           --toggle float)
-                        (yabai -m window $env.YABAI_WINDOW_ID
-                          --grid 5:4:3:1:1:3)
                         ^${firefoxExtensionWindowCreated}/bin/firefoxExtensionWindowCreated
                       }
+                      (yabai -m window $env.YABAI_WINDOW_ID
+                        --grid 5:4:3:1:1:3)
                     }
                   }
                 '';
