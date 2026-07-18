@@ -54,7 +54,11 @@ let args = Array(CommandLine.arguments.dropFirst())
 if args.first == "--daemon" {
   let daemon = Daemon()
   let app = NSApplication.shared
-  app.setActivationPolicy(.prohibited)
+  // .accessory (not .prohibited): a session CGEventTap only receives gesture
+  // events (magnify) when the process has accessory-level session presence —
+  // .prohibited starves it. focusd still never activates itself, so it stays
+  // invisible (no Dock, no cmd-tab; LSUIElement in Info.plist).
+  app.setActivationPolicy(.accessory)
   daemon.start()
   app.run()
 } else if !args.isEmpty {

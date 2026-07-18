@@ -8,6 +8,12 @@ let YABAI = ProcessInfo.processInfo.environment["FOCUSD_YABAI"] ?? "yabai"
 // How far below the notch to hold the fullscreen Firefox window (= sketchybar height).
 let BAR_HEIGHT = Int(ProcessInfo.processInfo.environment["FOCUSD_BAR_HEIGHT"] ?? "32") ?? 32
 
+// Trackpad-pinch → PiP resize. Ports match the firefox.cfg listener range; gain
+// scales the raw per-event magnification (calibration knob — bump it if pinch
+// feels sluggish, lower it if it overshoots).
+let PINCH_PORTS = 47100...47103
+let PINCH_GAIN = Double(ProcessInfo.processInfo.environment["FOCUSD_PINCH_GAIN"] ?? "1.0") ?? 1.0
+
 let DEBUG = ProcessInfo.processInfo.environment["FOCUSD_DEBUG"] != nil
 func dbg(_ s: @autoclosure () -> String) {
   guard DEBUG else { return }

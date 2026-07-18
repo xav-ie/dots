@@ -172,7 +172,19 @@ in
           bundleId = "com.x.focusd";
           appPath = "${pkgs.pkgs-mine.focus-daemon}/Applications/focusd.app";
           pin = "cdhash";
-          services = [ "Accessibility" ];
+          # Accessibility: AX window moves (notch pin). InputMonitoring
+          # (kTCCServiceListenEvent): the magnify CGEventTap for pinch-to-resize —
+          # a listen-only tap is gated by this, NOT Accessibility, so without it
+          # the tap is created but receives zero events.
+          services = [
+            "Accessibility"
+            "InputMonitoring"
+          ];
+          # focusd caches both grants at launch and is loaded before this
+          # activation writes them, so relaunch it once the grant is live. Names
+          # the launchd.user.agents.focusd attribute below (the module resolves the
+          # label + validates it exists).
+          reloadAgent = "focusd";
         }
       ];
     };
