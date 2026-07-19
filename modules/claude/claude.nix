@@ -145,11 +145,52 @@
               echo '{ "hooks": {} }' > "$out/plugins/${name}/hooks.json"
             '';
 
+          # Apply not-yet-merged upstream PRs on top of the pinned context-mode
+          # input. Kept off marketplace.src (like stripPluginHooks) so
+          # findInputName still resolves the raw input for claude-update-marketplaces.
+          patchedContextMode = pkgs.applyPatches {
+            name = "context-mode-patched";
+            src = inputs.claude-marketplace-context-mode;
+            patches =
+              map
+                (
+                  p:
+                  pkgs.fetchpatch {
+                    name = "context-mode-pr-${p.pr}.patch";
+                    url = "https://github.com/mksglu/context-mode/pull/${p.pr}.diff";
+                    inherit (p) hash;
+                  }
+                )
+                [
+                  # remove chdir
+                  {
+                    pr = "974";
+                    hash = "sha256-O+RemxMk02/rzv/BSorzhSsEphkS6TbhaK6Aij5Heec=";
+                  }
+                  # resolve bun from $PATH
+                  {
+                    pr = "973";
+                    hash = "sha256-0x5SDMgEXkZk/cjK5utzwi9qJITiHau8dUMGhNT5HuY=";
+                  }
+                  # bash test portability
+                  {
+                    pr = "972";
+                    hash = "sha256-aHaAdQI9eTw4X59ROFT+ApcrlmkTWLkWP/3bXH5q4lw=";
+                  }
+                ];
+          };
+
           # Generate home.file entries for marketplace directories
           marketplaceFiles = lib.mapAttrs' (name: marketplace: {
             name = ".claude/plugins/marketplaces/${name}";
             value = {
-              source = if name == "osgrep" then stripPluginHooks name marketplace.src else marketplace.src;
+              source =
+                if name == "osgrep" then
+                  stripPluginHooks name marketplace.src
+                else if name == "context-mode" then
+                  patchedContextMode
+                else
+                  marketplace.src;
             };
           }) cfg.marketplaces;
 
@@ -314,6 +355,23 @@
                   done
                 }
                 _override_plugin_mcp
+              '';
+
+          # setup-plugins won't reinstall an already-present version, and
+          # /ctx-upgrade re-fetches unpatched upstream — so the installed cache
+          # drifts back to unpatched. Re-sync the patched runtime files into the
+          # matching-version cache dir on every activation (version-guarded so a
+          # newer upstream version is left untouched, not clobbered).
+          home.activation.claudeContextModeSync =
+            lib.hm.dag.entryAfter [ "claudePluginSync" ] # sh
+              ''
+                mp="${patchedContextMode}"
+                ver="$(${pkgs.jq}/bin/jq -r '.plugins[0].version' "$mp/.claude-plugin/marketplace.json")"
+                cdir="${config.home.homeDirectory}/.claude/plugins/cache/context-mode/context-mode/$ver"
+                if [ -d "$cdir" ]; then
+                  install -m644 "$mp/start.mjs" "$cdir/start.mjs"
+                  install -m644 "$mp/hooks/find-bun.mjs" "$cdir/hooks/find-bun.mjs"
+                fi
               '';
 
           # The mgrep plugin ships a SessionStart hook that runs `mgrep watch` in
