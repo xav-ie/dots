@@ -59,6 +59,7 @@ rec {
   apple-emoji-linux = pkgs.callPackage ./apple-emoji-linux { };
   base-ref = pkgs.callPackage ./base-ref { inherit writeNuApplication; };
   better-branch = pkgs.callPackage ./better-branch { inherit writeNuApplication; };
+  browse = pkgs.callPackage ./browse { inherit writeNuApplication; };
   cache-command = pkgs.callPackage ./cache-command { };
   discord-mcp = pkgs.callPackage ./discord-mcp { };
   # claude-code packages need allowUnfree, passed via pkgs-unfree
@@ -79,6 +80,8 @@ rec {
   format-staged = pkgs.callPackage ./format-staged { inherit writeNuApplication; };
   git-amend = pkgs.callPackage ./git-amend { inherit writeNuApplication; };
   gp = pkgs.callPackage ./gp { inherit update-pr writeNuApplication; };
+  gpw = pkgs.callPackage ./gpw { inherit browse writeNuApplication; };
+  grw = pkgs.callPackage ./grw { inherit browse writeNuApplication; };
   is-sshed = pkgs.callPackage ./is-sshed { inherit writeNuApplication; };
   lint-staged = pkgs.callPackage ./lint-staged { inherit writeNuApplication; };
   localip = pkgs.callPackage ./localip { inherit writeNuApplication; };

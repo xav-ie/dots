@@ -21,8 +21,6 @@
             gake = "do { git pull; make }";
             gitd = "git d";
             gits = "git s";
-            gpw = "gh pr view -w";
-            grw = "gh repo view -w";
             gust = "do { git pull; just }";
             info = "info --vi-keys";
             jsut = "just";
