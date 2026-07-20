@@ -113,6 +113,7 @@
               apple-emoji-linux
               base-ref
               better-branch
+              browse
               cache-command
               clauhist
               ff
@@ -120,6 +121,8 @@
               flint
               format-staged
               gp
+              gpw
+              grw
               is-sshed
               lint-staged
               localip
