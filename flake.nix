@@ -143,6 +143,8 @@
     mcp-atlassian-src.flake = false;
     slack-mcp-server.url = "github:korotovsky/slack-mcp-server/v1.2.3";
     slack-mcp-server.flake = false;
+    protonmail-mcp-src.url = "github:barhatch/protonmail-mcp-server";
+    protonmail-mcp-src.flake = false;
     executor-src.url = "github:RhysSullivan/executor/v1.4.19";
     executor-src.flake = false;
     bun-demincer-src.url = "github:xav-ie/bun-demincer/fix/linux-dataStart-byte-count";

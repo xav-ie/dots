@@ -2199,6 +2199,22 @@
         "type": "github"
       }
     },
+    "protonmail-mcp-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1761244657,
+        "narHash": "sha256-AH6HYEasT6iXFBPmjreqv/Rs4DRgq9doN5T8SE4diB0=",
+        "owner": "barhatch",
+        "repo": "protonmail-mcp-server",
+        "rev": "653322c7cf5987b004fcbbd8ea0b3d6db874d5eb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "barhatch",
+        "repo": "protonmail-mcp-server",
+        "type": "github"
+      }
+    },
     "pyobjc": {
       "flake": false,
       "locked": {
@@ -2338,6 +2354,7 @@
         "pimalaya-neverest": "pimalaya-neverest",
         "plover-flake": "plover-flake",
         "postiz-src": "postiz-src",
+        "protonmail-mcp-src": "protonmail-mcp-src",
         "quadlet-nix": "quadlet-nix",
         "ralph-src": "ralph-src",
         "ream": "ream",

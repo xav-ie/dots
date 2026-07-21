@@ -49,6 +49,17 @@
         mode = "0400";
       };
 
+      # Proton Mail Bridge SMTP creds (protonmail-mcp). Username is the Proton
+      # address; password is Bridge's generated SMTP password, not the login one.
+      secrets."proton/smtp_username" = {
+        owner = config.defaultUser;
+        mode = "0400";
+      };
+      secrets."proton/smtp_password" = {
+        owner = config.defaultUser;
+        mode = "0400";
+      };
+
       # Jira/Confluence API token auth (mcp-atlassian)
       secrets."jira/email" = {
         owner = config.defaultUser;
