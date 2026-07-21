@@ -41,6 +41,7 @@ in
         "blender"
         "chromium"
         "claude"
+        "dayflow"
         "dockdoor"
         "ente"
         "figma"
@@ -131,6 +132,13 @@ in
             "Camera"
             "Microphone"
             "ScreenCapture"
+          ];
+        }
+        {
+          bundleId = "teleportlabs.com.Dayflow";
+          services = [
+            "ScreenCapture"
+            "Accessibility"
           ];
         }
         {
