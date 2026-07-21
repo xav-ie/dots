@@ -26,10 +26,24 @@
           defaultText = lib.literalExpression "config.programs.nushell.enable";
           description = "Whether to enable nushell integration (wrapper function + completions)";
         };
+
+        enableGitSubcommand = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether to install a git-wt subcommand so `git wt` invokes worktrunk";
+        };
       };
 
       config = lib.mkIf cfg.enable {
-        home.packages = [ cfg.package ];
+        home.packages = [
+          cfg.package
+        ]
+        ++ lib.optional cfg.enableGitSubcommand (
+          pkgs.runCommand "git-wt" { } ''
+            mkdir -p "$out/bin"
+            ln -s ${cfg.package}/bin/wt "$out/bin/git-wt"
+          ''
+        );
 
         programs.nushell.extraConfig = lib.mkIf cfg.enableNushellIntegration ''
           source ${
