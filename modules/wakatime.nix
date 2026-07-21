@@ -85,7 +85,13 @@ in
       # plugin treats a PATH binary as always-current — so this keeps the CLI
       # reproducible and stops the self-download into ~/.wakatime. Needed at all
       # because nixpkgs' wakatime-cli is too old for `--sync-ai-activity`.
-      home.packages = [ pkgs.pkgs-mine.wakatime-cli ];
+      # wakafetch reads the same ~/.wakatime.cfg → terminal dashboard for our
+      # self-hosted wakapi (`wakafetch --daily` / `--heatmap`).
+      home.packages = [
+        pkgs.pkgs-mine.wakatime-cli
+        pkgs.pkgs-mine.wakafetch
+        (pkgs.writeShellScriptBin "wf" ''exec ${pkgs.pkgs-mine.wakafetch}/bin/wakafetch -f -d 1 "$@"'')
+      ];
 
       # Claude Code plugin marketplace. Merges into the core set registered in
       # modules/claude/claude.nix (mergeable attrsOf option). The plugin itself
@@ -106,7 +112,7 @@ in
             cfg="$HOME/.wakatime.cfg"
             if [ -r "$keyfile" ]; then
               key="$(cat "$keyfile")"
-              if [ ! -f "$cfg" ] || ! grep -qF "$key" "$cfg" || ! grep -qF "$api_url" "$cfg"; then
+              if [ ! -f "$cfg" ] || ! grep -qF "$key" "$cfg" || ! grep -qxF "api_url = $api_url" "$cfg"; then
                 run printf '[settings]\napi_key = %s\napi_url = %s\n' "$key" "$api_url" > "$cfg"
                 run chmod 600 "$cfg"
               fi
