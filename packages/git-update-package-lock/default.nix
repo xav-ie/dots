@@ -4,10 +4,10 @@
   nodejs,
 }:
 writeNuApplication {
-  name = "update-package-lock";
+  name = "git-update-package-lock";
   runtimeInputs = [
     git
     nodejs
   ];
-  text = ./update-package-lock.nu |> builtins.readFile;
+  text = ./git-update-package-lock.nu |> builtins.readFile;
 }

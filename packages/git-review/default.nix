@@ -1,15 +1,13 @@
 {
   writeNuApplication,
-  fzf,
-  gh,
   git,
+  gh,
 }:
 writeNuApplication {
-  name = "prs";
+  name = "git-review";
   runtimeInputs = [
-    fzf
-    gh
     git
+    gh
   ];
-  text = ./prs.nu |> builtins.readFile;
+  text = ./git-review.nu |> builtins.readFile;
 }

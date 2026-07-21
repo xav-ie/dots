@@ -112,7 +112,6 @@
             ++ (with pkgs.pkgs-mine; [
               apple-emoji-linux
               base-ref
-              better-branch
               browse
               cache-command
               clauhist
@@ -120,6 +119,12 @@
               firefox-router
               flint
               format-staged
+              git-amend
+              git-bb
+              git-log-pr
+              git-prs
+              git-review
+              git-update-package-lock
               gp
               gpw
               grw
@@ -134,8 +139,6 @@
               osgrep-indexed
               pgpod
               pr-summary
-              prs
-              review
               searcher
               tm
               tmux-move-window
@@ -143,7 +146,6 @@
               toggle-theme
               tsc-filter
               uair-toggle-and-notify
-              update-package-lock
               update-pr
               whisper-transcribe
               zellij-tab-name-update

@@ -1,11 +1,13 @@
 {
+  gh,
   writeNuApplication,
   git,
 }:
 writeNuApplication {
-  name = "better-branch";
+  name = "git-log-pr";
   runtimeInputs = [
+    gh
     git
   ];
-  text = ./better-branch.nu |> builtins.readFile;
+  text = ./git-log-pr.nu |> builtins.readFile;
 }
