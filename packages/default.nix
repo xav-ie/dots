@@ -120,6 +120,7 @@ rec {
   tsc-filter = pkgs.callPackage ./tsc-filter { inherit writeNuApplication; };
   uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
   update-pr = pkgs.callPackage ./update-pr { inherit pr-summary writeNuApplication; };
+  wakafetch = pkgs.callPackage ./wakafetch { };
   wakatime-cli = pkgs.callPackage ./wakatime-cli { };
   whisper-transcribe = pkgs.callPackage ./whisper-transcribe {
     inherit pkgs-unfree writeNuApplication;
