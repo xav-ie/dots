@@ -58,7 +58,6 @@ rec {
   default = pkgs.callPackage ./cache-command { };
   apple-emoji-linux = pkgs.callPackage ./apple-emoji-linux { };
   base-ref = pkgs.callPackage ./base-ref { inherit writeNuApplication; };
-  better-branch = pkgs.callPackage ./better-branch { inherit writeNuApplication; };
   browse = pkgs.callPackage ./browse { inherit writeNuApplication; };
   cache-command = pkgs.callPackage ./cache-command { };
   discord-mcp = pkgs.callPackage ./discord-mcp { };
@@ -79,6 +78,13 @@ rec {
   flint = pkgs.callPackage ./flint { inherit format-staged lint-staged writeNuApplication; };
   format-staged = pkgs.callPackage ./format-staged { inherit writeNuApplication; };
   git-amend = pkgs.callPackage ./git-amend { inherit writeNuApplication; };
+  git-bb = pkgs.callPackage ./git-bb { inherit writeNuApplication; };
+  git-log-pr = pkgs.callPackage ./git-log-pr { inherit writeNuApplication; };
+  git-prs = pkgs.callPackage ./git-prs { inherit writeNuApplication; };
+  git-review = pkgs.callPackage ./git-review { inherit writeNuApplication; };
+  git-update-package-lock = pkgs.callPackage ./git-update-package-lock {
+    inherit writeNuApplication;
+  };
   gp = pkgs.callPackage ./gp { inherit update-pr writeNuApplication; };
   gpw = pkgs.callPackage ./gpw { inherit browse writeNuApplication; };
   grw = pkgs.callPackage ./grw { inherit browse writeNuApplication; };
@@ -87,7 +93,6 @@ rec {
   localip = pkgs.callPackage ./localip { inherit writeNuApplication; };
   mcp-atlassian = pkgs.callPackage ./mcp-atlassian { inherit mcp-atlassian-src pkgs-bleeding; };
   mcp-sse-client = pkgs.callPackage ./mcp-sse-client { };
-  log-pr = pkgs.callPackage ./log-pr { inherit writeNuApplication; };
   nix-flamegraph = pkgs.callPackage ./nix-flamegraph { inherit writeNuApplication; };
   nodejs_25 = pkgs.callPackage ./nodejs_25 { };
   process-logger = pkgs.callPackage ./process-logger { inherit nodejs_25; };
@@ -101,8 +106,6 @@ rec {
   prettier-plugin-toml = pkgs.callPackage ./prettier-plugin-toml { };
   prettier-with-toml = pkgs.callPackage ./prettier-with-toml { inherit prettier-plugin-toml; };
   nu_plugin_prompt = pkgs.callPackage ./nu_plugin_prompt { inherit pkgs-bleeding; };
-  prs = pkgs.callPackage ./prs { inherit writeNuApplication; };
-  review = pkgs.callPackage ./review { inherit writeNuApplication; };
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
   slack-mcp-server = pkgs.callPackage ./slack-mcp-server { src = slack-mcp-server-src; };
   ssh-praesidium-route = pkgs.callPackage ./ssh-praesidium-route { inherit writeNuApplication; };
@@ -116,7 +119,6 @@ rec {
   toml-merge = pkgs.callPackage ./toml-merge { };
   tsc-filter = pkgs.callPackage ./tsc-filter { inherit writeNuApplication; };
   uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
-  update-package-lock = pkgs.callPackage ./update-package-lock { inherit writeNuApplication; };
   update-pr = pkgs.callPackage ./update-pr { inherit pr-summary writeNuApplication; };
   wakatime-cli = pkgs.callPackage ./wakatime-cli { };
   whisper-transcribe = pkgs.callPackage ./whisper-transcribe {

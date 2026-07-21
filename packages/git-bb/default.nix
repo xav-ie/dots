@@ -1,13 +1,11 @@
 {
   writeNuApplication,
   git,
-  gh,
 }:
 writeNuApplication {
-  name = "review";
+  name = "git-bb";
   runtimeInputs = [
     git
-    gh
   ];
-  text = ./review.nu |> builtins.readFile;
+  text = ./git-bb.nu |> builtins.readFile;
 }
