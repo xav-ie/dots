@@ -43,6 +43,7 @@
   mcp-atlassian-src,
   muscat-pkg,
   nuenv,
+  protonmail-mcp-src,
   simulstreaming-src,
   slack-mcp-server-src,
   zerobrew-src,
@@ -105,6 +106,7 @@ rec {
   pr-summary = pkgs.callPackage ./pr-summary { inherit base-ref writeNuApplication; };
   prettier-plugin-toml = pkgs.callPackage ./prettier-plugin-toml { };
   prettier-with-toml = pkgs.callPackage ./prettier-with-toml { inherit prettier-plugin-toml; };
+  protonmail-mcp = pkgs.callPackage ./protonmail-mcp { src = protonmail-mcp-src; };
   nu_plugin_prompt = pkgs.callPackage ./nu_plugin_prompt { inherit pkgs-bleeding; };
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
   slack-mcp-server = pkgs.callPackage ./slack-mcp-server { src = slack-mcp-server-src; };

@@ -73,6 +73,7 @@
           clauhist-src
           executor-src
           mcp-atlassian-src
+          protonmail-mcp-src
           simulstreaming-src
           zerobrew-src
           ;

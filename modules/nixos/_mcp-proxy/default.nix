@@ -156,6 +156,7 @@ in
     ./servers/jira-delivery.nix
     ./servers/jira-product.nix
     ./servers/discord.nix
+    ./servers/protonmail.nix
   ];
 
   options.services.mcp-proxy = {
