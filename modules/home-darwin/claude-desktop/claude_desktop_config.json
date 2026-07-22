@@ -1,0 +1,62 @@
+{
+  "mcpServers": {
+    "executor": {
+      "command": "/etc/profiles/per-user/x/bin/npx",
+      "args": ["-y", "mcp-remote", "https://executor.lalala.casa/mcp"]
+    }
+  },
+  "coworkUserFilesPath": "/Users/x/Claude",
+  "preferences": {
+    "menuBarEnabled": false,
+    "launchPreviewStorage": "shared",
+    "launchPreviewPersistedWorkspaces": [],
+    "launchPreviewSessionScopedSessions": [],
+    "remoteFolderConsentMemory": ["/Users/x/Projects/canada"],
+    "remoteSessionFolderGrants": {
+      "session_01KQ5apPS93GjLsbFVREWdLw": ["/Users/x/Projects/canada"]
+    },
+    "coworkScheduledTasksEnabled": true,
+    "coworkHipaaRestricted": false,
+    "ccdScheduledTasksEnabled": true,
+    "sidebarMode": "chat",
+    "bypassPermissionsOptInByAccount": {
+      "0b9ce84b-bec4-4ae4-a3c3-fdb3033c23d3": true
+    },
+    "bypassPermissionsGateByAccount": {
+      "0b9ce84b-bec4-4ae4-a3c3-fdb3033c23d3": true
+    },
+    "coworkWebSearchEnabled": true,
+    "coworkModelAutoFallbackByAccount": {
+      "0b9ce84b-bec4-4ae4-a3c3-fdb3033c23d3": true
+    },
+    "chicagoEnabled": true,
+    "remoteToolsDeviceName": "nox",
+    "ccRemoteControlDefaultEnabled": true,
+    "epitaxyPrefs": {
+      "starred-local-code-sessions": [],
+      "starred-cowork-spaces": [],
+      "starred-session-groups": [],
+      "dframe-local-slice": {
+        "pinnedOrder": [],
+        "homeProjectsPinnedOrder": []
+      },
+      "desktop-frame.paneStore.v1": {
+        "state": {
+          "extraPanesByMode": {},
+          "colWeightsByMode": {},
+          "rowSplit": 0.5,
+          "draftNonce": 0
+        },
+        "version": 4
+      },
+      "ccd-sessions-filter": {
+        "state": {
+          "selectedProjects": []
+        },
+        "version": 0
+      },
+      "dframe-group-scopes": {}
+    },
+    "keepAwakeEnabled": true
+  }
+}
