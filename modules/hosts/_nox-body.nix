@@ -142,6 +142,13 @@ in
           ];
         }
         {
+          bundleId = "com.anthropic.claudefordesktop";
+          services = [
+            "ScreenCapture"
+            "Accessibility"
+          ];
+        }
+        {
           bundleId = "us.zoom.xos";
           services = [
             "Camera"
