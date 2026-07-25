@@ -79,6 +79,7 @@ in
     ./square-corners
     ./remove-window-rim
     ./pin-iphone-mirroring
+    ./hide-windows
   ];
 
   options.services.dyldInject = {

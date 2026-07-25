@@ -6,28 +6,8 @@
 # owns the static item props + the hover box, so it no longer subscribes to
 # volume_change (volume.nu is the single owner of the image, which avoids the two
 # items fighting over it mid-tween).
-const ICON_WIDTH = 24
-
-def main [] {
-  let item_props = [
-    "click_script=$HOME/.config/sketchybar/open_volume_control.scpt"
-    "icon.background.drawing=on"
-    "icon.background.image.scale=0.5"
-    $"icon.width=($ICON_WIDTH)"
-    "icon.padding_left=0"
-    "icon.padding_right=0"
-    "label.padding_left=0"
-    "label.padding_right=0"
-    "label.width=0"
-    "label="
-    "padding_left=0"
-    "padding_right=0"
-  ]
-
-  match $env.SENDER {
-    "forced" => {
-      sketchybar --set $"($env.NAME)" ...$item_props
-    }
-    _ => { }
-  }
-}
+# Geometry (icon.width=24 and all paddings) is owned by the `sb-cluster volume`
+# primitive in sketchybarrc.nu, and the icon image is driven by volume.nu's tween
+# (see `vol-icon-image` there). This item therefore has nothing to render itself;
+# it exists only for its half of the shared hover highlight (mouse events).
+def main [] { }

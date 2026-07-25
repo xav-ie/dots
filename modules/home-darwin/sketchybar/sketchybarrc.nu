@@ -37,6 +37,82 @@ let default_props = [
 ]
 sketchybar --default ...$default_props
 
+# ─── Tiling primitives ───────────────────────────────────────────────────────
+# Every bar item's on-screen footprint must abut its neighbours with NO gap and
+# NO overlap, so hover is smooth and there are no dead zones. These two helpers
+# make that hold BY CONSTRUCTION: ALL geometry (padding / width / background
+# drawing / heights) lives here, so the per-item plugins set only CONTENT (the
+# glyph image + the number). Verify with `sb-check-tiling`.
+
+# A single icon button (no label). Footprint == `width` == the icon.background
+# highlight box; every padding is zeroed so the footprint is exactly `width`.
+# `--extra` carries any NON-geometry per-item props (e.g. click_script) or, for a
+# `bg_only` item like wifi, its own `background.*` highlight props (which re-enable
+# the item background this primitive turns off by default).
+def sb-icon-item [
+  name: string
+  position: string
+  width: int
+  script: string
+  subs: list<string>
+  --extra: list<string> = []
+] {
+  (sketchybar --add item $name $position
+    --set $name $"script=($script)"
+      "padding_left=0" "padding_right=0"
+      $"icon.width=($width)" "icon.padding_left=0" "icon.padding_right=0"
+      "icon.background.drawing=on" "icon.background.image.scale=0.5"
+      "background.drawing=off"
+      "label=" "label.width=0" "label.padding_left=0" "label.padding_right=0"
+      ...$extra
+    --subscribe $name ...$subs)
+}
+
+# An icon+label cluster: a `<name>_icon` glyph plus a `<name>` label that share
+# ONE hover highlight. ENFORCES the tiling invariant zone == pull == icon_w:
+#   <name>      label.padding_left =  icon_w   (reserved zone the glyph sits in)
+#   <name>      padding_left       = -icon_w   (pull the label back over the glyph)
+#   <name>_icon icon.width         =  icon_w   (glyph exactly fills the zone)
+# so the footprint is exactly [glyph-left .. number-right] with NO overhang past
+# the glyph. That overhang (label.padding_left 28 vs a 24px icon) was the hidden
+# 4px that made hidewin overlap the volume icon; enforcing equality here fixes it
+# at the source. Label is added FIRST (rightmost) and the glyph SECOND (to its
+# left), matching the existing right-item visual order (glyph left of number).
+# `label_w` fixes the number box (0 = hug the text). `--right-pad` is the only
+# inter-item gap knob. `--label-extra`/`--icon-extra` carry non-geometry props
+# (click_script, label.align, update_freq).
+def sb-cluster [
+  name: string
+  position: string
+  icon_w: int
+  label_w: int
+  icon_script: string
+  icon_subs: list<string>
+  label_script: string
+  label_subs: list<string>
+  --right-pad: int = 0
+  --label-extra: list<string> = []
+  --icon-extra: list<string> = []
+] {
+  let label_width = (if $label_w > 0 { [$"label.width=($label_w)"] } else { [] })
+  (sketchybar --add item $name $position
+    --set $name $"script=($label_script)"
+      $"padding_left=(-1 * $icon_w)" $"padding_right=($right_pad)"
+      $"label.padding_left=($icon_w)" "label.padding_right=4"
+      "icon.width=0" "icon.padding_left=0" "icon.padding_right=0"
+      ...$label_width
+      ...$label_extra
+    --subscribe $name ...$label_subs)
+  (sketchybar --add item $"($name)_icon" $position
+    --set $"($name)_icon" $"script=($icon_script)"
+      "padding_left=0" "padding_right=0"
+      $"icon.width=($icon_w)" "icon.padding_left=0" "icon.padding_right=0"
+      "icon.background.drawing=on" "icon.background.image.scale=0.5"
+      "label=" "label.width=0" "label.padding_left=0" "label.padding_right=0"
+      ...$icon_extra
+    --subscribe $"($name)_icon" ...$icon_subs)
+}
+
 # on top of windows, but under actual MacOS native menu bar
 sketchybar --bar "topmost=window"
 sketchybar --bar "font_smoothing=on"
@@ -65,52 +141,87 @@ sketchybar --bar "font_smoothing=on"
 # volume is registered. More info about the event system can be found here:
 # https://felixkratz.github.io/SketchyBar/config/events
 
-# clock
-(sketchybar --add item clock right
-  --set clock $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/clock.nu"
-  --subscribe clock mouse.entered mouse.exited)
-(sketchybar --add item clock_icon right
-  --set clock_icon $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/clock_icon.nu"
-  --subscribe clock_icon mouse.entered mouse.exited)
+# clock — icon+label cluster (sb-cluster), identical structure to volume/battery.
+# icon_w=24 == the clock-face zone (the 18px face is centred in it via clock_icon's
+# --min-width, leaving a small gap to the time). label_w=0 → the time string hugs
+# its own width (it's variable: day/date/12h). The tick is driven by update_freq
+# (the `routine` sender), passed to both sub-items via --*-extra. Highlight is ONE
+# shared label.background over [face + time] (clock -> label_only in
+# sketchybar-hoverd, matching volume/battery). click opens Control Center > Clock.
+sb-cluster clock right 24 0 (
+  $"sketchybar-hover --plugin ($PLUGIN_DIR)/clock_icon.nu"
+) [mouse.entered mouse.exited] (
+  $"sketchybar-hover --plugin ($PLUGIN_DIR)/clock.nu"
+) [mouse.entered mouse.exited] --label-extra [
+  "update_freq=30"
+  "click_script=$HOME/.config/sketchybar/select_control_center.nu \"Clock\""
+] --icon-extra [
+  "update_freq=30"
+  "click_script=$HOME/.config/sketchybar/select_control_center.nu \"Clock\""
+]
 
-# wifi
-# Native icon rendered by `sketchybar-icons` (SF Symbol -> PNG via CoreWLAN
-# signal), replacing the old `Control Center,WiFi` alias that screen-recorded the
-# menu bar. `network_change` is the com.apple.system.config.network_change
-# distributed notification (instant connect/disconnect); `update_freq` refreshes
-# signal bars. The item paints its own background as the hover highlight, so no
-# separate wifi_background item is needed.
+# wifi — single icon (sb-icon-item). Native icon rendered by `sketchybar-icons`
+# (SF Symbol -> PNG via CoreWLAN signal). `network_change` is the
+# com.apple.system.config.network_change distributed notification (instant
+# connect/disconnect); `update_freq` refreshes signal bars. wifi is `bg_only`:
+# the hover highlight is the item's OWN full-footprint background, so --extra
+# re-enables it (the primitive turns background.drawing off by default). NO
+# background.padding — under the tiling primitives every item already abuts, so
+# the old -1px seam-closer now just overlaps control_center's highlight.
+# click_script opens Control Center > Wi-Fi.
 (sketchybar --add event network_change com.apple.system.config.network_change)
-(sketchybar --add item wifi right
-  --set wifi $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/wifi.nu" update_freq=30
-  --subscribe wifi network_change mouse.entered mouse.exited)
+sb-icon-item wifi right 26 $"sketchybar-hover --plugin ($PLUGIN_DIR)/wifi.nu" [network_change mouse.entered mouse.exited] --extra [
+  "update_freq=30"
+  "click_script=$HOME/.config/sketchybar/select_control_center.nu \"Wi-Fi\""
+  "background.height=24"
+  "background.corner_radius=6"
+  "background.drawing=on"
+  "background.color=0x00000000"
+]
 
-# control center
-(sketchybar --add item control_center right
-  --set control_center $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/control_center.nu"
-  --subscribe control_center mouse.entered mouse.exited)
+# control center — single icon (sb-icon-item, icon_only highlight).
+sb-icon-item control_center right 26 $"sketchybar-hover --plugin ($PLUGIN_DIR)/control_center.nu" [mouse.entered mouse.exited] --extra [
+  "click_script=$HOME/.config/sketchybar/select_control_center.nu \"Control Center\""
+]
 
+# battery — icon+label cluster (sb-cluster). icon_w=36 == the rendered battery
+# glyph width, so zone==pull==36 (was 40, the 4px overhang). label_w=0 → the %
+# hugs the text. battery_change is emitted by the sketchybar-battery daemon.
 (sketchybar --add event battery_change)
-# battery
-(sketchybar --add item battery right
-  --set battery $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/battery.nu"
-  --subscribe battery battery_change mouse.entered mouse.exited)
-# battery icon: native SF Symbol rendered by `sketchybar-icons`, replacing the
-# old `Control Center,Battery` alias that screen-recorded the menu bar.
-(sketchybar --add item battery_icon right
-  --set battery_icon $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/battery_icon.nu"
-  --subscribe battery_icon battery_change mouse.entered mouse.exited)
+sb-cluster battery right 36 0 (
+  $"sketchybar-hover --plugin ($PLUGIN_DIR)/battery_icon.nu"
+) [battery_change mouse.entered mouse.exited] (
+  $"sketchybar-hover --plugin ($PLUGIN_DIR)/battery.nu"
+) [battery_change mouse.entered mouse.exited] --label-extra ["click_script=$HOME/.config/sketchybar/select_control_center.nu \"Battery\""] --icon-extra ["click_script=$HOME/.config/sketchybar/select_control_center.nu \"Battery\""]
 
-# volume
-(sketchybar --add item volume right
-  --set volume $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/volume.nu"
-  --subscribe volume volume_change mouse.entered mouse.exited)
-# volume_icon does NOT subscribe to volume_change: volume.nu owns the icon image
-# and drives it in lockstep with the number tween (see volume.nu). It still needs
-# mouse events for the shared hover highlight.
-(sketchybar --add item volume_icon right
-  --set volume_icon $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/volume_icon.nu"
-  --subscribe volume_icon mouse.entered mouse.exited)
+# volume — icon+label cluster (sb-cluster). icon_w=24 == the speaker glyph width,
+# so zone==pull==24 (was 28, the 4px overhang that overlapped hidewin). label_w=61
+# fixes the number box (volume.nu re-sizes it per digit-count via an animated
+# tween). volume_icon does NOT subscribe volume_change — volume.nu owns the icon
+# image and drives it in lockstep with the number tween — but still needs mouse
+# events for the shared hover highlight.
+sb-cluster volume right 24 61 (
+  $"sketchybar-hover --plugin ($PLUGIN_DIR)/volume_icon.nu"
+) [mouse.entered mouse.exited] (
+  $"sketchybar-hover --plugin ($PLUGIN_DIR)/volume.nu"
+) [volume_change mouse.entered mouse.exited] --label-extra [
+  "label.align=right"
+  "click_script=$HOME/.config/sketchybar/open_volume_control.scpt"
+] --icon-extra ["click_script=$HOME/.config/sketchybar/open_volume_control.scpt"]
+
+# hidewin — single icon (sb-icon-item, icon_only). Screen-capture hiding toggle
+# (packages/hidewin-bar), placed to the LEFT of the volume icon (right items add
+# right-to-left). Its plugin owns the icon image (white = Normal, orange =
+# Screenshare Mode); `hidewin_mode` is bound to the com.x.hidewin.mode-changed
+# notification the agent posts. mouse.clicked opens the panel.
+(sketchybar --add event hidewin_mode com.x.hidewin.mode-changed)
+(sb-icon-item
+  hidewin
+  right
+  26
+  $"sketchybar-hover --plugin ($PLUGIN_DIR)/hidewin.nu"
+  [hidewin_mode mouse.entered mouse.exited mouse.clicked]
+)
 
 # zoom mute — shows ONLY during an active Zoom meeting: white mic.slash when
 # muted, red mic when LIVE. State is read/toggled from Zoom's own "Meeting" menu

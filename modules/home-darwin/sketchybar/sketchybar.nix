@@ -59,6 +59,11 @@
             config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/open_volume_control.scpt";
           "sketchybar/select_control_center.nu".source =
             config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/select_control_center.nu";
+          # Acceptance test for the bar's tiling invariant (no gaps/overlaps
+          # between adjacent item footprints). Run:
+          #   nu ~/.config/sketchybar/sb-check-tiling.nu
+          "sketchybar/sb-check-tiling.nu".source =
+            config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/sb-check-tiling.nu";
 
           "sketchybar/plugins/battery.nu".source =
             config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/plugins/battery.nu";
@@ -72,6 +77,8 @@
             config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/plugins/control_center.nu";
           "sketchybar/plugins/front_app.nu".source =
             config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/plugins/front_app.nu";
+          "sketchybar/plugins/hidewin.nu".source =
+            config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/plugins/hidewin.nu";
           "sketchybar/plugins/space.nu".source =
             config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/plugins/space.nu";
           "sketchybar/plugins/volume.nu".source =
@@ -104,6 +111,8 @@
                 # battery_icon.nu / wifi.nu plugins (replaces the screen-recording
                 # Control Center aliases).
                 pkgs.pkgs-mine.sketchybar-icons
+                # The `hidewin` item's click_script runs `hidewin panel`.
+                pkgs.pkgs-mine.hidewin
               ]
               |> lib.makeBinPath
             }:/usr/bin";

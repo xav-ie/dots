@@ -1,26 +1,15 @@
 #!/usr/bin/env nu --stdin
 
 def main [] {
-  let label = date now | format date "%a %b %-d %-I:%M%p"
-  let item_props = [
-    "click_script=$HOME/.config/sketchybar/select_control_center.nu \"Clock\""
-    "icon.width=0"
-    "label.padding_left=25"
-    # Was -26 (a tight overlap tuned for the old Nerd-Font clock glyph, which
-    # carried side-bearing whitespace). The native clock PNG has none, so -26
-    # pulled "Thu" flush against it; -23 restores a clean gap to the clock icon.
-    "padding_left=-22"
-    "padding_right=0"
-    "update_freq=30"
-    $"label=($label)"
-  ]
 
+  # Geometry (the 24px icon zone/pull, paddings, update_freq) is owned by the
+  # `sb-cluster clock` primitive in sketchybarrc.nu — this plugin sets only
+  # CONTENT: the time string. Both `forced` (startup) and `routine` (the
+  # update_freq tick) refresh it.
+  let label = date now | format date "%a %b %-d %-I:%M%p"
   match $env.SENDER {
-    "forced" => {
-      sketchybar --set $"($env.NAME)" ...$item_props
-    }
-    "routine" => {
-      sketchybar --set $"($env.NAME)" ...$item_props
+    "forced" | "routine" => {
+      sketchybar --set $"($env.NAME)" $"label=($label)"
     }
     _ => {
       print $"clock: ignoring event ($env.SENDER)"

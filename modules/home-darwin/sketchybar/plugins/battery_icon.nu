@@ -55,18 +55,9 @@ def render [percent: int, plugged: bool] {
 }
 
 def main [] {
-  let item_props = [
-    "click_script=$HOME/.config/sketchybar/select_control_center.nu \"Battery\""
-    "icon.background.drawing=on"
-    "icon.background.image.scale=0.5"
-    "icon.padding_left=0"
-    "icon.padding_right=0"
-    "label.padding_left=0"
-    "label.padding_right=0"
-    "padding_left=0"
-    "padding_right=0"
-  ]
 
+  # Geometry (icon.width=36 and all paddings) is owned by the `sb-cluster battery`
+  # primitive in sketchybarrc.nu — this plugin sets only CONTENT (the glyph image).
   match $env.SENDER {
     "forced" => {
       let batt = (pmset -g batt)
@@ -80,7 +71,7 @@ def main [] {
       # "Now drawing from 'AC Power'" when plugged, "'Battery Power'" otherwise.
       let plugged = $batt | str contains "AC Power"
       let out = (render $percent $plugged)
-      sketchybar --set $"($env.NAME)" ...$item_props $"icon.background.image=($out)"
+      sketchybar --set $"($env.NAME)" $"icon.background.image=($out)"
     }
     "battery_change" => {
       let percent = $env.BATTERY | into int

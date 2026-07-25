@@ -31,25 +31,15 @@ def render [] {
 }
 
 def main [] {
-  let item_props = [
-    "click_script=$HOME/.config/sketchybar/select_control_center.nu \"Control Center\""
-    "icon.background.drawing=on"
-    "icon.background.image.scale=0.5"
-    $"icon.width=($MIN_WIDTH)"
-    "icon.padding_left=0"
-    "icon.padding_right=0"
-    "label.padding_left=0"
-    "label.padding_right=0"
-    "label.width=0"
-    "label="
-    "padding_left=0"
-    "padding_right=0"
-  ]
 
+  # Geometry (icon.width and all paddings) is owned by the `sb-icon-item
+  # control_center` primitive in sketchybarrc.nu — here we set only the image.
+  # MIN_WIDTH must match the primitive's `width` arg (26) so the rendered glyph
+  # fills its footprint.
   match $env.SENDER {
     "forced" => {
       let out = (render)
-      sketchybar --set $"($env.NAME)" ...$item_props $"icon.background.image=($out)"
+      sketchybar --set $"($env.NAME)" $"icon.background.image=($out)"
     }
     _ => {
       print $"control_center: ignoring event ($env.SENDER)"

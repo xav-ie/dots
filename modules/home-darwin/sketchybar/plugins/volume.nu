@@ -16,6 +16,11 @@ def vol-width [v: int] {
 # cheap path lookup, fine to call per frame.
 const VOL_CACHE_DIR = "~/.cache/sketchybar" | path expand
 const VOL_POINT_SIZE = 12
+# Centre the small speaker glyph in a MIN_WIDTH canvas so it sits centred in the
+# cluster's icon.width (= sb-cluster volume icon_w = 24), like control_center
+# does. Without this the tiny glyph left-aligned in the 24px box. In the cache
+# filename so stale (uncentred) PNGs bust.
+const VOL_MIN_WIDTH = 24
 
 def volume-symbol [pct: int] {
   if $pct <= 0 { "speaker.slash.fill" } else if $pct <= 24 { "speaker.fill" } else if $pct <= 49 { "speaker.wave.1.fill" } else if $pct <= 74 { "speaker.wave.2.fill" } else { "speaker.wave.3.fill" }
@@ -23,10 +28,10 @@ def volume-symbol [pct: int] {
 
 def vol-icon-image [v: int] {
   let sym = (volume-symbol $v)
-  let out = $"($VOL_CACHE_DIR)/volume-($sym)-($VOL_POINT_SIZE).png"
+  let out = $"($VOL_CACHE_DIR)/volume-($sym)-($VOL_POINT_SIZE)-w($VOL_MIN_WIDTH).png"
   if not ($out | path exists) {
     let w = "0xffffffff"
-    sketchybar-icons symbol --symbol $sym --point-size $VOL_POINT_SIZE --scale 2 --palette $"($w),($w),($w),($w)" --out $out
+    sketchybar-icons symbol --symbol $sym --point-size $VOL_POINT_SIZE --scale 2 --min-width $VOL_MIN_WIDTH --palette $"($w),($w),($w),($w)" --out $out
   }
   $out
 }
@@ -42,34 +47,11 @@ def set-vol [v: int] {
 }
 
 def main [] {
-  let item_props = [
-    "click_script=$HOME/.config/sketchybar/open_volume_control.scpt"
-    "icon.padding_left=0"
-    "icon.padding_right=0"
-    # Reserve a 28px zone on the label's left for the speaker icon, exactly like
-    # battery.nu (label.padding_left=40 / padding_left=-40). label.padding_left
-    # extends the label's *background* — the hover highlight the daemon paints —
-    # leftward over the icon, and the matching negative padding_left pulls this
-    # item back over the separate `volume_icon` so its glyph sits inside that
-    # zone. Result: hovering the icon or the number lights one box around both.
-    "label.padding_left=28"
-    "label.padding_right=4"
-    # label.width (set per-value in volume_change) is the *total* label region —
-    # the 28px icon zone + the number + right pad — so it also sizes the hover
-    # box. It's a fixed value per digit-count, and right align pins the % to the
-    # battery side. Stable right align relies on our sketchybar fork: stock
-    # sketchybar positions right/center text by ink width, so equal-*advance*
-    # tabular values ("25%" vs "31%") wobbled inside the box; the fork aligns by
-    # the typographic advance width (see the `sketchybar` override in
-    # overlays/default.nix), so same-digit values render identically.
-    # This default is overridden immediately on the first volume_change.
-    "label.width=61"
-    "label.align=right"
-    "padding_left=-28"
-    # Small right pad so the volume button sits just clear of the battery button.
-    "padding_right=3"
-  ]
 
+  # Geometry (the 24px icon zone/pull, label.width, align, paddings) is owned by
+  # the `sb-cluster volume` primitive in sketchybarrc.nu — this plugin sets only
+  # CONTENT: the number and speaker icon. label.width is re-set per digit-count
+  # by set-vol's animated tween (a dynamic value, not static geometry).
   match $env.SENDER {
     "volume_change" => {
 
@@ -102,14 +84,13 @@ def main [] {
         let steps = (if $mag > 10 { 10 } else { $mag })
         for i in 1..$steps {
           if (open --raw /tmp/sketchybar_volume_gen | str trim | into int) != $gen { return }
-          let v = $current + (($delta * $i / $steps) | math round | into int)
+          let v = $current + $delta * $i / $steps | math round | into int
           set-vol $v
           sleep 5ms
         }
       }
     }
     "forced" => {
-      sketchybar --set $"($env.NAME)" ...$item_props
       # Seed the number + icon from the current volume on (re)load, so the
       # readout is right before the first volume_change. Mute shows as 0.
       let muted = (

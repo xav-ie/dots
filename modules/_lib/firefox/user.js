@@ -14,3 +14,6 @@ user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);
 // the wrong window. Non-native fullscreen keeps the window on the current Space,
 // killing both problems while the fullscreen button keeps working as expected.
 user_pref("full-screen-api.macos-native-full-screen", false);
+
+// Kill the floating "You are sharing your entire screen." indicator window.
+user_pref("privacy.webrtc.hideGlobalIndicator", true);

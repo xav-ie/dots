@@ -20,7 +20,7 @@ in
       # github.com/ProtonMail/proton-bridge/pull/526
       protonmail-bridge =
         (pkgs.protonmail-bridge.override {
-          buildGoModule = pkgs.buildGoModule.override { go = pkgs.pkgs-bleeding.go; };
+          buildGoModule = pkgs.buildGoModule.override { inherit (pkgs.pkgs-bleeding) go; };
         }).overrideAttrs
           (old: {
             src = pkgs.fetchFromGitHub {

@@ -141,7 +141,6 @@ type NameToTarget = HashMap<&'static str, &'static str>;
 type TargetKeys = HashMap<&'static str, &'static [&'static str]>;
 
 fn item_configs() -> (NameToTarget, TargetKeys) {
-    let clock_keys: &[&str] = &["label.background.color", "icon.background.color"];
     let label_only: &[&str] = &["label.background.color"];
     let icon_only: &[&str] = &["icon.background.color"];
     // The wifi icon is an image with no label, so it paints its own item
@@ -159,9 +158,14 @@ fn item_configs() -> (NameToTarget, TargetKeys) {
         ("volume", "volume"),
         ("volume_icon", "volume"),
         ("zoom_mute", "zoom_mute"),
+        ("hidewin", "hidewin"),
     ]);
     let target_keys: TargetKeys = HashMap::from([
-        ("clock", clock_keys),
+        // clock is now an sb-cluster (like volume/battery): ONE shared
+        // label.background covers [face + time], extended left over the glyph via
+        // the label's icon-zone padding. (Was clock_keys = both backgrounds, back
+        // when clock_icon painted its own icon.background highlight.)
+        ("clock", label_only),
         ("front_app", label_only),
         ("wifi", bg_only),
         ("control_center", icon_only),
@@ -170,6 +174,8 @@ fn item_configs() -> (NameToTarget, TargetKeys) {
         // zoom_mute is an image with no label, so like wifi it paints its own
         // item background as the hover highlight.
         ("zoom_mute", bg_only),
+        // hidewin mirrors control_center (icon-only image button).
+        ("hidewin", icon_only),
     ]);
     (name_to_target, target_keys)
 }

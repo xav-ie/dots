@@ -138,7 +138,9 @@ rec {
   audio-autoswitch = pkgs.callPackage ./audio-autoswitch { };
   fix-yabai = pkgs.callPackage ./fix-yabai { inherit writeNuApplication; };
   focus-daemon = pkgs.callPackage ./focus-daemon { };
+  hidewin-bar = pkgs.callPackage ./hidewin-bar { };
   firefox-pip-mover = pkgs.callPackage ./firefox-pip-mover { };
+  hidewin = pkgs.callPackage ./hidewin { };
   move-pip = pkgs.callPackage ./move-pip { };
   sketchybar-battery = pkgs.callPackage ./sketchybar-battery { inherit writeNuApplication; };
   sketchybar-hover = pkgs.callPackage ./sketchybar-hover { };

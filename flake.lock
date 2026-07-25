@@ -2589,11 +2589,11 @@
         "treefmt-nix": "treefmt-nix_6"
       },
       "locked": {
-        "lastModified": 1784227649,
-        "narHash": "sha256-tuVJQ7PdZdljzc5CT3haMrvQXqJyoG1Z7rNrtRX8bhk=",
+        "lastModified": 1785001511,
+        "narHash": "sha256-46LwXsZEWKqtKxsRguPmFUCVkb5yTJYBerfD6VGp25A=",
         "owner": "xav-ie",
         "repo": "sketchybar-icons",
-        "rev": "6a4be30c0297f67c8678a6453d78f5562edf85ac",
+        "rev": "db7676b763acf6ce723604a9eb121861c4ea82f1",
         "type": "github"
       },
       "original": {

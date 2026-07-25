@@ -7,6 +7,7 @@
         home = {
           packages = with pkgs.pkgs-mine; [
             fix-yabai
+            hidewin
             move-pip
             sketchybar-battery
           ];

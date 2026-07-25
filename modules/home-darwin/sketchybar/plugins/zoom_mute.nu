@@ -133,12 +133,11 @@ def main [] {
     "background.drawing=on"
     $"background.color=($CLEAR_COLOR)"
     "padding_left=0"
-    # Butt-joint against the volume group. The volume number's background reaches
-    # padding_left=-28 while the speaker (volume_icon) is only 24 wide, so the
-    # volume bg's left edge pokes ~a few px left of the speaker, into us. 3 is the
-    # measured value where our hover box exactly meets it (seam=0px) — not gapping
-    # (4) nor overlapping (<3).
-    "padding_right=3"
+    # Abut hidewin (our right neighbour) with zero gap. Was 3 to compensate for the
+    # old volume-icon overhang (label.padding_left=28 vs a 24px icon); that overhang
+    # is gone now (the sb-cluster primitive enforces zone==pull==icon_w), so under
+    # the zero-padding tiling model any pad here just opens a dead zone.
+    "padding_right=0"
   ]
 
   match $env.SENDER {

@@ -21,10 +21,6 @@ const POINT_SIZE = 14
 # so the hover-highlight button is a touch narrower than control_center. Paired
 # with icon.width below (which sketchybar left-aligns the image within).
 const MIN_WIDTH = 26
-# Rightward nudge (points) baked into the PNG, since sketchybar can't move a
-# background image. Compensates for the button being shifted by background
-# padding, so the fan sits centred in its button (measured 12/11 retina px).
-const X_SHIFT = 0.75
 
 # Quantize the 0..1 signal fraction to the wifi glyph's THREE distinct arc
 # levels. The `wifi` symbol only has 3 arcs, and its variableValue bands are
@@ -85,50 +81,27 @@ def render [] {
     }
   }
 
-  let out = $"($CACHE_DIR)/wifi-($spec.key)-($POINT_SIZE)-w($MIN_WIDTH)-x($X_SHIFT).png"
+  let out = $"($CACHE_DIR)/wifi-($spec.key)-($POINT_SIZE)-w($MIN_WIDTH).png"
   if not ($out | path exists) {
     if $spec.value == null {
-      sketchybar-icons symbol --symbol $spec.sym --point-size $POINT_SIZE --scale 2 --min-width $MIN_WIDTH --x-shift $X_SHIFT --color $color --out $out
+      sketchybar-icons symbol --symbol $spec.sym --point-size $POINT_SIZE --scale 2 --min-width $MIN_WIDTH --color $color --out $out
     } else {
-      sketchybar-icons symbol --symbol $spec.sym --value $spec.value --point-size $POINT_SIZE --scale 2 --min-width $MIN_WIDTH --x-shift $X_SHIFT --color $color --out $out
+      sketchybar-icons symbol --symbol $spec.sym --value $spec.value --point-size $POINT_SIZE --scale 2 --min-width $MIN_WIDTH --color $color --out $out
     }
   }
   $out
 }
 
 def main [] {
-  let item_props = [
-    "click_script=$HOME/.config/sketchybar/select_control_center.nu \"Wi-Fi\""
-    "icon.background.drawing=on"
-    "icon.background.image.scale=0.5"
-    # sketchybar LEFT-aligns a background image within icon.width, so set the
-    # width to the padded image's on-screen width (= MIN_WIDTH). The renderer
-    # centres the glyph in that padded canvas, so the icon ends up centred in the
-    # hover highlight (this item's own background) with no dead space on the
-    # right. Width tuned a touch under control_center.
-    "icon.width=26"
-    "icon.padding_left=0"
-    "icon.padding_right=0"
-    "label.padding_left=0"
-    "label.padding_right=0"
-    # The hover highlight is this item's OWN background (painted by
-    # sketchybar-hoverd, target `wifi` -> `background.color`). Pre-set the
-    # geometry here; the colour starts transparent and the daemon animates it.
-    "background.height=24"
-    "background.corner_radius=6"
-    "background.drawing=on"
-    "background.color=0x00000000"
-    # Extends the button leftward a hair to meet the control_center button
-    # (closing the seam). The fan is re-centred for this via X_SHIFT above.
-    "background.padding_left=-1"
-    "padding_left=0"
-    "padding_right=0"
-  ]
 
+  # Geometry (icon.width=26, the bg_only highlight background) is owned by the
+  # `sb-icon-item wifi` primitive + its --extra in sketchybarrc.nu — here we set
+  # only the icon image. MIN_WIDTH centres the glyph WITHIN that footprint; no
+  # x-shift nudge is needed once the footprint tiles cleanly.
   match $env.SENDER {
     "forced" => {
       let out = (render)
-      sketchybar --set $"($env.NAME)" ...$item_props $"icon.background.image=($out)"
+      sketchybar --set $"($env.NAME)" $"icon.background.image=($out)"
     }
     "network_change" | "routine" => {
       let out = (render)
