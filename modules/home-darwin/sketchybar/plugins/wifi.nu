@@ -7,10 +7,11 @@
 # `Control Center,WiFi` alias, which mirrored the real menu-bar item by
 # continuously screen-recording it.
 #
-# Driven by the `network_change` event (bound to the
-# com.apple.system.config.network_change distributed notification) for instant
-# connect/disconnect reaction, plus the item's `update_freq` for slow signal
-# refresh.
+# Driven by `wifi_change`, emitted by the sketchybar-wifi daemon straight off
+# CoreWLAN events (the same ones Control Center listens to) — that's what makes
+# this instant. `network_change` is kept only to catch hotspot tether on/off
+# (a route change CoreWLAN can't see). Both are push — nothing polls, so there
+# is deliberately no `update_freq` on the item.
 
 const CACHE_DIR = "~/.cache/sketchybar" | path expand
 # On-screen icon height in px (rendered at 2x, drawn at background.image.scale
@@ -22,21 +23,13 @@ const POINT_SIZE = 14
 # with icon.width below (which sketchybar left-aligns the image within).
 const MIN_WIDTH = 26
 
-# Quantize the 0..1 signal fraction to the wifi glyph's THREE distinct arc
-# levels. The `wifi` symbol only has 3 arcs, and its variableValue bands are
-# ~[0,0.33)=1 arc, [0.33,0.66)=2 arcs, [0.66,1]=3 arcs — so values must land
-# clearly inside a band (0.2 / 0.5 / 1.0), else adjacent levels render alike.
-def signal-value [fraction: float] {
-  if $fraction >= 0.66 {
-    1.0
-  } else if $fraction >= 0.33 {
-    0.5
-  } else {
-    0.2
-  }
-}
+# Map the arc count `sketchybar-icons` reports (0..3) to a variableValue the
+# `wifi` symbol renders distinctly. Its bands are ~[0,0.33)=1 arc, [0.33,0.66)=2
+# arcs, [0.66,1]=3 arcs, so values must land clearly inside a band. 0 = no arcs
+# (the dimmed "searching" glyph).
+const SIGNAL_VALUES = [0.0 0.2 0.5 1.0]
 
-# Parse `power=on associated=yes rssi=-56 fraction=0.83` into a record.
+# Parse `power=on associated=yes level=3 rssi=-56 fraction=0.83` into a record.
 def read-wifi [] {
   sketchybar-icons wifi
   | str trim
@@ -70,9 +63,14 @@ def render [] {
     if ($state.power? | default "on") != "on" {
       {sym: "wifi.slash", value: null, key: "off"}
     } else if ($state.associated? | default "no") != "yes" {
-      {sym: "wifi.exclamationmark", value: null, key: "noassoc"}
+      # Radio on but no association: macOS is still trying, so this is the
+      # PENDING state, not an error. Control Center draws the plain wifi glyph
+      # with its arcs unfilled — variableValue 0 dims them exactly that way.
+      # (wifi.exclamationmark, the old choice here, is macOS's "connected but no
+      # internet" glyph — wrong for "not connected yet".)
+      {sym: "wifi", value: 0.0, key: "pending"}
     } else {
-      let v = signal-value ($state.fraction | into float)
+      let v = $SIGNAL_VALUES | get ($state.level | into int)
       {
         sym: "wifi"
         value: $v
@@ -103,7 +101,7 @@ def main [] {
       let out = (render)
       sketchybar --set $"($env.NAME)" $"icon.background.image=($out)"
     }
-    "network_change" | "routine" => {
+    "wifi_change" | "network_change" | "routine" => {
       let out = (render)
       sketchybar --set $"($env.NAME)" $"icon.background.image=($out)"
     }

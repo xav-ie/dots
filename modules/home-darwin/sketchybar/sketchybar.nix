@@ -132,6 +132,31 @@
           };
         };
 
+        # This agent listens through CoreWLAN events, so the Wi-Fi icon reacts
+        # as fast as Control Center does instead of waiting on configd's
+        # network_change notification (seconds late, and silent on signal
+        # changes). It blocks on a run loop — no polling — and only triggers
+        # when the *displayed* state changes, not on every RSSI wobble.
+        launchd.agents.sketchybar-wifi = {
+          inherit (config.launchd.agents.sketchybar) enable;
+          config = {
+            Debug = true;
+            ProgramArguments = [
+              "${pkgs.pkgs-mine.sketchybar-icons}/bin/sketchybar-icons"
+              "wifi"
+              "--watch"
+              "--trigger"
+              "wifi_change"
+            ];
+            KeepAlive = true;
+            RunAtLoad = true;
+            StandardOutPath = "/tmp/sketchybar-wifi.log";
+            StandardErrorPath = "/tmp/sketchybar-wifi.err";
+            # --trigger shells out to `sketchybar` off PATH.
+            EnvironmentVariables.PATH = "${lib.makeBinPath [ pkgs.sketchybar ]}:/usr/bin";
+          };
+        };
+
         # Owns per-item hover state. Items invoke `sketchybar-hover` (the tiny
         # client) on mouse events; this daemon receives those over a Unix socket
         # and pushes batched `--set` updates back to sketchybar. Avoids the
