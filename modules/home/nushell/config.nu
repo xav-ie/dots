@@ -313,3 +313,9 @@ def gcot [tag: string@"nu-complete git tags"] {
     git checkout $resolved
   }
 }
+
+# cwd: like `pwd`, but also puts the path on the clipboard.
+def cwd []: nothing -> string {
+  $env.PWD | if $nu.os-info.name == "macos" { $in | pbcopy } else { $in | wl-copy }
+  $env.PWD
+}
