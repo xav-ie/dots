@@ -45,6 +45,37 @@ system:
     (ln -sfn $"(pwd)/($gc_root_name)"
       $"/nix/var/nix/gcroots/per-user/($env.USER)/($gc_root_name)")
 
+# reboot once into the `autologin` specialisation, which skips the greeter and
+# comes up straight in Hyprland — for rebooting a machine you're not sitting at.
+
+# Only that one boot is passwordless; every boot after it uses the greeter again.
+reboot-auto-login:
+    #!/usr/bin/env nu
+    if (uname | get kernel-name) != "Linux" {
+      error make { msg: "NixOS only" }
+    }
+
+    just system
+
+    # bootctl needs root: the ESP is mode 0700 (see nixos/hardware-configuration.nix).
+    let entries = (
+      sudo bootctl list --json=short
+      | from json
+      | where ($it.id | str contains "specialisation-autologin")
+      | insert gen { $in.id | parse -r 'generation-(?<n>\d+)' | get n.0 | into int }
+      | sort-by gen
+    )
+    if ($entries | is-empty) {
+      error make { msg: "no autologin specialisation boot entry — did `just system` succeed?" }
+    }
+    let entry = ($entries | last)
+
+    print $"Will reboot into: ($entry.id)"
+    if (input "Type 'yes' to reboot: ") != "yes" {
+      error make { msg: "aborted" }
+    }
+    sudo systemctl reboot $"--boot-loader-entry=($entry.id)"
+
 # fix the lockfile for auto-follow
 lock:
     direnv deny
