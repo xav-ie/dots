@@ -14,7 +14,9 @@ writeNuApplication {
       # Open the current branch's PR in my browser (herdr-aware, unlike `gh -w`
       # which would open on the desktop when attached remotely).
       def --wrapped main [...args] {
-        browse (^gh pr view --json url -q .url ...$args | str trim)
+        let url = (^gh pr view --json url -q .url ...$args | str trim)
+        if ($url | is-empty) { exit 1 }
+        browse $url
       }
     '';
 }
