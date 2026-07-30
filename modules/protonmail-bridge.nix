@@ -72,16 +72,17 @@ in
       bridge-entry = pkgs.writeShellApplication {
         name = "protonmail-bridge-entry";
         inherit runtimeInputs;
-        text = ''
-          ${keychainInit}
-          # keepalive on both legs: without it an idle IMAP connection can go
-          # half-open (no FIN) and the MCP's reads black-hole. Probes detect a
-          # dead peer and tear the relay down so the client reconnects.
-          ka=keepalive,keepidle=30,keepintvl=10,keepcnt=3
-          socat TCP-LISTEN:2025,fork,reuseaddr,$ka TCP:127.0.0.1:1025,$ka &
-          socat TCP-LISTEN:2143,fork,reuseaddr,$ka TCP:127.0.0.1:1143,$ka &
-          exec protonmail-bridge --noninteractive
-        '';
+        text = # sh
+          ''
+            ${keychainInit}
+            # keepalive on both legs: without it an idle IMAP connection can go
+            # half-open (no FIN) and the MCP's reads black-hole. Probes detect a
+            # dead peer and tear the relay down so the client reconnects.
+            ka=keepalive,keepidle=30,keepintvl=10,keepcnt=3
+            socat TCP-LISTEN:2025,fork,reuseaddr,$ka TCP:127.0.0.1:1025,$ka &
+            socat TCP-LISTEN:2143,fork,reuseaddr,$ka TCP:127.0.0.1:1143,$ka &
+            exec protonmail-bridge --noninteractive
+          '';
       };
 
       # One-time interactive login helper (invoked via the homeManager wrapper
@@ -183,14 +184,15 @@ in
       home.packages = [
         (pkgs.writeShellApplication {
           name = "protonmail-login";
-          text = ''
-            echo "stopping bridge daemon..."
-            sudo systemctl stop podman-protonmail-bridge
-            trap 'echo "restarting bridge daemon..."; sudo systemctl start podman-protonmail-bridge' EXIT
-            sudo podman run -it --rm \
-              -v ${dataDir}:${dataDir} \
-              ${image} protonmail-bridge-login
-          '';
+          text = # sh
+            ''
+              echo "stopping bridge daemon..."
+              sudo systemctl stop podman-protonmail-bridge
+              trap 'echo "restarting bridge daemon..."; sudo systemctl start podman-protonmail-bridge' EXIT
+              sudo podman run -it --rm \
+                -v ${dataDir}:${dataDir} \
+                ${image} protonmail-bridge-login
+            '';
         })
       ];
     };
