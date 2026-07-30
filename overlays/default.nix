@@ -140,6 +140,22 @@ in
             --prefix PYTHONPATH : "${final.speechd}/lib/${final.python3.libPrefix}/site-packages"
         '';
       });
+      # nixpkgs pins nvidia-vaapi-driver 0.0.14; 0.0.17 has the per-plane block
+      # height + decode-sync fixes needed for stable NVDEC decode under zink/
+      # WebRender. Must be an overlay, not an extraPackages entry: the nixos
+      # nvidia module appends `pkgs.nvidia-vaapi-driver` itself, so anything else
+      # leaves two versions in /run/opengl-driver. Keep the nixpkgs derivation
+      # (system glibc) and just bump src — bleeding's own build links a newer
+      # glibc and won't load on this system.
+      nvidia-vaapi-driver = prev.nvidia-vaapi-driver.overrideAttrs (_: {
+        version = "0.0.17";
+        src = final.fetchFromGitHub {
+          owner = "elFarto";
+          repo = "nvidia-vaapi-driver";
+          rev = "v0.0.17";
+          hash = "sha256-eJ523lEmB4s+R/QN4J8t6LZ4zw2rEQsaaRBJdjH8Amo=";
+        };
+      });
       writeNuApplication = final.nuenv.writeShellApplication;
 
       # sketchybar built from the clean upstream v2.23.0 tag (sketchybar-src) with

@@ -224,15 +224,7 @@ in
 
     hardware = {
       enableAllFirmware = true;
-      graphics = {
-        enable = true;
-        enable32Bit = true;
-        # VA-API (NVDEC) belongs in extraPackages, NOT `package`: `package` is the
-        # primary GL/mesa driver, and overriding it with nvidia-vaapi-driver drops
-        # the libglvnd dispatch libs (libGL/libEGL/libgbm) from /run/opengl-driver,
-        # so GL apps (ghostty) fail with "Unable to acquire an opengl context".
-        extraPackages = [ pkgs.nvidia-vaapi-driver ];
-      };
+      graphics = import ./_praesidium/graphics.nix pkgs;
       nvidia = {
         modesetting.enable = true;
         # allows systemd to better control nvidia card
@@ -264,9 +256,11 @@ in
         open = true;
         gsp.enable = true;
         nvidiaSettings = true;
-        # beta, production, stable (=production), or latest (=MAX(production,
-        # some version))
-        package = config.boot.kernelPackages.nvidiaPackages.production;
+        # latest (610.x), not production (595.84): 610's Vulkan driver imports
+        # externally-allocated (NVDEC) block-linear dma-bufs correctly, which is
+        # what Firefox HW video decode through zink needs — on 595.84 those
+        # frames come back green.
+        package = config.boot.kernelPackages.nvidiaPackages.latest;
         # forceFullCompositionPipeline = true;
       };
       nvidia-container-toolkit.enable = true;

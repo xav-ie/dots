@@ -25,7 +25,7 @@
       power-save-enter-pkg = pkgs.writeNuApplication {
         name = power-save-enter-name;
         runtimeInputs = [
-          config.boot.kernelPackages.nvidiaPackages.production
+          config.hardware.nvidia.package # nvidia-smi must match the loaded driver
         ];
         text = # nu
           ''
@@ -49,7 +49,7 @@
       power-save-exit-pkg = pkgs.writeNuApplication {
         name = power-save-exit-name;
         runtimeInputs = [
-          config.boot.kernelPackages.nvidiaPackages.production
+          config.hardware.nvidia.package # nvidia-smi must match the loaded driver
         ];
         text = # nu
           ''

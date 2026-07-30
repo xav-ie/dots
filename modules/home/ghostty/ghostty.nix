@@ -18,7 +18,40 @@
     in
     {
       config = {
-        programs.ghostty.package = pkgs.ghostty;
+        # Linux takes bleeding's 1.3.1 (nixpkgs is on 1.2.3), run on Xwayland
+        # against NVIDIA's native GL.
+        #
+        # Why not native Wayland: every Wayland client's EGL comes from Mesa
+        # (NVIDIA's vendor doesn't offer the Wayland platform), and Mesa has no
+        # native driver for this GPU — so it's zink or llvmpipe. Ghostty's cell
+        # draw (instanced 4-vertex TRIANGLE_STRIP with an SSBO bound in the
+        # vertex *and* fragment stages) hard-faults the GPU through zink here:
+        # NVRM Xid 69, graphics-engine class error on Ampere class 0xc797,
+        # after which the window never repaints — it reads as dead keyboard
+        # input. Confirmed by tracing zink's draw stream at boot. llvmpipe
+        # avoids the fault but burns ~250-400% CPU.
+        #
+        # On the X11 platform NVIDIA's EGL *does* serve us, so Xwayland gets
+        # real GPU acceleration and can't hit the zink bug at all. Both vars are
+        # needed: without the vendor pin Mesa wins on X11 and we land back on
+        # llvmpipe. Trade-off is Xwayland's usual caveats (scaling, IME).
+        # Revisit once the upstream zink/NVIDIA bug is fixed.
+        programs.ghostty.package =
+          if pkgs.stdenv.isLinux then
+            pkgs.symlinkJoin {
+              name = "ghostty-nvidia-x11";
+              paths = [ pkgs.pkgs-bleeding.ghostty ];
+              nativeBuildInputs = [ pkgs.makeWrapper ];
+              postBuild = ''
+                wrapProgram $out/bin/ghostty \
+                  --set GDK_BACKEND x11 \
+                  --set __EGL_VENDOR_LIBRARY_FILENAMES \
+                    /run/opengl-driver/share/glvnd/egl_vendor.d/10_nvidia.json
+              '';
+              inherit (pkgs.pkgs-bleeding.ghostty) meta;
+            }
+          else
+            pkgs.ghostty;
 
         xdg.configFile = lib.mkMerge [
           # Common config for all platforms

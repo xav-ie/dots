@@ -102,8 +102,21 @@
         home.sessionVariables = {
           GBM_BACKEND = "nvidia-drm";
           LIBVA_DRIVER_NAME = "nvidia";
+          # Route Mesa GL through zink (Vulkan → NVIDIA) instead of llvmpipe. On
+          # wlroots/NVIDIA every Wayland client's EGL display comes from Mesa
+          # (NVIDIA's vendor doesn't offer the Wayland platform at all), and Mesa
+          # has no native driver for this GPU — so without this every GL app
+          # software-renders on the CPU. Measured on ghostty: 146% CPU on
+          # llvmpipe vs a few percent on zink.
+          MESA_LOADER_DRIVER_OVERRIDE = "zink";
           MOZ_DISABLE_RDD_SANDBOX = "1";
           NIXOS_OZONE_WL = "1";
+          # direct: elFarto exports the decoded NVDEC surface as a block-linear
+          # dma-buf that zink imports zero-copy. This needs the zink import fix in
+          # mesaMain (zink-nvidia-import-no-export.patch): without it zink requested
+          # export handles on the imported dma-buf, which flips NVIDIA's tiling kind
+          # so the surface reads back as zero (solid green video). With the patch,
+          # HW video decode works on native Wayland with correct colors.
           NVD_BACKEND = "direct"; # github:elFarto
           WLR_NO_HARDWARE_CURSORS = "1";
           WLR_RENDERER_ALLOW_SOFTWARE = "1";
