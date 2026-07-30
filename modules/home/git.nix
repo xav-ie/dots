@@ -8,6 +8,26 @@
     }:
     let
       gitIniFmt = pkgs.formats.gitIni { };
+
+      # gpg that reports a tty only when its caller actually owns one.
+      # services.gpg-agent.enableSshSupport exports GPG_TTY at login, and every
+      # child inherits it — including agent/daemon processes whose stdio are
+      # pipes. pinentry-auto routes on the resulting `OPTION ttyname=`, so those
+      # callers made pinentry-curses draw onto a terminal they do not own,
+      # overwriting whatever TUI was there until the ~60s pinentry timeout.
+      # Deciding per invocation instead of per login keeps the prompt where you
+      # are actually typing (herdr pane, local or over SSH) and sends
+      # terminal-less callers to pinentry-gnome3 on the desktop.
+      gpg-tty-aware =
+        pkgs.writeShellScriptBin "gpg-tty-aware" # sh
+          ''
+            if [ -t 2 ]; then
+              export GPG_TTY="$(readlink /proc/self/fd/2)"
+            else
+              unset GPG_TTY
+            fi
+            exec ${pkgs.gnupg}/bin/gpg "$@"
+          '';
     in
     {
       # Git config validation (canonical casing, case collisions) runs via
@@ -163,6 +183,7 @@
             #   line-numbers = true;
             #   true-color = "always";
             # };
+            gpg.program = "${gpg-tty-aware}/bin/gpg-tty-aware";
             gpg.ssh.allowedSignersFile = osConfig.sops.secrets."git/allowed_signers".path;
             "includeif \"gitdir:~/\"" = {
               path = "~/.config/git/config.default";
