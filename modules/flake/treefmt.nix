@@ -59,6 +59,29 @@
               ];
             };
 
+          # Recursive JSON key sort; prettier still owns whitespace style.
+          jsonSortKeys = pkgs.writeShellApplication {
+            name = "json-sort-keys";
+            runtimeInputs = [ pkgs.jq ];
+            text = ''
+              for f in "$@"; do
+                jq --sort-keys . "$f" >"$f.tmp" && mv "$f.tmp" "$f"
+              done
+            '';
+          };
+
+          jsonSortKeysFormatterModule =
+            { mkFormatterModule, ... }:
+            {
+              imports = [
+                (mkFormatterModule {
+                  name = "json-sort-keys";
+                  mainProgram = "json-sort-keys";
+                  includes = [ "modules/claude/settings.json" ];
+                })
+              ];
+            };
+
           # Custom Nushell formatter module (treefmt-nix has no nufmt yet)
           nufmtFormatterModule =
             { mkFormatterModule, ... }:
@@ -76,6 +99,7 @@
           imports = [
             glslFormatterModule
             goModFormatterModule
+            jsonSortKeysFormatterModule
             nufmtFormatterModule
           ];
 
@@ -96,6 +120,10 @@
             glsl_analyzer = {
               enable = true;
               package = glsl_analyzer;
+            };
+            json-sort-keys = {
+              enable = true;
+              package = jsonSortKeys;
             };
             just.enable = true;
             kdlfmt.enable = true;
@@ -126,6 +154,8 @@
             };
           };
           settings = {
+            # Sort before prettier so prettier has the final say on style.
+            formatter.json-sort-keys.priority = -1;
             on-unmatched = "fatal";
             excludes = [
               "**/*.entitlements"
