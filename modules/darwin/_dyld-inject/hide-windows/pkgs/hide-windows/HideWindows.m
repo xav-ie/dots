@@ -50,16 +50,22 @@ static int g_hidden = 0;           // default: VISIBLE (normal mode); menubar
                                    // Screenshare Mode flips this to hidden
 static NSString *g_bundleID = nil; // this process's bundle id (retained)
 static NSString *g_pid = nil;      // this process's pid as a string (retained)
+// Window numbers explicitly revealed while hidden — the menubar reveals per
+// WINDOW, not just per process, so you can present one document and keep the
+// rest of the same app excluded. Empty means "the whole process follows
+// g_hidden". Cleared by any process-wide show/hide, since that restates intent.
+static NSMutableSet *g_revealed = nil;
 
-static NSInteger targetSharing(void) {
+static NSInteger sharingFor(NSWindow *w) {
   // ReadOnly (not ReadWrite) is the normal capturable state; either
   // non-zero value restores visibility.
-  return g_hidden ? NSWindowSharingNone : NSWindowSharingReadOnly;
+  BOOL hide = g_hidden && ![g_revealed containsObject:@([w windowNumber])];
+  return hide ? NSWindowSharingNone : NSWindowSharingReadOnly;
 }
 
 static void applyWindow(NSWindow *w) {
-  if ([w sharingType] != targetSharing())
-    [w setSharingType:targetSharing()];
+  if ([w sharingType] != sharingFor(w))
+    [w setSharingType:sharingFor(w)];
 }
 
 // The one and only safe way to reach the app's windows. Two rules:
@@ -92,6 +98,40 @@ static BOOL targetsUs(NSString *o) {
   return !o || [o isEqualToString:g_pid] || [o isEqualToString:g_bundleID];
 }
 
+// An object may carry a window suffix: "<target>#<windowNumber>" addresses one
+// window of that target, plain "<target>" the whole process. Returns the window
+// number via *win (nil for process-wide) and the target via *who.
+static void splitTarget(NSString *o, NSString **who, NSNumber **win) {
+  *who = o;
+  *win = nil;
+  if (!o)
+    return;
+  NSRange r = [o rangeOfString:@"#" options:NSBackwardsSearch];
+  if (r.location == NSNotFound)
+    return;
+  *who = [o substringToIndex:r.location];
+  *win = @([[o substringFromIndex:r.location + 1] integerValue]);
+}
+
+// Apply a show (reveal = YES) or hide to whatever the object addressed.
+static void applyRequest(NSString *object, BOOL reveal) {
+  NSString *who = nil;
+  NSNumber *win = nil;
+  splitTarget(object, &who, &win);
+  if (!targetsUs(who))
+    return;
+  if (win) {
+    if (reveal)
+      [g_revealed addObject:win];
+    else
+      [g_revealed removeObject:win];
+  } else {
+    g_hidden = reveal ? 0 : 1;
+    [g_revealed removeAllObjects];
+  }
+  applyAll();
+}
+
 // Friendly label for the menubar: app name plus the profile-ish suffix
 // after the last " — " in a window title (Firefox appends "— Work" etc.).
 static NSString *friendlyLabel(void) {
@@ -113,6 +153,8 @@ static NSString *friendlyLabel(void) {
   return name;
 }
 
+static void announceWindows(void);
+
 // Tell the menubar who we are: object = "<pid>\t<label>". Only real
 // foreground apps announce — daemons/accessory helpers stay out of the
 // menu (and, crucially, we never touch NSApp in them).
@@ -125,6 +167,58 @@ static void announce(void) {
                     object:obj
                   userInfo:nil
         deliverImmediately:YES];
+  announceWindows();
+}
+
+// Is this a window a person would pick out of a menu? NOT "is it titled" —
+// Ghostty (macos-titlebar-style = hidden) draws real terminal windows with no
+// title bar at all, and they're exactly what you want to reveal one of.
+// canBecomeMainWindow is the honest test: it's what AppKit itself uses to mean
+// "a primary window", so palettes, HUDs, and hidden helper windows (Ghostty's
+// TUINSWindow, an offscreen "Configuration Errors" alert) fall out for free.
+static BOOL listableWindow(NSWindow *w) {
+  return w.isVisible && [w canBecomeMainWindow] && w.frame.size.width >= 200 &&
+         w.frame.size.height >= 100;
+}
+
+// The best human label available. A title is preferred, but plenty of windows
+// have a useless one — a terminal configured with `title = " "` reports a
+// single space — so fall back to the tab title, then to the represented file
+// (Ghostty points this at the working directory, which is what you'd actually
+// recognise). Empty is a fine answer; the menubar numbers those.
+static NSString *windowLabel(NSWindow *w) {
+  NSCharacterSet *ws = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+  for (NSString *candidate in @[ w.title ?: @"", w.tab.title ?: @"" ]) {
+    NSString *t = [candidate stringByTrimmingCharactersInSet:ws];
+    if (t.length)
+      return [t stringByReplacingOccurrencesOfString:@"\t" withString:@" "];
+  }
+  NSString *path = [[w representedURL] path];
+  if (path.length)
+    return [path stringByAbbreviatingWithTildeInPath];
+  return @"";
+}
+
+// Per-window announcement: "<pid>\t<windowNumber>\t<label>", one per window, so
+// the menubar can list an app's windows and reveal them individually. Window
+// numbers are stable for the life of a window, which is what makes them usable
+// as the reveal key.
+static void announceWindows(void) {
+  NSApplication *app = regularApp();
+  if (!app)
+    return;
+  NSDistributedNotificationCenter *dc =
+      [NSDistributedNotificationCenter defaultCenter];
+  for (NSWindow *w in [app windows]) {
+    if (!listableWindow(w))
+      continue;
+    [dc postNotificationName:@"com.x.hidewin.iam-window"
+                      object:[NSString stringWithFormat:@"%@\t%ld\t%@", g_pid,
+                                                        (long)[w windowNumber],
+                                                        windowLabel(w)]
+                    userInfo:nil
+          deliverImmediately:YES];
+  }
 }
 
 // orderWindow:relativeTo: is the funnel every on-screen ordering routes
@@ -152,6 +246,7 @@ __attribute__((constructor)) static void init(void) {
       return;
     g_bundleID = [bundleID retain];
     g_pid = [[NSString stringWithFormat:@"%d", getpid()] retain];
+    g_revealed = [[NSMutableSet alloc] init]; // non-ARC: owned deliberately
 
     // Seed from the current mode so an app launched mid-meeting starts HIDDEN
     // with no gap, instead of flashing visible until the menubar's per-launch
@@ -202,19 +297,13 @@ __attribute__((constructor)) static void init(void) {
                     object:nil
                      queue:[NSOperationQueue mainQueue]
                 usingBlock:^(NSNotification *note) {
-                  if (targetsUs(note.object)) {
-                    g_hidden = 0;
-                    applyAll();
-                  }
+                  applyRequest(note.object, YES);
                 }];
     [dc addObserverForName:@"com.x.hidewin.hide"
                     object:nil
                      queue:[NSOperationQueue mainQueue]
                 usingBlock:^(NSNotification *note) {
-                  if (targetsUs(note.object)) {
-                    g_hidden = 1;
-                    applyAll();
-                  }
+                  applyRequest(note.object, NO);
                 }];
     // The menubar asks "who's out there?" on launch / menu open; reply.
     [dc addObserverForName:@"com.x.hidewin.who"

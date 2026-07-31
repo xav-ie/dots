@@ -38,6 +38,7 @@ let HIDE = Notification.Name("com.x.hidewin.hide")
 let WHO = Notification.Name("com.x.hidewin.who")
 let IAM = Notification.Name("com.x.hidewin.iam")
 let TOGGLE = Notification.Name("com.x.hidewin.toggle-panel")
+let IAM_WINDOW = Notification.Name("com.x.hidewin.iam-window")
 let MODE_CHANGED = Notification.Name("com.x.hidewin.mode-changed")
 
 func post(_ name: Notification.Name, _ object: String?) {
@@ -110,6 +111,7 @@ final class PanelBackground: NSView {
 final class HoverRow: NSView {
   enum Mark {
     case check(Bool)
+    case partial  // an app with only some of its windows revealed
     case warning, none
   }
 
@@ -121,18 +123,20 @@ final class HoverRow: NSView {
 
   init(
     _ title: String, icon: NSImage? = nil, subtitle: String? = nil, mark m: Mark = .none,
-    enabled: Bool = true
+    enabled: Bool = true, indent: CGFloat = 0
   ) {
     super.init(frame: NSRect(x: 0, y: 0, width: ROW_W, height: ROW_H))
     wantsLayer = true
     layer?.cornerRadius = PANEL_RADIUS - PANEL_PAD  // concentric with the panel's corners
 
-    var x: CGFloat = 8
+    var x: CGFloat = 8 + indent
     mark.frame = NSRect(x: x, y: (ROW_H - 13) / 2, width: 13, height: 13)
     mark.contentTintColor = .labelColor
     switch m {
     case .check(let on):
       mark.image = checkImage(on)
+    case .partial:
+      mark.image = NSImage(systemSymbolName: "minus", accessibilityDescription: nil)
     case .warning:
       mark.contentTintColor = .systemOrange
       mark.image = NSImage(
@@ -211,8 +215,19 @@ final class Controller: NSObject {
   let panel = NSPanel(
     contentRect: NSRect(x: 0, y: 0, width: PANEL_W, height: 40),
     styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
-  var revealed = Set<pid_t>()
+  // Reveals are keyed by the exact notification target they were posted with:
+  // "<pid>#<windowNumber>" for a window, "<pid>" for a whole process (apps whose
+  // agent announced no titled windows). Storing the target verbatim means
+  // re-asserting on Screenshare Mode is just a replay.
+  var revealed = Set<String>()
   var labels = [pid_t: String]()  // pid -> label; PRESENCE means the agent is injected
+  var windows = [pid_t: [(number: Int, title: String)]]()
+  // Announcements arrive one notification per app AND per window, so a WHO
+  // round is a burst of dozens. Rebuilding on each one is what made the panel
+  // jitter as it opened; instead collect the round into `incoming` and swap it
+  // in once, and coalesce any other rebuild into a single pass.
+  var incoming: [pid_t: [(number: Int, title: String)]]?
+  var rebuildScheduled = false
   var clickMonitor: Any?
   var lastMonitorClose: Date?  // when a click-outside last closed the panel
   // Screenshare Mode: OFF (default) = everything visible so recorders like
@@ -246,7 +261,29 @@ final class Controller: NSObject {
       // label improves (e.g. Firefox's "— Work" suffix set once a window is key).
       let changed = labels[pid] != parts[1]
       labels[pid] = parts[1]
-      if changed && panel.isVisible { buildContent() }
+      if changed { scheduleRebuild() }
+    }
+    DistributedNotificationCenter.default().addObserver(
+      forName: IAM_WINDOW, object: nil, queue: .main
+    ) { [weak self] note in
+      guard let self, let s = note.object as? String else { return }
+      let parts = s.components(separatedBy: "\t")
+      guard parts.count == 3, let pid = pid_t(parts[0]), let num = Int(parts[1]) else { return }
+      // Mid-round announcements land in `incoming`; unsolicited ones (a window
+      // opened while the panel is up) go straight to the live map.
+      var list = (incoming != nil ? incoming![pid] : windows[pid]) ?? []
+      if let i = list.firstIndex(where: { $0.number == num }) {
+        guard list[i].title != parts[2] else { return }  // nothing new to show
+        list[i].title = parts[2]
+      } else {
+        list.append((number: num, title: parts[2]))
+      }
+      if incoming != nil {
+        incoming![pid] = list
+      } else {
+        windows[pid] = list
+        scheduleRebuild()
+      }
     }
     post(WHO, nil)
     // Fail safe: if we were hiding when last quit (e.g. crashed mid-meeting),
@@ -266,7 +303,7 @@ final class Controller: NSObject {
     publishMode()
     if on {
       post(HIDE, nil)
-      for pid in revealed { post(SHOW, String(pid)) }
+      for target in revealed { post(SHOW, target) }
       if launchObserver == nil {
         launchObserver = NSWorkspace.shared.notificationCenter.addObserver(
           forName: NSWorkspace.didLaunchApplicationNotification, object: nil, queue: .main
@@ -274,9 +311,9 @@ final class Controller: NSObject {
           guard let self, screenshareMode,
             let app = n.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
           else { return }
-          if !revealed.contains(app.processIdentifier) {
-            post(HIDE, String(app.processIdentifier))
-          }
+          // A just-launched process has no revealed windows yet (its window
+          // numbers didn't exist when the reveals were made), so hide it whole.
+          post(HIDE, String(app.processIdentifier))
         }
       }
     } else {
@@ -320,8 +357,34 @@ final class Controller: NSObject {
     openPanel(anchorX: anchorX)
   }
 
+  // Ask every agent to re-announce, and collect the replies off to the side.
+  // The panel keeps showing the previous list meanwhile — clearing first made it
+  // open empty and then jump as rows streamed in. Swapping once the round
+  // settles also drops windows closed since the last open.
+  func refreshWindows() {
+    incoming = [:]
+    post(WHO, nil)
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+      guard let self, let fresh = incoming else { return }
+      incoming = nil
+      windows = fresh
+      if panel.isVisible { buildContent() }
+    }
+  }
+
+  // Many announcements, one redraw.
+  func scheduleRebuild() {
+    guard panel.isVisible, !rebuildScheduled else { return }
+    rebuildScheduled = true
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+      guard let self else { return }
+      rebuildScheduled = false
+      if panel.isVisible { buildContent() }
+    }
+  }
+
   func openPanel(anchorX: CGFloat?) {
-    post(WHO, nil)  // solicit fresh announcements
+    refreshWindows()
     buildContent()
     let scr = NSScreen.main ?? NSScreen.screens.first!
     var x = anchorX ?? (scr.frame.maxX - panel.frame.width - 8)
@@ -376,26 +439,40 @@ final class Controller: NSObject {
       for a in apps { nameCount[a.localizedName ?? "", default: 0] += 1 }
 
       items.append(separatorBox())
-      // Reveal specific apps to present; everything else stays hidden.
+      // Reveal specific apps to present; everything else stays hidden. An app
+      // with titled windows lists them underneath: its own checkbox drives all
+      // of them at once, and goes half-checked when only some are revealed.
       for app in apps {
         let pid = app.processIdentifier
-        let row: HoverRow
-        if let label = labels[pid] {
-          row = HoverRow(label, icon: app.icon, mark: .check(revealed.contains(pid)))
-          row.onClick = { [weak self, weak row] in
-            guard let self else { return }
-            toggle(pid)
-            row?.setChecked(revealed.contains(pid))
-          }
-        } else {
+        guard let label = labels[pid] else {
           // No agent in this process — hiding would silently fail. Say so.
           let name = app.localizedName ?? app.bundleIdentifier!
           let dup = (nameCount[app.localizedName ?? ""] ?? 0) > 1
-          row = HoverRow(
-            dup ? "\(name) (\(pid))" : name, icon: app.icon, subtitle: "restart to enable",
-            mark: .warning, enabled: false)
+          items.append(
+            HoverRow(
+              dup ? "\(name) (\(pid))" : name, icon: app.icon, subtitle: "restart to enable",
+              mark: .warning, enabled: false))
+          continue
         }
-        items.append(row)
+        let appRow = HoverRow(label, icon: app.icon, mark: appMark(pid))
+        appRow.onClick = { [weak self] in
+          guard let self else { return }
+          toggleApp(pid)
+          buildContent()
+        }
+        items.append(appRow)
+        for w in windowRows(pid) {
+          let target = "\(pid)#\(w.number)"
+          let wRow = HoverRow(w.title, mark: .check(revealed.contains(target)), indent: 22)
+          // Rebuild rather than just re-marking the row: the app's own checkbox
+          // summarises its windows, so it moves with them.
+          wRow.onClick = { [weak self] in
+            guard let self else { return }
+            toggleTarget(target)
+            buildContent()
+          }
+          items.append(wRow)
+        }
       }
       items.append(separatorBox())
       for (label, action) in [
@@ -503,19 +580,63 @@ final class Controller: NSObject {
     return vev
   }
 
-  func toggle(_ pid: pid_t) {
-    if revealed.contains(pid) {
-      revealed.remove(pid)
-      post(HIDE, String(pid))
+  // An app's windows as they should read in the menu, oldest first (window
+  // numbers ascend with age — a stable order, unlike titles). Agents send an
+  // empty label when a window has nothing worth showing, and some apps give
+  // every window the same title, so number those rather than list "Ghostty"
+  // three times with no way to tell which is which.
+  func windowRows(_ pid: pid_t) -> [(number: Int, title: String)] {
+    let wins = (windows[pid] ?? []).sorted { $0.number < $1.number }
+    var seen = [String: Int]()
+    return wins.enumerated().map { i, w in
+      let base = w.title.isEmpty ? "Window \(i + 1)" : w.title
+      seen[base, default: 0] += 1
+      let n = seen[base]!
+      return (number: w.number, title: n == 1 ? base : "\(base) (\(n))")
+    }
+  }
+
+  // Every reveal target an app owns: one per titled window, or the process
+  // itself when its agent announced no windows (nothing finer to address).
+  func targets(_ pid: pid_t) -> [String] {
+    let wins = windows[pid] ?? []
+    return wins.isEmpty ? [String(pid)] : wins.map { "\(pid)#\($0.number)" }
+  }
+
+  // Half-checked when an app has some but not all of its windows revealed.
+  func appMark(_ pid: pid_t) -> HoverRow.Mark {
+    let all = targets(pid)
+    let on = all.filter(revealed.contains).count
+    if on == 0 { return .check(false) }
+    return on == all.count ? .check(true) : .partial
+  }
+
+  func toggleTarget(_ target: String) {
+    if revealed.contains(target) {
+      revealed.remove(target)
+      post(HIDE, target)
     } else {
-      revealed.insert(pid)
-      post(SHOW, String(pid))
+      revealed.insert(target)
+      post(SHOW, target)
+    }
+  }
+
+  // The app checkbox drives all its windows: reveal every one unless they're
+  // already all revealed, in which case hide them.
+  func toggleApp(_ pid: pid_t) {
+    let all = targets(pid)
+    let reveal = !all.allSatisfy(revealed.contains)
+    for t in all {
+      if reveal == revealed.contains(t) { continue }
+      toggleTarget(t)
     }
   }
 
   @objc func revealAll() {
     // Only apps with an injected agent can actually be revealed.
-    revealed = Set(runningApps().map { $0.processIdentifier }.filter { labels[$0] != nil })
+    revealed = Set(
+      runningApps().map { $0.processIdentifier }.filter { labels[$0] != nil }
+        .flatMap(targets))
     post(SHOW, nil)
     buildContent()
   }

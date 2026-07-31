@@ -3,7 +3,6 @@ quit-after-last-window-closed = true
 macos-option-as-alt = true
 macos-titlebar-style = hidden
 window-decoration = false
-title =" "
 
 # Automatically install terminfo on remote SSH hosts and preserve TERM in sudo
 shell-integration-features = ssh-terminfo,sudo
