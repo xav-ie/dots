@@ -101,10 +101,23 @@ in
 
     cornerRadius = lib.mkOption {
       type = lib.types.str;
-      default = "0.0";
+      default = "1.0";
       description = ''
-        Corner radius the dylib forces NSThemeFrame to report. 0.0 = fully
-        square. Useful values: 0.0, 4.0, 10.0 (Sequoia), 16.0 (Tahoe default).
+        Corner radius the dylib forces NSThemeFrame to report. 1.0 is
+        visually indistinguishable from square and is the lowest SAFE
+        value — see the warning below. Useful values: 1.0, 4.0, 10.0
+        (Sequoia), 16.0 (Tahoe default).
+
+        DO NOT set 0.0 on macOS 26.5.x. A reported radius of exactly zero
+        makes AppKit compute a degenerate window hit region: windows draw
+        normally but swallow mouse clicks. Symptom is app-specific and
+        looks like anything but a corner bug — on 26.5.1 every control in
+        System Settings (Wi-Fi toggle, Software Update button, all the
+        panes' remote views) rendered fine and was completely unclickable,
+        while the same Wi-Fi toggle in Control Center worked. Bisected to
+        _cornerRadius and _getCachedWindowCornerRadius; both break clicks
+        at 0.0 and both are needed for squareness, so the radius value —
+        not the hook set — is the knob. Was fine before 26.5.x.
       '';
     };
   };
