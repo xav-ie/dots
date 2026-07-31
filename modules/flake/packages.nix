@@ -6,6 +6,7 @@
       lib,
       pkgs,
       system,
+      writeNuApplication,
       ...
     }:
     let
@@ -16,6 +17,12 @@
       };
     in
     {
+      # The single definition of the nu-script builder: every module that needs
+      # it takes `writeNuApplication` as a perSystem arg, package set included.
+      _module.args.writeNuApplication =
+        inputs.nuenv.lib.mkNushellScriptApplication pkgs.nushell pkgs.writeTextFile
+          pkgs.lib;
+
       packages = import (inputs.self + "/packages") {
         # ags only builds on linux; null on darwin, where it is unused.
         agsPackages = inputs.ags.packages.${system} or null;
@@ -66,7 +73,7 @@
             })
           ];
         };
-        nuenv = inputs.nuenv.lib;
+        inherit writeNuApplication;
         muscat-pkg = inputs.muscat.packages.${system}.muscat;
         inherit (inputs)
           bun-demincer-src

@@ -42,15 +42,14 @@
   generate-kaomoji,
   mcp-atlassian-src,
   muscat-pkg,
-  nuenv,
   protonmail-mcp-src,
   simulstreaming-src,
   slack-mcp-server-src,
+  writeNuApplication,
   zerobrew-src,
 }:
 let
   optionalAttrs = bool: attrSet: if bool then attrSet else { };
-  writeNuApplication = nuenv.mkNushellScriptApplication pkgs.nushell pkgs.writeTextFile pkgs.lib;
 
   notify = pkgs.callPackage ./notify { inherit generate-kaomoji writeNuApplication; };
 in
