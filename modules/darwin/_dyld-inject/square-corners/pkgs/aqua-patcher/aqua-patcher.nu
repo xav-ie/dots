@@ -94,10 +94,21 @@ def stage_one [car: string] {
   $out
 }
 
-def "main apply" [
-  --targets: list<string> = ["DarkAqua.car"]   # subset of [Aqua.car, DarkAqua.car]
-] {
+# `which` is a plain string, matching `main restore` — NOT a list<string>.
+# Nushell cannot pass a list to a script invoked as an external command:
+# `--targets [a b]`, `...[a b]` and `--targets "[a, b]"` all fail with
+# "expected list", so a list-typed param is unreachable from the CLI.
+def "main apply" [which: string = "both"] {
   require_security_disabled
+  let targets = if $which == "light" {
+    [$LIGHT_CAR]
+  } else if $which == "dark" {
+    [$DARK_CAR]
+  } else if $which == "both" {
+    [$LIGHT_CAR $DARK_CAR]
+  } else {
+    err "usage: aqua-patcher apply [light|dark|both]"
+  }
   main backup
 
   mut to_install = []
@@ -192,9 +203,10 @@ def main [] {
   print "Usage: aqua-patcher <subcommand>"
   print ""
   print "  backup                        copy current Aqua.car & DarkAqua.car to backup locations"
-  print "  apply [--targets <list>]      run car-edit on the system .car(s), install patched,"
-  print "                                bless a new boot snapshot. Idempotent."
-  print "                                Default targets: [DarkAqua.car]"
+  print "  apply [light|dark|both]       run car-edit on the system .car(s), install patched,"
+  print "                                bless a new boot snapshot. Idempotent. Default: both."
+  print "                                Re-run after every macOS point update — the update"
+  print "                                reseals the system snapshot and reverts the patch."
   print "  restore [light|dark|both]     restore .car(s) from backup, bless, reboot"
   print "  status                        SIP/auth-root state, current/backup/staged md5s"
 }
