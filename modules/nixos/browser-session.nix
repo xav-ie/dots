@@ -1,7 +1,7 @@
 # Consumes the browser-session-mcp flake's NixOS module (Chrome + the
 # listener/reaper/takeover daemons) and layers on the praesidium-specific bits:
 # the NVIDIA GPU Chrome flags and the Traefik/mcp-proxy routing. The MCP server
-# itself runs in the mcp-proxy container (see _mcp-proxy/servers/browser-session).
+# itself runs in the mcp-proxy container (see mcp-proxy/servers/browser-session).
 {
   flake.modules.nixos.praesidium =
     {
