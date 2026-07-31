@@ -15,6 +15,18 @@ in
   config = {
     networking.hostName = "nox";
 
+    # Launched from the dyld-inject agent (after its setenv) instead of
+    # from macOS login items, so they actually get the injected dylibs.
+    # Each must ALSO be removed from System Settings → General → Login
+    # Items, or the login item wins and the app starts uninjected.
+    services.dyldInject.startupApps = [
+      "Claude"
+      "Dayflow"
+      "FluidVoice"
+      "Klack"
+      "WakaTime"
+    ];
+
     # https://github.com/nix-darwin/nix-darwin/issues/1035
     # seems to be waiting on
     # https://github.com/nix-darwin/nix-darwin/pull/1205

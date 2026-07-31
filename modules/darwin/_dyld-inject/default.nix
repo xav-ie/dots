@@ -73,6 +73,29 @@ let
   # auto-resolved by callPackage from pkgs.
   dyld-check = pkgs.callPackage ./pkgs/dyld-check { };
   joined = cfg.libraries |> lib.concatStringsSep ":";
+
+  # Runs at login: set the env, WAIT until launchd actually reports it
+  # back, then launch the startup apps. The wait is the whole point —
+  # `open` hands the spawn to launchd, which stamps the child with the
+  # domain env as it exists at spawn time, so opening before the value
+  # has landed would reproduce the very race this replaces.
+  loginScript = pkgs.writeShellScript "dyld-inject-login" ''
+    /bin/launchctl setenv DYLD_INSERT_LIBRARIES ${lib.escapeShellArg joined}
+
+    i=0
+    while [ "$(/bin/launchctl getenv DYLD_INSERT_LIBRARIES)" != ${lib.escapeShellArg joined} ]; do
+      i=$((i + 1))
+      if [ "$i" -gt 50 ]; then
+        echo "dyld-inject: setenv did not take after 5s; launching anyway" >&2
+        break
+      fi
+      /bin/sleep 0.1
+    done
+
+    ${lib.concatMapStringsSep "\n" (app: ''
+      /usr/bin/open -g -a ${lib.escapeShellArg app} || echo "dyld-inject: could not open ${app}" >&2
+    '') cfg.startupApps}
+  '';
 in
 {
   imports = [
@@ -97,6 +120,30 @@ in
         re-applies it on every `darwin-rebuild activate`.
       '';
     };
+
+    startupApps = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      example = lib.literalExpression ''[ "Claude" "Dayflow" ]'';
+      description = ''
+        Apps to launch from THIS agent, right after the setenv, instead
+        of from macOS's login items.
+
+        Login items and this agent both start in launchd's login burst
+        with no ordering between them, so a login item can spawn before
+        the setenv lands and come up with no DYLD_INSERT_LIBRARIES at
+        all. Launching from here is ordered by construction: the setenv
+        and the `open` calls are sequential statements in one script.
+
+        A system-domain LaunchDaemon is not an earlier fix — a job's
+        setenv only reaches its own sub-domain; there is no system to
+        gui inheritance.
+
+        Each entry is passed to `open -g -a`, so use the name as it
+        appears in /Applications. You MUST also remove the app from
+        System Settings to General to Login Items, or it will still race.
+      '';
+    };
   };
 
   config = lib.mkMerge [
@@ -109,12 +156,7 @@ in
       home-manager.users.${config.defaultUser}.launchd.agents.dyld-inject = {
         enable = true;
         config = {
-          ProgramArguments = [
-            "/bin/launchctl"
-            "setenv"
-            "DYLD_INSERT_LIBRARIES"
-            joined
-          ];
+          ProgramArguments = [ "${loginScript}" ];
           RunAtLoad = true;
         };
       };
