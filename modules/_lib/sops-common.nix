@@ -49,6 +49,22 @@
         mode = "0400";
       };
 
+      # Google OAuth client (own GCP project, Tag Manager API enabled) plus a
+      # refresh token for it — the self-hosted GTM MCP server trades the refresh
+      # token for access tokens itself, so there is no browser flow at runtime.
+      secrets."gtm/client_id" = {
+        owner = config.defaultUser;
+        mode = "0400";
+      };
+      secrets."gtm/client_secret" = {
+        owner = config.defaultUser;
+        mode = "0400";
+      };
+      secrets."gtm/refresh_token" = {
+        owner = config.defaultUser;
+        mode = "0400";
+      };
+
       # Proton Mail Bridge SMTP creds (protonmail-mcp). Username is the Proton
       # address; password is Bridge's generated SMTP password, not the login one.
       secrets."proton/smtp_username" = {

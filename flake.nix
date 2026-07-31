@@ -145,6 +145,8 @@
     slack-mcp-server.flake = false;
     protonmail-mcp-src.url = "github:barhatch/protonmail-mcp-server";
     protonmail-mcp-src.flake = false;
+    gtm-mcp-src.url = "github:stape-io/google-tag-manager-mcp-server/994b962e00bd935f79f331c431f6f67e60354835";
+    gtm-mcp-src.flake = false;
     executor-src.url = "github:RhysSullivan/executor/v1.4.19";
     executor-src.flake = false;
     bun-demincer-src.url = "github:xav-ie/bun-demincer/fix/linux-dataStart-byte-count";

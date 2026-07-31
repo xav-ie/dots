@@ -919,6 +919,23 @@
         "type": "github"
       }
     },
+    "gtm-mcp-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1785261516,
+        "narHash": "sha256-+oTwh/wpdKj75HbL3FtUmEH0HFoU30UoU4rUEhhcGdg=",
+        "owner": "stape-io",
+        "repo": "google-tag-manager-mcp-server",
+        "rev": "994b962e00bd935f79f331c431f6f67e60354835",
+        "type": "github"
+      },
+      "original": {
+        "owner": "stape-io",
+        "repo": "google-tag-manager-mcp-server",
+        "rev": "994b962e00bd935f79f331c431f6f67e60354835",
+        "type": "github"
+      }
+    },
     "hardware": {
       "locked": {
         "lastModified": 1766568855,
@@ -2317,6 +2334,7 @@
         "generate-kaomoji": "generate-kaomoji",
         "gitignore": "gitignore",
         "glsl_analyzer": "glsl_analyzer",
+        "gtm-mcp-src": "gtm-mcp-src",
         "hardware": "hardware",
         "herdr": "herdr",
         "himalaya-latest": "himalaya-latest",
