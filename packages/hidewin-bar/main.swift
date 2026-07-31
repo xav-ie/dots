@@ -2,8 +2,7 @@
 //
 // Windows are VISIBLE by default (so recorders like Dayflow keep working).
 // This menubar app's "Screenshare Mode" hides everything from capture for
-// a meeting; you then reveal the specific apps you want to present. The
-// eye/eye.slash icon shows whether Screenshare Mode is active.
+// a meeting; you then reveal the specific apps you want to present.
 //
 // The dropdown is a custom NSPanel with sharingType = .none, NOT an
 // NSMenu: native menu windows are a privileged server-rendered surface
@@ -17,7 +16,7 @@
 // don't touch sketchybar — we only PUBLISH state: on a Screenshare Mode change
 // we write ~/.cache/hidewin/mode and post `mode-changed` (a sketchybar event
 // the item subscribes to). The plugin's mouse.clicked runs `hidewin panel <x>`,
-// posting the toggle below with the item's x so we place the panel under it.
+// posting TOGGLE with the item's x so we place the panel under it.
 //
 // Targeting is per-PROCESS (pid): two Firefox profile instances share a
 // bundle id but are separate processes, so keying by pid lets you reveal
@@ -46,8 +45,65 @@ func post(_ name: Notification.Name, _ object: String?) {
     name, object: object, userInfo: nil, deliverImmediately: true)
 }
 
-// Top-down layout so the app list reads like a menu.
-final class FlippedView: NSView { override var isFlipped: Bool { true } }
+let PANEL_W: CGFloat = 280
+let PANEL_RADIUS: CGFloat = 16
+let PANEL_PAD: CGFloat = 6
+let ROW_W = PANEL_W - PANEL_PAD * 2
+let ROW_H: CGFloat = 24
+let SEP_H: CGFloat = 9
+
+// Outside of drawing, .cgColor resolves against NSAppearance.current, which here
+// is the light default no matter what the panel is actually showing — so resolve
+// the appearance explicitly instead of leaning on dynamic colors.
+func isDark(_ appearance: NSAppearance) -> Bool {
+  appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+}
+
+func checkImage(_ on: Bool) -> NSImage? {
+  on ? NSImage(systemSymbolName: "checkmark", accessibilityDescription: nil) : nil
+}
+
+func separatorBox() -> NSBox {
+  let v = NSBox(frame: NSRect(x: 0, y: 0, width: ROW_W, height: 1))
+  v.boxType = .separator
+  return v
+}
+
+// Top-down layout so the app list reads like a menu, plus the scrim behind the
+// rows: .clear glass alone leaves label text unreadable over a bright app behind
+// the panel. tintColor can't fix it (it lightens, never darkens), so this puts a
+// translucent wash between the glass and the rows — dark and see-through like a
+// notification banner, glass edge and refraction intact. It follows the system
+// appearance so it stays behind whatever labelColor resolves to.
+final class PanelBackground: NSView {
+  override var isFlipped: Bool { true }
+
+  override init(frame: NSRect) {
+    super.init(frame: frame)
+    wantsLayer = true
+    layer?.cornerRadius = PANEL_RADIUS
+    layer?.masksToBounds = true
+    applyScrim()
+  }
+  required init?(coder: NSCoder) { fatalError() }
+
+  // A CGColor is a snapshot, so unlike the labels it won't restyle itself when
+  // the system flips between Light and Dark. Re-resolve it when told to — and
+  // re-soften the glass, which rebuilds its material (and with it the stock
+  // blur radius) on the same flip.
+  override func viewDidChangeEffectiveAppearance() {
+    applyScrim()
+    // The glass IS the window's contentView; its backdrop layer is a sibling of
+    // ours, not an ancestor, so patch from the top of the tree.
+    guard let glass = window?.contentView else { return }
+    DispatchQueue.main.async { Controller.reduceGlassBlur(glass) }
+  }
+
+  private func applyScrim() {
+    let scrim: NSColor = isDark(effectiveAppearance) ? .black : .white
+    layer?.backgroundColor = scrim.withAlphaComponent(0.4).cgColor
+  }
+}
 
 // A menu-like row: hover-highlights, whole row is clickable. Left slot shows a
 // checkmark (revealed), a ⚠ (agent not injected), or nothing (actions/header).
@@ -60,40 +116,36 @@ final class HoverRow: NSView {
   var onClick: (() -> Void)?
   private let label = NSTextField(labelWithString: "")
   private let mark = NSImageView()
-  private var markTint: NSColor = .labelColor
-  private var markIsCheck = false
-  private let enabled: Bool
   private var track: NSTrackingArea?
+  private var hovered = false
 
   init(
-    width: CGFloat, height: CGFloat, icon: NSImage?, title: String, subtitle: String?, mark m: Mark,
-    enabled: Bool
+    _ title: String, icon: NSImage? = nil, subtitle: String? = nil, mark m: Mark = .none,
+    enabled: Bool = true
   ) {
-    self.enabled = enabled
-    super.init(frame: NSRect(x: 0, y: 0, width: width, height: height))
+    super.init(frame: NSRect(x: 0, y: 0, width: ROW_W, height: ROW_H))
     wantsLayer = true
-    layer?.cornerRadius = 5
+    layer?.cornerRadius = PANEL_RADIUS - PANEL_PAD  // concentric with the panel's corners
 
     var x: CGFloat = 8
-    mark.frame = NSRect(x: x, y: (height - 13) / 2, width: 13, height: 13)
+    mark.frame = NSRect(x: x, y: (ROW_H - 13) / 2, width: 13, height: 13)
+    mark.contentTintColor = .labelColor
     switch m {
     case .check(let on):
-      markIsCheck = true
-      mark.image = on ? NSImage(systemSymbolName: "checkmark", accessibilityDescription: nil) : nil
+      mark.image = checkImage(on)
     case .warning:
-      markTint = .systemOrange
+      mark.contentTintColor = .systemOrange
       mark.image = NSImage(
         systemSymbolName: "exclamationmark.triangle.fill", accessibilityDescription: nil)
     case .none:
       break
     }
-    mark.contentTintColor = markTint
     addSubview(mark)
     x += 20
 
-    if let icon = icon {
+    if let icon {
       icon.size = NSSize(width: 16, height: 16)
-      let iv = NSImageView(frame: NSRect(x: x, y: (height - 16) / 2, width: 16, height: 16))
+      let iv = NSImageView(frame: NSRect(x: x, y: (ROW_H - 16) / 2, width: 16, height: 16))
       iv.image = icon
       addSubview(iv)
       x += 22
@@ -112,15 +164,12 @@ final class HoverRow: NSView {
     label.attributedStringValue = attr
     label.textColor = enabled ? .labelColor : .secondaryLabelColor
     label.lineBreakMode = .byTruncatingTail
-    label.frame = NSRect(x: x, y: (height - 16) / 2, width: width - x - 8, height: 16)
+    label.frame = NSRect(x: x, y: (ROW_H - 16) / 2, width: ROW_W - x - 8, height: 16)
     addSubview(label)
   }
   required init?(coder: NSCoder) { fatalError() }
 
-  func setChecked(_ on: Bool) {
-    mark.image = on ? NSImage(systemSymbolName: "checkmark", accessibilityDescription: nil) : nil
-    mark.contentTintColor = markTint
-  }
+  func setChecked(_ on: Bool) { mark.image = checkImage(on) }
 
   override func updateTrackingAreas() {
     super.updateTrackingAreas()
@@ -131,14 +180,26 @@ final class HoverRow: NSView {
     track = t
   }
   override func mouseEntered(with event: NSEvent) {
-    layer?.backgroundColor = NSColor.selectedContentBackgroundColor.cgColor
-    label.textColor = .white
-    if markIsCheck { mark.contentTintColor = .white }
+    hovered = true
+    applyHighlight()
   }
   override func mouseExited(with event: NSEvent) {
-    layer?.backgroundColor = NSColor.clear.cgColor
-    label.textColor = enabled ? .labelColor : .secondaryLabelColor
-    mark.contentTintColor = markTint
+    hovered = false
+    applyHighlight()
+  }
+  // Same CGColor-snapshot problem as the scrim: repaint on an appearance flip.
+  override func viewDidChangeEffectiveAppearance() { applyHighlight() }
+
+  // Liquid Glass highlights are colorless — a faint wash, not an accent-filled
+  // slab, so the glass underneath still reads through. Light in Dark Mode, dark
+  // in Light Mode.
+  private func applyHighlight() {
+    guard hovered else {
+      layer?.backgroundColor = NSColor.clear.cgColor
+      return
+    }
+    let c: NSColor = isDark(effectiveAppearance) ? .white : .black
+    layer?.backgroundColor = c.withAlphaComponent(0.15).cgColor
   }
   override func mouseDown(with event: NSEvent) {}  // claim the event so mouseUp fires
   override func mouseUp(with event: NSEvent) {
@@ -148,7 +209,7 @@ final class HoverRow: NSView {
 
 final class Controller: NSObject {
   let panel = NSPanel(
-    contentRect: NSRect(x: 0, y: 0, width: 280, height: 40),
+    contentRect: NSRect(x: 0, y: 0, width: PANEL_W, height: 40),
     styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
   var revealed = Set<pid_t>()
   var labels = [pid_t: String]()  // pid -> label; PRESENCE means the agent is injected
@@ -168,8 +229,6 @@ final class Controller: NSObject {
     panel.backgroundColor = .clear
     panel.isOpaque = false
 
-    // The sketchybar plugin's mouse.clicked runs `hidewin panel <x>`, posting
-    // this with the item's x so we place the panel under it.
     DistributedNotificationCenter.default().addObserver(
       forName: TOGGLE, object: nil, queue: .main
     ) { [weak self] note in
@@ -180,14 +239,14 @@ final class Controller: NSObject {
     DistributedNotificationCenter.default().addObserver(
       forName: IAM, object: nil, queue: .main
     ) { [weak self] note in
-      guard let self = self, let s = note.object as? String else { return }
+      guard let self, let s = note.object as? String else { return }
       let parts = s.components(separatedBy: "\t")
       guard parts.count == 2, let pid = pid_t(parts[0]) else { return }
       // Refresh when a pid first proves it's injected (⚠ → checkbox) OR when its
       // label improves (e.g. Firefox's "— Work" suffix set once a window is key).
-      let changed = self.labels[pid] != parts[1]
-      self.labels[pid] = parts[1]
-      if changed && self.panel.isVisible { self.buildContent() }
+      let changed = labels[pid] != parts[1]
+      labels[pid] = parts[1]
+      if changed && panel.isVisible { buildContent() }
     }
     post(WHO, nil)
     // Fail safe: if we were hiding when last quit (e.g. crashed mid-meeting),
@@ -195,12 +254,12 @@ final class Controller: NSObject {
     if UserDefaults.standard.bool(forKey: "screenshareMode") {
       setScreenshareMode(true)
     } else {
-      publishMode()  // write initial state for the sketchybar plugin
+      publishMode()
     }
   }
 
-  // The master toggle. ON hides everything (except already-revealed apps) and
-  // keeps new apps hidden as they launch; OFF makes everything visible again.
+  // ON hides everything (except already-revealed apps) and keeps new apps hidden
+  // as they launch; OFF makes everything visible again.
   func setScreenshareMode(_ on: Bool) {
     screenshareMode = on
     UserDefaults.standard.set(on, forKey: "screenshareMode")
@@ -212,10 +271,10 @@ final class Controller: NSObject {
         launchObserver = NSWorkspace.shared.notificationCenter.addObserver(
           forName: NSWorkspace.didLaunchApplicationNotification, object: nil, queue: .main
         ) { [weak self] n in
-          guard let self = self, self.screenshareMode,
+          guard let self, screenshareMode,
             let app = n.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
           else { return }
-          if !self.revealed.contains(app.processIdentifier) {
+          if !revealed.contains(app.processIdentifier) {
             post(HIDE, String(app.processIdentifier))
           }
         }
@@ -288,120 +347,160 @@ final class Controller: NSObject {
   }
 
   func buildContent() {
-    let W: CGFloat = 280
-    let pad: CGFloat = 6
-    let rowH: CGFloat = 24
-    let sepH: CGFloat = 9
-    let rowW = W - pad * 2
     let apps = runningApps()
-    var nameCount = [String: Int]()
-    for a in apps { nameCount[a.localizedName ?? "", default: 0] += 1 }
 
-    // (view, slotHeight) in top-down order.
-    var items: [(NSView, CGFloat)] = []
+    // Top-down order. A row's slot height follows from its type: separators
+    // (NSBox) get SEP_H, everything else ROW_H.
+    var items: [NSView] = []
 
+    // Short wording on purpose: at this size the old "Screenshare Mode — hidden
+    // from capture" overruns the 252pt slot, and the mode is already named by
+    // the toggle row directly below.
     let header = NSTextField(
-      labelWithString: screenshareMode
-        ? "Screenshare Mode — hidden from capture" : "Normal — all apps visible")
-    header.font = .systemFont(ofSize: 11, weight: .semibold)
-    header.textColor = .secondaryLabelColor
-    header.frame = NSRect(x: 14, y: 0, width: W - 28, height: rowH)
-    items.append((header, rowH))
+      labelWithString: screenshareMode ? "Selected apps visible" : "All apps visible")
+    header.font = .systemFont(ofSize: 13, weight: .semibold)
+    header.textColor = .labelColor  // full contrast: white on the dark scrim, black on the light one
+    header.frame = NSRect(x: 14, y: 0, width: PANEL_W - 28, height: ROW_H)
+    items.append(header)
 
-    // Master toggle.
-    let modeRow = HoverRow(
-      width: rowW, height: rowH, icon: nil, title: "Screenshare Mode", subtitle: nil,
-      mark: .check(screenshareMode), enabled: true)
+    let modeRow = HoverRow("Screenshare Mode", mark: .check(screenshareMode))
     modeRow.onClick = { [weak self] in
-      guard let self = self else { return }
-      self.setScreenshareMode(!self.screenshareMode)
-      self.buildContent()
+      guard let self else { return }
+      setScreenshareMode(!screenshareMode)
+      buildContent()
     }
-    items.append((modeRow, rowH))
-    items.append((separatorBox(rowW), sepH))
+    items.append(modeRow)
 
     if screenshareMode {
+      var nameCount = [String: Int]()
+      for a in apps { nameCount[a.localizedName ?? "", default: 0] += 1 }
+
+      items.append(separatorBox())
       // Reveal specific apps to present; everything else stays hidden.
       for app in apps {
         let pid = app.processIdentifier
-        let injected = labels[pid] != nil
-        let base = labels[pid] ?? app.localizedName ?? app.bundleIdentifier!
-        var title = base
-        if !injected && (nameCount[app.localizedName ?? ""] ?? 0) > 1 { title = "\(base) (\(pid))" }
         let row: HoverRow
-        if injected {
-          row = HoverRow(
-            width: rowW, height: rowH, icon: app.icon, title: title, subtitle: nil,
-            mark: .check(revealed.contains(pid)), enabled: true)
+        if let label = labels[pid] {
+          row = HoverRow(label, icon: app.icon, mark: .check(revealed.contains(pid)))
           row.onClick = { [weak self, weak row] in
-            guard let self = self else { return }
-            self.toggle(pid)
-            row?.setChecked(self.revealed.contains(pid))
+            guard let self else { return }
+            toggle(pid)
+            row?.setChecked(revealed.contains(pid))
           }
         } else {
           // No agent in this process — hiding would silently fail. Say so.
+          let name = app.localizedName ?? app.bundleIdentifier!
+          let dup = (nameCount[app.localizedName ?? ""] ?? 0) > 1
           row = HoverRow(
-            width: rowW, height: rowH, icon: app.icon, title: title, subtitle: "restart to enable",
+            dup ? "\(name) (\(pid))" : name, icon: app.icon, subtitle: "restart to enable",
             mark: .warning, enabled: false)
-          row.onClick = nil
         }
-        items.append((row, rowH))
+        items.append(row)
       }
-      items.append((separatorBox(rowW), sepH))
+      items.append(separatorBox())
       for (label, action) in [
         ("Reveal All", #selector(revealAll)), ("Hide All", #selector(hideAll)),
       ] {
-        let row = HoverRow(
-          width: rowW, height: rowH, icon: nil, title: label, subtitle: nil, mark: .none,
-          enabled: true)
+        let row = HoverRow(label)
         row.onClick = { [weak self] in self?.perform(action) }
-        items.append((row, rowH))
+        items.append(row)
       }
-    } else {
-      let note = HoverRow(
-        width: rowW, height: rowH, icon: nil,
-        title: "Turn on before a meeting to hide apps", subtitle: nil, mark: .none, enabled: false)
-      items.append((note, rowH))
     }
 
-    items.append((separatorBox(rowW), sepH))
-    let quitRow = HoverRow(
-      width: rowW, height: rowH, icon: nil, title: "Quit hidewin", subtitle: nil, mark: .none,
-      enabled: true)
+    items.append(separatorBox())
+    let quitRow = HoverRow("Quit hidewin")
     quitRow.onClick = { [weak self] in self?.quit() }
-    items.append((quitRow, rowH))
+    items.append(quitRow)
 
-    let height = pad * 2 + items.reduce(0) { $0 + $1.1 }
-    let container = FlippedView(frame: NSRect(x: 0, y: 0, width: W, height: height))
-    var y = pad
-    for (v, h) in items {
-      if v is NSBox {
-        v.setFrameOrigin(NSPoint(x: pad, y: y + (h - 1) / 2))
-      } else if v === header {
-        v.setFrameOrigin(NSPoint(x: 14, y: y + (h - rowH) / 2))
-      } else {
-        v.setFrameOrigin(NSPoint(x: pad, y: y))
-      }
+    let height = PANEL_PAD * 2 + items.reduce(0) { $0 + ($1 is NSBox ? SEP_H : ROW_H) }
+    let container = PanelBackground(frame: NSRect(x: 0, y: 0, width: PANEL_W, height: height))
+    var y = PANEL_PAD
+    for v in items {
+      let sep = v is NSBox
+      v.setFrameOrigin(
+        NSPoint(x: v === header ? 14 : PANEL_PAD, y: sep ? y + (SEP_H - 1) / 2 : y))
       container.addSubview(v)
-      y += h
+      y += sep ? SEP_H : ROW_H
     }
 
-    let vev = NSVisualEffectView(frame: NSRect(x: 0, y: 0, width: W, height: height))
+    panel.setContentSize(NSSize(width: PANEL_W, height: height))
+    let backdrop = glassBackdrop(NSRect(x: 0, y: 0, width: PANEL_W, height: height), container)
+    panel.contentView = backdrop
+    // The glass layer tree only exists after layout, so soften afterwards.
+    DispatchQueue.main.async { Controller.reduceGlassBlur(backdrop) }
+  }
+
+  // Stock glass blurs the backdrop at inputBlurRadius 10 (on a half-scale
+  // backdrop), which smears whatever is behind the panel into mush. Nothing on
+  // NSGlassEffectView exposes the radius, so we reach into its layer tree and
+  // rebuild the private `glassBackground` CAFilter with a smaller one, copying
+  // every other input verbatim. Mutating the committed filter in place does
+  // nothing (it's already handed to the render server) — it has to be built
+  // fresh and reassigned.
+  // ponytail: private CoreAnimation API; a macOS update can rename the filter or
+  // its inputs. It fails soft — no filter found means stock blur, nothing worse.
+  static func reduceGlassBlur(_ view: NSView, radius: Double = 3) {
+    guard let root = view.layer,
+      let filterClass = NSClassFromString("CAFilter") as? NSObject.Type
+    else { return }
+
+    func visit(_ layer: CALayer) {
+      defer { layer.sublayers?.forEach(visit) }
+      guard String(describing: type(of: layer)) == "CABackdropLayer",
+        let filters = (layer as NSObject).value(forKey: "filters") as? [NSObject]
+      else { return }
+      var rebuilt: [NSObject] = []
+      for filter in filters {
+        guard "\(filter)" == "glassBackground",
+          let fresh = (filterClass as AnyObject).perform(
+            NSSelectorFromString("filterWithName:"), with: "glassBackground")?
+            .takeUnretainedValue() as? NSObject,
+          let inputs = filter.perform(NSSelectorFromString("inputKeys"))?
+            .takeUnretainedValue() as? [String]
+        else {
+          rebuilt.append(filter)
+          continue
+        }
+        for key in inputs where key != "inputBlurRadius" {
+          if let v = filter.value(forKey: key) { fresh.setValue(v, forKey: key) }
+        }
+        fresh.setValue(radius, forKey: "inputBlurRadius")
+        rebuilt.append(fresh)
+      }
+      CATransaction.begin()
+      CATransaction.setDisableActions(true)
+      (layer as NSObject).setValue(rebuilt, forKey: "filters")
+      CATransaction.commit()
+    }
+    visit(root)
+  }
+
+  // Liquid Glass (macOS 26 NSGlassEffectView), resolved at RUNTIME: the nixpkgs
+  // Swift SDK predates the class, so we can't name it at compile time. Falls
+  // back to the old vibrancy material on anything older.
+  //
+  // style 1 = .clear. The default (.regular, 0) lays a heavy scrim over the
+  // backdrop and reads like plain vibrancy; .clear lets the colors behind
+  // actually come through. Verified side by side against a test pattern.
+  func glassBackdrop(_ frame: NSRect, _ content: NSView) -> NSView {
+    if let cls = NSClassFromString("NSGlassEffectView") as? NSObject.Type,
+      let glass = cls.init() as? NSView
+    {
+      glass.frame = frame
+      glass.setValue(1, forKey: "style")
+      glass.setValue(PANEL_RADIUS, forKey: "cornerRadius")
+      glass.setValue(content, forKey: "contentView")
+      return glass
+    }
+    let vev = NSVisualEffectView(frame: frame)
     vev.material = .menu
     vev.state = .active
     vev.blendingMode = .behindWindow
     vev.wantsLayer = true
     vev.layer?.cornerRadius = 8
     vev.layer?.masksToBounds = true
-    vev.addSubview(container)
-    panel.setContentSize(NSSize(width: W, height: height))
-    panel.contentView = vev
-  }
-
-  func separatorBox(_ width: CGFloat) -> NSBox {
-    let v = NSBox(frame: NSRect(x: 0, y: 0, width: width, height: 1))
-    v.boxType = .separator
-    return v
+    vev.addSubview(content)
+    return vev
   }
 
   func toggle(_ pid: pid_t) {
