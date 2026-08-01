@@ -47,10 +47,12 @@
 let
   optionalAttrs = bool: attrSet: if bool then attrSet else { };
 
+  is-sshed = pkgs.callPackage ./is-sshed { inherit writeNuApplication; };
   notify = pkgs.callPackage ./notify { inherit generate-kaomoji writeNuApplication; };
+  uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
 in
 rec {
-  inherit notify;
+  inherit is-sshed notify uair-toggle-and-notify;
   default = pkgs.callPackage ./cache-command { };
   apple-emoji-linux = pkgs.callPackage ./apple-emoji-linux { };
   base-ref = pkgs.callPackage ./base-ref { inherit writeNuApplication; };
@@ -84,7 +86,6 @@ rec {
   gp = pkgs.callPackage ./gp { inherit update-pr writeNuApplication; };
   gpw = pkgs.callPackage ./gpw { inherit browse writeNuApplication; };
   grw = pkgs.callPackage ./grw { inherit browse writeNuApplication; };
-  is-sshed = pkgs.callPackage ./is-sshed { inherit writeNuApplication; };
   lint-staged = pkgs.callPackage ./lint-staged { inherit writeNuApplication; };
   localip = pkgs.callPackage ./localip { inherit writeNuApplication; };
   mcp-atlassian = pkgs.callPackage ./mcp-atlassian { inherit mcp-atlassian-src pkgs-bleeding; };
@@ -109,7 +110,6 @@ rec {
   toggle-theme = pkgs.callPackage ./toggle-theme { inherit writeNuApplication; };
   toml-merge = pkgs.callPackage ./toml-merge { };
   tsc-filter = pkgs.callPackage ./tsc-filter { inherit writeNuApplication; };
-  uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
   update-pr = pkgs.callPackage ./update-pr { inherit pr-summary writeNuApplication; };
   wakafetch = pkgs.callPackage ./wakafetch { };
   wakatime-cli = pkgs.callPackage ./wakatime-cli { };
@@ -138,7 +138,7 @@ rec {
 })
 // (optionalAttrs isLinux rec {
   askpass = pkgs.callPackage ./askpass {
-    inherit agsPackages;
+    inherit agsPackages is-sshed;
     fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
   };
   bar = pkgs.callPackage ./bar {
@@ -147,15 +147,13 @@ rec {
       notification-center
       pickers
       uair
+      uair-toggle-and-notify
       virtual-headset-ctl
       virtual-headset-panel
       ;
     # Plain (non-CUDA) build: the bar only needs the `record toggle` IPC client,
     # which never loads whisper, so it stays out of the heavy GPU closure.
     inherit (pkgs-bleeding) hyprwhspr-rs;
-    # uair-toggle-and-notify lives in the base (non-Linux) set, out of scope
-    # here; rebuild it from the same inputs (identical store path).
-    uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
     fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
   };
   browser-session-mcp = browser-session-mcp-pkg;
