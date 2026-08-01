@@ -423,8 +423,6 @@
             # no wrapper of their own. Kept live-editable.
             ".claude/lib-transcript.nu".source =
               config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/lib-transcript.nu";
-            ".claude/lib-focus.nu".source =
-              config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/lib-focus.nu";
             ".claude/schemas/edit-hooks.schema.json".source =
               config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/edit-hooks.schema.json";
             ".claude/marketplaces.json".source =
@@ -454,25 +452,6 @@
             ".claude/plugins/known_marketplaces.json".text = knownMarketplacesJson;
             ".claude/hooks/context-mode-cache-heal.mjs".source =
               "${inputs.claude-marketplace-context-mode}/hooks/cache-heal.mjs";
-            # tmux-claude-resurrect Claude hooks: thin execs that point at the
-            # plugin's bash scripts.  Direct symlinks won't work because the
-            # hook scripts source a sibling `lib-claude-pid.sh` via
-            # `dirname "${BASH_SOURCE[0]}"`, so we need BASH_SOURCE[0] to resolve
-            # to the /nix/store hooks directory.
-            ".claude/tmux-assistant-claude-track.sh" = {
-              text = ''
-                #!/usr/bin/env bash
-                exec ${pkgs.pkgs-mine.tmux-claude-resurrect}/share/tmux-plugins/tmux-assistant-resurrect/hooks/claude-session-track.sh "$@"
-              '';
-              executable = true;
-            };
-            ".claude/tmux-assistant-claude-cleanup.sh" = {
-              text = ''
-                #!/usr/bin/env bash
-                exec ${pkgs.pkgs-mine.tmux-claude-resurrect}/share/tmux-plugins/tmux-assistant-resurrect/hooks/claude-session-cleanup.sh "$@"
-              '';
-              executable = true;
-            };
           }
           # Nushell hook scripts: each gets a live-editable .nu plus a store
           # wrapper (~/.claude/<name>) that pins the interpreter. settings.json
@@ -481,7 +460,6 @@
           // (mkNuHook "notify-if-question")
           // (mkNuHook "record-pending-tool")
           // (mkNuHook "format-and-lint")
-          // (mkNuHook "tmux-claude-indicator")
           // (mkNuHook "statusline")
           // marketplaceFiles;
 

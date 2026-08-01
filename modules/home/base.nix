@@ -140,9 +140,6 @@
               pgpod
               pr-summary
               searcher
-              tm
-              tmux-move-window
-              tmux-tab-name-update
               toggle-theme
               tsc-filter
               uair-toggle-and-notify

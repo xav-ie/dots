@@ -1,8 +1,6 @@
 # Shared transcript helpers for Claude Code hook scripts (sourced via
-# `use ~/.claude/lib-transcript.nu`). Both the desktop-notification hook
-# (notify-if-question.nu) and the tmux dot indicator (tmux-claude-indicator.nu)
-# need the text of the message Claude just finished, so the extraction lives
-# here once.
+# `use ~/.claude/lib-transcript.nu`). The desktop-notification hook
+# (notify-if-question.nu) needs the text of the message Claude just finished.
 
 # Text of the most recent assistant message that has non-empty text content,
 # found by walking the transcript backward. Returns "" on any failure (missing

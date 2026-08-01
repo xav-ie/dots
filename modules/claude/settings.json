@@ -50,15 +50,6 @@
           }
         ],
         "matcher": "permission_prompt"
-      },
-      {
-        "hooks": [
-          {
-            "command": "~/.claude/tmux-claude-indicator notification",
-            "type": "command"
-          }
-        ],
-        "matcher": "permission_prompt"
       }
     ],
     "PostToolUse": [
@@ -87,10 +78,6 @@
       {
         "hooks": [
           {
-            "command": "~/.claude/tmux-assistant-claude-cleanup.sh",
-            "type": "command"
-          },
-          {
             "command": "~/.claude/record-pending-tool",
             "type": "command"
           }
@@ -99,15 +86,6 @@
       }
     ],
     "SessionStart": [
-      {
-        "hooks": [
-          {
-            "command": "~/.claude/tmux-assistant-claude-track.sh",
-            "type": "command"
-          }
-        ],
-        "matcher": ""
-      },
       {
         "hooks": [
           {
@@ -125,20 +103,6 @@
           }
         ],
         "matcher": "*"
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "command": "~/.claude/tmux-claude-indicator stop",
-            "type": "command"
-          },
-          {
-            "command": "~/.claude/record-pending-tool",
-            "type": "command"
-          }
-        ]
       }
     ]
   },

@@ -38,14 +38,11 @@
         browser-session-mcp-pkg = inputs.browser-session-mcp.packages.${system}.default or null;
         sketchybar-icons-pkg = inputs.sketchybar-icons.packages.${system}.default or null;
         generate-kaomoji = inputs.generate-kaomoji.packages.${system}.default;
-        # atuin and uair carry unmerged PR patches from overlays/default.nix:
-        # atuin's pty-proxy OSC-7 cwd tracking (#3461) — without it tmux-shell's
-        # proxy never chdir's and pane_current_path stays at $HOME — and uair's
-        # PR#31 newline-flushed `uairctl listen` for the AGS bar. The package-set
-        # pkgs below has no overlays applied, so extend it with them and pull the
-        # patched builds out.
+        # uair carries an unmerged PR patch from overlays/default.nix: PR#31's
+        # newline-flushed `uairctl listen` for the AGS bar. The package-set pkgs
+        # below has no overlays applied, so extend it with them and pull the
+        # patched build out.
         inherit ((pkgs.extend (inputs.self.overlays |> builtins.attrValues |> lib.composeManyExtensions)))
-          atuin
           uair
           ;
         # Use regular nixpkgs - most packages are writeNuApplication wrappers

@@ -28,13 +28,9 @@
   # sketchybar-icons, extracted to its own repo
   # (inputs.sketchybar-icons.packages.<system>.default); darwin-only.
   sketchybar-icons-pkg ? null,
-  # Overlay-patched atuin (pty-proxy OSC-7 cwd tracking, #3461) built at the
-  # flake level; must be the same patched build the profile uses so tmux-shell's
-  # proxy chdir's and pane_current_path tracks the shell's cwd.
-  atuin,
-  # uair patched with PR#31 (overlays/default.nix), threaded in from packages.nix
-  # for the same reason: `uairctl listen` must be newline-delimited and flushed so
-  # the AGS bar can stream it. Forwarded to the bar below.
+  # uair patched with PR#31 (overlays/default.nix), threaded in from packages.nix:
+  # `uairctl listen` must be newline-delimited and flushed so the AGS bar can
+  # stream it. Forwarded to the bar below.
   uair,
   bun-demincer-src,
   clauhist-src,
@@ -110,12 +106,6 @@ rec {
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
   slack-mcp-server = pkgs.callPackage ./slack-mcp-server { src = slack-mcp-server-src; };
   ssh-praesidium-route = pkgs.callPackage ./ssh-praesidium-route { inherit writeNuApplication; };
-  tm = pkgs.callPackage ./tm { };
-  tmux-claude-resurrect = pkgs.callPackage ./tmux-claude-resurrect { };
-  tmux-move-window = pkgs.callPackage ./tmux-move-window { inherit writeNuApplication; };
-  tmux-is-vim-in-tree = pkgs.callPackage ./tmux-is-vim-in-tree { };
-  tmux-shell = pkgs.callPackage ./tmux-shell { inherit atuin pkgs-bleeding; };
-  tmux-tab-name-update = pkgs.callPackage ./tmux-tab-name-update { };
   toggle-theme = pkgs.callPackage ./toggle-theme { inherit writeNuApplication; };
   toml-merge = pkgs.callPackage ./toml-merge { };
   tsc-filter = pkgs.callPackage ./tsc-filter { inherit writeNuApplication; };

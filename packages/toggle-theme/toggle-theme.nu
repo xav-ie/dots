@@ -23,39 +23,20 @@ def get_descendants [parent_pid: int] {
   ($children | append $all_descendants | uniq)
 }
 
-# Get relevant PIDs which would like SIGWINCH
+# Get relevant PIDs which would like SIGWINCH: the herdr servers/clients and
+# everything running inside their panes.
 def get_pids [] {
-  # Get all tmux server/client PIDs (without -x flag to match "tmux attach" etc)
-  let tmux_pids = (
-    ^pgrep tmux
-    | lines
-    | where $it != ""
-    | each {|pid| ($pid | str trim | into int) }
+  let herdr_pids = (
+    try {
+      ^pgrep herdr | lines | where $it != "" | each {|pid| ($pid | str trim | into int) }
+    } catch { [] }
   )
 
-  # Get all pane processes
-  let pane_pids = (^tmux list-panes -a -F "#{pane_pid}:#{pane_tty}" | lines | where $it != "")
-  | par-each -k { |entry|
-      let parts = $entry | split column ":" pane_pid pane_tty | get 0
-      let pane_pid = $parts.pane_pid | into int
-      let tty = $parts.pane_tty
-
-      # Get processes on the TTY
-      let tty_pids = if $tty != "" and $tty != "-" {
-        (^ps -o pid= -t $tty | lines | where $it != "" | each {|pid| ($pid | str trim | into int) })
-      } else {
-        []
-      }
-
-      # Get all recursive descendants of the pane PID
-      let descendant_pids = (get_descendants $pane_pid)
-
-      ($tty_pids | append $descendant_pids)
-    }
-  | flatten
-
-  # Combine tmux PIDs with pane PIDs
-  ($tmux_pids | append $pane_pids | uniq)
+  (
+    $herdr_pids
+    | append ($herdr_pids | par-each {|p| get_descendants $p } | flatten)
+    | uniq
+  )
 }
 
 def get_theme [] {

@@ -119,35 +119,14 @@ $env.config.explore = {
   selected_cell: {bg: light_blue}
 }
 
-$env.config.hooks.pre_execution = [
-  {||
-    if 'TMUX_PANE' in $env { $env.TMUX_TAB_UPDATE_PANE = $env.TMUX_PANE }
-  }
-]
-
-# tmux-tab-name-update only matters when $PWD changes (tab name is derived
-# from directory + git branch).  Move from pre_prompt (every prompt) to
-# env_change.PWD (only on cd) — saves ~2ms per non-cd prompt.
-#
-# Tradeoff: if you `git checkout other-branch` without cd, the tab name
-# keeps showing the old branch until the next cd.  `cd .` refreshes.
-$env.config.hooks.env_change = ($env.config.hooks.env_change? | default {})
-$env.config.hooks.env_change.PWD = (
-    $env.config.hooks.env_change.PWD?
-    | default []
-    | append {|_before, _after| tmux-tab-name-update }
-)
-
 # --- graphical session env ---------------------------------------------------
 # Pull the live graphical session's compositor vars (DISPLAY, WAYLAND_DISPLAY, …)
-# into the current shell. Use it to un-stick a tmux pane that was started over
-# SSH so firefox-router / xdg-open can reach the display. Only *sets* vars —
-# clearing them again (to go headless) is left to you.
+# into the current shell. Use it to un-stick a shell that was started over SSH so
+# firefox-router / xdg-open can reach the display. Only *sets* vars — clearing
+# them again (to go headless) is left to you.
 #
 # Source is `systemctl --user show-environment`, the canonical graphical session
-# Hyprland imports its env into. New panes opened after a local `tmux attach`
-# already inherit these via update-environment (../tmux.nix); this is for
-# already-running shells.
+# Hyprland imports its env into.
 def --env get-graphical-env [] {
   systemctl --user show-environment
   | lines
