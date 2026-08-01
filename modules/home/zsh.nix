@@ -40,7 +40,6 @@
               man = "c4 env man";
               # nvim = "~/Projects/xnixvim/result/bin/nvim";
               w = "watson";
-              zj = "zellij attach || zellij";
             };
             initContent = # sh
               ''

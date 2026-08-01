@@ -12,7 +12,7 @@ background-opacity = 1.0
 background-blur-radius = 0
 theme = light:XLight,dark:XDark
 
-# I use zellij for maximum portability, so I don't want to depend on
+# I use a multiplexer for maximum portability, so I don't want to depend on
 # Ghostty window management primitives.
 keybind = ctrl+shift+e=unbind
 keybind = ctrl+shift+n=unbind

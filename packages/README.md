@@ -18,14 +18,6 @@ provide one :).
 Nixpkgs searching script with fzf. Lets you easily search and enter
 shell of a package without having to look it up on nixpkgs search.
 
-### [zellij-tab-name-update](./zellij-tab-name-update)
-
-Automatically update the zellij tab name based on the current git
-directory you are in.
-
-You basically just run this as a `preCmd` or `PROMPT_COMMAND` script so it
-has chance to run every time you change directories.
-
 ## Not-So Interesting Scripts 😴
 
 ### [cache-command](./cache-command)

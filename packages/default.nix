@@ -119,7 +119,6 @@ rec {
   pi-executor = pkgs.callPackage ./pi-executor { };
   pi-readcache = pkgs.callPackage ./pi-readcache { };
   pi-show-diffs = pkgs.callPackage ./pi-show-diffs { };
-  zellij-tab-name-update = pkgs.callPackage ./zellij-tab-name-update { };
 
 }
 // (optionalAttrs isDarwin {

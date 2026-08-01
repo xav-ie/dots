@@ -31,7 +31,6 @@
             vnc720 = "hyprctl keyword monitor HDMI-A-2,1280x720@30,auto,0.80";
             vnc1080 = "hyprctl keyword monitor HDMI-A-2,1920x1080@30,auto,1";
             w = "watson";
-            zj = "try { zellij attach } catch { zellij }";
           };
           # (3) Files in $nu.vendor-autoload-dirs are loaded. These files can be
           # used for any purpose and are a convenient way to modularize a

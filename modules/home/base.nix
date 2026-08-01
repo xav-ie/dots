@@ -145,7 +145,6 @@
               uair-toggle-and-notify
               update-pr
               whisper-transcribe
-              zellij-tab-name-update
             ])
             ++ [
               inputs.nix-auto-follow.packages.${pkgs.stdenv.hostPlatform.system}.default
