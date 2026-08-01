@@ -349,7 +349,7 @@ in
       # FastConformer on the GPU; needs the `ngc/api_key` sops secret to pull
       # the NeMo base image. See nixos/scribe/.
       scribe = {
-        enable = true;
+        enable = false;
         # Larger 0.6B streaming model (vs the default 114M FastConformer) for
         # higher English accuracy. Revert to the default model id if it's not
         # clearly better.
