@@ -4,6 +4,10 @@
       virtualisation = {
         podman = {
           enable = true;
+          autoPrune = {
+            enable = true;
+            dates = "weekly";
+          };
           # Create a `docker` alias for podman, to use it as a drop-in replacement
           dockerCompat = true;
           # Create a "docker" socket that just points to podman
