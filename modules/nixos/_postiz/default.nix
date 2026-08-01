@@ -16,7 +16,6 @@ let
     name = "postiz-src-patched";
     src = inputs.postiz-src;
     patches = [
-      ./integration-fix.patch
       ./pm2-quiet.patch
       ./worker-allowlist.patch
     ];

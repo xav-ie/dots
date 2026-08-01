@@ -2179,11 +2179,11 @@
     "postiz-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1777322176,
-        "narHash": "sha256-75mjnFBZDMp/uN0Q0TWgwBODBB4GM7tYTqIAA0HC82Y=",
+        "lastModified": 1785612950,
+        "narHash": "sha256-TRLqWSPv7jmQCG0dXclxsTsFjrtPYJxX3mLyxpYCMWI=",
         "owner": "xav-ie",
         "repo": "postiz-app",
-        "rev": "c71286755ce69ba91e795e6f6003d3df169a1016",
+        "rev": "01a9f6276cdbe8f828f92fb16899e1d6debb1ee1",
         "type": "github"
       },
       "original": {
