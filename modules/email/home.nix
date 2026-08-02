@@ -36,22 +36,12 @@
         systemd.user.services.neverest = {
           Unit = {
             Description = "Sync mail with neverest";
-            # Timer-driven oneshot: invisible to `systemctl --failed`. This had
-            # failed silently on every run. See modules/home-linux/unit-failure-log.nix.
             OnFailure = "unit-failure@%n.service";
           };
           Service = {
             Type = "oneshot";
-            # neverest runs the account's `auth.cmd` through a shell it looks up
-            # on PATH. A systemd user service inherits only systemd's own bin,
-            # so there was no `sh` to run it with and every sync died with
-            #   cannot get imap password from global keyring
-            #     cannot get secret from command
-            #       No such file or directory (os error 2)
-            # which reads like a missing password file but is a missing shell.
-            # Verified: same script + PATH set = "Account work successfully
-            # synchronized!". Absolute paths in auth.cmd are not enough on their
-            # own, because the shell that runs them must also be resolvable.
+            # neverest runs auth.cmd through a shell it looks up on PATH, which
+            # a systemd user service does not otherwise have.
             Environment = [
               "PATH=${
                 lib.makeBinPath [
@@ -63,12 +53,8 @@
             ExecStart = toString (
               pkgs.writeShellScript "neverest-sync" # sh
                 ''
-                  # $XDG_RUNTIME_DIR, not /run/user/$(id -u): systemd user
-                  # services run with a minimal PATH that has no `id`, so the
-                  # substitution came back empty and the path collapsed to
-                  # /run/user//neverest.lock — root-owned, so flock failed with
-                  # EACCES on every run and mail never synced. systemd always
-                  # sets XDG_RUNTIME_DIR for user units, and it needs no binary.
+                  # $XDG_RUNTIME_DIR, not /run/user/$(id -u): there is no `id`
+                  # on the service PATH, and systemd always sets this.
                   ${pkgs.util-linux}/bin/flock \
                     --nonblock \
                     --conflict-exit-code 0 \

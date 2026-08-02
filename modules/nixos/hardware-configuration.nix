@@ -23,13 +23,9 @@
         "hid_generic"
       ];
 
-      # Force-loaded, not merely available. `availableKernelModules` is loaded
-      # only when udev matches hardware; these must be present unconditionally
-      # so a stage-1 emergency shell always has a keyboard. On 2026-08-02 a
-      # `init=/bin/sh` recovery shell came up with a dead wired keyboard —
-      # usbhid alone is the USB transport, hid_generic is what actually binds
-      # the device as an input. Without both, the rescue shell is unusable and
-      # the only way back in is another machine.
+      # Force-loaded, not merely available: `availableKernelModules` only loads
+      # on a udev match, and a stage-1 emergency shell must always have a
+      # keyboard. usbhid is the transport, hid_generic binds it as an input.
       boot.initrd.kernelModules = [
         "usbhid"
         "hid_generic"
@@ -37,17 +33,14 @@
       boot.kernelModules = [ "kvm-intel" ];
       boot.extraModulePackages = [ ];
 
-      # This firmware advertises an ACPI Time & Alarm Device, so the kernel gives
-      # it rtc0 and demotes the real CMOS clock to rtc1. But acpi_tad implements
-      # no RTC ioctls, leaving /dev/rtc unreadable: save-hwclock fails on every
-      # shutdown and rtcwake cannot arm. Blacklisting it restores rtc_cmos as
-      # rtc0, which fixes every RTC user at once.
+      # This firmware advertises an ACPI Time & Alarm Device, so the kernel
+      # gives it rtc0 and demotes rtc_cmos. acpi_tad implements no RTC ioctls,
+      # so /dev/rtc is unreadable and save-hwclock fails on every shutdown.
       boot.blacklistedKernelModules = [ "acpi_tad" ];
 
-      # Disk layout is declarative — disko generates every `fileSystems.*` entry
-      # from this block. Addressed by-id, not /dev/nvme0n1: `disko --mode destroy`
-      # wipes whatever it is pointed at, and a USB disk attached at migration time
-      # can shift kernel device names.
+      # disko generates every `fileSystems.*` entry from this block. Addressed
+      # by-id, since `disko --mode destroy` wipes whatever it is pointed at and
+      # kernel device names can shift.
       disko.devices.disk.main = {
         type = "disk";
         device = "/dev/disk/by-id/nvme-Samsung_SSD_970_EVO_Plus_1TB_S6S1NS0W210475Z";
@@ -61,10 +54,8 @@
                 type = "filesystem";
                 format = "vfat";
                 mountpoint = "/boot";
-                # Default vfat masks (fmask=0022,dmask=0022) make /boot
-                # world-readable, which leaks the systemd-boot random-seed file.
-                # Tighten to root-only; systemd-boot runs pre-OS so OS perms
-                # don't gate it, and rebuild tooling already runs as root.
+                # The default vfat masks make /boot world-readable, leaking the
+                # systemd-boot random-seed file. Nothing needs it non-root.
                 mountOptions = [
                   "fmask=0077"
                   "dmask=0077"
@@ -135,9 +126,8 @@
         };
       };
 
-      # NixOS creates this itself. On btrfs its mkswap unit calls
-      # `btrfs filesystem mkswapfile`, which allocates it NOCOW and
-      # uncompressed — no manual `chattr +C` required.
+      # NixOS creates this itself; on btrfs its mkswap unit uses
+      # `btrfs filesystem mkswapfile`, so no manual `chattr +C` is needed.
       swapDevices = [
         {
           device = "/swap/swapfile";

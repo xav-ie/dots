@@ -113,11 +113,9 @@
         mode = "0400";
       };
 
-      # osgrep indexing allowlist (packages/osgrep-indexed defaults
-      # OSGREP_INDEX_CONFIG to this path). One opaque JSON blob —
-      # {folders, worktrees, extraIgnore} — because the repo paths name private
-      # work projects. Read at runtime by the index service; never baked into
-      # the Nix store. Decrypts to /run/secrets/osgrep/config.
+      # osgrep indexing allowlist, {folders, worktrees, extraIgnore} as one
+      # opaque JSON blob because the repo paths name private work projects.
+      # packages/osgrep-indexed reads it at runtime via OSGREP_INDEX_CONFIG.
       secrets."osgrep/config" = {
         owner = config.defaultUser;
         mode = "0400";

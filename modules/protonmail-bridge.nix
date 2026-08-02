@@ -164,16 +164,10 @@ in
         labels."traefik.docker.network" = "podman";
       };
 
-      # Bridge must not start until DNS actually answers. On 2026-08-02 it came
-      # up at boot while dnsmasq was dead (/etc/dnsmasq.d did not exist), could
-      # not reach mail-api.proton.me, and ended up with an account-less vault —
-      # costing a full interactive re-login and an SMTP password rotation.
-      #
-      # Ordering after nss-lookup.target is NOT sufficient: that target only
-      # sequences resolver services *starting*, never their *answering*. So poll
-      # for a real answer and fail if it never comes, leaving Bridge unstarted
-      # rather than running blind. getent (not dig) because it goes through NSS,
-      # the same path Bridge itself resolves on.
+      # Bridge must not start until DNS answers, or it comes up with an
+      # account-less vault and needs an interactive re-login. nss-lookup.target
+      # is not enough: it sequences resolvers starting, not answering. getent
+      # rather than dig, to resolve over NSS like Bridge itself does.
       systemd.services.proton-dns-gate = {
         after = [
           "network-online.target"
@@ -212,15 +206,9 @@ in
         ];
       };
       systemd.services.podman-mcp = {
-        # Also after the bridge: mcp reaches it by container name over the
-        # shared network, so starting first means `getaddrinfo ENOTFOUND
-        # protonmail-bridge` and no mail features for the life of the process.
-        # This was latent until proton-dns-gate started holding the bridge back
-        # for however long DNS takes to answer (16s on the 2026-08-02 boot).
-        #
-        # `wants`, not `requires`: mcp also serves Slack and degrades to
-        # "email features limited" without the bridge, so a bridge failure
-        # should delay it, not take it down with it.
+        # Also after the bridge: mcp reaches it by container name, so starting
+        # first means getaddrinfo ENOTFOUND for the life of the process.
+        # `wants`, not `requires`, since mcp also serves Slack.
         after = [
           "protonmail-network.service"
           "podman-protonmail-bridge.service"

@@ -75,15 +75,9 @@
       # ~/.npm/bin, so this wrapper wins.
       osgrep-wrapper = pkgs.writeShellApplication {
         name = "osgrep";
-        # nodejs is REQUIRED here. ~/.npm/bin/osgrep is a JS file whose shebang
-        # is `#!/usr/bin/env node`, and writeShellApplication gives a strict
-        # PATH built only from runtimeInputs. With no node on it, env exits 127
-        # and osgrep never runs — which is exactly what happened: osgrep-index
-        # reported unit success while every one of the 50 repos failed with
-        # FAILED (127) and nothing was ever indexed. Interactively it worked,
-        # because a login shell has node on PATH.
-        # Match programs.npm.package (nodejs_24) so the wrapper runs osgrep on
-        # the same runtime it was installed with.
+        # Required: ~/.npm/bin/osgrep has a `#!/usr/bin/env node` shebang and
+        # writeShellApplication's PATH holds only runtimeInputs. nodejs_24
+        # matches programs.npm.package, the runtime it was installed with.
         runtimeInputs = [ pkgs.nodejs_24 ];
         text = ''
           export NODE_OPTIONS="--require ${gitignoreGuard}''${NODE_OPTIONS:+ ''${NODE_OPTIONS}}"

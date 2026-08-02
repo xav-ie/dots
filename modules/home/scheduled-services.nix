@@ -123,14 +123,9 @@
             _name: svc: {
               Unit = {
                 Description = svc.description;
-                # Every unit here is a timer-driven oneshot, and those are
-                # invisible to `systemctl --failed`: the unit fails, the timer
-                # fires again, and it settles back to inactive/success, so
-                # failure state never accumulates. process-logger had failed 37
-                # consecutive times unnoticed. OnFailure is edge-triggered, so
-                # each failure gets recorded as it happens.
-                # See modules/home-linux/unit-failure-log.nix; `unit-failures`
-                # prints the log.
+                # These are timer-driven oneshots, which never accumulate
+                # failure state for `systemctl --failed` to show. Read the log
+                # with `unit-failures`.
                 OnFailure = "unit-failure@%n.service";
               };
               Service = {

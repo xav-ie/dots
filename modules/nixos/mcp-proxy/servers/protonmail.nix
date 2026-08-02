@@ -12,16 +12,10 @@
       wrapped = pkgs.writeShellScript "protonmail-mcp-wrapped" ''
         export NODE_TLS_REJECT_UNAUTHORIZED=0
 
-        # Refuse to start if the bridge is unreachable. Left alone,
-        # protonmail-mcp starts anyway, logs "email features will be limited",
-        # and still advertises send/read tools that fail at call time — an
-        # agent sees a healthy source and discovers the breakage mid-task.
-        #
-        # mcp-resilient only degrades a backend to an empty tool list when it
-        # exits NON-ZERO, so exiting here is what converts a lying source into
-        # an honestly absent one. Backends are spawned per request, so this is
-        # re-probed on every spawn and recovers by itself once the bridge is
-        # back — no restart needed.
+        # Refuse to start if the bridge is unreachable; protonmail-mcp would
+        # otherwise advertise tools that fail at call time. mcp-resilient only
+        # degrades a backend to an empty tool list on a NON-ZERO exit. Backends
+        # spawn per request, so this re-probes and recovers on its own.
         if ! ${pkgs.coreutils}/bin/timeout 3 ${pkgs.bash}/bin/bash -c \
           ": < /dev/tcp/$PROTONMAIL_IMAP_HOST/$PROTONMAIL_IMAP_PORT" 2>/dev/null; then
           echo "protonmail-mcp: bridge $PROTONMAIL_IMAP_HOST:$PROTONMAIL_IMAP_PORT unreachable" >&2

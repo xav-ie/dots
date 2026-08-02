@@ -125,17 +125,12 @@
             )
             |> builtins.toJSON;
 
-          # osgrep ships a SessionStart hook (hooks/start.js) that launches a
-          # long-lived `osgrep serve` daemon. Its worker pool busy-loops at 100%
-          # CPU once indexing finishes — four pegged cores, fans spun up — and it
-          # runs uncapped, unlike our Nice'd/idle-IO osgrep-index.service. We
-          # don't need it: the osgrep-index systemd timer already keeps every
-          # allowlisted repo indexed. So we vendor the marketplace but neuter its
-          # hooks.json. osgrep is served straight from this read-only /nix/store
-          # symlink, so we can't edit it in place; instead we build a patched
-          # copy here (hooks.json → no-op) and symlink THAT in. marketplace.src
-          # stays the raw input so findInputName (and thus
-          # `claude-update-marketplaces`) keeps working.
+          # osgrep's SessionStart hook launches an `osgrep serve` daemon whose
+          # worker pool busy-loops at 100% CPU once indexing finishes, uncapped.
+          # The osgrep-index timer already keeps every allowlisted repo indexed,
+          # so build a copy of the marketplace with hooks.json neutered and
+          # symlink that in. marketplace.src stays the raw input, so
+          # findInputName and `claude-update-marketplaces` keep working.
           stripPluginHooks =
             name: src:
             pkgs.runCommand "claude-marketplace-${name}-nohooks" { } ''

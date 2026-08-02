@@ -3,10 +3,8 @@
 # in the last hour/day?" (via `process-top`) — something btop/top can't answer.
 #
 # node:sqlite and node:child_process are built into Node 25, and .mts
-# type-stripping runs the TypeScript directly, so the only runtime dep is `ps`
-# (sampler.mts shells out to it). That has to be wrapped in: systemd user
-# services get a minimal PATH with no procps, so the sampler died with
-# `spawnSync ps ENOENT` on every run and never recorded a single sample.
+# type-stripping runs the TypeScript directly, so the only runtime dep is `ps`,
+# which sampler.mts shells out to and a systemd user service does not have.
 {
   lib,
   stdenvNoCC,

@@ -180,19 +180,11 @@ in
         };
       };
 
-    # The password is declarative. It used to live only in /etc/shadow, set by
-    # hand with `passwd` — which meant a bare-metal reinstall produced a LOCKED
-    # account (`passwd -S` => `L`). sudo and pkexec both authenticate against
-    # that nonexistent password and Tailscale SSH is off, so the 2026-08-02
-    # rebuild left no remote path to root at all and needed physical recovery.
-    #
-    # The hash is stored encrypted rather than inline because this repo is
-    # public and $6$ is SHA-512-crypt — fast enough to attack offline at
-    # leisure, and git history makes a later deletion pointless.
-    #
-    # neededForUsers puts it in /run/secrets-for-users, which sops-nix populates
-    # before user activation runs; a normal secret is decrypted too late to set
-    # a password with.
+    # Declarative, so a bare-metal reinstall does not produce a locked account
+    # with no remote path to root. Encrypted rather than inline because this
+    # repo is public and $6$ is cheap to attack offline. neededForUsers puts it
+    # in /run/secrets-for-users, which is populated before user activation; a
+    # normal secret decrypts too late to set a password with.
     sops.secrets."${config.defaultUser}/hashed_password".neededForUsers = true;
 
     users = {
@@ -200,8 +192,7 @@ in
       users."${config.defaultUser}" = {
         isNormalUser = true;
         description = config.defaultUser;
-        hashedPasswordFile =
-          config.sops.secrets."${config.defaultUser}/hashed_password".path;
+        hashedPasswordFile = config.sops.secrets."${config.defaultUser}/hashed_password".path;
         extraGroups = [
           "docker"
           "input"
