@@ -37,6 +37,13 @@
       boot.kernelModules = [ "kvm-intel" ];
       boot.extraModulePackages = [ ];
 
+      # This firmware advertises an ACPI Time & Alarm Device, so the kernel gives
+      # it rtc0 and demotes the real CMOS clock to rtc1. But acpi_tad implements
+      # no RTC ioctls, leaving /dev/rtc unreadable: save-hwclock fails on every
+      # shutdown and rtcwake cannot arm. Blacklisting it restores rtc_cmos as
+      # rtc0, which fixes every RTC user at once.
+      boot.blacklistedKernelModules = [ "acpi_tad" ];
+
       # Disk layout is declarative — disko generates every `fileSystems.*` entry
       # from this block. Addressed by-id, not /dev/nvme0n1: `disko --mode destroy`
       # wipes whatever it is pointed at, and a USB disk attached at migration time
