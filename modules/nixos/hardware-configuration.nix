@@ -16,11 +16,24 @@
 
       boot.initrd.availableKernelModules = [
         "xhci_pci"
+        "ehci_pci" # USB 2.0 ports, often the only ones that work in a pinch
         "ahci"
         "nvme"
         "usbhid"
+        "hid_generic"
       ];
-      boot.initrd.kernelModules = [ ];
+
+      # Force-loaded, not merely available. `availableKernelModules` is loaded
+      # only when udev matches hardware; these must be present unconditionally
+      # so a stage-1 emergency shell always has a keyboard. On 2026-08-02 a
+      # `init=/bin/sh` recovery shell came up with a dead wired keyboard —
+      # usbhid alone is the USB transport, hid_generic is what actually binds
+      # the device as an input. Without both, the rescue shell is unusable and
+      # the only way back in is another machine.
+      boot.initrd.kernelModules = [
+        "usbhid"
+        "hid_generic"
+      ];
       boot.kernelModules = [ "kvm-intel" ];
       boot.extraModulePackages = [ ];
 
