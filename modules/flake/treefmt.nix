@@ -176,6 +176,7 @@
               ".git-blame-ignore-revs"
               ".gitignore"
               "flake.lock"
+              "modules/home-darwin/claude-desktop/claude_desktop_config.json"
               "secrets/*.yaml" # sops has its own formatter
             ]
             ++ pkgs.lib.optionals pkgs.stdenv.isDarwin [

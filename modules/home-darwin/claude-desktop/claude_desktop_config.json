@@ -2,7 +2,11 @@
   "mcpServers": {
     "executor": {
       "command": "/etc/profiles/per-user/x/bin/npx",
-      "args": ["-y", "mcp-remote", "https://executor.lalala.casa/mcp"]
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://executor.lalala.casa/mcp"
+      ]
     }
   },
   "coworkUserFilesPath": "/Users/x/Claude",
@@ -11,10 +15,6 @@
     "launchPreviewStorage": "shared",
     "launchPreviewPersistedWorkspaces": [],
     "launchPreviewSessionScopedSessions": [],
-    "remoteFolderConsentMemory": ["/Users/x/Projects/canada"],
-    "remoteSessionFolderGrants": {
-      "session_01KQ5apPS93GjLsbFVREWdLw": ["/Users/x/Projects/canada"]
-    },
     "coworkScheduledTasksEnabled": true,
     "coworkHipaaRestricted": false,
     "ccdScheduledTasksEnabled": true,
@@ -29,6 +29,7 @@
     "coworkModelAutoFallbackByAccount": {
       "0b9ce84b-bec4-4ae4-a3c3-fdb3033c23d3": true
     },
+    "keepAwakeEnabled": true,
     "chicagoEnabled": true,
     "remoteToolsDeviceName": "nox",
     "ccRemoteControlDefaultEnabled": true,
@@ -56,7 +57,6 @@
         "version": 0
       },
       "dframe-group-scopes": {}
-    },
-    "keepAwakeEnabled": true
+    }
   }
 }
