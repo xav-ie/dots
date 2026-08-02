@@ -164,9 +164,52 @@ in
         labels."traefik.docker.network" = "podman";
       };
 
+      # Bridge must not start until DNS actually answers. On 2026-08-02 it came
+      # up at boot while dnsmasq was dead (/etc/dnsmasq.d did not exist), could
+      # not reach mail-api.proton.me, and ended up with an account-less vault —
+      # costing a full interactive re-login and an SMTP password rotation.
+      #
+      # Ordering after nss-lookup.target is NOT sufficient: that target only
+      # sequences resolver services *starting*, never their *answering*. So poll
+      # for a real answer and fail if it never comes, leaving Bridge unstarted
+      # rather than running blind. getent (not dig) because it goes through NSS,
+      # the same path Bridge itself resolves on.
+      systemd.services.proton-dns-gate = {
+        after = [
+          "network-online.target"
+          "nss-lookup.target"
+          "dnsmasq.service"
+        ];
+        wants = [
+          "network-online.target"
+          "dnsmasq.service"
+        ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+        };
+        script = ''
+          for i in $(seq 1 60); do
+            if ${pkgs.getent}/bin/getent hosts mail-api.proton.me >/dev/null 2>&1; then
+              echo "DNS resolved mail-api.proton.me after $i attempt(s)"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "mail-api.proton.me still unresolvable after 120s — refusing to start Bridge" >&2
+          exit 1
+        '';
+      };
+
       systemd.services.podman-protonmail-bridge = {
-        after = [ "protonmail-network.service" ];
-        requires = [ "protonmail-network.service" ];
+        after = [
+          "protonmail-network.service"
+          "proton-dns-gate.service"
+        ];
+        requires = [
+          "protonmail-network.service"
+          "proton-dns-gate.service"
+        ];
       };
       systemd.services.podman-mcp = {
         after = [ "protonmail-network.service" ];
