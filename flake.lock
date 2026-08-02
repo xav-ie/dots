@@ -2623,16 +2623,16 @@
     "slack-mcp-server": {
       "flake": false,
       "locked": {
-        "lastModified": 1772573878,
-        "narHash": "sha256-AfmuQfV3RqFBw9b8B4aFM0EOuFQrUlUpTnMmQcyvCfU=",
+        "lastModified": 1778798792,
+        "narHash": "sha256-I4f6yKV0BXtaxnqi/XNID+Pwl2mWjSqxIHhb07U7sc4=",
         "owner": "korotovsky",
         "repo": "slack-mcp-server",
-        "rev": "b24b1b08af740d5c710f556d45a5b8ba3acc0ebc",
+        "rev": "a079b3cd4d5836d791c942a9fc107987e7865b37",
         "type": "github"
       },
       "original": {
         "owner": "korotovsky",
-        "ref": "v1.2.3",
+        "ref": "v1.3.0",
         "repo": "slack-mcp-server",
         "type": "github"
       }
