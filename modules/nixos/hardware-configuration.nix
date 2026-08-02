@@ -6,6 +6,7 @@
     {
       config,
       lib,
+      pkgs,
       modulesPath,
       ...
     }:
@@ -23,30 +24,109 @@
       boot.kernelModules = [ "kvm-intel" ];
       boot.extraModulePackages = [ ];
 
-      fileSystems."/" = {
-        device = "/dev/disk/by-uuid/fcd367e4-c83c-4fc6-ab6d-73d40df8e3c7";
-        fsType = "ext4";
+      # Disk layout is declarative — disko generates every `fileSystems.*` entry
+      # from this block. Addressed by-id, not /dev/nvme0n1: `disko --mode destroy`
+      # wipes whatever it is pointed at, and a USB disk attached at migration time
+      # can shift kernel device names.
+      disko.devices.disk.main = {
+        type = "disk";
+        device = "/dev/disk/by-id/nvme-Samsung_SSD_970_EVO_Plus_1TB_S6S1NS0W210475Z";
+        content = {
+          type = "gpt";
+          partitions = {
+            ESP = {
+              size = "512M";
+              type = "EF00";
+              content = {
+                type = "filesystem";
+                format = "vfat";
+                mountpoint = "/boot";
+                # Default vfat masks (fmask=0022,dmask=0022) make /boot
+                # world-readable, which leaks the systemd-boot random-seed file.
+                # Tighten to root-only; systemd-boot runs pre-OS so OS perms
+                # don't gate it, and rebuild tooling already runs as root.
+                mountOptions = [
+                  "fmask=0077"
+                  "dmask=0077"
+                ];
+              };
+            };
+            root = {
+              size = "100%";
+              content = {
+                type = "btrfs";
+                extraArgs = [
+                  "-L"
+                  "nixos"
+                ];
+                subvolumes = {
+                  "@" = {
+                    mountpoint = "/";
+                    mountOptions = [
+                      "compress=zstd:3"
+                      "noatime"
+                    ];
+                  };
+                  "@home" = {
+                    mountpoint = "/home";
+                    mountOptions = [
+                      "compress=zstd:3"
+                      "noatime"
+                    ];
+                  };
+                  "@nix" = {
+                    mountpoint = "/nix";
+                    mountOptions = [
+                      "compress=zstd:3"
+                      "noatime"
+                    ];
+                  };
+                  "@var" = {
+                    mountpoint = "/var";
+                    mountOptions = [
+                      "compress=zstd:3"
+                      "noatime"
+                    ];
+                  };
+                  # Reserved for impermanence; mounted now so adopting it later
+                  # needs no second data shuffle.
+                  "@persist" = {
+                    mountpoint = "/persist";
+                    mountOptions = [
+                      "compress=zstd:3"
+                      "noatime"
+                    ];
+                  };
+                  "@snapshots" = {
+                    mountpoint = "/.snapshots";
+                    mountOptions = [ "noatime" ];
+                  };
+                  # No compression: swap needs stable, fully-allocated extents.
+                  # Its own subvolume because a subvolume holding an active
+                  # swapfile cannot be snapshotted.
+                  "@swap" = {
+                    mountpoint = "/swap";
+                    mountOptions = [ "noatime" ];
+                  };
+                };
+              };
+            };
+          };
+        };
       };
 
-      fileSystems."/boot" = {
-        device = "/dev/disk/by-uuid/B0A7-312A";
-        fsType = "vfat";
-        # Default vfat masks (fmask=0022,dmask=0022) make /boot world-readable,
-        # which leaks the systemd-boot random-seed file. Tighten to root-only;
-        # systemd-boot runs pre-OS so OS perms don't gate it, and rebuild
-        # tooling (nh, nixos-rebuild) already runs as root.
-        options = [
-          "fmask=0077"
-          "dmask=0077"
-        ];
-      };
-
+      # NixOS creates this itself. On btrfs its mkswap unit calls
+      # `btrfs filesystem mkswapfile`, which allocates it NOCOW and
+      # uncompressed — no manual `chattr +C` required.
       swapDevices = [
         {
-          device = "/swapfile";
+          device = "/swap/swapfile";
           size = 8 * 1024;
         }
       ];
+
+      boot.supportedFilesystems = [ "btrfs" ];
+      environment.systemPackages = [ pkgs.btrfs-progs ];
 
       zramSwap = {
         enable = true;

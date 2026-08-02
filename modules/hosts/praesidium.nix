@@ -11,6 +11,7 @@ in
         flakeModules.nixos.common
         flakeModules.nixos.linux
         flakeModules.nixos.praesidium
+        inputs.disko.nixosModules.disko
         inputs.hardware.nixosModules.common-cpu-intel-cpu-only
         inputs.hardware.nixosModules.common-gpu-nvidia-nonprime
         inputs.hardware.nixosModules.common-pc-ssd
