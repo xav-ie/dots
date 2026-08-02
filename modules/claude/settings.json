@@ -21,7 +21,6 @@
     "context-mode@context-mode": true,
     "dts@outsmartly-plugins": false,
     "hookify@claude-plugins-official": false,
-    "mgrep@Mixedbread-Grep": false,
     "osgrep@osgrep": true,
     "plugin-dev@claude-plugins-official": false,
     "ponytail@ponytail": true,

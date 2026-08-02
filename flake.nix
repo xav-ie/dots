@@ -112,8 +112,6 @@
     claude-marketplace-outsmartly.url = "git+ssh://git@github.com/outsmartly/claude-plugins";
     claude-marketplace-lsps.flake = false;
     claude-marketplace-lsps.url = "github:Piebald-AI/claude-code-lsps";
-    claude-marketplace-mgrep.flake = false;
-    claude-marketplace-mgrep.url = "github:mixedbread-ai/mgrep";
     claude-marketplace-osgrep.flake = false;
     claude-marketplace-osgrep.url = "github:Ryandonofrio3/osgrep";
     claude-marketplace-ponytail.flake = false;

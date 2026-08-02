@@ -297,22 +297,6 @@
         "type": "github"
       }
     },
-    "claude-marketplace-mgrep": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1769171503,
-        "narHash": "sha256-Njs0h2Roqm9xK8TV7BqrR5EwpK+ONNl3ct1fHU0UZEY=",
-        "owner": "mixedbread-ai",
-        "repo": "mgrep",
-        "rev": "fe2c523686e9a98a983660d0aa253ffdc097faf7",
-        "type": "github"
-      },
-      "original": {
-        "owner": "mixedbread-ai",
-        "repo": "mgrep",
-        "type": "github"
-      }
-    },
     "claude-marketplace-official": {
       "flake": false,
       "locked": {
@@ -2315,7 +2299,6 @@
         "bun-demincer-src": "bun-demincer-src",
         "claude-marketplace-context-mode": "claude-marketplace-context-mode",
         "claude-marketplace-lsps": "claude-marketplace-lsps",
-        "claude-marketplace-mgrep": "claude-marketplace-mgrep",
         "claude-marketplace-official": "claude-marketplace-official",
         "claude-marketplace-osgrep": "claude-marketplace-osgrep",
         "claude-marketplace-outsmartly": "claude-marketplace-outsmartly",

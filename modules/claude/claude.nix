@@ -130,14 +130,12 @@
           # CPU once indexing finishes — four pegged cores, fans spun up — and it
           # runs uncapped, unlike our Nice'd/idle-IO osgrep-index.service. We
           # don't need it: the osgrep-index systemd timer already keeps every
-          # allowlisted repo indexed. So, mirroring the mgrep treatment
-          # (claudeMgrepDisableWatch below), we vendor the marketplace but neuter
-          # its hooks.json. mgrep's hooks live in the WRITABLE plugin cache, so
-          # that one is stripped at activation time; osgrep is served straight
-          # from this read-only /nix/store symlink, so we can't edit it in place.
-          # Instead we build a patched copy here (hooks.json → no-op) and symlink
-          # THAT in. marketplace.src stays the raw input so findInputName (and
-          # thus `claude-update-marketplaces`) keeps working.
+          # allowlisted repo indexed. So we vendor the marketplace but neuter its
+          # hooks.json. osgrep is served straight from this read-only /nix/store
+          # symlink, so we can't edit it in place; instead we build a patched
+          # copy here (hooks.json → no-op) and symlink THAT in. marketplace.src
+          # stays the raw input so findInputName (and thus
+          # `claude-update-marketplaces`) keeps working.
           stripPluginHooks =
             name: src:
             pkgs.runCommand "claude-marketplace-${name}-nohooks" { } ''
@@ -283,10 +281,6 @@
               repo = "Piebald-AI/claude-code-lsps";
               src = inputs.claude-marketplace-lsps;
             };
-            "Mixedbread-Grep" = {
-              repo = "mixedbread-ai/mgrep";
-              src = inputs.claude-marketplace-mgrep;
-            };
             "osgrep" = {
               repo = "Ryandonofrio3/osgrep";
               src = inputs.claude-marketplace-osgrep;
@@ -374,21 +368,6 @@
                 fi
               '';
 
-          # The mgrep plugin ships a SessionStart hook that runs `mgrep watch` in
-          # every session's cwd — a recursive inotify watcher that exhausts
-          # fs.inotify.max_user_watches across large repos and live-uploads
-          # transient temp files. We keep the plugin (for its search skill) but
-          # strip the hooks; indexing is handled by the mgrep-sync timer instead.
-          home.activation.claudeMgrepDisableWatch =
-            lib.hm.dag.entryAfter [ "claudePluginSync" ] # sh
-              ''
-                for hookfile in "${config.home.homeDirectory}"/.claude/plugins/cache/Mixedbread-Grep/mgrep/*/hooks/hook.json; do
-                  [ -f "$hookfile" ] || continue
-                  chmod u+w "$hookfile" 2>/dev/null || true
-                  echo '{ "hooks": {} }' > "$hookfile"
-                done
-              '';
-
           home.packages = [
             claude-package
             claude-native
@@ -437,12 +416,6 @@
                 };
               };
             };
-            # Global mgrep defaults. Per-repo .mgreprc.yaml overrides these.
-            # Raised from the 1000-file default so the dedicated worktrees
-            # (~1.4k tracked files) are not silently truncated on sync.
-            ".config/mgrep/config.yaml".text = ''
-              maxFileCount: 5000
-            '';
             ".claude/agents".source =
               config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/claude/agents";
             ".claude/commands".source =

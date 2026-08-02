@@ -40,7 +40,6 @@
             ".edit-hooks.json"
             ".devenv*"
             ".direnv"
-            ".mgrepignore"
             ".osgrep"
             ".osgrepignore"
             ".pi"

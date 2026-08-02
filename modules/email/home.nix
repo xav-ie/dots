@@ -34,7 +34,12 @@
         # Periodic mail sync — config at ~/.config/neverest/config.toml via sops template
         # flock prevents concurrent runs
         systemd.user.services.neverest = {
-          Unit.Description = "Sync mail with neverest";
+          Unit = {
+            Description = "Sync mail with neverest";
+            # Timer-driven oneshot: invisible to `systemctl --failed`. This had
+            # failed silently on every run. See modules/home-linux/unit-failure-log.nix.
+            OnFailure = "unit-failure@%n.service";
+          };
           Service = {
             Type = "oneshot";
             ExecStart = toString (

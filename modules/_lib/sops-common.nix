@@ -113,12 +113,12 @@
         mode = "0400";
       };
 
-      # mgrep indexing allowlist (modules/home-linux/mgrep/mgrep.nix).
-      # One opaque JSON blob — {folders, worktrees, extraIgnore} — because the
-      # repo paths name private work projects. Read at runtime by the sync /
-      # worktree-pull services; never baked into the Nix store. Decrypts to
-      # /run/secrets/mgrep/config.
-      secrets."mgrep/config" = {
+      # osgrep indexing allowlist (packages/osgrep-indexed defaults
+      # OSGREP_INDEX_CONFIG to this path). One opaque JSON blob —
+      # {folders, worktrees, extraIgnore} — because the repo paths name private
+      # work projects. Read at runtime by the index service; never baked into
+      # the Nix store. Decrypts to /run/secrets/osgrep/config.
+      secrets."osgrep/config" = {
         owner = config.defaultUser;
         mode = "0400";
       };

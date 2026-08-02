@@ -51,7 +51,7 @@ let
     // no index yet are skipped.
     function allowlist() {
       const configPath =
-        process.env.OSGREP_INDEX_CONFIG || "/run/secrets/mgrep/config";
+        process.env.OSGREP_INDEX_CONFIG || "/run/secrets/osgrep/config";
       let folders;
       try {
         folders = JSON.parse(fs.readFileSync(configPath, "utf8")).folders || [];
