@@ -28,6 +28,32 @@
             fi
             exec ${pkgs.gnupg}/bin/gpg "$@"
           '';
+
+      # Same idea for ssh, which needs it for a different reason. gpg reads
+      # GPG_TTY from its own environment; ssh has no such knob, so the agent can
+      # only learn a tty from whichever client last called updatestartuptty.
+      # With gpg-agent serving SSH_AUTH_SOCK, unlocking a passphrase-protected
+      # ssh key spawns pinentry with no `OPTION ttyname=`, so pinentry-auto
+      # falls through to pinentry-gnome3, finds no display over SSH, and git
+      # dies with "agent refused operation".
+      #
+      # Doing this per invocation rather than at shell start is deliberate:
+      # herdr panes are long-lived under `herdr server`, so a one-shot at login
+      # would pin the agent to whichever pane happened to start last and leave
+      # every other pane unable to prompt. GPG_TTY is scoped to the single
+      # gpg-connect-agent call, never exported, for the same reason
+      # gpg-tty-aware unsets it — daemons inheriting it draw on terminals they
+      # do not own.
+      ssh-tty-aware =
+        pkgs.writeShellScriptBin "ssh-tty-aware" # sh
+          ''
+            if [ -t 2 ]; then
+              GPG_TTY="$(readlink /proc/self/fd/2)" \
+                ${pkgs.gnupg}/bin/gpg-connect-agent updatestartuptty /bye \
+                >/dev/null 2>&1 || true
+            fi
+            exec ${pkgs.openssh}/bin/ssh "$@"
+          '';
     in
     {
       # Git config validation (canonical casing, case collisions) runs via
@@ -183,6 +209,7 @@
             #   true-color = "always";
             # };
             gpg.program = "${gpg-tty-aware}/bin/gpg-tty-aware";
+            core.sshCommand = "${ssh-tty-aware}/bin/ssh-tty-aware";
             gpg.ssh.allowedSignersFile = osConfig.sops.secrets."git/allowed_signers".path;
             "includeif \"gitdir:~/\"" = {
               path = "~/.config/git/config.default";
