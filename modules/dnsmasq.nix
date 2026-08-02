@@ -4,6 +4,13 @@
   flake.modules.nixos.linux =
     { pkgs, ... }:
     {
+      # `conf-dir` below points at /etc/dnsmasq.d, and dnsmasq exits 3 if that
+      # directory does not exist. Nothing creates it: it survived on the old
+      # host only as leftover state, so the 2026-08-02 rebuild onto a fresh
+      # filesystem had no resolver at all on first boot — and since
+      # networking.nameservers is 127.0.0.1, that took DNS down with it.
+      systemd.tmpfiles.rules = [ "d /etc/dnsmasq.d 0755 root root -" ];
+
       # too slow :(
       # TODO: use a different dns server
       services.dnsmasq = {
