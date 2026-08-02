@@ -40,10 +40,16 @@
             ExecStart = toString (
               pkgs.writeShellScript "neverest-sync" # sh
                 ''
+                  # $XDG_RUNTIME_DIR, not /run/user/$(id -u): systemd user
+                  # services run with a minimal PATH that has no `id`, so the
+                  # substitution came back empty and the path collapsed to
+                  # /run/user//neverest.lock — root-owned, so flock failed with
+                  # EACCES on every run and mail never synced. systemd always
+                  # sets XDG_RUNTIME_DIR for user units, and it needs no binary.
                   ${pkgs.util-linux}/bin/flock \
                     --nonblock \
                     --conflict-exit-code 0 \
-                    /run/user/$(id -u)/neverest.lock \
+                    "$XDG_RUNTIME_DIR/neverest.lock" \
                     ${lib.getExe pkgs.neverest} sync
                 ''
             );
