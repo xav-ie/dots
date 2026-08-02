@@ -75,6 +75,16 @@
       # ~/.npm/bin, so this wrapper wins.
       osgrep-wrapper = pkgs.writeShellApplication {
         name = "osgrep";
+        # nodejs is REQUIRED here. ~/.npm/bin/osgrep is a JS file whose shebang
+        # is `#!/usr/bin/env node`, and writeShellApplication gives a strict
+        # PATH built only from runtimeInputs. With no node on it, env exits 127
+        # and osgrep never runs — which is exactly what happened: osgrep-index
+        # reported unit success while every one of the 50 repos failed with
+        # FAILED (127) and nothing was ever indexed. Interactively it worked,
+        # because a login shell has node on PATH.
+        # Match programs.npm.package (nodejs_24) so the wrapper runs osgrep on
+        # the same runtime it was installed with.
+        runtimeInputs = [ pkgs.nodejs_24 ];
         text = ''
           export NODE_OPTIONS="--require ${gitignoreGuard}''${NODE_OPTIONS:+ ''${NODE_OPTIONS}}"
           exec ${realOsgrep} "$@"
@@ -84,7 +94,7 @@
       # The indexing allowlist is PRIVATE (it names work projects), so it is read
       # at runtime from the SAME opaque sops blob mgrep uses — {folders, ...}.
       # osgrep only needs `folders`; the rest is mgrep-only and ignored here.
-      configPath = "/run/secrets/mgrep/config";
+      configPath = "/run/secrets/osgrep/config";
 
       # Patterns osgrep's built-in defaults DON'T cover but should never be
       # indexed in any repo. Minified bundles are single-line, so osgrep chunks
@@ -114,6 +124,7 @@
           pkgs.coreutils
           pkgs.gnused
           pkgs.jq
+          pkgs.gnugrep
         ];
         text = # sh
           ''
