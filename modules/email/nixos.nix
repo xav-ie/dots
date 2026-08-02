@@ -32,7 +32,7 @@
           encryption.type = "tls"
           login = "${addressPlaceholder}"
           auth.type = "password"
-          auth.cmd = "cat ${passFile}"
+          auth.cmd = "${pkgs.coreutils}/bin/cat ${passFile}"
 
           [accounts.${name}.folder.aliases]
           ${lib.concatMapStrings (f: "${f.name} = \"${f.gmailRemote}\"\n") emailData.folders}
@@ -58,7 +58,7 @@
           auth on
           from ${addressPlaceholder}
           user ${addressPlaceholder}
-          passwordeval cat ${passFile}
+          passwordeval ${pkgs.coreutils}/bin/cat ${passFile}
         '';
 
       mkNeverestAccount =
@@ -91,7 +91,7 @@
           right.backend.encryption = "tls"
           right.backend.login = "${addressPlaceholder}"
           right.backend.auth.type = "password"
-          right.backend.auth.cmd = "cat ${passFile}"
+          right.backend.auth.cmd = "${pkgs.coreutils}/bin/cat ${passFile}"
 
           right.folder.permissions.delete = false
           right.message.permissions.delete = false

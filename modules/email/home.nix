@@ -42,6 +42,24 @@
           };
           Service = {
             Type = "oneshot";
+            # neverest runs the account's `auth.cmd` through a shell it looks up
+            # on PATH. A systemd user service inherits only systemd's own bin,
+            # so there was no `sh` to run it with and every sync died with
+            #   cannot get imap password from global keyring
+            #     cannot get secret from command
+            #       No such file or directory (os error 2)
+            # which reads like a missing password file but is a missing shell.
+            # Verified: same script + PATH set = "Account work successfully
+            # synchronized!". Absolute paths in auth.cmd are not enough on their
+            # own, because the shell that runs them must also be resolvable.
+            Environment = [
+              "PATH=${
+                lib.makeBinPath [
+                  pkgs.bash
+                  pkgs.coreutils
+                ]
+              }"
+            ];
             ExecStart = toString (
               pkgs.writeShellScript "neverest-sync" # sh
                 ''
