@@ -212,8 +212,21 @@ in
         ];
       };
       systemd.services.podman-mcp = {
-        after = [ "protonmail-network.service" ];
+        # Also after the bridge: mcp reaches it by container name over the
+        # shared network, so starting first means `getaddrinfo ENOTFOUND
+        # protonmail-bridge` and no mail features for the life of the process.
+        # This was latent until proton-dns-gate started holding the bridge back
+        # for however long DNS takes to answer (16s on the 2026-08-02 boot).
+        #
+        # `wants`, not `requires`: mcp also serves Slack and degrades to
+        # "email features limited" without the bridge, so a bridge failure
+        # should delay it, not take it down with it.
+        after = [
+          "protonmail-network.service"
+          "podman-protonmail-bridge.service"
+        ];
         requires = [ "protonmail-network.service" ];
+        wants = [ "podman-protonmail-bridge.service" ];
       };
     };
 
