@@ -1,12 +1,8 @@
 {
   "mcpServers": {
     "executor": {
-      "command": "/etc/profiles/per-user/x/bin/npx",
-      "args": [
-        "-y",
-        "mcp-remote",
-        "https://executor.lalala.casa/mcp"
-      ]
+      "command": "/etc/profiles/per-user/x/bin/executor-mcp-remote",
+      "args": []
     }
   },
   "coworkUserFilesPath": "/Users/x/Claude",

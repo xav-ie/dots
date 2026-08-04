@@ -27,6 +27,29 @@
       '';
 
       home.packages = [
+        # Executor gates /mcp on a bearer token. The config JSON is committed and
+        # synced both ways, so the token can't live in it — read it out of the
+        # sops shell-env blob at launch instead. A GUI app also carries none of
+        # the shell env, so ${EXECUTOR_AUTH_TOKEN} wouldn't expand there anyway.
+        (pkgs.writeShellApplication {
+          name = "executor-mcp-remote";
+          runtimeInputs = [ pkgs.nodejs ];
+          text = ''
+            EXECUTOR_AUTH_TOKEN=$(sed -n 's/^EXECUTOR_AUTH_TOKEN=//p' /run/secrets/shell-env)
+            if [ -z "$EXECUTOR_AUTH_TOKEN" ]; then
+              echo "executor-mcp-remote: EXECUTOR_AUTH_TOKEN missing from /run/secrets/shell-env" >&2
+              exit 1
+            fi
+            export EXECUTOR_AUTH_TOKEN
+
+            # The token goes through the environment, never argv: /proc/PID/cmdline
+            # is world-readable (mode 444) while environ is 400. mcp-remote expands
+            # ''${VAR} in header values from its own process env.
+            exec npx -y mcp-remote https://executor.lalala.casa/mcp \
+              --header "Authorization:Bearer \''${EXECUTOR_AUTH_TOKEN}"
+          '';
+        })
+
         # Force the repo's config back out to the live file, after editing the
         # repo copy by hand.
         (pkgs.writeShellApplication {

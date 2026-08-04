@@ -408,6 +408,7 @@
                 executor = {
                   type = "http";
                   url = "https://executor.lalala.casa/mcp";
+                  headers.Authorization = "Bearer \${EXECUTOR_AUTH_TOKEN}";
                 };
               };
             };

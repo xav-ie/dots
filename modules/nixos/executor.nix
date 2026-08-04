@@ -74,6 +74,9 @@
 
           environment = {
             HOME = userHome;
+            # Lets the daemon reclaim a stale server.json from a previous boot
+            # instead of refusing to start and crash-looping under Restart.
+            EXECUTOR_SUPERVISED = "1";
           };
 
           serviceConfig = {
@@ -81,7 +84,7 @@
             WorkingDirectory = executorWorkspace;
             # Gate config-sync on the proxy being reachable (see waitForMcpProxy).
             ExecStartPre = waitForMcpProxy;
-            ExecStart = "${pkgs.pkgs-mine.executor}/bin/executor web --port ${cfg.port |> toString} --allowed-host ${cfg.subdomain}.${config.services.local-networking.baseDomain}";
+            ExecStart = "${pkgs.pkgs-mine.executor}/bin/executor daemon run --foreground --port ${cfg.port |> toString} --allowed-host ${cfg.subdomain}.${config.services.local-networking.baseDomain}";
             Restart = "on-failure";
             RestartSec = 5;
             StandardOutput = "journal";

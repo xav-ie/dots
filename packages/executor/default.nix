@@ -51,7 +51,7 @@ let
 
     outputHashAlgo = "sha256";
     outputHashMode = "recursive";
-    outputHash = "sha256-z05Vl7yn54gry/YcWW74BBh0tXww5lpZF1d3c4FQy+I=";
+    outputHash = "sha256-rYqjfRE96TnHPN6Rp99TEUV3//5laHrMGR6eo5hqKg0=";
   };
 in
 stdenv.mkDerivation {
@@ -107,9 +107,7 @@ stdenv.mkDerivation {
     runHook preInstall
 
     mkdir -p $out/bin $out/lib/executor
-    cp apps/cli/dist/executor-linux-x64/bin/executor $out/lib/executor/
-    cp apps/cli/dist/executor-linux-x64/bin/emscripten-module.wasm $out/lib/executor/
-    cp apps/cli/dist/executor-linux-x64/bin/keyring.node $out/lib/executor/
+    cp -R apps/cli/dist/executor-linux-x64/bin/. $out/lib/executor/
     chmod +x $out/lib/executor/executor
 
     makeBinaryWrapper $out/lib/executor/executor $out/bin/executor
