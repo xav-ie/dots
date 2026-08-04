@@ -79,6 +79,7 @@
           mcp-atlassian-src
           protonmail-mcp-src
           simulstreaming-src
+          workspace-mcp-src
           zerobrew-src
           ;
         slack-mcp-server-src = inputs.slack-mcp-server;

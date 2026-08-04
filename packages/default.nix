@@ -41,6 +41,7 @@
   protonmail-mcp-src,
   simulstreaming-src,
   slack-mcp-server-src,
+  workspace-mcp-src,
   writeNuApplication,
   zerobrew-src,
 }:
@@ -117,6 +118,7 @@ rec {
   whisper-transcribe = pkgs.callPackage ./whisper-transcribe {
     inherit pkgs-unfree writeNuApplication;
   };
+  workspace-mcp = pkgs.callPackage ./workspace-mcp { src = workspace-mcp-src; };
   pi-executor = pkgs.callPackage ./pi-executor { };
   pi-readcache = pkgs.callPackage ./pi-readcache { };
   pi-show-diffs = pkgs.callPackage ./pi-show-diffs { };

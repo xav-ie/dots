@@ -153,6 +153,8 @@
     clauhist-src.flake = false;
     macos-corner-fix-src.url = "github:m4rkw/macos-corner-fix/147f2708cb468475567139acbad7d714859a4b67";
     macos-corner-fix-src.flake = false;
+    workspace-mcp-src.url = "github:gemini-cli-extensions/workspace/preview-2026-08-03";
+    workspace-mcp-src.flake = false;
     zerobrew-src.url = "github:lucasgelfond/zerobrew";
     zerobrew-src.flake = false;
 

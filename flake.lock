@@ -2370,6 +2370,7 @@
         "terranix": "terranix",
         "treefmt-nix": "treefmt-nix_7",
         "virtual-headset": "virtual-headset",
+        "workspace-mcp-src": "workspace-mcp-src",
         "xdusk": "xdusk",
         "zerobrew-src": "zerobrew-src",
         "zjstatus": "zjstatus"
@@ -2937,6 +2938,23 @@
       "original": {
         "owner": "xav-ie",
         "repo": "virtual-headset",
+        "type": "github"
+      }
+    },
+    "workspace-mcp-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782763747,
+        "narHash": "sha256-ZDM0pUivWTwxhQhJDRdhIivvKT4ATHwUUFbuKMH0nxk=",
+        "owner": "gemini-cli-extensions",
+        "repo": "workspace",
+        "rev": "089927ead01433f38c65c12cdcd2ed9a18165277",
+        "type": "github"
+      },
+      "original": {
+        "owner": "gemini-cli-extensions",
+        "ref": "preview-2026-08-03",
+        "repo": "workspace",
         "type": "github"
       }
     },
