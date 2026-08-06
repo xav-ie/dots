@@ -127,6 +127,7 @@ rec {
 // (optionalAttrs isDarwin {
   airpods-mode = pkgs.callPackage ./airpods-mode { };
   audio-autoswitch = pkgs.callPackage ./audio-autoswitch { };
+  confirm-open = pkgs.callPackage ./confirm-open { };
   fix-yabai = pkgs.callPackage ./fix-yabai { inherit writeNuApplication; };
   focus-daemon = pkgs.callPackage ./focus-daemon { };
   hidewin-bar = pkgs.callPackage ./hidewin-bar { };

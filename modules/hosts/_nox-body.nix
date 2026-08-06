@@ -264,13 +264,16 @@ in
             # held key never backlogs.
             focus = "${pkgs.pkgs-mine.focus-daemon}/bin/focusd";
             move-pip = "${pkgs.pkgs-mine.move-pip}/bin/move-pip";
+            confirm-open = "${pkgs.pkgs-mine.confirm-open}/bin/confirm-open";
           in
           # sh
           ''
             # Application-driven window management - static list avoids imap1/concatStringsSep overhead
             lcmd - 1 : ${focus} Ghostty
             lcmd - 2 : ${focus} Firefox
-            lcmd - 3 : ${focus} zoom.us
+            # Zoom is slow to launch and a pain to quit, so confirm first when it
+            # isn't already running. Enter = open, Escape = cancel (exit 1).
+            lcmd - 3 : pgrep -x zoom.us >/dev/null || ${confirm-open} zoom.us && ${focus} zoom.us
             lcmd - 4 : ${focus} Finder
             lcmd - 5 : ${focus} Messages Signal
             lcmd - 6 : ${focus} Chromium
