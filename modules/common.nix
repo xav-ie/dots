@@ -5,8 +5,14 @@ let
   # prebuilt paths instead of rebuilding these repos from source.
   selfCaches = import ./_lib/caches.nix;
   cacheEndpoint = "https://cache.lalala.casa";
-  cacheSubstituters = map (c: "${cacheEndpoint}/${c.name}") selfCaches;
-  cachePublicKeys = map (c: c.key) selfCaches;
+  # `key = null` marks a cache that's declared but not provisioned yet (cachectl
+  # still needs its name/repo to create it). Skip those entirely: a cache we
+  # can't verify signatures for is useless as a substituter, and a placeholder
+  # key would poison every build that consults one — nix aborts the whole build
+  # with `invalid character in Base64 string` when it decodes the key list.
+  provisionedCaches = builtins.filter (c: c.key != null) selfCaches;
+  cacheSubstituters = map (c: "${cacheEndpoint}/${c.name}") provisionedCaches;
+  cachePublicKeys = map (c: c.key) provisionedCaches;
 
   userModule =
     { lib, ... }:

@@ -2,11 +2,26 @@
 # atticd-ensure-caches oneshot (../hosts/_arca-body.nix) to create each cache, by
 # `cachectl sync`/`list` to wire each repo's ATTIC_TOKEN, and by the common nix
 # settings (../common.nix) to add each as a substituter so local builds pull from
-# them. To add a project: add an entry (name/repo/key), then `cachectl deploy`
-# (creates the cache) and `cachectl sync`. The `key` is the cache's public
-# signing key (`attic cache info <name>`), the same one each repo's nix-cache CI
-# action wires as an `extra-trusted-public-keys`.
+# them. To add a project: add an entry with `key = null`, run `cachectl sync`
+# (creates the cache on the box, then mints the repo's ATTIC_TOKEN), then read
+# the cache's public signing key and fill `key` in:
+#
+#   curl -s https://cache.lalala.casa/_api/v1/cache-config/<name> | jq -r .public_key
+#
+# `key = null` means "declared, not yet provisioned": common.nix skips it as
+# both a substituter and a trusted key. That bootstrap state has to exist —
+# a placeholder string instead makes every local build that consults a
+# substituter die with `invalid character in Base64 string: ''`, including the
+# `nix build` that `cachectl sync` itself runs to deploy the box.
+#
+# The same key goes in each repo's nix-cache CI action (as the ATTIC_PUBLIC_KEY
+# repo variable) for `extra-trusted-public-keys`.
 [
+  {
+    name = "canada";
+    repo = "xav-ie/canada";
+    key = "canada:JLsKjnlZ/arNjPhqL8lj9RtSEgOo5ykB5fT5TIQdjCw=";
+  }
   {
     name = "browser-session-mcp";
     repo = "xav-ie/browser-session-mcp";
