@@ -741,17 +741,25 @@ in
         '';
     };
 
-    # Self-heal the orchestrator, which hosts every Temporal publish worker.
-    # On a cold pod boot (pm2 launches backend + frontend + orchestrator at
-    # once) the orchestrator's Temporal worker init deadlocks before
-    # `app.listen` — it never binds the :3002 health port and no worker polls
-    # any task queue, so posts start a workflow that sits Running forever.
-    # Restarting the orchestrator alone, once the pod is warm, always comes up
-    # in ~5s. This gate polls the health port after boot and kicks pm2 until it
-    # serves. The deadlock is in upstream's worker init; this heals it without
-    # forking the image.
-    systemd.services."${subdomain}-orchestrator-heal" = {
-      description = "Heal deadlocked Postiz orchestrator (Temporal workers)";
+    # Self-heal the two pm2 processes that touch Temporal on startup. On a cold
+    # pod boot (pm2 launches backend + frontend + orchestrator at once) their
+    # Temporal init can deadlock before `app.listen` — the process prints its
+    # pnpm banner, then goes silent forever and never binds its port, while pm2
+    # still reports it `online` with 0 restarts.
+    #
+    #   orchestrator (:3002) hosts every publish worker, so posts start a
+    #     workflow that sits Running forever.
+    #   backend (:3000) serves the whole API, so every /api/* 502s and the
+    #     frontend renders once then dies with a client-side exception.
+    #
+    # Restarting the wedged process alone, with the pod warm, comes up in ~5s.
+    # This gate polls both ports after boot and kicks whichever isn't serving.
+    # The retry loop matters: the first `pm2 restart backend` can itself die
+    # with EADDRINUSE while the wedged process still owns the socket, so a
+    # single kick is not enough. The deadlock is in upstream's init; this heals
+    # it without forking the image.
+    systemd.services."${subdomain}-app-heal" = {
+      description = "Heal deadlocked Postiz backend/orchestrator";
       after = [ "${subdomain}.service" ];
       partOf = [ "${subdomain}.service" ];
       wantedBy = [ "${subdomain}.service" ];
@@ -766,13 +774,13 @@ in
           set -u
           APP=${subdomain}
 
-          # A resolved fetch — even an HTTP 500 — means NestFactory finished
-          # and the app bound :3002, i.e. the workers registered. A rejected
-          # fetch means the deadlock (nothing listening). Don't treat 500 as
-          # down: it only means Temporal was briefly unreachable, app is fine.
+          # A resolved fetch — even an HTTP 404/500 — means NestFactory finished
+          # and the process bound its port. A rejected fetch means the deadlock
+          # (nothing listening). Don't treat a non-2xx as down: for the
+          # orchestrator it only means Temporal was briefly unreachable.
           healthy() {
             podman exec "$APP" node -e \
-              'fetch("http://127.0.0.1:3002/health/status").then(()=>process.exit(0)).catch(()=>process.exit(1))' \
+              "fetch('http://127.0.0.1:$1/').then(()=>process.exit(0)).catch(()=>process.exit(1))" \
               >/dev/null 2>&1
           }
 
@@ -782,20 +790,30 @@ in
             sleep 2
           done
 
-          # A healthy cold boot binds :3002 within ~15s; a deadlocked one never
-          # does. Grace once, then kick and re-check a few times. An unneeded
-          # kick just re-boots a still-starting orchestrator (~5s, idempotent).
+          # A healthy cold boot binds both ports within ~15s; a deadlocked
+          # process never does. Grace once, then kick whatever is still down and
+          # re-check. An unneeded kick just re-boots a still-starting process
+          # (~5s, idempotent).
           for attempt in 1 2 3 4 5; do
             sleep 30
-            if healthy; then
-              echo "orchestrator serving on :3002 (check $attempt)"
+
+            down=""
+            for pair in orchestrator:3002 backend:3000; do
+              healthy "''${pair##*:}" || down="$down ''${pair%%:*}"
+            done
+
+            if [ -z "$down" ]; then
+              echo "backend and orchestrator both serving (check $attempt)"
               exit 0
             fi
-            echo "orchestrator not serving on :3002 — restarting pm2 orchestrator (attempt $attempt)"
-            podman exec "$APP" pm2 restart orchestrator >/dev/null 2>&1 || true
+
+            for proc in $down; do
+              echo "$proc not serving — restarting pm2 $proc (attempt $attempt)"
+              podman exec "$APP" pm2 restart "$proc" >/dev/null 2>&1 || true
+            done
           done
 
-          echo "orchestrator still not serving after retries; leaving for Restart=always"
+          echo "still not serving after retries:$down; leaving for Restart=always"
           exit 0
         '';
     };
