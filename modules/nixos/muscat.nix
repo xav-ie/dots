@@ -24,7 +24,7 @@
       };
 
       config = {
-        services.local-networking.subdomains = [ cfg.subdomain ];
+        services.local-networking.proxies.muscat = { inherit (cfg) subdomain port; };
 
         # Serve the single, self-contained board.html built by packages/muscat.
         # `--index board.html` makes it the response for `/`.

@@ -8,12 +8,7 @@
     }:
     let
       cfg = config.services.reverse-proxy;
-      inherit (config.services.local-networking) baseDomain;
       cfgSecret = config.sops.placeholder;
-
-      # Shared between the router that references it and the spec that defines it.
-      chromeLocalhostHost = "chrome-localhost-host";
-      snippetsStripPrefix = "snippets-strip-prefix";
     in
     {
       options = {
@@ -23,6 +18,18 @@
             default = true;
             example = "true";
             description = "Whether to enable the reverse proxy.";
+          };
+
+          port = lib.mkOption {
+            type = lib.types.port;
+            default = 8081;
+            description = ''
+              Loopback port nginx listens on for this proxy.
+
+              One option because two places need to agree: the listener below
+              and the Traefik route that forwards to it. They were the same
+              literal in two files, which is the shape a drift takes.
+            '';
           };
 
           # TODO: make an array of proxies instead of just one
@@ -39,8 +46,14 @@
       };
 
       config = {
-        environment.etc."traefik/traefik-config.yaml".source =
-          config.sops.templates."traefik-config.yaml".path;
+        # The one route whose host is a secret. It belongs here for the same
+        # reason as all the others: next to the thing that serves it.
+        services.local-networking.proxies = lib.mkIf cfg.enable {
+          ${cfg.name} = {
+            rule = "Host(`${cfgSecret."reverse-proxy/reverse-hostname"}`)";
+            inherit (cfg) port;
+          };
+        };
 
         sops = {
           secrets =
@@ -55,150 +68,6 @@
             };
 
           templates = {
-            "traefik-config.yaml" = {
-              content = lib.generators.toYAML { } {
-                http = {
-                  routers = {
-                    dashboard = {
-                      rule = "Host(`${baseDomain}`) || Host(`traefik.${baseDomain}`)";
-                      service = "api@internal";
-                      tls.certResolver = "cloudflare";
-                    };
-                    home-assistant = {
-                      rule = "Host(`${config.services.home-assistant.subdomain}.${baseDomain}`)";
-                      service = "home-assistant-service";
-                      tls.certResolver = "cloudflare";
-                    };
-                    executor = {
-                      rule = "Host(`${config.services.executor.subdomain}.${baseDomain}`)";
-                      service = "executor-service";
-                      tls.certResolver = "cloudflare";
-                    };
-                    ream = {
-                      rule = "Host(`${config.services.ream.subdomain}.${baseDomain}`)";
-                      service = "ream-service";
-                      tls.certResolver = "cloudflare";
-                    };
-                    muscat = {
-                      rule = "Host(`${config.services.muscat.subdomain}.${baseDomain}`)";
-                      service = "muscat-service";
-                      tls.certResolver = "cloudflare";
-                    };
-                    # Snippets MCP rides on the shared mcp.<base> host alongside
-                    # the containerised mcp-proxy. The PathPrefix rule has higher
-                    # default priority (longer matcher) than the docker-provider
-                    # router on Host(`mcp.<base>`), so /snippets/* lands here
-                    # while everything else still goes to the proxy container.
-                    snippets-via-mcp = {
-                      rule = "Host(`mcp.${baseDomain}`) && PathPrefix(`/snippets`)";
-                      # Beats the docker-provider router on bare Host(`mcp.<base>`)
-                      # regardless of rule-length math.
-                      priority = 100;
-                      service = "snippets-service";
-                      middlewares = [ snippetsStripPrefix ];
-                      tls.certResolver = "cloudflare";
-                    };
-                    chrome = {
-                      rule = "Host(`${config.services.browser-session.chrome.subdomain}.${baseDomain}`)";
-                      service = "chrome-service";
-                      tls.certResolver = "cloudflare";
-                      # Chrome's DevTools HTTP handler rejects non-loopback Host
-                      # headers (DNS-rebinding protection). Rewrite to `localhost`.
-                      middlewares = [ chromeLocalhostHost ];
-                    };
-                    # Human-takeover page server (browser-session-takeover daemon).
-                    # No Host rewrite needed — it's our own plain HTTP daemon.
-                    chrome-takeover = {
-                      rule = "Host(`${config.services.browser-session.takeover.subdomain}.${baseDomain}`)";
-                      service = "chrome-takeover-service";
-                      tls.certResolver = "cloudflare";
-                    };
-                  }
-                  // lib.optionalAttrs cfg.enable {
-                    ${cfg.name} = {
-                      rule = "Host(`${cfgSecret."reverse-proxy/reverse-hostname"}`)";
-                      service = "${cfg.name}-service";
-                      tls.certResolver = "cloudflare";
-                    };
-                  };
-                  services = {
-                    home-assistant-service = {
-                      loadBalancer = {
-                        servers = [
-                          { url = "http://127.0.0.1:8123"; }
-                        ];
-                      };
-                    };
-                    executor-service = {
-                      loadBalancer = {
-                        servers = [
-                          { url = "http://127.0.0.1:${config.services.executor.port |> toString}"; }
-                        ];
-                      };
-                    };
-                    ream-service = {
-                      loadBalancer = {
-                        servers = [
-                          { url = "http://127.0.0.1:${config.services.ream.port |> toString}"; }
-                        ];
-                      };
-                    };
-                    muscat-service = {
-                      loadBalancer = {
-                        servers = [
-                          { url = "http://127.0.0.1:${config.services.muscat.port |> toString}"; }
-                        ];
-                      };
-                    };
-                    snippets-service = {
-                      loadBalancer = {
-                        servers = [
-                          { url = "http://127.0.0.1:${config.services.snippet-mcp.port |> toString}"; }
-                        ];
-                      };
-                    };
-                    chrome-service = {
-                      loadBalancer = {
-                        # `passHostHeader = false` stops Traefik from copying the
-                        # public Host; the middleware below then sets it to localhost.
-                        passHostHeader = false;
-                        servers = [
-                          { url = "http://127.0.0.1:${config.services.browser-session.chrome.port |> toString}"; }
-                        ];
-                      };
-                    };
-                    chrome-takeover-service = {
-                      loadBalancer = {
-                        servers = [
-                          { url = "http://127.0.0.1:${config.services.browser-session.takeover.port |> toString}"; }
-                        ];
-                      };
-                    };
-                  };
-                  middlewares = {
-                    ${chromeLocalhostHost} = {
-                      headers.customRequestHeaders.Host = "localhost";
-                    };
-                    ${snippetsStripPrefix} = {
-                      stripPrefix.prefixes = [ "/snippets" ];
-                    };
-                  };
-                }
-                // lib.optionalAttrs cfg.enable {
-                  services = lib.optionalAttrs cfg.enable {
-                    ${cfg.name + "-service"} = {
-                      loadBalancer = {
-                        servers = [
-                          { url = "http://127.0.0.1:8081"; }
-                        ];
-                      };
-                    };
-                  };
-                };
-              };
-              mode = "0444";
-              restartUnits = [ "traefik.service" ];
-            };
 
             "reverse-proxy/cookie-domain-rewrite" = lib.mkIf cfg.enable {
               content =
@@ -301,7 +170,7 @@
           virtualHosts.${cfg.name} = {
             listen =
               let
-                port = 8081;
+                inherit (cfg) port;
               in
               [
                 {

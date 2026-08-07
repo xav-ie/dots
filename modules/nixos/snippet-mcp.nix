@@ -59,6 +59,17 @@
       };
 
       config = lib.mkIf cfg.enable {
+        # Rides on the shared mcp.<base> host alongside the containerised
+        # mcp-proxy, so this route is a path match rather than a host match.
+        services.local-networking.proxies.snippets-via-mcp = {
+          inherit (cfg) port;
+          rule = "Host(`mcp.${config.services.local-networking.baseDomain}`) && PathPrefix(`/snippets`)";
+          # Beats the docker-provider router on bare Host(`mcp.<base>`)
+          # regardless of rule-length math.
+          priority = 100;
+          middlewares = [ "snippets-strip-prefix" ];
+        };
+
         users.groups.snippet-mcp = { };
         users.users.snippet-mcp = {
           isSystemUser = true;

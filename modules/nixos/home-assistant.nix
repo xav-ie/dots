@@ -72,7 +72,10 @@
       };
 
       config = {
-        services.local-networking.subdomains = [ config.services.home-assistant.subdomain ];
+        services.local-networking.proxies.home-assistant = {
+          inherit (config.services.home-assistant) subdomain;
+          port = 8123;
+        };
 
         services = {
           home-assistant = {

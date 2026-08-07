@@ -52,7 +52,7 @@
 
       config = lib.mkIf cfg.enable {
         # Register subdomain
-        services.local-networking.subdomains = [ cfg.subdomain ];
+        services.local-networking.proxies.executor = { inherit (cfg) subdomain port; };
 
         # Create workspace directory
         systemd.tmpfiles.rules = [

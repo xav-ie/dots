@@ -9,10 +9,86 @@
     let
       inherit (config.services.local-networking) baseDomain subdomains;
 
+      # --- Traefik dynamic configuration -------------------------------------
+      #
+      # Moved here from nginx.nix, which owned an nginx *and* Traefik's routing
+      # table. Keeping them apart is not cosmetic: a `//` applied one level too
+      # high there replaced the whole `services` map instead of adding to it,
+      # taking six unrelated backends offline while every router still resolved
+      # and the config stayed valid.
+
+      # Shared between the router that references it and the spec that defines it.
+      chromeLocalhostHost = "chrome-localhost-host";
+      snippetsStripPrefix = "snippets-strip-prefix";
+
+      # Each proxied service is a router and a service that agree by string.
+      # Generating the pair from one spec removes the agreement problem; the
+      # specs themselves come from the modules that own the daemons, via
+      # `services.local-networking.proxies`.
+      mkProxy = name: p: {
+        routers.${name} = {
+          rule = if p.rule == null then "Host(`${p.subdomain}.${baseDomain}`)" else p.rule;
+          service = "${name}-service";
+          tls.certResolver = "cloudflare";
+        }
+        // lib.optionalAttrs (p.middlewares != [ ]) { inherit (p) middlewares; }
+        // lib.optionalAttrs (p.priority != null) { inherit (p) priority; };
+        services."${name}-service" = lib.recursiveUpdate {
+          loadBalancer.servers = [ { url = "http://127.0.0.1:${toString p.port}"; } ];
+        } p.service;
+      };
+
+      proxied =
+        config.services.local-networking.proxies
+        |> lib.mapAttrsToList mkProxy
+        |> lib.foldl' lib.recursiveUpdate {
+          routers = { };
+          services = { };
+        };
+
+      traefikDynamic = {
+        http = {
+          routers = proxied.routers // {
+            dashboard = {
+              rule = "Host(`${baseDomain}`) || Host(`traefik.${baseDomain}`)";
+              # Traefik's own dashboard, served by the API — it has no entry in
+              # `services` and never will.
+              service = "api@internal";
+              tls.certResolver = "cloudflare";
+            };
+          };
+          inherit (proxied) services;
+          middlewares = {
+            ${chromeLocalhostHost}.headers.customRequestHeaders.Host = "localhost";
+            ${snippetsStripPrefix}.stripPrefix.prefixes = [ "/snippets" ];
+          };
+        };
+      };
+
+      # Every router names a service, and nothing in Traefik's schema requires
+      # that service to exist — a dangling reference is valid config that fails
+      # at request time. Checking it here turns a silent 502 into a build error
+      # that names the routers.
+      #
+      # A name containing `@` belongs to another provider (`api@internal`, or a
+      # container published by the docker provider) and is unknowable from this
+      # file, so it is not ours to check. Excluding only `api@internal` would
+      # fail the build the first time a file router pointed at a container.
+      danglingRouters = lib.filterAttrs (
+        _: r: !(lib.hasInfix "@" r.service) && !(traefikDynamic.http.services ? ${r.service})
+      ) traefikDynamic.http.routers;
+
+      # A proxy already knows its own subdomain, so it does not have to be
+      # listed twice. `subdomains` stays for the hosts that Traefik routes some
+      # other way — the container labels the docker provider reads — which need
+      # a certificate and a hosts entry but have no entry here.
+      proxySubdomains =
+        config.services.local-networking.proxies |> lib.mapAttrsToList (_: p: p.subdomain);
+
       allDomains = [
         baseDomain
       ]
-      ++ (subdomains |> map (subdomain: "${subdomain}.${baseDomain}"));
+      ++ (subdomains ++ proxySubdomains |> lib.unique |> map (s: "${s}.${baseDomain}"));
       hostEntries =
         allDomains
         |> map (d: ''
@@ -67,6 +143,58 @@
             example = ''[ "dashboard" "media" ]'';
             description = "A list of subdomains to configure under the base domain for services and certificates.";
           };
+          proxies = lib.mkOption {
+            default = { };
+            description = ''
+              Services to expose through Traefik, contributed by the module that
+              owns each one.
+
+              Declared here and set there on purpose: a router and its service
+              agree only by string, and the port belongs next to the daemon that
+              listens on it. Because this is an attrset option the module system
+              merges the contributions — nothing hand-merges attrsets, which is
+              what once replaced the whole services map instead of adding to it.
+            '';
+            example = lib.literalExpression ''{ muscat = { subdomain = "muscat"; port = 8763; }; }'';
+            type = lib.types.attrsOf (
+              lib.types.submodule (
+                { name, ... }:
+                {
+                  options = {
+                    subdomain = lib.mkOption {
+                      type = lib.types.str;
+                      default = name;
+                      description = "Host is <subdomain>.<baseDomain>, unless `rule` overrides it.";
+                    };
+                    rule = lib.mkOption {
+                      type = lib.types.nullOr lib.types.str;
+                      default = null;
+                      description = "A full Traefik rule, for anything that is not a plain host match.";
+                    };
+                    port = lib.mkOption {
+                      type = lib.types.port;
+                      description = "Loopback port the service listens on.";
+                    };
+                    priority = lib.mkOption {
+                      type = lib.types.nullOr lib.types.int;
+                      default = null;
+                      description = "Router priority, where two rules can both match.";
+                    };
+                    middlewares = lib.mkOption {
+                      type = lib.types.listOf lib.types.str;
+                      default = [ ];
+                      description = "Middleware names to apply to the router.";
+                    };
+                    service = lib.mkOption {
+                      type = lib.types.attrs;
+                      default = { };
+                      description = "Extra loadBalancer settings, merged over the generated one.";
+                    };
+                  };
+                }
+              )
+            );
+          };
           caCertFile = lib.mkOption {
             type = lib.types.path;
             default = "${mkcertCA}/rootCA.pem";
@@ -77,6 +205,26 @@
       };
 
       config = {
+        # An `assert` in the module body would be evaluated during the module
+        # fixpoint, before `config` exists — and these routers read config, so
+        # that is an infinite recursion. `assertions` is the mechanism that runs
+        # after evaluation settles.
+        assertions = [
+          {
+            assertion = danglingRouters == { };
+            message = "traefik routers point at services that do not exist: ${lib.concatStringsSep ", " (lib.attrNames danglingRouters)}";
+          }
+        ];
+
+        environment.etc."traefik/traefik-config.yaml".source =
+          config.sops.templates."traefik-config.yaml".path;
+
+        sops.templates."traefik-config.yaml" = {
+          content = lib.generators.toYAML { } traefikDynamic;
+          mode = "0444";
+          restartUnits = [ "traefik.service" ];
+        };
+
         services.local-networking.subdomains = [ "traefik" ];
 
         environment.variables = {
