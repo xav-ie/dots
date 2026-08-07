@@ -37,10 +37,23 @@ let
   # the `nginxConf` arg in instance.nix) — mounting avoids the ~15min image
   # rebuild that editing the source copy would trigger (the COPY precedes the
   # pnpm build layers in Dockerfile.dev).
+  #
+  # The `Cookie` rewrite implements passwordless access: Cloudflare Access is
+  # the only identity gate we want, so requests that arrive without an `auth`
+  # cookie get a pre-minted, non-expiring one for the instance's single user.
+  # It has to be the *cookie* rather than the `Auth` header because the Next
+  # SSR path (`internalFetch`) reads `cookies()` and talks to the backend
+  # directly on :3000, bypassing nginx entirely. `$postiz_cookie` is defined by
+  # the per-instance /config/auth-map.conf, which holds the token (a sops
+  # template; see instance.nix).
   patchedNginxConf = pkgs.runCommand "postiz-nginx.conf" { } ''
     substitute ${postizSrc}/var/docker/nginx.conf $out \
       --replace-fail 'http://localhost:3000/' 'http://127.0.0.1:3000/' \
-      --replace-fail 'http://localhost:4200/' 'http://127.0.0.1:4200/'
+      --replace-fail 'http://localhost:4200/' 'http://127.0.0.1:4200/' \
+      --replace-fail 'http {' 'http {
+      include                     /config/auth-map.conf;' \
+      --replace-fail 'proxy_set_header Auth $http_auth;' 'proxy_set_header Auth $http_auth;
+            proxy_set_header Cookie $postiz_cookie;'
   '';
 in
 {

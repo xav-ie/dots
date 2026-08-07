@@ -238,6 +238,7 @@ in
     sops = {
       secrets = {
         # internal
+        "${name}/internal/auth_token" = { };
         "${name}/internal/jwt_secret" = { };
         "${name}/internal/postgres_password" = { };
       }
@@ -275,6 +276,25 @@ in
             }@${subdomain}-postgres:5432/${postgresDB}
           ''
           + socialEnv;
+        restartUnits = [ "${subdomain}.service" ];
+      };
+      # Shared-session cookie for the passwordless setup. Cloudflare Access
+      # already authenticates everyone who reaches the pod, so any request that
+      # arrives without an `auth` cookie is given the instance's own. The token
+      # is a Postiz JWT (signed with JWT_SECRET, no expiry) for the single user
+      # this instance runs as — mint it by copying the `auth` cookie out of a
+      # logged-in browser. Rotating JWT_SECRET invalidates it.
+      #
+      # A request that *does* carry its own `auth` cookie passes through
+      # untouched, so logging in as a different user still works.
+      templates."${name}-auth-map.conf" = {
+        mode = "0440";
+        content = ''
+          map $cookie_auth $postiz_cookie {
+              ""      "auth=${cfgSecret."${name}/internal/auth_token"}; $http_cookie";
+              default $http_cookie;
+          }
+        '';
         restartUnits = [ "${subdomain}.service" ];
       };
       templates."${name}-postgres.env" = {
@@ -370,6 +390,7 @@ in
                 "${postizDataDir}/config:/config/"
                 "${postizDataDir}/uploads:/uploads/"
                 "${uploadFetchShim}:/config/upload-fetch-shim.cjs:ro"
+                "${config.sops.templates."${name}-auth-map.conf".path}:/config/auth-map.conf:ro"
                 "${nginxConf}:/etc/nginx/nginx.conf:ro"
               ];
               environmentFiles = [ config.sops.templates."${name}.env".path ];
