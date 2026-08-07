@@ -3,7 +3,6 @@
     {
       config,
       lib,
-      pkgs,
       ...
     }:
     let
@@ -128,8 +127,6 @@
           recommendedOptimisation = false;
           recommendedGzipSettings = true;
           recommendedProxySettings = false;
-
-          additionalModules = with pkgs.nginxModules; [ moreheaders ];
 
           appendHttpConfig = # nginx
             ''
