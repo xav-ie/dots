@@ -226,6 +226,42 @@
           mkdir -p /var/log/nginx /var/run
           touch /var/log/nginx/error.log /var/log/nginx/access.log
         '';
+
+        # Reload nginx when a rendered secret changes.
+        #
+        # On NixOS every sops template carries `restartUnits = [ "nginx.service" ]`
+        # and sops-nix does this itself. The nix-darwin half of sops-nix has no
+        # such option — `restartUnits` does not exist on its template submodule,
+        # so it cannot even be set — and nginx.conf embeds the template *path*,
+        # which never changes when the value behind it does. Without this, a
+        # rotated secret is written to disk and served by an nginx that is still
+        # holding the previous one, indefinitely.
+        #
+        # mkOrder rather than mkAfter: sops-nix renders its templates in
+        # postActivation with mkAfter (order 1500) as well, and two mkAfters have
+        # no defined order between them — measured, this one landed first, which
+        # would hash the previous render and reload nothing. 2000 puts it after.
+        #
+        # Hashing the rendered files rather than reloading unconditionally keeps
+        # `darwin-rebuild switch` from bouncing the proxy on every unrelated
+        # change.
+        system.activationScripts.postActivation.text = lib.mkOrder 2000 ''
+          reverseProxyState=/var/lib/reverse-proxy
+          mkdir -p "$reverseProxyState"
+          renderedHash=$(cat ${
+            lib.concatStringsSep " " (
+              map (name: config.sops.templates.${name}.path) [
+                "reverse-proxy/cookie-domain-rewrite"
+                "reverse-proxy/domain-variables"
+              ]
+            )
+          } 2>/dev/null | ${pkgs.coreutils}/bin/sha256sum | cut -d" " -f1)
+          if [ "$renderedHash" != "$(cat "$reverseProxyState/secrets.sha256" 2>/dev/null)" ]; then
+            echo "reverse-proxy: rendered secrets changed, reloading nginx"
+            launchctl kickstart -k system/org.nixos.nginx 2>/dev/null || true
+            printf '%s' "$renderedHash" > "$reverseProxyState/secrets.sha256"
+          fi
+        '';
       };
     };
 }
