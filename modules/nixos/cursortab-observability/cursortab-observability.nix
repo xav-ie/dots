@@ -33,9 +33,12 @@
 
       # One subdomain per container. grafana = UI; prometheus/loki = the OTLP
       # ingest endpoints the host daemon pushes to.
-      grafanaHost = "grafana.${baseDomain}";
-      prometheusHost = "prometheus.${baseDomain}";
-      lokiHost = "loki.${baseDomain}";
+      # One list of names, so the Host(...) in each container's Traefik label and
+      # the subdomain registered for the certificate and /etc/hosts cannot
+      # disagree. They were independent literals 150 lines apart; a route with no
+      # cert fails loudly in a browser, but for prometheus and loki it is a
+      # silent telemetry drop.
+      hosts = lib.genAttrs [ "grafana" "loki" "prometheus" ] (n: "${n}.${baseDomain}");
 
       # traefik docker-provider labels for a container in the pod. Each gets its
       # own router + service; all resolve to the shared pod IP on `port`.
@@ -178,11 +181,7 @@
       };
 
       config = lib.mkIf cfg.enable {
-        services.local-networking.subdomains = [
-          "grafana"
-          "loki"
-          "prometheus"
-        ];
+        services.local-networking.subdomains = lib.attrNames hosts;
 
         virtualisation.quadlet =
           let
@@ -219,7 +218,7 @@
                     "--web.enable-otlp-receiver"
                   ];
                   # OTLP metrics ingest at /api/v1/otlp/v1/metrics.
-                  labels = mkTraefikLabels "prometheus" prometheusHost promInternalPort;
+                  labels = mkTraefikLabels "prometheus" hosts.prometheus promInternalPort;
                 };
                 serviceConfig.Restart = "always";
               };
@@ -234,7 +233,7 @@
                   ];
                   exec = [ "-config.file=/etc/loki/loki.yaml" ];
                   # OTLP logs ingest at /otlp/v1/logs.
-                  labels = mkTraefikLabels "loki" lokiHost lokiInternalPort;
+                  labels = mkTraefikLabels "loki" hosts.loki lokiInternalPort;
                 };
                 serviceConfig.Restart = "always";
               };
@@ -251,7 +250,7 @@
                   ];
                   environments = {
                     GF_SERVER_HTTP_PORT = toString grafanaInternalPort;
-                    GF_SERVER_ROOT_URL = "https://${grafanaHost}";
+                    GF_SERVER_ROOT_URL = "https://${hosts.grafana}";
                     # Reachable only through traefik on this single-user box, so
                     # skip auth entirely. Revert (login form + admin secret) if
                     # this is ever exposed to a wider network.
@@ -259,7 +258,7 @@
                     GF_AUTH_ANONYMOUS_ORG_ROLE = "Admin";
                     GF_AUTH_DISABLE_LOGIN_FORM = "true";
                   };
-                  labels = mkTraefikLabels "grafana" grafanaHost grafanaInternalPort;
+                  labels = mkTraefikLabels "grafana" hosts.grafana grafanaInternalPort;
                 };
                 serviceConfig.Restart = "always";
                 unitConfig.After = [
@@ -286,8 +285,8 @@
         # so the push is plain HTTPS with no extra trust wiring.
         environment.sessionVariables = {
           OTEL_EXPORTER_OTLP_PROTOCOL = "http/protobuf";
-          OTEL_EXPORTER_OTLP_METRICS_ENDPOINT = "https://${prometheusHost}/api/v1/otlp/v1/metrics";
-          OTEL_EXPORTER_OTLP_LOGS_ENDPOINT = "https://${lokiHost}/otlp/v1/logs";
+          OTEL_EXPORTER_OTLP_METRICS_ENDPOINT = "https://${hosts.prometheus}/api/v1/otlp/v1/metrics";
+          OTEL_EXPORTER_OTLP_LOGS_ENDPOINT = "https://${hosts.loki}/otlp/v1/logs";
           OTEL_SERVICE_NAME = "cursortab";
         };
 
