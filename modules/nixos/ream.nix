@@ -26,7 +26,7 @@
       };
 
       config = {
-        services.local-networking.subdomains = [ cfg.subdomain ];
+        services.local-networking.proxies.ream = { inherit (cfg) subdomain port; };
 
         # systemd holds the socket; nothing runs until a connection arrives.
         systemd.sockets.ream = {

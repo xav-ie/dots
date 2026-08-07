@@ -68,10 +68,20 @@
           takeover.chromeWsBase = "wss://${cfg.chrome.subdomain}.${baseDomain}";
         };
 
-        services.local-networking.subdomains = [
-          cfg.chrome.subdomain
-          cfg.takeover.subdomain
-        ];
+        services.local-networking = {
+          proxies = {
+            chrome = {
+              inherit (cfg.chrome) subdomain port;
+              # Chrome's DevTools HTTP handler rejects non-loopback Host headers
+              # (DNS-rebinding protection). The middleware rewrites it to
+              # `localhost`, which only works if Traefik stops sending the public
+              # one first.
+              middlewares = [ "chrome-localhost-host" ];
+              service.loadBalancer.passHostHeader = false;
+            };
+            chrome-takeover = { inherit (cfg.takeover) subdomain port; };
+          };
+        };
       };
     };
 }
