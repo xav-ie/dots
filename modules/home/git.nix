@@ -2,6 +2,7 @@
   flake.modules.homeManager.common =
     {
       config,
+      gpgKeys,
       osConfig,
       pkgs,
       ...
@@ -13,20 +14,24 @@
       # services.gpg-agent.enableSshSupport exports GPG_TTY at login, and every
       # child inherits it — including agent/daemon processes whose stdio are
       # pipes. pinentry-auto routes on the resulting `OPTION ttyname=`, so those
-      # callers made pinentry-curses draw onto a terminal they do not own,
-      # overwriting whatever TUI was there until the ~60s pinentry timeout.
-      # Deciding per invocation instead of per login keeps the prompt where you
-      # are actually typing (herdr pane, local or over SSH) and sends
-      # terminal-less callers to pinentry-gnome3 on the desktop.
+      # callers made pinentry draw onto a terminal they do not own, overwriting
+      # whatever TUI was there until the ~60s pinentry timeout.
+      #
+      # Unsetting GPG_TTY is not enough on its own: with no ttyname from the
+      # client, gpg-agent falls back to its own startup tty (whichever client
+      # last ran `updatestartuptty`), so the prompt still lands on an unrelated
+      # pane. `--pinentry-mode cancel` closes that path — a cached passphrase
+      # still signs, an uncached one fails immediately instead of hijacking
+      # someone else's terminal.
       gpg-tty-aware =
         pkgs.writeShellScriptBin "gpg-tty-aware" # sh
           ''
             if [ -t 2 ]; then
               export GPG_TTY="$(readlink /proc/self/fd/2)"
-            else
-              unset GPG_TTY
+              exec ${pkgs.gnupg}/bin/gpg "$@"
             fi
-            exec ${pkgs.gnupg}/bin/gpg "$@"
+            unset GPG_TTY
+            exec ${pkgs.gnupg}/bin/gpg --pinentry-mode cancel "$@"
           '';
 
       # Same idea for ssh: it has no GPG_TTY equivalent, so gpg-agent only
@@ -261,16 +266,16 @@
         xdg.configFile."git/config.default".source = gitIniFmt.generate "config.default" {
           user = {
             inherit (config.programs.git.settings.user) name;
-            email = "github@xav.ie";
-            signingKey = "5B9134A9E7E7F965";
+            inherit (gpgKeys.personal) email;
+            signingKey = gpgKeys.personal.id;
           };
         };
 
         xdg.configFile."git/config.work".source = gitIniFmt.generate "config.work" {
           user = {
             inherit (config.programs.git.settings.user) name;
-            email = "xavier@outsmartly.com";
-            signingKey = "22420DD6C13E3EB7";
+            inherit (gpgKeys.work) email;
+            signingKey = gpgKeys.work.id;
           };
         };
 

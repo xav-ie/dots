@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Assuan-aware pinentry multiplexer. Picks pinentry-curses if the gpg client
+# Assuan-aware pinentry multiplexer. Picks pinentry-tty if the gpg client
 # advertised a tty (`OPTION ttyname=…` non-empty); otherwise pinentry-gnome3.
+# pinentry-tty, not -curses: curses takes over the terminal (alternate screen),
+# which wrecks any full-screen TUI that owns the pty.
 set -euo pipefail
 
 printf 'OK Pleased to meet you\n'
@@ -10,7 +12,7 @@ buffered=()
 
 while IFS= read -r line; do
   case "$line" in
-  "OPTION ttyname="?*) backend=pinentry-curses ;&
+  "OPTION ttyname="?*) backend=pinentry-tty ;&
   "OPTION "* | RESET)
     printf 'OK\n'
     buffered+=("$line")
