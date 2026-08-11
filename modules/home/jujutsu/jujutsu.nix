@@ -1,6 +1,6 @@
 {
   flake.modules.homeManager.common =
-    { pkgs, ... }:
+    { gpgKeys, pkgs, ... }:
     let
       delta-jj = pkgs.writeNuApplication {
         name = "delta-jj";
@@ -22,8 +22,7 @@
             signing = {
               behavior = "own";
               backend = "gpg";
-              # github@xav.ie
-              key = "5B9134A9E7E7F965";
+              key = gpgKeys.personal.id;
             };
             ui = {
               show-cryptographic-signatures = true;
@@ -32,16 +31,15 @@
             };
             user = {
               name = "Xavier Ruiz";
-              email = "github@xav.ie";
+              inherit (gpgKeys.personal) email;
             };
 
             "--scope" = [
               {
                 # NB: only applies properly when there is active jj repo
                 "--when"."repositories" = [ "~/Work/" ];
-                user.email = "xavier@outsmartly.com";
-                # xavier@outsmartly.com
-                signing.key = "22420DD6C13E3EB7";
+                user.email = gpgKeys.work.email;
+                signing.key = gpgKeys.work.id;
               }
             ];
 
