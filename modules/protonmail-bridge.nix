@@ -11,7 +11,7 @@ in
   flake.modules.nixos.praesidium =
     { pkgs, ... }:
     let
-      # Threaded IMAP-APPENDed drafts: stock Bridge never sets ParentID on
+      # Threaded drafts appended over IMAP: stock Bridge never sets ParentID on
       # CreateDraft, so Proton doesn't link reply drafts to their conversation.
       # Builds upstream PR #526 directly (extracts the SMTP parent-resolver into a
       # shared package and calls it from the IMAP draft path). #526 is on master,
@@ -182,17 +182,18 @@ in
           Type = "oneshot";
           RemainAfterExit = true;
         };
-        script = ''
-          for i in $(seq 1 60); do
-            if ${pkgs.getent}/bin/getent hosts mail-api.proton.me >/dev/null 2>&1; then
-              echo "DNS resolved mail-api.proton.me after $i attempt(s)"
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "mail-api.proton.me still unresolvable after 120s — refusing to start Bridge" >&2
-          exit 1
-        '';
+        script = # sh
+          ''
+            for i in $(seq 1 60); do
+              if ${pkgs.getent}/bin/getent hosts mail-api.proton.me >/dev/null 2>&1; then
+                echo "DNS resolved mail-api.proton.me after $i attempt(s)"
+                exit 0
+              fi
+              sleep 2
+            done
+            echo "mail-api.proton.me still unresolvable after 120s — refusing to start Bridge" >&2
+            exit 1
+          '';
       };
 
       systemd.services.podman-protonmail-bridge = {

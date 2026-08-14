@@ -52,15 +52,40 @@ let
   # every patch is checked: no change to cli.js fails the build.
   applyPatches =
     patches
-    |> lib.concatMapStringsSep "\n" (p: ''
-      cp cli.js cli.js.pre
-      sed -i ${p.args} cli.js
-      if cmp -s cli.js.pre cli.js; then
-        echo "claude-code patch '${p.name}' matched nothing — upstream shape changed"
-        exit 1
-      fi
-      rm cli.js.pre
-    '');
+    |> lib.concatMapStringsSep "\n" (
+      p: # sh
+      ''
+        cp cli.js cli.js.pre
+        sed -i ${p.args} cli.js
+        if cmp -s cli.js.pre cli.js; then
+          echo "claude-code patch '${p.name}' matched nothing — upstream shape changed"
+          exit 1
+        fi
+        rm cli.js.pre
+      ''
+    );
+
+  splicePatched = # sh
+    ''
+      # 1. Extract cli.js + native modules from the Bun-compiled binary. The
+      #    entry module's path inside the Bun VFS moves between releases, so
+      #    read it from the manifest instead of hardcoding.
+      mkdir extracted
+      node ${bun-demincer-src}/src/extract.mjs claude-original extracted
+      cp "extracted/$(node -p 'require("./extracted/manifest.json").entryPoint.split("/$bunfs/root/")[1]')" cli.js
+      chmod +w cli.js
+
+      # 2. Apply patches in-place.
+      ${applyPatches}
+
+      # 3. Splice patched cli.js back into the Bun binary (drops the JSC
+      #    bytecode cache — Bun re-parses the 25 MB CLI at every launch,
+      #    ~390 ms slower).
+      nu ${splicer} claude-original cli.js "$out/bin/.claude-wrapped"
+    '';
+
+  installBinary =
+    if patches == [ ] then ''cp claude-original "$out/bin/.claude-wrapped"'' else splicePatched;
 in
 stdenv.mkDerivation {
   pname = "claude-code";
@@ -86,30 +111,7 @@ stdenv.mkDerivation {
     chmod +w claude-original
 
     mkdir -p "$out/bin"
-    ${
-      if patches == [ ] then
-        ''
-          cp claude-original "$out/bin/.claude-wrapped"
-        ''
-      else
-        ''
-          # 1. Extract cli.js + native modules from the Bun-compiled binary. The
-          #    entry module's path inside the Bun VFS moves between releases, so
-          #    read it from the manifest instead of hardcoding.
-          mkdir extracted
-          node ${bun-demincer-src}/src/extract.mjs claude-original extracted
-          cp "extracted/$(node -p 'require("./extracted/manifest.json").entryPoint.split("/$bunfs/root/")[1]')" cli.js
-          chmod +w cli.js
-
-          # 2. Apply patches in-place.
-          ${applyPatches}
-
-          # 3. Splice patched cli.js back into the Bun binary (drops the JSC
-          #    bytecode cache — Bun re-parses the 25 MB CLI at every launch,
-          #    ~390 ms slower).
-          nu ${splicer} claude-original cli.js "$out/bin/.claude-wrapped"
-        ''
-    }
+    ${installBinary}
     chmod +x "$out/bin/.claude-wrapped"
 
     # splice.nu patches the __BUN segment in-place, so segment offsets stay

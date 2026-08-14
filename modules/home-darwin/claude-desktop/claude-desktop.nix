@@ -34,20 +34,21 @@
         (pkgs.writeShellApplication {
           name = "executor-mcp-remote";
           runtimeInputs = [ pkgs.nodejs ];
-          text = ''
-            EXECUTOR_AUTH_TOKEN=$(sed -n 's/^EXECUTOR_AUTH_TOKEN=//p' /run/secrets/shell-env)
-            if [ -z "$EXECUTOR_AUTH_TOKEN" ]; then
-              echo "executor-mcp-remote: EXECUTOR_AUTH_TOKEN missing from /run/secrets/shell-env" >&2
-              exit 1
-            fi
-            export EXECUTOR_AUTH_TOKEN
+          text = # sh
+            ''
+              EXECUTOR_AUTH_TOKEN=$(sed -n 's/^EXECUTOR_AUTH_TOKEN=//p' /run/secrets/shell-env)
+              if [ -z "$EXECUTOR_AUTH_TOKEN" ]; then
+                echo "executor-mcp-remote: EXECUTOR_AUTH_TOKEN missing from /run/secrets/shell-env" >&2
+                exit 1
+              fi
+              export EXECUTOR_AUTH_TOKEN
 
-            # The token goes through the environment, never argv: /proc/PID/cmdline
-            # is world-readable (mode 444) while environ is 400. mcp-remote expands
-            # ''${VAR} in header values from its own process env.
-            exec npx -y mcp-remote https://executor.lalala.casa/mcp \
-              --header "Authorization:Bearer \''${EXECUTOR_AUTH_TOKEN}"
-          '';
+              # The token goes through the environment, never argv: /proc/PID/cmdline
+              # is world-readable (mode 444) while environ is 400. mcp-remote expands
+              # ''${VAR} in header values from its own process env.
+              exec npx -y mcp-remote https://executor.lalala.casa/mcp \
+                --header "Authorization:Bearer \''${EXECUTOR_AUTH_TOKEN}"
+            '';
         })
 
         # Force the repo's config back out to the live file, after editing the
@@ -55,14 +56,15 @@
         (pkgs.writeShellApplication {
           name = "claude-config-push";
           runtimeInputs = [ pkgs.procps ];
-          text = ''
-            if pgrep -x Claude >/dev/null; then
-              echo "Claude Desktop is running — quit it first, or it'll overwrite this on its next prefs save." >&2
-              exit 1
-            fi
-            install -m600 -D "${repo}" "${live}"
-            echo "pushed ${repo} -> ${live}"
-          '';
+          text = # sh
+            ''
+              if pgrep -x Claude >/dev/null; then
+                echo "Claude Desktop is running — quit it first, or it'll overwrite this on its next prefs save." >&2
+                exit 1
+              fi
+              install -m600 -D "${repo}" "${live}"
+              echo "pushed ${repo} -> ${live}"
+            '';
         })
       ];
     };
