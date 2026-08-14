@@ -10,6 +10,19 @@ let
     sox
     ;
 
+  # Grep passes `--max-columns 500` with no preview flag, so a matching line over
+  # 500 columns is dropped whole ("[Omitted long matching line]") instead of being
+  # truncated — minified JS, lockfiles and one-line JSON return nothing. The flag
+  # is hardcoded in the CLI, but USE_BUILTIN_RIPGREP=0 points Grep at PATH, so
+  # shadowing `rg` fixes it without patching (and without the splice startup cost).
+  rgWrapper = pkgs.writeShellScriptBin "rg" ''
+    exec ${pkgs.ripgrep}/bin/rg --max-columns-preview "$@"
+  '';
+
+  binPath = lib.makeBinPath [
+    rgWrapper
+  ];
+
   linuxBinPath = lib.makeBinPath [
     bubblewrap
     gopls
@@ -29,19 +42,20 @@ let
     CLAUBBIT = "1"; # skip TrustDialog render/unmount cycles on startup
     CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD = "1";
     CLAUDE_CODE_DISABLE_BACKGROUND_TASKS = "1"; # hide run_in_background docs/UI
+    CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY = "1"; # never offer the in-session survey
     CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = "1"; # skip connectivity polling, changelog, auto-updater
     CLAUDE_CODE_DISABLE_OFFICIAL_MARKETPLACE_AUTOINSTALL = "1"; # skip marketplace plugin auto-install
     CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1"; # https://code.claude.com/docs/en/agent-teams
     DISABLE_AUTOUPDATER = "1";
     DISABLE_ERROR_REPORTING = "1";
+    DISABLE_GROWTHBOOK = "1"; # feature-flag fetch, gated separately from DISABLE_TELEMETRY
     DISABLE_INSTALLATION_CHECKS = "1";
-    DISABLE_TELEMETRY = "1"; # skip GrowthBook, tool search indexing, Datadog flush
-    ENABLE_EXPERIMENTAL_MCP_CLI = "false";
-    ENABLE_LSP_TOOL = "true";
+    DISABLE_TELEMETRY = "1"; # skip tool search indexing, Datadog flush
+    ENABLE_LSP_TOOL = "0";
     ENABLE_TOOL_SEARCH = "true";
-    NODE_COMPILE_CACHE = "/tmp/claude-code-compile-cache"; # ~3x faster Node.js startup (395ms→120ms)
     SSL_CERT_DIR = "${pkgs.cacert}/etc/ssl/certs"; # silence OpenSSL "Cannot open directory" warning
     SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+    USE_BUILTIN_RIPGREP = "0"; # route Grep at rgWrapper (see above)
   };
 in
 {
@@ -51,22 +65,10 @@ in
   wrapperArgs =
     (
       (envVars |> lib.mapAttrsToList (k: v: "--set ${k} ${v}"))
+      ++ [ "--prefix PATH : ${binPath}" ]
       ++ lib.optional stdenv.isLinux "--prefix PATH : ${linuxBinPath}"
     )
     |> lib.concatStringsSep " ";
-
-  # Wrapper script for tmux agent panes: exports env vars and starts /bin/sh
-  # Much faster than zsh (no .zshrc) and avoids long env var strings in send-keys
-  spawnWrapper = pkgs.writeScript "claude-agent-env" (
-    "#!/bin/sh\n"
-    + (
-      envVars
-      |> lib.mapAttrsToList (k: v: "export ${k}=${lib.escapeShellArg v}")
-      |> lib.concatStringsSep "\n"
-    )
-    + "\nexport CLAUDE_CONFIG_DIR=\"$HOME/.claude\""
-    + "\nexec /bin/sh\n"
-  );
 
   # Shared meta attributes
   meta =
