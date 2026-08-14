@@ -71,6 +71,7 @@ rec {
   claude-code-update = pkgs-unfree.callPackage ./claude-code/update.nix {
     inherit writeNuApplication;
   };
+  claude-resume = pkgs.callPackage ./claude-resume { inherit writeNuApplication; };
   clauhist = pkgs.callPackage ./clauhist { inherit clauhist-src; };
   ff = pkgs.callPackage ./ff { };
   firefox-router = pkgs.callPackage ./firefox-router { };

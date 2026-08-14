@@ -191,7 +191,6 @@
             ''
               export CLAUDE_CODE_DISABLE_FAST_MODE=1
               export CLAUDE_CONFIG_DIR="$HOME/.claude"
-              export ENABLE_LSP_TOOL=0
             '';
 
           # Native binary wrapper
