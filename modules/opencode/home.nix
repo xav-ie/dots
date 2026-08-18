@@ -48,6 +48,7 @@
               type = "remote";
               url = "https://executor.lalala.casa/mcp";
               enabled = true;
+              headers.Authorization = "Bearer {env:EXECUTOR_AUTH_TOKEN}";
             };
           }
         else
