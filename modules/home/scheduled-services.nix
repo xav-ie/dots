@@ -90,6 +90,14 @@
         svc:
         if svc.calendar == "hourly" then
           [ { Minute = svc.minute; } ]
+        else if svc.calendar == "monthly" then
+          [
+            {
+              Day = 1;
+              Hour = svc.hour;
+              Minute = svc.minute;
+            }
+          ]
         else if svc.calendar == "weekly" then
           [
             {
@@ -169,7 +177,9 @@
               enable = true;
               config = {
                 Label = "com.user.${name}";
-                ProgramArguments = [ svc.command ];
+                # launchd takes argv, not a shell string, so a command carrying
+                # flags has to be split.
+                ProgramArguments = lib.splitString " " svc.command;
                 StandardOutPath = "${config.home.homeDirectory}/Library/Logs/${name}.log";
                 StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/${name}.log";
               }

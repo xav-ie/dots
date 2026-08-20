@@ -79,6 +79,14 @@ def main [] {
   # and the pieces below are appended with no separator.
   let prompt = prompt-render
 
+  let pending = try {
+    let raw = open ("~/.cache/claude-code-pending" | path expand) | str trim
+    if ($raw | is-empty) { null } else {
+      let target = $raw | split row " -> " | last
+      $"↑($target)" | paint 221
+    }
+  } catch { null }
+
   let rest = [
     $model_display
     (
@@ -86,6 +94,7 @@ def main [] {
         $session | paint (hash-color $session)
       }
     )
+    $pending
   ]
   | compact
   | str join ' '

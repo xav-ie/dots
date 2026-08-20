@@ -102,6 +102,13 @@
           # The update script package (in overlay)
           inherit (pkgs) claude-code-update;
 
+          # Wrapper that cds into the package dir so sources.json resolves
+          # regardless of where the command is invoked from.
+          claudeCodeUpdateWrapped = pkgs.writeShellScriptBin "claude-code-update" ''
+            cd "${config.dotFilesDir}/packages/claude-code"
+            exec ${claude-code-update}/bin/claude-code-update "$@"
+          '';
+
           marketplaceInputNames =
             cfg.marketplaces |> lib.mapAttrsToList (_: m: findInputName m.src) |> lib.filter (x: x != null);
 
@@ -366,6 +373,7 @@
             claude-package
             claude-native
             claude-npm
+            claudeCodeUpdateWrapped
             cfg.pluginSyncPackage
             updateMarketplacesPackage
           ]
@@ -431,10 +439,12 @@
           // (mkNuHook "statusline")
           // marketplaceFiles;
 
-          # Daily update check for claude-code sources
+          # Daily check: always reports the changelog for pending releases,
+          # but only rewrites sources.json at most once per 30 days (gated
+          # inside the script). --cooldown-days 14 quarantines fresh releases.
           services.scheduled.claude-code-update = {
             description = "Check for claude-code updates";
-            command = "${claude-code-update}/bin/claude-code-update";
+            command = "${claude-code-update}/bin/claude-code-update --cooldown-days 14";
             workingDirectory = "${config.dotFilesDir}/packages/claude-code";
             calendar = "daily";
             hour = 9;
