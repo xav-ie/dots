@@ -469,16 +469,16 @@
     "executor-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1785433808,
-        "narHash": "sha256-zO7haqc+4iLVohEyui+ay8Hda2fuPIn9MiTs/p6yFu4=",
+        "lastModified": 1787068755,
+        "narHash": "sha256-OFLqLEr9j7EGPwpPY8hgGfPtxdZ4UT4oBQBBTVyOeCU=",
         "owner": "RhysSullivan",
         "repo": "executor",
-        "rev": "2c1880107fe94b46d6e9082412c074c2cfdb8053",
+        "rev": "22a0383758aef57106fda7aa05825c0607352feb",
         "type": "github"
       },
       "original": {
         "owner": "RhysSullivan",
-        "ref": "v1.5.37",
+        "ref": "v1.5.42",
         "repo": "executor",
         "type": "github"
       }
