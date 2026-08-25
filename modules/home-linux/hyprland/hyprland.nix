@@ -125,6 +125,14 @@
           __GLX_VENDOR_LIBRARY_NAME = "nvidia";
         };
 
+        # Systemd user services never source ~/.profile, so hypridle — and the
+        # hyprlock it spawns — otherwise runs without the GL vars above: Mesa
+        # finds no driver for the NVIDIA pci id and gbm can't allocate, so the
+        # lock screen renders nothing at all.
+        systemd.user.sessionVariables = {
+          inherit (config.home.sessionVariables) GBM_BACKEND MESA_LOADER_DRIVER_OVERRIDE;
+        };
+
         home.pointerCursor = {
           name = "phinger-cursors-dark";
           package = pkgs.phinger-cursors;
