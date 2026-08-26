@@ -7,82 +7,13 @@
       osConfig,
       pkgs,
       fonts,
+      hyprlock-weather,
       ...
     }:
     let
       cfg = config.programs.hyprland;
       barCfg = config.programs.ags-bar;
       # Same `sans` (Inter) the pickers/bar use, so hyprlock tracks the system font.
-
-      # Today/Tomorrow forecast for the lock-screen label: each day is a header plus
-      # a "rain% icon hi/lo desc" row. Same source (wttr.in Boston, Fahrenheit) and
-      # weatherCode→glyph mapping as the notification-center Weather card, so the two
-      # stay visually consistent.
-      hyprlock-weather = pkgs.writeNuApplication {
-        name = "hyprlock-weather";
-        text = # nu
-          ''
-            # wttr.in weatherCode → Nerd Font (nf-weather) glyph codepoint, matching
-            # the symbolic-icon buckets the notification-center Weather card uses.
-            let icon_of = {|code|
-              if $code == 113 { "e30d" # day_sunny
-              } else if $code == 116 { "e302" # day_cloudy
-              } else if $code in [119 122] { "e312" # cloudy
-              } else if $code in [143 248 260] { "e313" # fog
-              } else if $code in [200 386 389 392 395] { "e31d" # thunderstorm
-              } else if $code in [179 227 230 323 326 329 332 335 338 368 371] { "e31a" # snow
-              } else if $code >= 176 { "e319" # showers
-              } else { "e302" }
-            }
-            try {
-              let j = (http get --max-time 10sec 'https://wttr.in/Boston?format=j1' | from json)
-              let cur = $j.current_condition.0
-              # Today uses the live current condition; tomorrow the ~midday hourly
-              # entry (3-hourly → index 4 ≈ 12:00). Rain is the day's peak chance.
-              let mk = {|d live|
-                # wttr.in sometimes truncates the current day's hourly array, so guard
-                # the midday lookup; seed the rain max so an empty list can't throw.
-                let hourly = ($d.hourly | default [])
-                let src = (if $live { $cur } else { $hourly | get -o 4 | default ($hourly | last) })
-                {
-                  icon: (char -u (do $icon_of ($src.weatherCode | into int)))
-                  rain: ($hourly | each {|h| $h.chanceofrain | into int } | append 0 | math max)
-                  hi: $d.maxtempF
-                  lo: $d.mintempF
-                  # current_condition sentence-cases the description but the hourly
-                  # feed Title-Cases it; normalise so today and tomorrow agree.
-                  desc: ($src.weatherDesc.0.value | str trim | str downcase | str capitalize)
-                }
-              }
-              let days = [(do $mk $j.weather.0 true) (do $mk $j.weather.1 false)]
-              # Description column fits the wider of the two days, no fixed slack.
-              let dw = ($days | each {|x| $x.desc | str length } | math max)
-              # Fixed-width fields keep columns aligned between the two rows while
-              # the whole block stays flush-right (text_align=right): every field
-              # is right-aligned so the text hugs the edge.
-              # The condition glyph is doubled and dropped via a pango <span>.
-              let fmt = {|x|
-                # Drop the umbrella glyph outside the padded field so it stays in a
-                # fixed column hard against the temp; only the digits right-pad.
-                let rainf = ($"($x.rain)%" | fill -a r -w 4)
-                let temp = ($"($x.hi)°/($x.lo)°" | fill -a r -w 8)
-                let desc = ($x.desc | fill -a r -w $dw)
-                $"($desc) <span size='200%' rise='-19000'>($x.icon)</span>($temp) (char -u e371)($rainf)"
-              }
-              # Headers in Inter ExtraLight (matching the clock/date module); data in
-              # mono. The leading zero-width space is load-bearing: hyprgraphics
-              # inserts a scale=1 attr over [0, END] after parsing markup, which
-              # clobbers any markup scale starting at index 0 — so the first header's
-              # size='150%' is lost unless something unscaled occupies index 0.
-              let head = {|t| $"<span font='${fonts.name "sans"} ExtraLight' size='150%'>($t)</span>" }
-              print $"(char -u '200b')(do $head Today)\n(do $fmt ($days | get 0))\n\n(do $head Tomorrow)\n(do $fmt ($days | get 1))"
-            } catch {
-              # Network down (common right after wake), rate-limit, or bad payload:
-              # degrade to a single line instead of a blank region on the lock screen.
-              print $"(char -u '200b')<span font='${fonts.name "sans"} ExtraLight' size='150%'>Weather unavailable</span>"
-            }
-          '';
-      };
     in
     {
       options.programs.hyprland = {
