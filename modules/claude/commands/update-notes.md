@@ -15,7 +15,6 @@ Report as scannable markdown, no preamble. Structure:
 2. One line: **Verdict:** — what I actually have to do, if anything.
 3. `---`
 4. Three `###` sections, in this order, skipping any that ends up empty:
-
    - `### ⚙️ Needs a decision from you` — anything I must set, unset, or
      brace for. Table: `| ! | What changed | Your move |`.
    - `### ⚠️ Know about it` — things that were quietly broken or that
