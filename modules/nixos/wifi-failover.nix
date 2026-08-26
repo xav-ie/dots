@@ -9,30 +9,32 @@
         networking.networkmanager.dispatcherScripts = [
           {
             type = "basic";
-            source = pkgs.writeShellScript "wifi-failover" ''
-              iface="$1"
-              action="$2"
+            source =
+              pkgs.writeShellScript "wifi-failover" # sh
+                ''
+                  iface="$1"
+                  action="$2"
 
-              case "$action" in
-                up | down) ;;
-                *) exit 0 ;;
-              esac
+                  case "$action" in
+                    up | down) ;;
+                    *) exit 0 ;;
+                  esac
 
-              nmcli=${pkgs.networkmanager}/bin/nmcli
+                  nmcli=${pkgs.networkmanager}/bin/nmcli
 
-              # Toggling the radio emits events for the Wi-Fi device itself;
-              # acting on those would loop.
-              devtype=$("$nmcli" -t -f DEVICE,TYPE device | ${pkgs.gnugrep}/bin/grep "^$iface:" | ${pkgs.coreutils}/bin/cut -d: -f2)
-              case "$devtype" in
-                wifi | wifi-p2p | "") exit 0 ;;
-              esac
+                  # Toggling the radio emits events for the Wi-Fi device itself;
+                  # acting on those would loop.
+                  devtype=$("$nmcli" -t -f DEVICE,TYPE device | ${pkgs.gnugrep}/bin/grep "^$iface:" | ${pkgs.coreutils}/bin/cut -d: -f2)
+                  case "$devtype" in
+                    wifi | wifi-p2p | "") exit 0 ;;
+                  esac
 
-              if "$nmcli" -t -f TYPE,STATE device | ${pkgs.gnugrep}/bin/grep -q '^ethernet:connected$'; then
-                "$nmcli" radio wifi off
-              else
-                "$nmcli" radio wifi on
-              fi
-            '';
+                  if "$nmcli" -t -f TYPE,STATE device | ${pkgs.gnugrep}/bin/grep -q '^ethernet:connected$'; then
+                    "$nmcli" radio wifi off
+                  else
+                    "$nmcli" radio wifi on
+                  fi
+                '';
           }
         ];
       };

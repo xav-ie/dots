@@ -237,12 +237,12 @@ def main [
 
   # Never downgrade: if the resolved target is older than what's pinned, keep
   # the existing version.
-  let ver = if ($existing != null and "native" in $existing and (ver_num $resolved_native) < (ver_num $existing.native.version)) {
+  let ver = if $existing != null and "native" in $existing and (ver_num $resolved_native) < (ver_num $existing.native.version) {
     $existing.native.version
   } else {
     $resolved_native
   }
-  let target_npm = if ($existing != null and "npm" in $existing and "version" in $existing.npm and (ver_num $resolved_npm) < (ver_num $existing.npm.version)) {
+  let target_npm = if $existing != null and "npm" in $existing and "version" in $existing.npm and (ver_num $resolved_npm) < (ver_num $existing.npm.version) {
     $existing.npm.version
   } else {
     $resolved_npm
@@ -275,8 +275,11 @@ def main [
     let split = if $cooldown_days == 0 {
       let q_native = try { resolve_native_version $QUARANTINE_DAYS } catch { $ver }
       let q_npm = try { resolve_npm_version $QUARANTINE_DAYS } catch { $target_npm }
-      let q_upper = ([$q_native $q_npm] | sort-by {|v| ver_num $v} | last)
-      [$bounds.from ([$q_upper $bounds.to] | sort-by {|v| ver_num $v} | first)]
+      let q_upper = [$q_native $q_npm] | sort-by {|v| ver_num $v} | last
+      [
+        $bounds.from
+        ([$q_upper $bounds.to] | sort-by {|v| ver_num $v} | first)
+      ]
       | sort-by {|v| ver_num $v}
       | last
     } else {
@@ -311,10 +314,12 @@ def main [
   # version was pinned, or the last bump is older than BUMP_INTERVAL_DAYS.
   let explicit_pin = not ($version | is-empty) or not ($npm_version | is-empty)
   if not $force and not $explicit_pin {
-    let last = try { open $LAST_BUMP | str trim | into int } catch { 0 }
+    let last = try {
+      open $LAST_BUMP | str trim | into int
+    } catch { 0 }
     let elapsed_days = ((date now | into int) - $last) / 86_400_000_000_000
     if $elapsed_days < $BUMP_INTERVAL_DAYS {
-      let remaining = ($BUMP_INTERVAL_DAYS - ($elapsed_days | math floor))
+      let remaining = $BUMP_INTERVAL_DAYS - ($elapsed_days | math floor)
       print $"\n⏳ Bump gated: last bump was ($elapsed_days | math floor) days ago."
       print $"   Next auto-bump in ~($remaining) days. Use --force to override."
       return
