@@ -31,12 +31,26 @@ default_shell = "nu"
 [keys]
 prefix = "ctrl+space"
 
+# Written here rather than left to herdr-fwd's installer: it rewrites this file
+# by temp+rename, which replaces home-manager's symlink with a real file and
+# fails the next activation.
+[[keys.command]]
+key = "prefix+shift+f"
+type = "plugin_action"
+command = "herdr.fwd.open-dashboard-popup"
+description = "Open port-forward dashboard"
+
 [ui.toast]
 delivery = "herdr"
 
 [ui]
 show_agent_labels_on_pane_borders = true
 agent_panel_sort = "spaces"
+
+[ui.sidebar]
+
+[ui.sidebar.spaces]
+rows = [["state_icon", "workspace"], ["branch", "git_status"], ["$port_forward_status"]]
 
 [experimental]
 pane_history = true
