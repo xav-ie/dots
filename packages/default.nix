@@ -88,6 +88,7 @@ rec {
   gp = pkgs.callPackage ./gp { inherit update-pr writeNuApplication; };
   gpw = pkgs.callPackage ./gpw { inherit browse writeNuApplication; };
   grw = pkgs.callPackage ./grw { inherit browse writeNuApplication; };
+  herdr-edit = pkgs.callPackage ./herdr-edit { inherit writeNuApplication; };
   lint-staged = pkgs.callPackage ./lint-staged { inherit writeNuApplication; };
   localip = pkgs.callPackage ./localip { inherit writeNuApplication; };
   mcp-atlassian = pkgs.callPackage ./mcp-atlassian { inherit mcp-atlassian-src pkgs-bleeding; };
@@ -196,4 +197,5 @@ rec {
     fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
   };
   snippet-mcp = pkgs.callPackage ./snippet-mcp { };
+  vibe-kanban = pkgs.callPackage ./vibe-kanban { };
 })
