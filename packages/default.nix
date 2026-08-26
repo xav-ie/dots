@@ -90,6 +90,7 @@ rec {
   gpw = pkgs.callPackage ./gpw { inherit browse writeNuApplication; };
   grw = pkgs.callPackage ./grw { inherit browse writeNuApplication; };
   herdr-edit = pkgs.callPackage ./herdr-edit { inherit writeNuApplication; };
+  herdr-fwd = pkgs.callPackage ./herdr-fwd { };
   herdr-mobile-relay = pkgs.callPackage ./herdr-mobile-relay { };
   lint-staged = pkgs.callPackage ./lint-staged { inherit writeNuApplication; };
   localip = pkgs.callPackage ./localip { inherit writeNuApplication; };
