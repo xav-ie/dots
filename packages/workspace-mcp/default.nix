@@ -30,6 +30,8 @@ buildNpmPackage {
 
   inherit src;
 
+  patches = [ ./event-location.patch ];
+
   npmDepsHash = "sha256-7PbXyCrT6ICKhZyFugnYxY9hMd0NAmWNfY0BkpAxQtk=";
 
   # keytar's install script fetches a prebuilt binary from the network. The

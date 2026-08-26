@@ -1,0 +1,127 @@
+diff --git a/workspace-server/src/index.ts b/workspace-server/src/index.ts
+index e7a8077..8d476d5 100644
+--- a/workspace-server/src/index.ts
++++ b/workspace-server/src/index.ts
+@@ -1079,6 +1079,12 @@ async function main() {
+           .string()
+           .optional()
+           .describe('The description of the event.'),
++        location: z
++          .string()
++          .optional()
++          .describe(
++            'The geographic location of the event as free-form text, e.g. "Cafe Luna, Cambridge, MA".',
++          ),
+         start: eventDateInputSchema('start'),
+         end: eventDateInputSchema('end'),
+         attendees: z
+@@ -1202,6 +1208,12 @@ async function main() {
+           .string()
+           .optional()
+           .describe('The end time for the event search.'),
++        q: z
++          .string()
++          .optional()
++          .describe(
++            'Free-text search over summary, description, location, and attendees. Terms are ANDed.',
++          ),
+         attendeeResponseStatus: z
+           .array(z.string())
+           .optional()
+@@ -1291,6 +1303,12 @@ async function main() {
+           .string()
+           .optional()
+           .describe('The new description of the event.'),
++        location: z
++          .string()
++          .optional()
++          .describe(
++            'The new geographic location of the event as free-form text. Pass an empty string to clear it.',
++          ),
+         start: eventDateInputSchema('start').optional(),
+         end: eventDateInputSchema('end').optional(),
+         attendees: z
+diff --git a/workspace-server/src/services/CalendarService.ts b/workspace-server/src/services/CalendarService.ts
+index eccecc0..f11f0c3 100644
+--- a/workspace-server/src/services/CalendarService.ts
++++ b/workspace-server/src/services/CalendarService.ts
+@@ -37,6 +37,7 @@ export interface CreateEventInput {
+   calendarId?: string;
+   summary?: string;
+   description?: string;
++  location?: string;
+   start: { dateTime?: string; date?: string };
+   end: { dateTime?: string; date?: string };
+   attendees?: string[];
+@@ -70,6 +71,7 @@ export interface ListEventsInput {
+   calendarId?: string;
+   timeMin?: string;
+   timeMax?: string;
++  q?: string;
+   attendeeResponseStatus?: string[];
+   eventTypes?: ListEventsEventType[];
+ }
+@@ -89,6 +91,7 @@ export interface UpdateEventInput {
+   calendarId?: string;
+   summary?: string;
+   description?: string;
++  location?: string;
+   start?: { dateTime?: string; date?: string };
+   end?: { dateTime?: string; date?: string };
+   attendees?: string[];
+@@ -312,6 +315,7 @@ export class CalendarService {
+     const {
+       calendarId,
+       description,
++      location,
+       start,
+       end,
+       attendees,
+@@ -364,6 +368,7 @@ export class CalendarService {
+       const event: calendar_v3.Schema$Event = {
+         summary,
+         description,
++        location,
+         start,
+         end,
+         attendees: attendees?.map((email) => ({ email })),
+@@ -469,6 +474,7 @@ export class CalendarService {
+     const {
+       calendarId,
+       timeMin = new Date().toISOString(),
++      q,
+       attendeeResponseStatus = ['accepted', 'tentative', 'needsAction'],
+       eventTypes,
+     } = input;
+@@ -490,11 +496,14 @@ export class CalendarService {
+         timeMax,
+         singleEvents: true,
+         fields:
+-          'items(id,summary,start,end,description,htmlLink,attendees,status,eventType,focusTimeProperties,outOfOfficeProperties,workingLocationProperties,attachments(fileId,fileUrl,title,mimeType,iconLink))',
++          'items(id,summary,start,end,description,location,htmlLink,attendees,status,eventType,focusTimeProperties,outOfOfficeProperties,workingLocationProperties,attachments(fileId,fileUrl,title,mimeType,iconLink))',
+       };
+       if (eventTypes && eventTypes.length > 0) {
+         listParams.eventTypes = eventTypes;
+       }
++      if (q) {
++        listParams.q = q;
++      }
+       const res = await calendar.events.list(listParams);
+ 
+       const events = res.data.items
+@@ -624,6 +633,7 @@ export class CalendarService {
+       calendarId,
+       summary,
+       description,
++      location,
+       start,
+       end,
+       attendees,
+@@ -648,6 +658,7 @@ export class CalendarService {
+       const requestBody: calendar_v3.Schema$Event = {};
+       if (summary !== undefined) requestBody.summary = summary;
+       if (description !== undefined) requestBody.description = description;
++      if (location !== undefined) requestBody.location = location;
+       if (start) requestBody.start = start;
+       if (end) requestBody.end = end;
+       if (attendees !== undefined)
