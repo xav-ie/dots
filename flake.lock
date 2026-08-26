@@ -469,16 +469,16 @@
     "executor-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1787068755,
-        "narHash": "sha256-OFLqLEr9j7EGPwpPY8hgGfPtxdZ4UT4oBQBBTVyOeCU=",
+        "lastModified": 1787685535,
+        "narHash": "sha256-NYydsI91ijZldG2GjsaZMyuvUhQrSbxuQDJKS9PdJ4g=",
         "owner": "RhysSullivan",
         "repo": "executor",
-        "rev": "22a0383758aef57106fda7aa05825c0607352feb",
+        "rev": "0ae7959fe03e8fb98d0b8a961438ad88e49fbd4b",
         "type": "github"
       },
       "original": {
         "owner": "RhysSullivan",
-        "ref": "v1.5.42",
+        "ref": "v1.6.0",
         "repo": "executor",
         "type": "github"
       }
@@ -943,11 +943,11 @@
         "rust-overlay": "rust-overlay_2"
       },
       "locked": {
-        "lastModified": 1784114872,
-        "narHash": "sha256-T2daR2+s8xod93hRfxBeqb8KcNOV7QkTtZEniXeNgBc=",
+        "lastModified": 1787704742,
+        "narHash": "sha256-UPy1DYvDvOxUbXoA8xpmM5zwgLgSodr0Nau5KAZalVo=",
         "owner": "xav-ie",
         "repo": "herdr",
-        "rev": "00936613dddefd487d12ece4e22cf6cc641f5227",
+        "rev": "3b6c43af65b4366921a22a6b44af49ed0568c62e",
         "type": "github"
       },
       "original": {
