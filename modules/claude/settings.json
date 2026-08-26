@@ -105,6 +105,9 @@
       }
     ]
   },
+  "permissions": {
+    "defaultMode": "bypassPermissions"
+  },
   "preferredNotifChannel": "notifications_disabled",
   "prefersReducedMotion": true,
   "skipDangerousModePermissionPrompt": true,
