@@ -175,7 +175,10 @@
           environmentFiles = [
             config.sops.templates."mcp-proxy-env".path
           ];
-          extraOptions = allExtraHosts |> map (h: "--add-host=${h}");
+          extraOptions = (allExtraHosts |> map (h: "--add-host=${h}")) ++ [
+            # workspace-mcp salts its token store with the hostname
+            "--hostname=${subdomain}"
+          ];
           labels = {
             "traefik.enable" = "true";
             "traefik.http.routers.${subdomain}-secure.entrypoints" = "websecure";
