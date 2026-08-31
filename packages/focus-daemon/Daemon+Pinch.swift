@@ -1,3 +1,4 @@
+import AppKit
 import CoreGraphics
 import Foundation
 
@@ -40,37 +41,104 @@ private var mtAccMid: Float = 0  // one-time pinch-vs-slide decision
 private let MT_DECIDE: Float = 0.03  // finger travel to accumulate before locking the mode
 private var pinchSock: Int32 = -1  // reused UDP datagram socket to the PiP listener
 
+// The MT device dies silently across sleep/wake (and USB trackpad replug): the
+// handle stays valid, the callback just stops firing forever. So the handle is
+// re-openable — mtClose() fully tears the old one down (stop, unregister, release)
+// before mtOpen() creates a new one, so a re-open costs nothing in memory.
+private var mtDev: MTDeviceRef? = nil
+private var mtCreate: (@convention(c) () -> MTDeviceRef?)? = nil
+private var mtRegister: (@convention(c) (MTDeviceRef, MTContactCallback) -> Void)? = nil
+private var mtUnregister: (@convention(c) (MTDeviceRef, MTContactCallback) -> Void)? = nil
+private var mtStart: (@convention(c) (MTDeviceRef, Int32) -> Void)? = nil
+private var mtStop: (@convention(c) (MTDeviceRef) -> Void)? = nil
+private var mtRelease: (@convention(c) (MTDeviceRef) -> Void)? = nil
+private var mtIsRunning: (@convention(c) (MTDeviceRef) -> Bool)? = nil
+
+private let mtCallback: MTContactCallback = { _, touches, n, _, _ in
+  onTouchFrame(touches, n)
+  return 0
+}
+
+private func mtResolve() -> Bool {
+  if mtCreate != nil { return true }
+  let path =
+    "/System/Library/PrivateFrameworks/MultitouchSupport.framework/MultitouchSupport"
+  guard let h = dlopen(path, RTLD_NOW) else {
+    fputs("focusd: MultitouchSupport dlopen failed\n", stderr)
+    return false
+  }
+  guard let pDefault = dlsym(h, "MTDeviceCreateDefault"),
+    let pReg = dlsym(h, "MTRegisterContactFrameCallback"),
+    let pStart = dlsym(h, "MTDeviceStart")
+  else {
+    fputs("focusd: MultitouchSupport dlsym failed\n", stderr)
+    return false
+  }
+  mtCreate = unsafeBitCast(pDefault, to: (@convention(c) () -> MTDeviceRef?).self)
+  mtRegister = unsafeBitCast(
+    pReg, to: (@convention(c) (MTDeviceRef, MTContactCallback) -> Void).self)
+  mtStart = unsafeBitCast(pStart, to: (@convention(c) (MTDeviceRef, Int32) -> Void).self)
+  // Teardown/liveness symbols: present on every OS we've seen, but optional —
+  // without them we degrade to leaking one device per re-open rather than failing.
+  if let p = dlsym(h, "MTUnregisterContactFrameCallback") {
+    mtUnregister = unsafeBitCast(
+      p, to: (@convention(c) (MTDeviceRef, MTContactCallback) -> Void).self)
+  }
+  if let p = dlsym(h, "MTDeviceStop") {
+    mtStop = unsafeBitCast(p, to: (@convention(c) (MTDeviceRef) -> Void).self)
+  }
+  if let p = dlsym(h, "MTDeviceRelease") {
+    mtRelease = unsafeBitCast(p, to: (@convention(c) (MTDeviceRef) -> Void).self)
+  }
+  if let p = dlsym(h, "MTDeviceIsRunning") {
+    mtIsRunning = unsafeBitCast(p, to: (@convention(c) (MTDeviceRef) -> Bool).self)
+  }
+  return true
+}
+
+private func mtClose() {
+  guard let dev = mtDev else { return }
+  mtDev = nil
+  mtStop?(dev)
+  mtUnregister?(dev, mtCallback)
+  if let release = mtRelease {
+    release(dev)
+  } else {
+    Unmanaged<AnyObject>.fromOpaque(dev).release()  // MTDeviceRef is a CF type
+  }
+  mtPrevDist = -1  // any in-flight gesture is over
+}
+
+private func mtOpen() {
+  mtClose()
+  guard mtResolve(), let create = mtCreate, let dev = create() else {
+    fputs("focusd: no multitouch device\n", stderr)
+    return
+  }
+  mtDev = dev
+  mtRegister?(dev, mtCallback)
+  mtStart?(dev, 0)
+  fputs("focusd: multitouch pinch capture started\n", stderr)
+}
+
 extension Daemon {
   func startPinchCapture() {
     if pinchSock < 0 { pinchSock = socket(AF_INET, SOCK_DGRAM, 0) }
-    let path =
-      "/System/Library/PrivateFrameworks/MultitouchSupport.framework/MultitouchSupport"
-    guard let h = dlopen(path, RTLD_NOW) else {
-      fputs("focusd: MultitouchSupport dlopen failed\n", stderr)
-      return
+    mtOpen()
+    // Wake is the known killer; re-open there. The 60s poll is the backstop for
+    // every other way the device goes quiet (replug, display wake without a
+    // system wake) — MTDeviceIsRunning is cheap and re-opens only when dead, so
+    // the steady state allocates nothing.
+    NSWorkspace.shared.notificationCenter.addObserver(
+      forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
+    ) { _ in mtOpen() }
+    Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { _ in
+      guard let dev = mtDev, let running = mtIsRunning else { return }
+      if !running(dev) {
+        fputs("focusd: multitouch device stopped — reopening\n", stderr)
+        mtOpen()
+      }
     }
-    guard let pDefault = dlsym(h, "MTDeviceCreateDefault"),
-      let pReg = dlsym(h, "MTRegisterContactFrameCallback"),
-      let pStart = dlsym(h, "MTDeviceStart")
-    else {
-      fputs("focusd: MultitouchSupport dlsym failed\n", stderr)
-      return
-    }
-    let createDefault = unsafeBitCast(pDefault, to: (@convention(c) () -> MTDeviceRef?).self)
-    let register = unsafeBitCast(
-      pReg, to: (@convention(c) (MTDeviceRef, MTContactCallback) -> Void).self)
-    let start = unsafeBitCast(pStart, to: (@convention(c) (MTDeviceRef, Int32) -> Void).self)
-    guard let dev = createDefault() else {
-      fputs("focusd: no multitouch device\n", stderr)
-      return
-    }
-    let cb: MTContactCallback = { _, touches, n, _, _ in
-      onTouchFrame(touches, n)
-      return 0
-    }
-    register(dev, cb)
-    start(dev, 0)
-    fputs("focusd: multitouch pinch capture started\n", stderr)
   }
 }
 
