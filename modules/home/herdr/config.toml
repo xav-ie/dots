@@ -49,8 +49,28 @@ agent_panel_sort = "spaces"
 
 [ui.sidebar]
 
+# Default is [["state_icon", "workspace", "tab"], ["agent"]]. The tab name says
+# what the agent is working on and the agent's own name doesn't, so lead with the
+# tab and drop the agent row; the space goes on its own line beneath, where it
+# reads as the owner rather than as part of the title.
+[ui.sidebar.agents]
+rows = [
+  # Rendered only on the first agent of each space — herdr drops a row whose
+  # tokens all resolve to nothing, and only that agent carries the token
+  # (packages/herdr-space-headers keeps it tagged).
+  [{ token = "$space_header", fg = "#9A5FEB", bold = true, dim = false }],
+  # dim = false is load-bearing: `tab` is a "secondary" token whose base style is
+  # overlay0 + Modifier::DIM, and herdr only drops DIM when the config says so
+  # (apply_token_style in src/ui/sidebar.rs), so fg alone renders muted.
+  [
+    "state_icon",
+    { token = "tab", fg = "#FFD242", bold = true, dim = false },
+    { token = "$siblings", fg = "#a090a0", dim = false }
+  ],
+]
+
 [ui.sidebar.spaces]
-rows = [["state_icon", "workspace"], ["branch", "git_status"], ["$port_forward_status"]]
+rows = [["state_icon", "workspace"], ["$port_forward_status"]]
 
 [experimental]
 pane_history = true
