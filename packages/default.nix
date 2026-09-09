@@ -92,6 +92,7 @@ rec {
   herdr-edit = pkgs.callPackage ./herdr-edit { inherit writeNuApplication; };
   herdr-fwd = pkgs.callPackage ./herdr-fwd { };
   herdr-mobile-relay = pkgs.callPackage ./herdr-mobile-relay { };
+  herdr-space-headers = pkgs.callPackage ./herdr-space-headers { inherit writeNuApplication; };
   lint-staged = pkgs.callPackage ./lint-staged { inherit writeNuApplication; };
   localip = pkgs.callPackage ./localip { inherit writeNuApplication; };
   mcp-atlassian = pkgs.callPackage ./mcp-atlassian { inherit mcp-atlassian-src pkgs-bleeding; };
