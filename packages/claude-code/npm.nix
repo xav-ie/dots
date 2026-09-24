@@ -29,9 +29,7 @@ let
   splicer = ./splice.nu;
 
   # Add `{ name = "…"; args = "-e 's|…|…|g'"; }` entries to modify the CLI. Empty
-  # means the tarball binary is installed as-is: extract + splice would drop the
-  # JSC bytecode cache and cost ~390 ms of startup (72 ms -> 467 ms, measured) for
-  # no benefit. Any patch has to be worth that on every launch.
+  # means the tarball binary is installed as-is, skipping extract + splice.
   patches = [
     # The vim mode indicator renders as a dim ink Text node:
     #   Vsc=mao?rs.jsxs(_,{dimColor:!0,children:["-- ",E_t," --"]},"vim-indicator"):null
@@ -49,39 +47,40 @@ let
   ];
 
   # sed against minified upstream silently no-ops once the code shape moves, so
-  # every patch is checked: no change to cli.js fails the build.
+  # every patch is checked: no JS module changed fails the build.
   applyPatches =
     patches
     |> lib.concatMapStringsSep "\n" (
       p: # sh
       ''
-        cp cli.js cli.js.pre
-        sed -i ${p.args} cli.js
-        if cmp -s cli.js.pre cli.js; then
+        cp -a extracted extracted.pre
+        (cd extracted && sed -i ${p.args} $targets)
+        if diff -rq extracted extracted.pre > /dev/null; then
           echo "claude-code patch '${p.name}' matched nothing — upstream shape changed"
           exit 1
         fi
-        rm cli.js.pre
+        rm -rf extracted.pre
       ''
     );
 
   splicePatched = # sh
     ''
-      # 1. Extract cli.js + native modules from the Bun-compiled binary. The
-      #    entry module's path inside the Bun VFS moves between releases, so
-      #    read it from the manifest instead of hardcoding.
+      # 1. Extract every JS module from the Bun-compiled binary. Upstream
+      #    code-splits, so a patch target can live in any chunk, not just
+      #    the entry module.
       mkdir extracted
       node ${bun-demincer-src}/src/extract.mjs claude-original extracted
-      cp "extracted/$(node -p 'require("./extracted/manifest.json").entryPoint.split("/$bunfs/root/")[1]')" cli.js
-      chmod +w cli.js
+      cp -a extracted extracted.orig
+      targets=$(cd extracted && { ls *.js; node -p 'require("./manifest.json").entryPoint.split("/").pop()'; } | sort -u)
 
-      # 2. Apply patches in-place.
+      # 2. Apply patches in-place across all JS modules.
       ${applyPatches}
 
-      # 3. Splice patched cli.js back into the Bun binary (drops the JSC
-      #    bytecode cache — Bun re-parses the 25 MB CLI at every launch,
-      #    ~390 ms slower).
-      nu ${splicer} claude-original cli.js "$out/bin/.claude-wrapped"
+      # 3. Splice the modules that actually changed back into the Bun binary.
+      #    Only those modules lose their JSC bytecode cache and get re-parsed
+      #    at launch; the rest of the CLI still starts from cache.
+      changed=$(cd extracted && for f in $targets; do cmp -s "$f" "../extracted.orig/$f" || echo "$f"; done)
+      nu ${splicer} claude-original extracted "$out/bin/.claude-wrapped" $changed
     '';
 
   installBinary =
@@ -114,7 +113,7 @@ stdenv.mkDerivation {
     ${installBinary}
     chmod +x "$out/bin/.claude-wrapped"
 
-    # splice.nu patches the __BUN segment in-place, so segment offsets stay
+    # splice.nu edits bytes inside the __BUN segment, so segment offsets stay
     # valid but the original adhoc signature now covers stale bytes. macOS
     # arm64 SIGKILLs binaries with broken signatures, so re-sign with rcodesign.
     ${lib.optionalString (stdenv.isDarwin && patches != [ ]) ''
