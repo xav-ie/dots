@@ -1,10 +1,11 @@
 # Shared NixOS + darwin nix settings, flake registry, `defaultUser`, and gcroots.
 let
+  cacheEndpoint = "https://cache.lalala.casa";
+  curlUserAgent = "--user-agent=nixpkgs-fetchurl";
   # Self-hosted atticd caches (single-sourced from _lib/caches.nix, same list the
   # CI push actions and cachectl use). Wired as substituters so local builds pull
   # prebuilt paths instead of rebuilding these repos from source.
   selfCaches = import ./_lib/caches.nix;
-  cacheEndpoint = "https://cache.lalala.casa";
   # `key = null` marks a cache that's declared but not provisioned yet (cachectl
   # still needs its name/repo to create it). Skip those entirely: a cache we
   # can't verify signatures for is useless as a substituter, and a placeholder
@@ -49,6 +50,15 @@ let
 
         nix = {
           enable = true;
+
+          # crates.io 403s any request whose User-Agent starts with `curl/`, which
+          # is exactly what nixpkgs' fetchurl sends — every uncached crate fails.
+          # `NIX_CURL_FLAGS` is a fetchurl impureEnvVar appended after its own
+          # `--user-agent`, so the last flag wins. Must contain no spaces: the
+          # builder splats it unquoted. Set on the daemon two ways because
+          # `nix.envVars` only reaches the daemon on NixOS — nix-darwin doesn't
+          # own the nix-daemon plist, so darwin needs the `impure-env` route.
+          envVars.NIX_CURL_FLAGS = curlUserAgent;
           # https://nixos.wiki/wiki/Storage_optimization
           gc = {
             automatic = pkgs.stdenv.isDarwin;
@@ -66,10 +76,12 @@ let
             # TODO: do I need this?
             # builders = lib.mkForce "ssh-ng://builder@linux-builder aarch64-linux /etc/nix/builder_ed25519 4 - - - c3NoLWVkMjU1MTkgQUFBQUMzTnphQzFsWkRJMU5URTVBQUFBSUpCV2N4Yi9CbGFxdDFhdU90RStGOFFVV3JVb3RpQzVxQkorVXVFV2RWQ2Igcm9vdEBuaXhvcwo=";
             experimental-features = [
+              "configurable-impure-env"
               "nix-command"
               "flakes"
               "pipe-operators"
             ];
+            impure-env = "NIX_CURL_FLAGS=${curlUserAgent}";
             # Actively pull from the self-hosted caches (not just allow them).
             extra-substituters = cacheSubstituters;
             extra-trusted-substituters = [
