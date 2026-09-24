@@ -19,6 +19,7 @@
 
       # Shared between the router that references it and the spec that defines it.
       chromeLocalhostHost = "chrome-localhost-host";
+      compress = "compress";
       snippetsStripPrefix = "snippets-strip-prefix";
 
       # Each proxied service is a router and a service that agree by string.
@@ -30,8 +31,11 @@
           rule = if p.rule == null then "Host(`${p.subdomain}.${baseDomain}`)" else p.rule;
           service = "${name}-service";
           tls.certResolver = "cloudflare";
+          # Every proxied backend serves over loopback with no compression of its
+          # own, so Traefik is the only place it can happen. Worth ~4x on the
+          # asset-heavy SPAs when reached from off the LAN.
+          middlewares = [ compress ] ++ p.middlewares;
         }
-        // lib.optionalAttrs (p.middlewares != [ ]) { inherit (p) middlewares; }
         // lib.optionalAttrs (p.priority != null) { inherit (p) priority; };
         services."${name}-service" = lib.recursiveUpdate {
           loadBalancer.servers = [ { url = "http://127.0.0.1:${toString p.port}"; } ];
@@ -60,6 +64,7 @@
           inherit (proxied) services;
           middlewares = {
             ${chromeLocalhostHost}.headers.customRequestHeaders.Host = "localhost";
+            ${compress}.compress = { };
             ${snippetsStripPrefix}.stripPrefix.prefixes = [ "/snippets" ];
           };
         };
