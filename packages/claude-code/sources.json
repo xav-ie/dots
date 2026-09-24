@@ -1,44 +1,44 @@
 {
   "native": {
-    "version": "2.1.228",
+    "version": "2.1.273",
     "gcs_bucket": "https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases",
     "sources": {
       "x86_64-linux": {
         "platform": "linux-x64",
-        "hash": "sha256-1TWYXmlBo+sAF5zNf1LOsMZiOgMFpRjrxOZRT4SpTJk="
+        "hash": "sha256-bHUuLMfBEMnfFfJtjRNNQ4xa6V29YQ78GjCL9/nF9sE="
       },
       "aarch64-linux": {
         "platform": "linux-arm64",
-        "hash": "sha256-JmQAYhlJe/cCGsQxVlGc1C7aZM6ypm9DTsq4Pngx+UI="
+        "hash": "sha256-EDz6tNauiYtq9pIzb7Zi/8xgcHXMZAiJK9NQs/VJ6+4="
       },
       "x86_64-darwin": {
         "platform": "darwin-x64",
-        "hash": "sha256-eFLxrg77ZNRtd6V9iFLa3cSm/7WK7aYme9PzQorcCbM="
+        "hash": "sha256-IDDs+RHjAed4s8WkkGjWdROEyDDkjqFPEeth3SNiLO4="
       },
       "aarch64-darwin": {
         "platform": "darwin-arm64",
-        "hash": "sha256-Q0hLE1LO8DoING827wQ3dVsarWRquTE84YeFe3lLckc="
+        "hash": "sha256-lT6YgNvLC3DzHB9Qjeaj/TiXU9ExaIVX/ZktqRhGk/s="
       }
     }
   },
   "npm": {
-    "version": "2.1.236",
+    "version": "2.1.281",
     "sources": {
       "x86_64-linux": {
         "platform": "linux-x64",
-        "hash": "sha256-JBTyw1UFAz4cyOUPDX88Sf4a8YCCCiNrHUczvKTHvJ0="
+        "hash": "sha256-sNo8XYzhnBCEmFvKLkmqTG54rQYGwrSsfeYH2aMd10o="
       },
       "aarch64-linux": {
         "platform": "linux-arm64",
-        "hash": "sha256-epISQ9u7nZdx1qWVMMOPyCBQiz1mDsWq02H37LIl+dU="
+        "hash": "sha256-+Y9om+Ie9zQozNusulYaFMVrv1SgaQWjWvbdWYF8v3o="
       },
       "x86_64-darwin": {
         "platform": "darwin-x64",
-        "hash": "sha256-z51qrhaR9zsPqKWTf2eA/H5V5JDYYJOR//suLOaFXZ0="
+        "hash": "sha256-mqBDVeFc/MsDP9dht/OLgd3aNDHo+8JS4HMZJ+SZJd0="
       },
       "aarch64-darwin": {
         "platform": "darwin-arm64",
-        "hash": "sha256-E9gtnhI9h14pI6UPDPEusO+Qb3C0MDzl3FxT4E7R7+Q="
+        "hash": "sha256-nmI9Mp4OrRkoRUn+CZzHHzp60GwuJrUmT+OhL8aHzRs="
       }
     }
   }
