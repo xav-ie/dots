@@ -4,7 +4,6 @@
   stdenvNoCC,
   stdenv,
   autoPatchelfHook,
-  fetchpatch,
   makeBinaryWrapper,
   executor-src,
 }:
@@ -52,7 +51,7 @@ let
 
     outputHashAlgo = "sha256";
     outputHashMode = "recursive";
-    outputHash = "sha256-BtxPqRNRA2I6vM9ZeLHzHx4ObjDqbMYDMus89QvERb4=";
+    outputHash = "sha256-c2H5cIbeFOIoSHMoVd5+MDR4r4Kn7MM8G2+kAzNuJ3U=";
   };
 in
 stdenv.mkDerivation {
@@ -60,18 +59,6 @@ stdenv.mkDerivation {
   inherit version;
   src = executor-src;
   inherit node_modules;
-
-  patches = [
-    # PR #1716: a remote MCP connection's SSE GET is never released on close,
-    # so every dial burns one of Bun's 256 concurrent-request slots until the
-    # daemon exhausts the pool and all MCP discovery times out. Still open
-    # upstream; remove once merged + released (v1.5.42 does not have it). A
-    # `pull/N.diff` URL renders the PR head, so re-pin this hash on every push.
-    (fetchpatch {
-      url = "https://github.com/UsefulSoftwareCo/executor/pull/1716.diff";
-      hash = "sha256-XsfbfDmgRwAq9f+LB2Jr7GT9EBHdZC6ui9LHizlq6hA=";
-    })
-  ];
 
   nativeBuildInputs = [
     pkgs.bun
