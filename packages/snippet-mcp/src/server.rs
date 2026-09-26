@@ -213,7 +213,7 @@ fn management_tools() -> Vec<Tool> {
         (
             "description",
             Value::String(
-                "Map of arg name → { type: 'string'|'number'|'boolean', description?, optional?, default? }"
+                "Map of arg name → { type: 'string'|'number'|'boolean'|'array'|'object', description?, optional? (renders null when omitted), default? }"
                     .into(),
             ),
         ),

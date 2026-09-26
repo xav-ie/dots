@@ -7,6 +7,8 @@ pub enum ArgType {
     String,
     Number,
     Boolean,
+    Array,
+    Object,
 }
 
 impl ArgType {
@@ -15,6 +17,8 @@ impl ArgType {
             ArgType::String => "string",
             ArgType::Number => "number",
             ArgType::Boolean => "boolean",
+            ArgType::Array => "array",
+            ArgType::Object => "object",
         }
     }
 }
