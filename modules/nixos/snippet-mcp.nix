@@ -130,6 +130,7 @@
           }
           // lib.optionalAttrs (cfg.executorBaseUrl != null) {
             EXECUTOR_BASE_URL = cfg.executorBaseUrl;
+            EXECUTOR_AUTH_TOKEN_FILE = "%d/executor-auth";
           };
 
           serviceConfig = {
@@ -146,6 +147,11 @@
             ];
             User = "snippet-mcp";
             Group = "snippet-mcp";
+            # executor's bearer token, owned by the executor user; systemd
+            # hands the service a private copy under $CREDENTIALS_DIRECTORY.
+            LoadCredential = lib.optional (
+              cfg.executorBaseUrl != null
+            ) "executor-auth:/home/${config.defaultUser}/.executor/server-control/auth.json";
             Restart = "on-failure";
             RestartSec = 5;
             StandardOutput = "journal";

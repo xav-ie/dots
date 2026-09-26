@@ -19,8 +19,14 @@ cargo run --release -- --http --port 38973 --host 127.0.0.1
 Env:
 
 - `SNIPPET_DIR` — snippets directory (default `/var/lib/snippet-mcp/snippets`)
-- `EXECUTOR_REFRESH_URL` — POSTed after writes to force a catalog refresh in
-  executor. Leave unset for local dev.
+- `EXECUTOR_BASE_URL` — executor host; after writes snippet-mcp POSTs
+  `/api/connections/<owner>/<namespace>/<name>/refresh` there to force a
+  catalog refresh. Leave unset for local dev.
+- `EXECUTOR_AUTH_TOKEN_FILE` — executor's `server-control/auth.json`, whose
+  `token` is sent as the bearer.
+- `EXECUTOR_REFRESH_NAMESPACE` / `EXECUTOR_REFRESH_CONNECTION` — integration
+  and `<owner>/<name>` of the connection to refresh (default `snippets`,
+  `org/workspace`).
 - `RUST_LOG` — tracing filter, default `snippet_mcp=info`.
 
 ## Snippet format
