@@ -169,13 +169,33 @@ in
         # color and clears them — wiping the square-corner mask instead of
         # re-squaring it (not idempotent). Apple's originals survive in the
         # read-only OS-update APFS snapshot; mount it and patch from there.
-        local UPDATE_SNAP SRC_DIR
+        #
+        # NEVER mount the snapshot we are booted from (true right after a
+        # macOS update, before our own blessed snapshot exists): on 26.6.2
+        # the mount fails EBUSY and leaves the kernel unable to verify the
+        # live root's pages ("Can't determine hash type … faking zero data"),
+        # so every process paging in system code gets zeros → black screen /
+        # watchdog panic. In that state the live files ARE pristine anyway.
+        local UPDATE_SNAP BOOT_SNAP SRC_DIR=""
         UPDATE_SNAP=$(/usr/sbin/diskutil apfs listSnapshots / 2>/dev/null \
-          | grep -oE 'com\.apple\.os\.update-[0-9A-F]+' | head -1)
-        if [ -n "$UPDATE_SNAP" ] && [ ! -d "$PRISTINE/$RES_REL" ]; then
-          /sbin/mount_apfs -o ro -s "$UPDATE_SNAP" "$BASE_DISK" "$PRISTINE" 2>/dev/null || true
-        fi
-        if [ -d "$PRISTINE/$RES_REL" ]; then
+          | grep -oE 'com\.apple\.os\.update-[0-9A-F]+' | head -1 || true)
+        BOOT_SNAP=$(/usr/sbin/diskutil info / 2>/dev/null \
+          | awk -F': *' '/APFS Snapshot Name/ {print $2}')
+        # Match any update snapshot, not just the first listed one.
+        case "$BOOT_SNAP" in
+        com.apple.os.update-*)
+          SRC_DIR="$SYS_DIR"
+          echo "    booted from $BOOT_SNAP: live .car files are pristine"
+          ;;
+        *)
+          if [ -n "$UPDATE_SNAP" ] && [ ! -d "$PRISTINE/$RES_REL" ]; then
+            /sbin/mount_apfs -o ro -s "$UPDATE_SNAP" "$BASE_DISK" "$PRISTINE" 2>/dev/null || true
+          fi
+          ;;
+        esac
+        if [ -n "$SRC_DIR" ]; then
+          :
+        elif [ -d "$PRISTINE/$RES_REL" ]; then
           SRC_DIR="$PRISTINE/$RES_REL"
           echo "    source: pristine OS-update snapshot"
         else
