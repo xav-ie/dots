@@ -8,7 +8,8 @@
 declare const Components: {
   interfaces: any;
   classes: any;
-  utils: { reportError(msg: unknown): void };
+  utils: any;
 };
 declare const Services: any;
 declare const ChromeUtils: any;
+declare const console: { error(msg: unknown): void };

@@ -61,7 +61,7 @@ const MAX_LOG_VEL = Math.log(SCALE_MAX_PER_SEC);
 
 function err(msg: unknown): void {
   try {
-    Cu.reportError("[pip-mover] " + msg);
+    console.error("[pip-mover] " + msg);
   } catch (_) {}
 }
 
