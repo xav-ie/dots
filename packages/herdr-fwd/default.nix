@@ -55,7 +55,11 @@ rustPlatform.buildRustPackage {
     sed '/^\[\[build\]\]/,/^$/d' herdr-plugin.toml > "$root/herdr-plugin.toml"
   '';
 
-  passthru.pluginRoot = "share/herdr-fwd";
+  passthru = {
+    pluginRoot = "share/herdr-fwd";
+    # External upstream code; don't gate our checks on its clippy hygiene.
+    skipClippy = true;
+  };
 
   meta = {
     description = "Automatic loopback port forwarding for remote herdr sessions";

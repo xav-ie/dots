@@ -46,7 +46,12 @@ def write-at [file: path, offset: int, data: binary] {
   $data | ^dd $"of=($file)" bs=1M $"seek=($offset)" oflag=seek_bytes conv=notrunc status=none
 }
 
-def main [original: path, extracted: path, output: path, ...names: string] {
+def main [
+  original: path
+  extracted: path
+  output: path
+  ...names: string
+] {
   if ($names | is-empty) {
     error make {msg: "Usage: splice.nu <original> <extracted-dir> <output> <module>..."}
   }
@@ -102,14 +107,23 @@ def main [original: path, extracted: path, output: path, ...names: string] {
     } else if $len < $e.content_len {
       {off: $e.content_off, kind: content}
     } else {
-      error make {
-        msg: $"no room for ($name): ($len) bytes does not fit the bytecode \(($e.bytecode_len)\) or content \(($e.content_len)\) slot"
-      }
+      error make {msg: $"no room for ($name): ($len) bytes does not fit the bytecode \(($e.bytecode_len)\) or content \(($e.content_len)\) slot"}
     }
 
-    write-at $output ($raw_start + $slot.off) ($patched | bytes add --end 0x[00])
+    (write-at
+      $output
+      ($raw_start + $slot.off)
+      ($patched | bytes add --end 0x[00])
+    )
     let entry_pos = $table_start + $e.index * $MODULE_STRUCT_SIZE
-    write-at $output ($entry_pos + 8) ([(pack-u32 $slot.off) (pack-u32 $len)] | bytes collect)
+    (write-at
+      $output
+      ($entry_pos + 8)
+      ([
+        (pack-u32 $slot.off)
+        (pack-u32 $len)
+      ] | bytes collect)
+    )
     write-at $output ($entry_pos + 24) (0 | into binary) # bytecode offset + length
 
     print $"Spliced ($name): ($e.content_len) -> ($len) bytes \(into the ($slot.kind) slot\)"

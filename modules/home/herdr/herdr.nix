@@ -31,19 +31,20 @@
           seed ? "",
           rewriteHome ? false,
         }:
-        pkgs.runCommand "herdr-integration-${id}" { } ''
-          export HOME="$(mktemp -d)"
-          ${seed}
-          ${pkgs.herdr}/bin/herdr integration install ${id}
-          ${lib.concatMapStringsSep "\n" (rel: ''install -D -m${mode} "$HOME/${rel}" "$out/${rel}"'') rels}
-          ${lib.optionalString rewriteHome ''
-            # Some installers reference sibling files by absolute path (kimi's
-            # config.toml names its hook that way). Point those at where the
-            # files actually get deployed, not at the throwaway build HOME.
-            grep -rl "$HOME" "$out" \
-              | xargs -r sed -i "s#$HOME#${config.home.homeDirectory}#g"
-          ''}
-        '';
+        pkgs.runCommand "herdr-integration-${id}" { } # sh
+          ''
+            export HOME="$(mktemp -d)"
+            ${seed}
+            ${pkgs.herdr}/bin/herdr integration install ${id}
+            ${lib.concatMapStringsSep "\n" (rel: ''install -D -m${mode} "$HOME/${rel}" "$out/${rel}"'') rels}
+            ${lib.optionalString rewriteHome ''
+              # Some installers reference sibling files by absolute path (kimi's
+              # config.toml names its hook that way). Point those at where the
+              # files actually get deployed, not at the throwaway build HOME.
+              grep -rl "$HOME" "$out" \
+                | xargs -r sed -i "s#$HOME#${config.home.homeDirectory}#g"
+            ''}
+          '';
 
       integrations = {
         claude = {
