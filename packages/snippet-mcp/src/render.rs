@@ -19,7 +19,9 @@ pub fn render(snippet: &Snippet, args: &serde_json::Map<String, Value>) -> Resul
             resolved.insert(name.clone(), coerce(name, value, spec)?);
         } else if let Some(default) = &spec.default {
             resolved.insert(name.clone(), default.clone());
-        } else if !spec.optional.unwrap_or(false) {
+        } else if spec.optional.unwrap_or(false) {
+            resolved.insert(name.clone(), Value::Null);
+        } else {
             missing.push(name);
         }
     }
@@ -90,6 +92,20 @@ fn coerce(name: &str, value: &Value, spec: &ArgSpec) -> Result<Value> {
                 Ok(value.clone())
             } else {
                 Err(anyhow!("arg '{name}' must be a boolean"))
+            }
+        }
+        ArgType::Array => {
+            if value.is_array() {
+                Ok(value.clone())
+            } else {
+                Err(anyhow!("arg '{name}' must be an array"))
+            }
+        }
+        ArgType::Object => {
+            if value.is_object() {
+                Ok(value.clone())
+            } else {
+                Err(anyhow!("arg '{name}' must be an object"))
             }
         }
     }
