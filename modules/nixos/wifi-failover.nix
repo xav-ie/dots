@@ -95,7 +95,10 @@
           after = [ "NetworkManager.service" ];
           wants = [ "NetworkManager.service" ];
           serviceConfig.Type = "oneshot";
-          path = [ pkgs.networkmanager ];
+          path = [
+            pkgs.gawk
+            pkgs.networkmanager
+          ];
           script = # sh
             ''
               set -u
