@@ -437,6 +437,7 @@
           // (mkNuHook "record-pending-tool")
           // (mkNuHook "format-and-lint")
           // (mkNuHook "statusline")
+          // (mkNuHook "tool-suggest")
           // marketplaceFiles;
 
           # Daily check: always reports the changelog for pending releases,
