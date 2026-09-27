@@ -79,6 +79,8 @@
             EXECUTOR_SUPERVISED = "1";
             # Search -> tool-call events for search evals (~/Projects/snippet-evals/usage.py).
             EXECUTOR_USAGE_LOG = "${executorWorkspace}/usage.jsonl";
+            # Local embedding server for hybrid tools.search; keyword-only when down.
+            EXECUTOR_EMBED_URL = "http://127.0.0.1:38978/v1/embeddings";
           };
 
           serviceConfig = {

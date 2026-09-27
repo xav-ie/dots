@@ -70,6 +70,12 @@ stdenv.mkDerivation {
       url = "https://github.com/xav-ie/executor/commit/f8de858b36aeb40704336ce009ff76808dae3ae6.patch";
       hash = "sha256-/ZSLMUhZlANUOF1E8Sseel51oioBjTxSkZ8m1EVl4/o=";
     })
+    # Fuses embedding similarity into tools.search (EXECUTOR_EMBED_URL).
+    # Stacked on the ranking commit above.
+    (fetchpatch {
+      url = "https://github.com/xav-ie/executor/commit/9eba5beba379619a8ab70132a699bce43fee0f1f.patch";
+      hash = "sha256-lfSwHaPhbiXCiuodpM5qDcs4yOYB1IpIakCDG2VxoTs=";
+    })
     # Opt-in JSONL log of searches and tool calls (EXECUTOR_USAGE_LOG).
     (fetchpatch {
       url = "https://github.com/xav-ie/executor/commit/98951296bd5c90a25cc1d77ff2c07c153a313a81.patch";
