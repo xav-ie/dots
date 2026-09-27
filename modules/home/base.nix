@@ -25,7 +25,10 @@
           # GitHub CLI + declaratively-managed extensions
           gh = {
             enable = true;
-            extensions = [ pkgs.gh-markdown-preview ];
+            extensions = [
+              pkgs.gh-markdown-preview
+              pkgs.pkgs-mine.gh-stack
+            ];
             settings.git_protocol = "ssh";
           };
           # json processor

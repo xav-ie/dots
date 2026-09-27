@@ -78,6 +78,7 @@ rec {
   firefox-router = pkgs.callPackage ./firefox-router { };
   flint = pkgs.callPackage ./flint { inherit format-staged lint-staged writeNuApplication; };
   format-staged = pkgs.callPackage ./format-staged { inherit writeNuApplication; };
+  gh-stack = pkgs-bleeding.callPackage ./gh-stack { };
   git-amend = pkgs.callPackage ./git-amend { inherit writeNuApplication; };
   git-bb = pkgs.callPackage ./git-bb { inherit writeNuApplication; };
   git-log-pr = pkgs.callPackage ./git-log-pr { inherit writeNuApplication; };
