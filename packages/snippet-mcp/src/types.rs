@@ -61,6 +61,9 @@ pub struct Frontmatter {
     pub tags: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub kind: Option<SnippetKind>,
+    /// Overrides the integrations derived from the body's `tools.*` calls.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub integrations: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone)]
@@ -82,6 +85,8 @@ pub struct SaveInput {
     #[serde(default)]
     pub kind: Option<SnippetKind>,
     #[serde(default)]
+    pub integrations: Option<Vec<String>>,
+    #[serde(default)]
     pub overwrite: Option<bool>,
 }
 
@@ -98,4 +103,6 @@ pub struct UpdateInput {
     pub tags: Option<Vec<String>>,
     #[serde(default)]
     pub kind: Option<SnippetKind>,
+    #[serde(default)]
+    pub integrations: Option<Vec<String>>,
 }

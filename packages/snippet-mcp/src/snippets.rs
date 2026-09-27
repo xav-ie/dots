@@ -104,6 +104,7 @@ impl Registry {
             args: input.args,
             tags: input.tags,
             kind: Some(input.kind.unwrap_or(SnippetKind::Code)),
+            integrations: input.integrations,
         };
         let body = input.body.trim_end_matches('\n').to_string();
         let serialized = serialize(&fm, &body)?;
@@ -130,6 +131,7 @@ impl Registry {
             args: input.args.or(current.frontmatter.args),
             tags: input.tags.or(current.frontmatter.tags),
             kind: input.kind.or(current.frontmatter.kind),
+            integrations: input.integrations.or(current.frontmatter.integrations),
             overwrite: Some(true),
         };
         drop(_guard); // save() takes the lock itself

@@ -4,13 +4,14 @@ use crate::snippets::Registry;
 use crate::types::{ArgSpec, SaveInput, Snippet, UpdateInput};
 use rmcp::model::{
     CallToolRequestParams, CallToolResult, Content, ErrorData as McpError, Implementation,
-    JsonObject, ListToolsResult, PaginatedRequestParams, ProtocolVersion, ServerCapabilities,
-    ServerInfo, Tool,
+    JsonObject, ListToolsResult, Meta, PaginatedRequestParams, ProtocolVersion,
+    ServerCapabilities, ServerInfo, Tool,
 };
 use rmcp::service::RequestContext;
 use rmcp::{RoleServer, ServerHandler};
+use regex::Regex;
 use serde_json::{Map, Value, json};
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 
 #[derive(Clone)]
 pub struct SnippetServer {
@@ -147,11 +148,37 @@ fn snippet_tool(s: &Snippet) -> Tool {
         " (kind: {}) — returns the rendered snippet body for use inside executor.execute.",
         kind.as_str()
     ));
-    build_tool(
+    let tool = build_tool(
         s.name.clone(),
         description,
         args_to_schema(s.frontmatter.args.as_ref()),
-    )
+    );
+    let integrations = integrations(s);
+    if integrations.is_empty() {
+        return tool;
+    }
+    let mut meta = JsonObject::new();
+    meta.insert("executor/integrations".into(), json!(integrations));
+    tool.with_meta(Meta(meta))
+}
+
+/// Integrations a snippet drives, so executor's search can match it by them.
+/// Taken from `tools.<integration>.` calls and `"<integration>.org.`/`.user.`
+/// path strings in the body, unless the frontmatter lists them explicitly.
+fn integrations(s: &Snippet) -> Vec<String> {
+    static RE: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(r#"tools\.([a-z_][a-z0-9_]*)\.|["'`]([a-z_][a-z0-9_]*)\.(?:org|user)\."#).unwrap()
+    });
+    if let Some(explicit) = &s.frontmatter.integrations {
+        return explicit.clone();
+    }
+    let found: std::collections::BTreeSet<String> = RE
+        .captures_iter(&s.body)
+        .filter_map(|c| c.get(1).or_else(|| c.get(2)))
+        .map(|m| m.as_str().to_string())
+        .filter(|i| !matches!(i.as_str(), "search" | "describe" | "executor" | "snippets"))
+        .collect();
+    found.into_iter().collect()
 }
 
 fn args_to_schema(args: Option<&std::collections::BTreeMap<String, ArgSpec>>) -> JsonObject {
@@ -241,6 +268,7 @@ fn management_tools() -> Vec<Tool> {
                     ("body", &str_t),
                     ("args", &args_t),
                     ("tags", &str_arr_t),
+                    ("integrations", &str_arr_t),
                     ("kind", &kind_enum),
                     ("overwrite", &bool_t),
                 ],
@@ -257,6 +285,7 @@ fn management_tools() -> Vec<Tool> {
                     ("body", &str_t),
                     ("args", &args_t),
                     ("tags", &str_arr_t),
+                    ("integrations", &str_arr_t),
                     ("kind", &kind_enum),
                 ],
                 &["name"],
@@ -307,4 +336,36 @@ fn object_schema(props: &[(&str, &Value)], required: &[&str]) -> JsonObject {
     }
     m.insert("additionalProperties".into(), Value::Bool(false));
     m
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::Frontmatter;
+
+    fn snippet(body: &str, explicit: Option<Vec<String>>) -> Snippet {
+        Snippet {
+            name: "t".into(),
+            frontmatter: Frontmatter {
+                description: "d".into(),
+                args: None,
+                tags: None,
+                kind: None,
+                integrations: explicit,
+            },
+            body: body.into(),
+        }
+    }
+
+    #[test]
+    fn integrations_from_body_or_frontmatter() {
+        let body = r#"const P = "outsmartly.org.outsmartlyoauth.";
+await tools.slack.users_search({});
+await tools["proton_mail.org.workspace.search_emails"]({});
+await tools.search({ query: "x" });
+await tools.snippets.org.workspace.get({});"#;
+        assert_eq!(integrations(&snippet(body, None)), ["outsmartly", "proton_mail", "slack"]);
+        assert_eq!(integrations(&snippet(body, Some(vec!["gtm".into()]))), ["gtm"]);
+        assert!(snippet_tool(&snippet("no calls", None)).meta.is_none());
+    }
 }
