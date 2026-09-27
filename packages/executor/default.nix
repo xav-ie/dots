@@ -5,6 +5,7 @@
   stdenv,
   autoPatchelfHook,
   makeBinaryWrapper,
+  fetchpatch,
   executor-src,
 }:
 let
@@ -59,6 +60,22 @@ stdenv.mkDerivation {
   inherit version;
   src = executor-src;
   inherit node_modules;
+
+  # From github:xav-ie/executor; neither touches bun.lock, so node_modules above
+  # is shared with upstream.
+  patches = [
+    # tools.search ranks by query coverage instead of dropping partial matches,
+    # and matches a tool's `_meta["executor/integrations"]` (set by snippet-mcp).
+    (fetchpatch {
+      url = "https://github.com/xav-ie/executor/commit/f8de858b36aeb40704336ce009ff76808dae3ae6.patch";
+      hash = "sha256-/ZSLMUhZlANUOF1E8Sseel51oioBjTxSkZ8m1EVl4/o=";
+    })
+    # Opt-in JSONL log of searches and tool calls (EXECUTOR_USAGE_LOG).
+    (fetchpatch {
+      url = "https://github.com/xav-ie/executor/commit/98951296bd5c90a25cc1d77ff2c07c153a313a81.patch";
+      hash = "sha256-Of7LN3Zy0NQ1V683oNajiQGxBuemveHKdLMz1CkfGz8=";
+    })
+  ];
 
   nativeBuildInputs = [
     pkgs.bun

@@ -77,6 +77,8 @@
             # Lets the daemon reclaim a stale server.json from a previous boot
             # instead of refusing to start and crash-looping under Restart.
             EXECUTOR_SUPERVISED = "1";
+            # Search -> tool-call events for search evals (~/Projects/snippet-evals/usage.py).
+            EXECUTOR_USAGE_LOG = "${executorWorkspace}/usage.jsonl";
           };
 
           serviceConfig = {
