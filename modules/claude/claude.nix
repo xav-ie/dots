@@ -194,10 +194,72 @@
             };
           }) cfg.marketplaces;
 
+          # Same ~/.claude/projects/<name> for a repo on every machine and in
+          # every worktree; see project-name.sh.
+          claude-project-name = pkgs.writeShellApplication {
+            name = "claude-project-name";
+            runtimeInputs = [ pkgs.git ];
+            text = builtins.readFile ./project-name.sh;
+          };
+
+          # The wrapper uses this output, so a naming regression fails the build.
+          claude-project-name-tested =
+            pkgs.runCommand "claude-project-name-tested"
+              {
+                nativeBuildInputs = [
+                  pkgs.git
+                  claude-project-name
+                ];
+              }
+              ''
+                export HOME=$(mktemp -d)
+                cd "$HOME"
+                check() {
+                  got=$(claude-project-name "$1")
+                  [ "$got" = "$2" ] || { echo "FAIL $1: got '$got', want '$2'"; exit 1; }
+                }
+                git init -q Work/foo.bar
+                git -C Work/foo.bar -c user.email=t@t -c user.name=t commit -q --allow-empty -m init
+                git -C Work/foo.bar worktree add -q --detach "$HOME/Work/foo.bar/wt"
+                git -C Work/foo.bar worktree add -q --detach "$HOME/stray-wt"
+                git init -q Work/lib
+                git -C Work/lib -c user.email=t@t -c user.name=t commit -q --allow-empty -m init
+                git -C Work/foo.bar -c protocol.file.allow=always submodule add -q "$HOME/Work/lib" vendor/lib
+                mkdir -p Work/foo.bar/sub/dir plain_dir .cfg/r con "$(printf 'a%.0s' $(seq 70))"
+                check Work/foo.bar Work-foo-bar
+                check Work/foo.bar/sub/dir Work-foo-bar
+                check Work/foo.bar/wt Work-foo-bar
+                check stray-wt Work-foo-bar
+                check Work/foo.bar/vendor/lib Work-foo-bar-vendor-lib
+                check plain_dir plain_dir
+                check .cfg/r _cfg-r
+                check con ""
+                check . home
+                check / ""
+                check "$(printf 'a%.0s' $(seq 70))" ""
+                ln -s ${claude-project-name} $out
+              '';
+
+          claude-project-migrate = pkgs.writeShellApplication {
+            name = "claude-project-migrate";
+            runtimeInputs = [
+              pkgs.jq
+              pkgs.findutils
+              claude-project-name-tested
+            ];
+            text = builtins.readFile ./project-migrate.sh;
+          };
+
           shared_exports = # sh
             ''
               export CLAUDE_CODE_DISABLE_FAST_MODE=1
               export CLAUDE_CONFIG_DIR="$HOME/.claude"
+              # Always recompute: a claude started from inside a session (cd elsewhere
+              # && claude -p ...) must not inherit its parent's project name.
+              unset CLAUDE_CODE_PROJECT_DIR_NAME
+              if name=$(${claude-project-name-tested}/bin/claude-project-name) && [ -n "$name" ]; then
+                export CLAUDE_CODE_PROJECT_DIR_NAME="$name"
+              fi
             '';
 
           # Native binary wrapper
@@ -373,6 +435,8 @@
             claude-package
             claude-native
             claude-npm
+            claude-project-name-tested
+            claude-project-migrate
             claudeCodeUpdateWrapped
             cfg.pluginSyncPackage
             updateMarketplacesPackage

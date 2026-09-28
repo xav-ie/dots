@@ -11,15 +11,20 @@
 $env.config.color_config.search_result = {bg: "#dd2200", fg: white}
 
 # claude-sessions: resumable sessions for the current dir, newest first.
-# Claude stores one <uuid>.jsonl per session under
-# ~/.claude/projects/<cwd-with-every-non-alnum-as-dash>/. We surface the
-# generated title + latest prompt + mtime as the *display*, while the value
+# Claude stores one <uuid>.jsonl per session under ~/.claude/projects/<name>/,
+# where <name> is what our claude wrapper exports as CLAUDE_CODE_PROJECT_DIR_NAME
+# (claude-project-name: the repo relative to $HOME), else Claude's default
+# <cwd-with-every-non-alnum-as-dash>. We surface
+# the generated title + latest prompt + mtime as the *display*, while the value
 # inserted is the bare session id (see the completer below).
 def claude-sessions [] {
   let base = ($env.CLAUDE_CONFIG_DIR? | default ([$env.HOME ".claude"] | path join)) | path join "projects"
+  let name = try {
+    ^claude-project-name | str trim
+  } catch { "" }
   let dir = ([
     $base
-    (pwd | str replace -ra '[^a-zA-Z0-9]' '-')
+    (if ($name | is-empty) { pwd | str replace -ra '[^a-zA-Z0-9]' '-' } else { $name })
   ] | path join)
   if not ($dir | path exists) { return [] }
   let files = ls ($"($dir)/*.jsonl" | into glob) | sort-by modified -r
