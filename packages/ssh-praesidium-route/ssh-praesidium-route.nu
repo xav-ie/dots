@@ -38,11 +38,9 @@ const SLOW_GRACE = 1sec
 
 def main [] {
 
-  # Resolve praesidium's tailnet IP at runtime rather than hardcoding it — the
-  # address is assigned by the tailnet and shouldn't live in the repo. If the
-  # node is offline `tailscale ip` errors/empties, the ts probe simply fails and
+  # MagicDNS name; if the node is offline the ts probe simply fails and
   # cloudflared wins.
-  let tailnet_ip = (^tailscale ip -4 praesidium | str trim)
+  let tailnet_host = "praesidium.gecko-bonito.ts.net"
 
   let tmpdir = (^mktemp -d | str trim)
   let cf_marker = $"($tmpdir)/cf.ok"
@@ -60,7 +58,7 @@ def main [] {
 
   let ts_job = job spawn {
     let timeout_str = $"($PROBE_TIMEOUT_SECS)s"
-    let r = do { ^tailscale ping --c 1 --until-direct=false --timeout $timeout_str $tailnet_ip } | complete
+    let r = do { ^tailscale ping --c 1 --until-direct=false --timeout $timeout_str $tailnet_host } | complete
     if $r.exit_code == 0 {
       # Parse "in 47ms" or "in 1.744s" from the pong line.
       let matches = $r.stdout | parse --regex 'in (?P<num>[\d.]+)(?P<unit>m?s)\b'
@@ -118,6 +116,6 @@ def main [] {
   # command, so SSH gets the byte stream directly.
   match $winner {
     "cloudflared" => { ^cloudflared access ssh --hostname $CF_HOSTNAME }
-    "tailnet" => { ^nc $tailnet_ip 22 }
+    "tailnet" => { ^nc $tailnet_host 22 }
   }
 }
