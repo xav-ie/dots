@@ -219,3 +219,27 @@ slack-tokens:
     sudo sops set secrets/main.yaml '["slack"]["xoxc_token"]' $'"($xoxc)"'
     sudo sops set secrets/main.yaml '["slack"]["xoxd_token"]' $'"($xoxd)"'
     print "Updated Slack tokens in secrets/main.yaml. Run `just` to re-render + restart the proxy."
+
+# Secrets are rendered from sops into ~/.cache/esphome, which is kept 0700
+# rather than cleaned up: the compile cache there embeds the same secrets
+# anyway, and keeping it makes rebuilds fast.
+
+# compile + flash esphome/<device>.yaml over USB or OTA (it asks which port)
+esphome device="colorshadowrgb":
+    #!/usr/bin/env nu
+    let dir = ($env.HOME | path join ".cache" "esphome")
+    mkdir $dir
+    chmod 700 $dir
+    # Reuse the NetworkManager PSK (modules/nixos/wifi-failover.nix) so there is one copy.
+    let psk = (sudo sops -d --extract '["wifi"]["env"]' secrets/main.yaml
+      | lines | parse "{k}={v}" | where k == "VERIZON_JKST69_PSK" | get v.0 | str trim -c '"')
+    sudo sops -d secrets/esphome.yaml | from yaml | merge { wifi_password: $psk }
+      | to yaml | save -f ($dir | path join "secrets.yaml")
+    cp -f "esphome/{{ device }}.yaml" $dir
+    # In the official container: nixpkgs' esphome can't compile, because PlatformIO
+    # downloads a generic-Linux ESP-IDF toolchain that doesn't run on NixOS.
+    # keep-groups carries dialout in so rootless podman can open the serial port;
+    # host network is for OTA/mDNS.
+    let devices = (glob /dev/ttyACM* | each {|d| [--device $d] } | flatten)
+    (podman run --rm -it --network host --group-add keep-groups ...$devices
+      -v $"($dir):/config" ghcr.io/esphome/esphome:stable run "/config/{{ device }}.yaml")
