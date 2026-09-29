@@ -2,7 +2,9 @@
   flake.modules.homeManager.darwin =
     { pkgs, lib, ... }:
     let
-      ffr = "${pkgs.pkgs-mine.firefox-router}/bin/firefox-router";
+      name = "firefox-router";
+      ffr = "${pkgs.pkgs-mine.${name}}/bin/${name}";
+      id = "casa.lalala.${name}";
     in
     {
       # macOS link router: build a tiny AppleScript applet (FirefoxRouter.app) that
@@ -17,13 +19,13 @@
       # System Settings "Default web browser" dropdown hides background apps, so we
       # never use that dropdown — the firefox-router-default activation below sets
       # the default handler programmatically instead.
-      config.home.activation.firefox-router-app = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      config.home.activation."${name}-app" = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         app="$HOME/Applications/FirefoxRouter.app"
         plistbuddy="/usr/libexec/PlistBuddy"
         lsregister="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
 
         tmp="$(mktemp -d)"
-        src="$tmp/firefox-router.applescript"
+        src="$tmp/${name}.applescript"
         cat > "$src" <<APPLESCRIPT
         on open location this_URL
             do shell script "${ffr} " & quoted form of this_URL
@@ -46,12 +48,12 @@
         # Identify the bundle and declare it an http/https handler so macOS lists
         # it as a default-browser candidate. Newer osacompile output may omit
         # CFBundleIdentifier entirely, so Add it when Set can't find the key.
-        $plistbuddy -c "Set :CFBundleIdentifier casa.lalala.firefox-router" "$plist" 2>/dev/null \
-          || $plistbuddy -c "Add :CFBundleIdentifier string casa.lalala.firefox-router" "$plist"
+        $plistbuddy -c "Set :CFBundleIdentifier ${id}" "$plist" 2>/dev/null \
+          || $plistbuddy -c "Add :CFBundleIdentifier string ${id}" "$plist"
         $plistbuddy -c "Add :LSUIElement bool true" "$plist" 2>/dev/null || true
         $plistbuddy -c "Add :CFBundleURLTypes array" "$plist" 2>/dev/null || true
         $plistbuddy -c "Add :CFBundleURLTypes:0 dict" "$plist" 2>/dev/null || true
-        $plistbuddy -c "Add :CFBundleURLTypes:0:CFBundleURLName string casa.lalala.firefox-router" "$plist" 2>/dev/null || true
+        $plistbuddy -c "Add :CFBundleURLTypes:0:CFBundleURLName string ${id}" "$plist" 2>/dev/null || true
         $plistbuddy -c "Add :CFBundleURLTypes:0:CFBundleTypeRole string Viewer" "$plist" 2>/dev/null || true
         $plistbuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "$plist" 2>/dev/null || true
         $plistbuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string http" "$plist" 2>/dev/null || true
@@ -71,29 +73,11 @@
       # set returns success but defers the change until the user clicks "Use
       # FirefoxRouter" once. We only invoke the setter when it isn't already the
       # default, so after that one confirmation every later rebuild is a silent
-      # no-op (no prompt, no change). swift here is the Xcode Command Line Tools
-      # system interpreter, run at activation like osacompile above — if it's
-      # missing we skip and leave the default untouched.
-      config.home.activation.firefox-router-default = lib.hm.dag.entryAfter [ "firefox-router-app" ] ''
-        swift=/usr/bin/swift
-        [ -x "$swift" ] || exit 0
-        "$swift" - <<'SWIFT' || true
-        import AppKit
-        import Foundation
-        let id = "casa.lalala.firefox-router"
-        let ws = NSWorkspace.shared
-        guard let appURL = ws.urlForApplication(withBundleIdentifier: id) else { exit(0) }
-        let current = ws.urlForApplication(toOpen: URL(string: "http://example.com")!)
-        let currentID = current.flatMap { Bundle(url: $0)?.bundleIdentifier }
-        if currentID != id {
-            let group = DispatchGroup()
-            for scheme in ["http", "https"] {
-                group.enter()
-                ws.setDefaultApplication(at: appURL, toOpenURLsWithScheme: scheme) { _ in group.leave() }
-            }
-            _ = group.wait(timeout: .now() + 5)
-        }
-        SWIFT
+      # no-op (no prompt, no change). JXA via /usr/bin/osascript needs no compiler,
+      # SDK, or Xcode license.
+      config.home.activation."${name}-default" = lib.hm.dag.entryAfter [ "${name}-app" ] ''
+        /usr/bin/osascript -l JavaScript ${./set-default-browser.js} ${id} \
+          || echo "${name}-default: failed to set default browser" >&2
       '';
     };
 }

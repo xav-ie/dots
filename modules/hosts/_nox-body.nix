@@ -644,14 +644,14 @@ in
                 LSHandlerPreferredVersions = {
                   LSHandlerRoleAll = "-";
                 };
-                LSHandlerRoleAll = "org.mozilla.firefox";
+                LSHandlerRoleAll = "casa.lalala.firefox-router";
                 LSHandlerURLScheme = "http";
               }
               {
                 LSHandlerPreferredVersions = {
                   LSHandlerRoleAll = "-";
                 };
-                LSHandlerRoleAll = "org.mozilla.firefox";
+                LSHandlerRoleAll = "casa.lalala.firefox-router";
                 LSHandlerURLScheme = "https";
               }
               {
