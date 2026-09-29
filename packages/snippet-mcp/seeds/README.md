@@ -11,19 +11,18 @@ exist — runtime saves are never overwritten.
 ---
 description: One-line summary; this is what tools.search ranks against.
 args:
-  username: { type: string, description: "Slack username, no @" }
+  channel_id: { type: string, description: "Slack channel or DM channel id" }
   message: { type: string, description: "Message body" }
-tags: [slack, dm]
+tags: [slack, message]
 kind: code # or: instructions
 ---
 
-const user = await tools.slack_mcp_server.users_lookupByName({
-name: {{json username}},
-})
-await tools.slack_mcp_server.chat_postMessage({
-channel: user.id,
+const res = await tools["slack.org.workspace.conversations_add_message"]({
+channel_id: {{json channel_id}},
 text: {{json message}},
 })
+if (!res.ok) return `FAILED ${res.error.code}: ${res.error.message}`
+return res.data
 ```
 
 ## Rules
@@ -33,6 +32,7 @@ text: {{json message}},
 - **args** (optional) — `name → { type, description?, optional?, default? }`. Types: `string`, `number`, `boolean`.
 - **tags** (optional) — boost search relevance.
 - **kind** (optional, default `code`) — `code` or `instructions`. Both are just returned-text; the kind is a hint.
+- **Tool paths** — always the full `<integration>.<owner>.<connection>.<tool>` address from `tools.search()` / `tools.describe.tool()`; short aliases like `tools.slack.<tool>` don't resolve. Calls return `{ ok, data }` or `{ ok: false, error }`, so check `ok` before using `data`.
 
 ## Templating
 
