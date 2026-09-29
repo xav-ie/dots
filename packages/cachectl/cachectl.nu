@@ -5,15 +5,14 @@
 # drives its lifecycle: provision the cloud, install/update NixOS, and mint
 # per-project push/pull tokens.
 #
-# Admin SSH is tailnet-only, so `deploy`/`mint` reach arca at its Tailscale IP.
+# Admin SSH is tailnet-only, so `deploy`/`mint` reach arca by its MagicDNS name.
 # Runs against the dots checkout ($env.DOTS, default ~/Projects/dots).
 
 # ── helpers ─────────────────────────────────────────────────────────────────
 
-# arca's admin SSH target, resolved from its Tailscale hostname (tailnet-only,
-# and a reinstall hands arca a new tailnet IP).
+# arca's admin SSH target (tailnet-only; MagicDNS follows a reinstall's new IP).
 def arca-ssh [] {
-  $"root@(tailscale ip -4 arca | str trim)"
+  "root@arca.gecko-bonito.ts.net"
 }
 
 def dots-dir [] {

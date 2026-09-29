@@ -5,7 +5,6 @@
   gh,
   nix,
   nixos-rebuild,
-  tailscale,
 }:
 writeNuApplication {
   name = "cachectl";
@@ -15,7 +14,6 @@ writeNuApplication {
     gh
     nix
     nixos-rebuild
-    tailscale
   ];
   text = builtins.readFile ./cachectl.nu;
 }
