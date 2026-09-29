@@ -207,7 +207,9 @@
                 before_sleep_cmd = "loginctl lock-session";
                 # prevent having to press key twice
                 after_sleep_cmd = "hyprctl dispatch dpms on";
-                lock_cmd = "${config.programs.hyprlock.package}/bin/hyprlock --grace 10 || true";
+                # pidof guard: a second hyprlock racing the first for the GPU fails
+                # zink's vkCreateDevice and falls back to llvmpipe (~2 cores, fans).
+                lock_cmd = "${pkgs.procps}/bin/pidof hyprlock || ${config.programs.hyprlock.package}/bin/hyprlock --grace 10 || true";
               };
 
               listener = [
