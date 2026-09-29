@@ -39,7 +39,7 @@ web_server:
 globals:
   - id: effect_type
     type: int
-    initial_value: '0'
+    initial_value: "0"
 
 binary_sensor:
   - platform: gpio
@@ -49,10 +49,10 @@ binary_sensor:
     id: switch_0
     internal: true
     on_double_click:
-    - min_length: 50ms
-      max_length: 750ms
-      then:
-        - light.toggle: rgb_led
+      - min_length: 50ms
+        max_length: 750ms
+        then:
+          - light.toggle: rgb_led
     on_press:
       then:
         - lambda: |-
@@ -82,17 +82,17 @@ sensor:
     internal: true
     update_interval: 0.1s
     filters:
-      - delta: 0.01 
-      - calibrate_linear: 
+      - delta: 0.01
+      - calibrate_linear:
           - 0.0 -> 0.12
           - 0.85 -> 1.0
-    on_value: 
+    on_value:
       then:
-# This is not working yet. set_red() assign the *percentage*, need to figure out how to set absolute
-#        - lambda: |-
-#            id(rgb_led).make_call().set_red(x).perform();
+        # This is not working yet. set_red() assign the *percentage*, need to figure out how to set absolute
+        #        - lambda: |-
+        #            id(rgb_led).make_call().set_red(x).perform();
         - light.control:
-            id: rgb_led 
+            id: rgb_led
             red: !lambda "return x;"
 
   - platform: adc
@@ -102,14 +102,14 @@ sensor:
     update_interval: 0.1s
     filters:
       - delta: 0.01
-# The leds don't turn on until about 40/255 (15%) so adjust the range
-      - calibrate_linear: 
+      # The leds don't turn on until about 40/255 (15%) so adjust the range
+      - calibrate_linear:
           - 0.0 -> 0.15
           - 0.85 -> 1.0
-    on_value: 
+    on_value:
       then:
         - light.control:
-            id: rgb_led 
+            id: rgb_led
             green: !lambda "return x;"
 
   - platform: adc
@@ -119,13 +119,13 @@ sensor:
     update_interval: 0.1s
     filters:
       - delta: 0.01
-      - calibrate_linear: 
+      - calibrate_linear:
           - 0.0 -> 0.12
           - 0.85 -> 1.0
-    on_value: 
+    on_value:
       then:
         - light.control:
-            id: rgb_led 
+            id: rgb_led
             blue: !lambda "return x;"
 
 light:
@@ -141,15 +141,20 @@ light:
       - flicker:
 
 output:
+  # No thermal shutdown here (stock firmware stops at 63°C and defaults to 50%);
+  # the base is the only heatsink, so cap each channel.
   - platform: ledc
     id: output_red
     pin: GPIO7
     frequency: 1220Hz
+    max_power: 60%
   - platform: ledc
     id: output_green
     pin: GPIO6
     frequency: 1220Hz
+    max_power: 60%
   - platform: ledc
     id: output_blue
     pin: GPIO5
     frequency: 1220Hz
+    max_power: 60%
