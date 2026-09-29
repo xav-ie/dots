@@ -243,3 +243,15 @@ esphome device="colorshadowrgb":
     let devices = (glob /dev/ttyACM* | each {|d| [--device $d] } | flatten)
     (podman run --rm -it --network host --group-add keep-groups ...$devices
       -v $"($dir):/config" ghcr.io/esphome/esphome:stable run "/config/{{ device }}.yaml")
+
+# Rotating the keypair drops every phone's push subscription, so each has to
+# re-enable push.
+
+# generate Collie's Web Push (VAPID) keypair into sops; run `just` after
+collie-vapid:
+    #!/usr/bin/env nu
+    let cli = (nix build .#collie --no-link --print-out-paths | str trim) + "/share/collie/node_modules/web-push/src/cli.js"
+    let keys = (nix shell nixpkgs#nodejs -c node $cli generate-vapid-keys --json | from json)
+    sudo sops set secrets/main.yaml '["collie"]["vapid_public"]' ($keys.publicKey | to json)
+    sudo sops set secrets/main.yaml '["collie"]["vapid_private"]' ($keys.privateKey | to json)
+    print "Stored Collie VAPID keys in secrets/main.yaml. Run `just` to apply."
