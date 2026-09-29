@@ -2,14 +2,14 @@ use crate::refresh::refresh_executor;
 use crate::render::render;
 use crate::snippets::Registry;
 use crate::types::{ArgSpec, SaveInput, Snippet, UpdateInput};
+use regex::Regex;
 use rmcp::model::{
     CallToolRequestParams, CallToolResult, Content, ErrorData as McpError, Implementation,
-    JsonObject, ListToolsResult, Meta, PaginatedRequestParams, ProtocolVersion,
-    ServerCapabilities, ServerInfo, Tool,
+    JsonObject, ListToolsResult, Meta, PaginatedRequestParams, ProtocolVersion, ServerCapabilities,
+    ServerInfo, Tool,
 };
 use rmcp::service::RequestContext;
 use rmcp::{RoleServer, ServerHandler};
-use regex::Regex;
 use serde_json::{Map, Value, json};
 use std::sync::{Arc, LazyLock};
 
@@ -167,7 +167,8 @@ fn snippet_tool(s: &Snippet) -> Tool {
 /// path strings in the body, unless the frontmatter lists them explicitly.
 fn integrations(s: &Snippet) -> Vec<String> {
     static RE: LazyLock<Regex> = LazyLock::new(|| {
-        Regex::new(r#"tools\.([a-z_][a-z0-9_]*)\.|["'`]([a-z_][a-z0-9_]*)\.(?:org|user)\."#).unwrap()
+        Regex::new(r#"tools\.([a-z_][a-z0-9_]*)\.|["'`]([a-z_][a-z0-9_]*)\.(?:org|user)\."#)
+            .unwrap()
     });
     if let Some(explicit) = &s.frontmatter.integrations {
         return explicit.clone();
@@ -364,8 +365,14 @@ await tools.slack.users_search({});
 await tools["proton_mail.org.workspace.search_emails"]({});
 await tools.search({ query: "x" });
 await tools.snippets.org.workspace.get({});"#;
-        assert_eq!(integrations(&snippet(body, None)), ["outsmartly", "proton_mail", "slack"]);
-        assert_eq!(integrations(&snippet(body, Some(vec!["gtm".into()]))), ["gtm"]);
+        assert_eq!(
+            integrations(&snippet(body, None)),
+            ["outsmartly", "proton_mail", "slack"]
+        );
+        assert_eq!(
+            integrations(&snippet(body, Some(vec!["gtm".into()]))),
+            ["gtm"]
+        );
         assert!(snippet_tool(&snippet("no calls", None)).meta.is_none());
     }
 }
