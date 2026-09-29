@@ -46,7 +46,8 @@ func sendToDaemon(_ args: [String]) {
     $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { connect(fd, $0, len) }
   }
   guard ok == 0 else { exit(1) }
-  let msg = args.joined(separator: " ")
+  // Newline-separated so app names with spaces ("Google Chrome") survive.
+  let msg = args.joined(separator: "\n")
   _ = msg.withCString { write(fd, $0, strlen($0)) }
 }
 
