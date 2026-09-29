@@ -156,9 +156,35 @@
           default = { };
           description = "MCP servers to run inside the containerized proxy";
         };
+        headerRoutes = lib.mkOption {
+          type = lib.types.attrsOf (lib.types.attrsOf lib.types.str);
+          default = { };
+          description = ''
+            Virtual servers that pick a backend by the `Account` request header:
+            /servers/<route>/ is rewritten to /servers/<server>/ for the matching
+            header value. Lets executor hold one integration with one connection
+            (header value) per backend. Header values match case-sensitively.
+            No header matches no router → 404, rather than a silent default.
+          '';
+          example = {
+            atlassian = {
+              delivery = "jira-d";
+              product = "jira-p";
+            };
+          };
+        };
       };
 
       config = {
+        # A route named like a real server would catch header-less requests and
+        # bring back the silent default headerRoutes exists to prevent.
+        assertions = [
+          {
+            assertion = lib.intersectLists (lib.attrNames cfg.headerRoutes) (lib.attrNames cfg.servers) == [ ];
+            message = "services.mcp-proxy.headerRoutes names must not equal a server name";
+          }
+        ];
+
         services.local-networking.subdomains = [ subdomain ];
 
         sops.templates."mcp-proxy-env" = {
@@ -187,7 +213,27 @@
             "traefik.http.routers.${subdomain}-secure.tls.certResolver" = "cloudflare";
             "traefik.http.routers.${subdomain}-secure.service" = "${subdomain}-svc";
             "traefik.http.services.${subdomain}-svc.loadbalancer.server.port" = containerPort |> toString;
-          };
+          }
+          // lib.concatMapAttrs (
+            route: targets:
+            lib.concatMapAttrs (
+              value: server:
+              let
+                r = "${subdomain}-${route}-${value}";
+              in
+              {
+                "traefik.http.routers.${r}.entrypoints" = "websecure";
+                "traefik.http.routers.${r}.rule" =
+                  "Host(`${fullHostName}`) && PathPrefix(`/servers/${route}/`) && Header(`Account`, `${value}`)";
+                "traefik.http.routers.${r}.tls" = "true";
+                "traefik.http.routers.${r}.tls.certResolver" = "cloudflare";
+                "traefik.http.routers.${r}.service" = "${subdomain}-svc";
+                "traefik.http.routers.${r}.middlewares" = r;
+                "traefik.http.middlewares.${r}.replacepathregex.regex" = "^/servers/${route}/(.*)";
+                "traefik.http.middlewares.${r}.replacepathregex.replacement" = "/servers/${server}/$1";
+              }
+            ) targets
+          ) cfg.headerRoutes;
         };
       };
     };
