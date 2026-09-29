@@ -10,11 +10,12 @@ extension Daemon {
       scheduleRefresh()
       return
     }
-    if key.hasPrefix("--probe ") {
-      probe(String(key.dropFirst("--probe ".count)))
+    let parts = key.split(separator: "\n").map(String.init)
+    if parts.first == "--probe" {
+      probe(parts.dropFirst().joined(separator: " "))
       return
     }
-    let appNames = key.split(separator: " ").map(String.init)
+    let appNames = parts
     dbg("recv \(key)")
     enqueue(appNames)
   }
