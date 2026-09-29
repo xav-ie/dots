@@ -10,9 +10,9 @@
 
 # ── helpers ─────────────────────────────────────────────────────────────────
 
-# arca's admin SSH target (tailnet-only; MagicDNS follows a reinstall's new IP).
+# arca's admin SSH target; the `arca` ssh host block maps it to root over the tailnet.
 def arca-ssh [] {
-  "root@arca.gecko-bonito.ts.net"
+  "arca"
 }
 
 def dots-dir [] {
