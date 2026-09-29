@@ -49,15 +49,23 @@ let
   optionalAttrs = bool: attrSet: if bool then attrSet else { };
 
   is-sshed = pkgs.callPackage ./is-sshed { inherit writeNuApplication; };
-  notify = pkgs.callPackage ./notify { inherit generate-kaomoji writeNuApplication; };
+  notify = pkgs.callPackage ./notify {
+    inherit generate-kaomoji ssh-client-host writeNuApplication;
+  };
+  ssh-client-host = pkgs.callPackage ./ssh-client-host { inherit writeNuApplication; };
   uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
 in
 rec {
-  inherit is-sshed notify uair-toggle-and-notify;
+  inherit
+    is-sshed
+    notify
+    ssh-client-host
+    uair-toggle-and-notify
+    ;
   default = pkgs.callPackage ./cache-command { };
   apple-emoji-linux = pkgs.callPackage ./apple-emoji-linux { };
   base-ref = pkgs.callPackage ./base-ref { inherit writeNuApplication; };
-  browse = pkgs.callPackage ./browse { inherit writeNuApplication; };
+  browse = pkgs.callPackage ./browse { inherit ssh-client-host writeNuApplication; };
   cache-command = pkgs.callPackage ./cache-command { };
   discord-mcp = pkgs.callPackage ./discord-mcp { };
   # claude-code packages need allowUnfree, passed via pkgs-unfree

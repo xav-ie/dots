@@ -1,13 +1,17 @@
 {
   writeNuApplication,
-  libnotify,
   generate-kaomoji,
+  libnotify,
+  openssh,
+  ssh-client-host,
 }:
 writeNuApplication {
   name = "notify";
   runtimeInputs = [
-    libnotify
     generate-kaomoji
+    libnotify
+    openssh
+    ssh-client-host
   ];
   text = ./notify.nu |> builtins.readFile;
 }
