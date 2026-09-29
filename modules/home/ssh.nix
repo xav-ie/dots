@@ -9,6 +9,12 @@
           enableDefaultConfig = false;
           # Apply to all hosts by default
           matchBlocks = {
+            # Bare names never resolve (tailscale --accept-dns=false, dnsmasq
+            # domain-needed); the alias keeps known_hosts keyed on "nox".
+            "nox" = {
+              hostname = "nox.gecko-bonito.ts.net";
+              extraOptions.HostKeyAlias = "nox";
+            };
             # ssh-praesidium-route races cloudflared and tailnet probes in
             # parallel; whichever transport first proves reachable wins.
             # See packages/ssh-praesidium-route/ for the full racing logic.
