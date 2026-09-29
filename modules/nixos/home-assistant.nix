@@ -144,7 +144,10 @@
               # my additions
               ++ [
                 "apple_tv"
+                "esphome"
                 "govee_light_local"
+                # Connect ZBT-1 dongle (Zigbee/Thread radio + firmware updates)
+                "homeassistant_sky_connect"
                 "homekit"
                 "homekit_controller"
                 # Recommended for fast zlib compression
