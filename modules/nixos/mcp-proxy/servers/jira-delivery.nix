@@ -15,6 +15,7 @@
           '';
     in
     {
+      services.mcp-proxy.headerRoutes.atlassian.delivery = "jira-d";
       services.mcp-proxy.servers.jira-d = {
         command = "${wrapper}/bin/jira-mcp-delivery";
         packages = [
