@@ -5,10 +5,31 @@
 # whole configuration: no .env file, and none of upstream's collie-ctl.sh, which
 # would otherwise own the build, the service and the front door.
 {
+  # Web Push (VAPID) keys; generate them with `just collie-vapid`. Without them
+  # the bridge runs with push disabled.
+  flake.modules.nixos.linux =
+    { config, ... }:
+    {
+      sops = {
+        secrets = {
+          "collie/vapid_private" = { };
+          "collie/vapid_public" = { };
+        };
+        templates."collie.env" = {
+          owner = config.defaultUser;
+          content = ''
+            COLLIE_VAPID_PRIVATE=${config.sops.placeholder."collie/vapid_private"}
+            COLLIE_VAPID_PUBLIC=${config.sops.placeholder."collie/vapid_public"}
+          '';
+        };
+      };
+    };
+
   flake.modules.homeManager.linux =
     {
       config,
       lib,
+      osConfig,
       pkgs,
       ...
     }:
@@ -50,6 +71,7 @@
               # bridge. Same value, without the scheme.
               "COLLIE_PUBLIC_HOSTS=${lib.removePrefix "https://" cfg.origin}"
               "COLLIE_PUBLIC_URL=${cfg.origin}"
+              "COLLIE_VAPID_SUBJECT=${cfg.origin}"
               "PATH=${
                 lib.makeBinPath [
                   pkgs.git
@@ -57,6 +79,7 @@
                 ]
               }"
             ];
+            EnvironmentFile = osConfig.sops.templates."collie.env".path;
             Restart = "on-failure";
             RestartSec = 10;
           };
