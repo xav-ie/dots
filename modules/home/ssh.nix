@@ -10,7 +10,12 @@
           # Apply to all hosts by default
           matchBlocks = {
             # Bare names never resolve (tailscale --accept-dns=false, dnsmasq
-            # domain-needed); the alias keeps known_hosts keyed on "nox".
+            # domain-needed), so tailnet hosts map to their MagicDNS names.
+            "arca" = {
+              hostname = "arca.gecko-bonito.ts.net";
+              user = "root";
+            };
+            # The alias keeps known_hosts keyed on "nox".
             "nox" = {
               hostname = "nox.gecko-bonito.ts.net";
               extraOptions.HostKeyAlias = "nox";
