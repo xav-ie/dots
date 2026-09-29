@@ -1,0 +1,155 @@
+# From https://github.com/n2kbg/ESPHome-ColorShadowRGB (rctestflight Color Shadow lamp).
+# Flash with `just esphome colorshadowrgb`; secrets come from sops.
+esphome:
+  name: "colorshadowrgb"
+  friendly_name: ColorShadowRGB
+
+esp32:
+  board: esp32-c3-devkitm-1
+  framework:
+    type: esp-idf
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret api_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: "Verizon_JKST69" # modules/nixos/wifi-failover.nix
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "ColorShadowRGB Fallback Hotspot"
+    password: !secret ap_password
+
+captive_portal:
+
+web_server:
+  port: 80
+  version: 3
+
+globals:
+  - id: effect_type
+    type: int
+    initial_value: '0'
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO9
+      inverted: true
+    id: switch_0
+    internal: true
+    on_double_click:
+    - min_length: 50ms
+      max_length: 750ms
+      then:
+        - light.toggle: rgb_led
+    on_press:
+      then:
+        - lambda: |-
+            id(effect_type) += 1;
+            auto call = id(rgb_led).turn_on();
+            switch(id(effect_type)) {
+              case 1:
+                call.set_effect("pulse");
+                break;
+              case 2:
+                call.set_effect("random");
+                break;
+              case 3:
+                call.set_effect("flicker");
+                break;
+              default:
+                id(effect_type) = 0;
+                call.set_effect("None");
+                break;
+            }
+            call.perform();
+
+sensor:
+  - platform: adc
+    pin: GPIO4
+    id: set_red
+    internal: true
+    update_interval: 0.1s
+    filters:
+      - delta: 0.01 
+      - calibrate_linear: 
+          - 0.0 -> 0.12
+          - 0.85 -> 1.0
+    on_value: 
+      then:
+# This is not working yet. set_red() assign the *percentage*, need to figure out how to set absolute
+#        - lambda: |-
+#            id(rgb_led).make_call().set_red(x).perform();
+        - light.control:
+            id: rgb_led 
+            red: !lambda "return x;"
+
+  - platform: adc
+    pin: GPIO3
+    id: set_green
+    internal: true
+    update_interval: 0.1s
+    filters:
+      - delta: 0.01
+# The leds don't turn on until about 40/255 (15%) so adjust the range
+      - calibrate_linear: 
+          - 0.0 -> 0.15
+          - 0.85 -> 1.0
+    on_value: 
+      then:
+        - light.control:
+            id: rgb_led 
+            green: !lambda "return x;"
+
+  - platform: adc
+    pin: GPIO0
+    id: set_blue
+    internal: true
+    update_interval: 0.1s
+    filters:
+      - delta: 0.01
+      - calibrate_linear: 
+          - 0.0 -> 0.12
+          - 0.85 -> 1.0
+    on_value: 
+      then:
+        - light.control:
+            id: rgb_led 
+            blue: !lambda "return x;"
+
+light:
+  - platform: rgb
+    name: "light"
+    id: rgb_led
+    red: output_red
+    green: output_green
+    blue: output_blue
+    effects:
+      - pulse:
+      - random:
+      - flicker:
+
+output:
+  - platform: ledc
+    id: output_red
+    pin: GPIO7
+    frequency: 1220Hz
+  - platform: ledc
+    id: output_green
+    pin: GPIO6
+    frequency: 1220Hz
+  - platform: ledc
+    id: output_blue
+    pin: GPIO5
+    frequency: 1220Hz
