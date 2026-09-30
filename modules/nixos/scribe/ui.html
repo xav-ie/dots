@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>scribe</title>
+    <style>
+      :root {
+        --bg: #111318;
+        --panel: #1a1d24;
+        --line: #2a2e38;
+        --text: #e6e8ee;
+        --muted: #8b92a3;
+        --accent: #4f8cff;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          14px/1.5 system-ui,
+          -apple-system,
+          sans-serif;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 24px;
+        border-bottom: 1px solid var(--line);
+      }
+      header a {
+        color: var(--text);
+        text-decoration: none;
+        font-weight: 600;
+      }
+      main {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px 24px 120px;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--line);
+      }
+      th {
+        color: var(--muted);
+        font-weight: 500;
+        font-size: 12px;
+      }
+      tr.row {
+        cursor: pointer;
+      }
+      tr.row:hover {
+        background: var(--panel);
+      }
+      .chip {
+        display: inline-block;
+        padding: 1px 8px;
+        margin: 0 4px 4px 0;
+        border-radius: 999px;
+        background: var(--panel);
+        border: 1px solid var(--c, var(--line));
+        color: var(--c, var(--text));
+        font-size: 12px;
+      }
+      .players {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        display: grid;
+        gap: 6px;
+        padding: 10px 0;
+        background: var(--bg);
+        border-bottom: 1px solid var(--line);
+      }
+      .players label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .players label span {
+        width: 70px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      audio {
+        width: 100%;
+        height: 32px;
+      }
+      .turn {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 10px;
+        padding: 6px 8px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .turn:hover {
+        background: var(--panel);
+      }
+      .turn.now {
+        background: #22304d;
+      }
+      .turn .t {
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+        font-size: 12px;
+        padding-top: 2px;
+      }
+      .turn .who {
+        font-weight: 600;
+        font-size: 12px;
+      }
+      .links a {
+        color: var(--accent);
+        margin-right: 14px;
+      }
+      h2 {
+        margin: 18px 0 8px;
+        font-size: 15px;
+      }
+      pre {
+        white-space: pre-wrap;
+        background: var(--panel);
+        padding: 12px;
+        border-radius: 6px;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a href="#/">scribe</a><span class="muted" id="where"></span>
+    </header>
+    <main id="app"></main>
+    <script>
+      const app = document.getElementById("app");
+      const where = document.getElementById("where");
+
+      const el = (tag, props = {}, ...kids) => {
+        const e = Object.assign(document.createElement(tag), props);
+        e.append(...kids);
+        return e;
+      };
+      const color = (name) => {
+        let h = 0;
+        for (const ch of name) h = (h * 31 + ch.codePointAt(0)) % 360;
+        return `hsl(${h} 70% 68%)`;
+      };
+      const chip = (name) => {
+        const c = el("span", { className: "chip", textContent: name });
+        c.style.setProperty("--c", color(name));
+        return c;
+      };
+      const clock = (s) => {
+        s = Math.max(0, Math.round(s));
+        const h = Math.floor(s / 3600),
+          m = Math.floor((s % 3600) / 60),
+          sec = s % 60;
+        return (
+          (h ? `${h}:${String(m).padStart(2, "0")}` : `${m}`) +
+          `:${String(sec).padStart(2, "0")}`
+        );
+      };
+      const when = (ms) => (ms ? new Date(ms).toLocaleString() : "");
+      const api = async (path) => {
+        const r = await fetch(path);
+        if (!r.ok) throw new Error(`${path}: ${r.status}`);
+        return r.json();
+      };
+      // mic, mic-2, … in creation order (a plain sort puts mic-10 before mic-2).
+      const stemOrder = (stem) => Number(stem.split("-")[1] ?? 1);
+
+      async function list() {
+        where.textContent = "";
+        const sessions = await api("/api/sessions");
+        if (sessions.length === 0) {
+          app.replaceChildren(
+            el("p", { className: "muted", textContent: "No sessions yet." }),
+          );
+          return;
+        }
+        const rows = sessions.map((s) => {
+          const tr = el(
+            "tr",
+            {
+              className: "row",
+              onclick: () => (location.hash = `#/s/${s.sessionId}`),
+            },
+            el("td", { textContent: when(s.startedAt ?? s.modified * 1000) }),
+            el("td", {
+              textContent:
+                s.stoppedAt && s.startedAt
+                  ? clock((s.stoppedAt - s.startedAt) / 1000)
+                  : "",
+            }),
+            el("td", { textContent: s.platform ?? "" }),
+            el(
+              "td",
+              {},
+              ...s.speakers.filter((n) => n !== "Unknown").map(chip),
+            ),
+            el("td", { textContent: s.words || "" }),
+            el("td", {
+              className: "muted",
+              textContent:
+                s.channels
+                  .filter((c) => c.audio)
+                  .map((c) => c.stem)
+                  .join(", ") || "none",
+            }),
+          );
+          return tr;
+        });
+        app.replaceChildren(
+          el(
+            "table",
+            {},
+            el(
+              "thead",
+              {},
+              el(
+                "tr",
+                {},
+                ...[
+                  "Started",
+                  "Length",
+                  "Platform",
+                  "Speakers",
+                  "Words",
+                  "Audio",
+                ].map((h) => el("th", { textContent: h })),
+              ),
+            ),
+            el("tbody", {}, ...rows),
+          ),
+        );
+      }
+
+      async function show(id) {
+        where.textContent = `/ ${id}`;
+        const { session, channels } = await api(`/api/sessions/${id}`);
+
+        // Each saved stream plays against its own clock: the wall-clock epoch of
+        // its first sample.
+        const micEpochs = (session?.mic ?? [])
+          .map((m) => m.epoch)
+          .sort((a, b) => a - b);
+        const players = channels
+          .filter((c) => c.audio)
+          .sort((a, b) =>
+            a.stem.localeCompare(b.stem, undefined, { numeric: true }),
+          )
+          .map((c) => {
+            // Streams record their own start (c.epoch); older ones fall back to
+            // the extension's record.
+            const epoch =
+              c.epoch ??
+              (c.channel === "tab"
+                ? session?.tabEpoch
+                : micEpochs[stemOrder(c.stem) - 1]);
+            const audio = el("audio", {
+              controls: true,
+              preload: "metadata",
+              src: `/api/sessions/${id}/audio/${c.stem}`,
+            });
+            return { stem: c.stem, epoch, audio };
+          });
+
+        const segments = session?.segments ?? [];
+        const origin = session?.startedAt ?? segments[0]?.at ?? 0;
+        const seekAll = (at) => {
+          for (const p of players) {
+            if (p.epoch == null) continue;
+            const t = (at - p.epoch) / 1000;
+            if (t >= 0 && (!p.audio.duration || t <= p.audio.duration)) {
+              p.audio.currentTime = t;
+              p.audio.play();
+            } else {
+              p.audio.pause();
+            }
+          }
+        };
+
+        const turns = segments.map((seg) =>
+          el(
+            "div",
+            {
+              className: "turn",
+              onclick: () => seg.at != null && seekAll(seg.at),
+            },
+            el("div", {
+              className: "t",
+              textContent:
+                seg.at != null ? clock((seg.at - origin) / 1000) : "",
+            }),
+            el(
+              "div",
+              {},
+              Object.assign(
+                el("div", { className: "who", textContent: seg.speaker }),
+                {
+                  style: `color:${color(seg.speaker)}`,
+                },
+              ),
+              el("div", { textContent: seg.text }),
+            ),
+          ),
+        );
+
+        // Highlight the line being heard, following the tab stream's clock.
+        const lead = players.find((p) => p.stem === "tab" && p.epoch != null);
+        if (lead) {
+          lead.audio.addEventListener("timeupdate", () => {
+            const at = lead.epoch + lead.audio.currentTime * 1000;
+            let now = -1;
+            segments.forEach((s, i) => {
+              if (s.at != null && s.at <= at) now = i;
+            });
+            turns.forEach((t, i) => t.classList.toggle("now", i === now));
+          });
+        }
+
+        const speakers = [...new Set(segments.map((s) => s.speaker))];
+        const bundle = new Blob(
+          [JSON.stringify({ sessionId: id, session, channels }, null, 2)],
+          {
+            type: "application/json",
+          },
+        );
+        const body = [
+          el("p", {
+            className: "muted",
+            textContent: `${when(session?.startedAt)} · ${session?.platform ?? "unknown platform"}`,
+          }),
+          el("div", {}, ...speakers.map(chip)),
+          el(
+            "div",
+            { className: "links" },
+            el("a", {
+              href: URL.createObjectURL(bundle),
+              download: `scribe-${id}.json`,
+              textContent: "debug bundle",
+            }),
+            ...players.map((p) =>
+              el("a", {
+                href: p.audio.src,
+                download: `${id}-${p.stem}.flac`,
+                textContent: `${p.stem}.flac`,
+              }),
+            ),
+          ),
+        ];
+        if (players.length > 0) {
+          body.push(
+            el(
+              "div",
+              { className: "players" },
+              ...players.map((p) =>
+                el("label", {}, el("span", { textContent: p.stem }), p.audio),
+              ),
+            ),
+          );
+        }
+        if (turns.length > 0) {
+          body.push(el("h2", { textContent: "Transcript" }), ...turns);
+        } else {
+          // No record from the extension (it never reached Stop): show each saved
+          // stream's own words.
+          for (const c of channels) {
+            body.push(
+              el("h2", { textContent: `${c.stem} (raw)` }),
+              el("pre", {
+                textContent:
+                  (c.words ?? []).map((w) => w.word).join(" ") || "(no words)",
+              }),
+            );
+          }
+        }
+        app.replaceChildren(...body);
+      }
+
+      async function route() {
+        const m = location.hash.match(/^#\/s\/([0-9a-f-]{36})$/);
+        try {
+          await (m ? show(m[1]) : list());
+        } catch (e) {
+          app.replaceChildren(el("pre", { textContent: String(e) }));
+        }
+      }
+      addEventListener("hashchange", route);
+      route();
+    </script>
+  </body>
+</html>
