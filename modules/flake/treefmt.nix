@@ -167,6 +167,7 @@
               "**/.npmrc"
               "**/.terraform.lock.hcl"
               "**/Cargo.lock"
+              "**/uv.lock"
               "*.awk"
               "*.conf"
               "*.nuon" # data/config format, no formatter
