@@ -14,10 +14,17 @@
       # pooling_type=last and add_eos_token, matching the HF tokenizer's
       # trailing <|endoftext|>; validated against sentence-transformers with
       # ~/Projects/snippet-evals/validate_embed_server.py (cosine >= 0.998).
-      model = pkgs.fetchurl {
+      modelF16 = pkgs.fetchurl {
         url = "https://huggingface.co/mradermacher/harrier-oss-v1-0.6b-GGUF/resolve/d79decec1ab9442e969e79804515b9c31683d30e/harrier-oss-v1-0.6b.f16.gguf";
         sha256 = "0ykidqrhdcfyws7akrs40v5zv3kkmnk9jwnz5cl9zdaqiwyk3bzk";
       };
+      # q8_0 halves the weights (~0.55 GB less VRAM) so scribe fits on the same
+      # GPU. validate_embed_server.py: cosine >= 0.998 vs reference, same
+      # retrieval scores as f16. Quantized with the CPU llama.cpp, which is
+      # cached; the CUDA build would compile from source.
+      model = pkgs.runCommand "harrier-oss-v1-0.6b.q8_0.gguf" { } ''
+        ${pkgs.llama-cpp.override { cudaSupport = false; }}/bin/llama-quantize ${modelF16} $out q8_0
+      '';
     in
     {
       options.services.embed-server = {
@@ -65,12 +72,13 @@
             (containerPort |> toString)
             "-ngl"
             "99"
-            # 4 slots x 1024 tokens; the longest catalogue doc is ~630 tokens.
-            # Embeddings need a whole input in one ubatch. ~2.3 GB VRAM.
+            # 1 slot x 1024 tokens; the longest catalogue doc is ~630 tokens. Queries
+            # take ~6 ms, so one slot rarely queues; a query arriving mid catalogue
+            # re-embed (~6 s) waits for it. Embeddings need a whole input in one ubatch.
             "-c"
-            "4096"
+            "1024"
             "-np"
-            "4"
+            "1"
             "-b"
             "1024"
             "-ub"
