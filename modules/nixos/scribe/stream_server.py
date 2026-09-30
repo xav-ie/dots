@@ -20,7 +20,10 @@ Tunables (set by the Nix module via env):
                       each token a steady ~0.29 s after the word starts
   SCRIBE_RECORDINGS   where streams asking to be saved land (default
                       /cache/recordings): <sessionId>/<channel>.flac holds the
-                      16 kHz audio the model heard, <channel>.json its words
+                      16 kHz audio the model heard, <channel>.json its words,
+                      and session.json the extension's record posted at stop
+
+GET / serves ui.html, a browser for those sessions over the /api routes.
 """
 
 import asyncio
@@ -29,6 +32,7 @@ import logging
 import math
 import os
 import re
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -45,7 +49,8 @@ from nemo.collections.asr.parts.utils.streaming_utils import (
     StreamingBatchedAudioBuffer,
 )
 from nemo.utils import logging as nemo_logging
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import FileResponse, HTMLResponse
 
 # NeMo logs the full model config on load — pages of noise. Keep WARNING and up.
 nemo_logging.set_verbosity(logging.WARNING)
@@ -260,7 +265,22 @@ class Recording:
                 # zero-frame FLAC; keep only the metadata.
                 if self.audio.frames == 0:
                     self.audio_path.unlink(missing_ok=True)
-                self.meta_path.write_text(json.dumps({**self.meta, "words": words}))
+                _write_json(self.meta_path, {**self.meta, "words": words})
+
+
+def _write_json(path, data):
+    # Readers (the session browser) never see a half-written file.
+    tmp = path.with_name(f"{path.name}.{uuid.uuid4().hex}.tmp")
+    tmp.write_text(json.dumps(data))
+    tmp.replace(path)
+
+
+def _read_json(path):
+    """None when missing or unreadable, so one bad file can't break a listing."""
+    try:
+        return json.loads(path.read_text())
+    except (FileNotFoundError, ValueError):
+        return None
 
 
 def _to_16k(audio, src_rate):
@@ -279,6 +299,123 @@ def _open_recording(config, src_rate):
     ):
         return None
     return Recording(session_id, channel, src_rate)
+
+
+# --- session browser ---------------------------------------------------------
+
+UI_HTML = (Path(__file__).parent / "ui.html").read_text()
+STEM_RE = re.compile(r"^(tab|mic)(-[0-9]+)?$")
+MAX_SESSION_BYTES = 50 * 2**20
+
+
+def _session_dir(session_id):
+    if not SESSION_ID_RE.fullmatch(session_id):
+        raise HTTPException(404)
+    return RECORDINGS / session_id
+
+
+def _channels(folder, with_words):
+    """Saved streams in a session. A stream still being recorded has audio but no
+    metadata yet, and its FLAC header isn't final."""
+    stems = {p.stem for p in folder.glob("*.flac")} | {
+        p.stem for p in folder.glob("*.json") if STEM_RE.fullmatch(p.stem)
+    }
+    out = []
+    for stem in sorted(stems):
+        meta_path, audio_path = folder / f"{stem}.json", folder / f"{stem}.flac"
+        meta = _read_json(meta_path) or {}
+        if not with_words:
+            meta.pop("words", None)
+        try:
+            duration = sf.info(audio_path).duration if audio_path.exists() else 0.0
+        except RuntimeError:
+            duration = None
+        out.append(
+            {**meta, "stem": stem, "audio": audio_path.exists(), "duration": duration}
+        )
+    return out
+
+
+def _read_session(folder):
+    return _read_json(folder / "session.json")
+
+
+# The browser routes are plain `def`, so FastAPI runs their file work in its
+# threadpool instead of on the event loop serving live /ws streams.
+@app.get("/", response_class=HTMLResponse)
+def ui():
+    return UI_HTML
+
+
+@app.get("/api/sessions")
+def list_sessions():
+    if not RECORDINGS.exists():
+        return []
+    out = []
+    for folder in RECORDINGS.iterdir():
+        if not folder.is_dir() or not SESSION_ID_RE.fullmatch(folder.name):
+            continue
+        session = _read_session(folder) or {}
+        segments = session.get("segments") or []
+        out.append(
+            {
+                "sessionId": folder.name,
+                "startedAt": session.get("startedAt"),
+                "stoppedAt": session.get("stoppedAt"),
+                "platform": session.get("platform"),
+                "speakers": sorted({s["speaker"] for s in segments}),
+                "words": sum(len(s["text"].split()) for s in segments),
+                "channels": _channels(folder, with_words=False),
+                "hasRecord": bool(session),
+                "modified": folder.stat().st_mtime,
+            }
+        )
+    return sorted(
+        out, key=lambda s: s["startedAt"] or s["modified"] * 1000, reverse=True
+    )
+
+
+@app.get("/api/sessions/{session_id}")
+def get_session(session_id: str):
+    folder = _session_dir(session_id)
+    if not folder.is_dir():
+        raise HTTPException(404)
+    return {
+        "sessionId": session_id,
+        "session": _read_session(folder),
+        "channels": _channels(folder, with_words=True),
+    }
+
+
+@app.post("/api/sessions/{session_id}")
+async def put_session(session_id: str, request: Request):
+    """The extension's record of a finished recording: transcript, speaker
+    timeline, per-stream words and clocks, adapter snapshots."""
+    folder = _session_dir(session_id)
+    body = await request.body()
+    if len(body) > MAX_SESSION_BYTES:
+        raise HTTPException(413)
+    try:
+        record = json.loads(body)
+    except ValueError:
+        raise HTTPException(400) from None
+    if not isinstance(record, dict):
+        raise HTTPException(400)
+
+    def save():
+        folder.mkdir(parents=True, exist_ok=True)
+        _write_json(folder / "session.json", record)
+
+    await asyncio.to_thread(save)
+    return {"ok": True}
+
+
+@app.get("/api/sessions/{session_id}/audio/{stem}")
+def get_audio(session_id: str, stem: str):
+    path = _session_dir(session_id) / f"{stem}.flac"
+    if not STEM_RE.fullmatch(stem) or not path.exists():
+        raise HTTPException(404)
+    return FileResponse(path, media_type="audio/flac")
 
 
 @app.websocket("/ws")
@@ -305,9 +442,13 @@ async def ws(websocket: WebSocket):
                 break
             if msg.get("text"):
                 config = json.loads(msg["text"])
-                src_rate = int(config.get("sampleRate", SAMPLE_RATE))
-                if recording is None:
-                    recording = _open_recording(config, src_rate)
+                if "sampleRate" in config:
+                    src_rate = int(config["sampleRate"])
+                    if recording is None:
+                        recording = _open_recording(config, src_rate)
+                # Wall-clock ms of the stream's first sample, sent once audio starts.
+                if recording is not None and "epoch" in config:
+                    recording.meta["epoch"] = config["epoch"]
                 continue
             raw = msg.get("bytes")
             if not raw:

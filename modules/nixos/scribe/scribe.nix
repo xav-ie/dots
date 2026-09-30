@@ -50,6 +50,7 @@
       server = pkgs.runCommand "scribe-server" { } ''
         mkdir -p $out
         cp ${./stream_server.py} $out/stream_server.py
+        cp ${./ui.html} $out/ui.html
       '';
 
       # Nix binaries ignore the ld.so cache the NVIDIA CDI hook writes, so point
