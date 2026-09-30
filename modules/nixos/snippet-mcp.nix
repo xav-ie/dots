@@ -8,9 +8,9 @@
     }:
     let
       cfg = config.services.snippet-mcp;
-      workspace = "/var/lib/snippet-mcp";
-      snippetsDir = "${workspace}/snippets";
-      seedDir = "${pkgs.pkgs-mine.snippet-mcp}/share/snippet-mcp/seeds";
+      # Lives in the dots repo, age-encrypted, so snippets survive a wipe once
+      # committed. Commits are left to the user.
+      snippetsDir = "${config.programs.nh.flake}/snippets";
     in
     {
       options.services.snippet-mcp = {
@@ -70,61 +70,14 @@
           middlewares = [ "snippets-strip-prefix" ];
         };
 
-        users.groups.snippet-mcp = { };
-        users.users.snippet-mcp = {
-          isSystemUser = true;
-          group = "snippet-mcp";
-          home = workspace;
-          createHome = false;
-          description = "snippet-mcp service account";
-        };
-
-        # Workspace and snippets dir are restricted to the service user only.
-        # Hand-edits require `sudo -u snippet-mcp $EDITOR ${snippetsDir}/<name>.md`.
-        systemd.tmpfiles.rules = [
-          "d ${workspace} 0700 snippet-mcp snippet-mcp - -"
-          "d ${snippetsDir} 0700 snippet-mcp snippet-mcp - -"
-        ];
-
-        # Seed runtime snippets from the package's read-only seeds dir on every
-        # activation, but never overwrite an existing file. `cp -n` is no-clobber;
-        # the loop is idempotent and safe to re-run.
-        systemd.services.snippet-mcp-seed = {
-          description = "Seed snippet-mcp workspace from package defaults";
-          wantedBy = [ "multi-user.target" ];
-          before = [ "snippet-mcp.service" ];
-          after = [ "systemd-tmpfiles-setup.service" ];
-          serviceConfig = {
-            Type = "oneshot";
-            User = "snippet-mcp";
-            Group = "snippet-mcp";
-            RemainAfterExit = true;
-          };
-          script = # sh
-            ''
-              set -eu
-              for src in ${seedDir}/*.md; do
-                [ -e "$src" ] || continue
-                dest="${snippetsDir}/$(${pkgs.coreutils}/bin/basename "$src")"
-                if [ ! -e "$dest" ]; then
-                  ${pkgs.coreutils}/bin/cp "$src" "$dest"
-                  ${pkgs.coreutils}/bin/chmod 0600 "$dest"
-                fi
-              done
-            '';
-        };
-
         systemd.services.snippet-mcp = {
           description = "snippet-mcp HTTP MCP server";
           wantedBy = [ "multi-user.target" ];
-          after = [
-            "network.target"
-            "snippet-mcp-seed.service"
-          ];
-          requires = [ "snippet-mcp-seed.service" ];
+          after = [ "network.target" ];
 
           environment = {
             SNIPPET_DIR = snippetsDir;
+            SNIPPET_AGE_KEY_FILE = "%d/age-key";
             RUST_LOG = "snippet_mcp=info,rmcp=warn";
             EXECUTOR_REFRESH_NAMESPACE = cfg.executorRefreshNamespace;
           }
@@ -145,11 +98,15 @@
               "--allowed-host"
               "mcp.${config.services.local-networking.baseDomain}"
             ];
-            User = "snippet-mcp";
-            Group = "snippet-mcp";
-            # executor's bearer token, owned by the executor user; systemd
-            # hands the service a private copy under $CREDENTIALS_DIRECTORY.
-            LoadCredential = lib.optional (
+            # The user owns the repo checkout, so saved files stay committable.
+            User = config.defaultUser;
+            # The sops age key (root-only) decrypts and encrypts snippets;
+            # executor's bearer token is owned by the executor user. systemd
+            # hands the service private copies under $CREDENTIALS_DIRECTORY.
+            LoadCredential = [
+              "age-key:${config.sops.age.keyFile}"
+            ]
+            ++ lib.optional (
               cfg.executorBaseUrl != null
             ) "executor-auth:/home/${config.defaultUser}/.executor/server-control/auth.json";
             Restart = "on-failure";
@@ -158,17 +115,17 @@
             StandardError = "journal";
             SyslogIdentifier = "snippet-mcp";
 
-            # Hardening — service only needs to read its own state dir and emit
-            # outbound HTTPS to executor.
+            # Hardening — service only needs its snippets dir and outbound HTTPS
+            # to executor. Home is an empty tmpfs with just that dir bound in.
             ProtectSystem = "strict";
-            ProtectHome = true;
+            ProtectHome = "tmpfs";
+            BindPaths = [ snippetsDir ];
             ProtectKernelTunables = true;
             ProtectKernelModules = true;
             ProtectControlGroups = true;
             PrivateTmp = true;
             PrivateDevices = true;
             NoNewPrivileges = true;
-            ReadWritePaths = [ snippetsDir ];
             RestrictAddressFamilies = [
               "AF_INET"
               "AF_INET6"

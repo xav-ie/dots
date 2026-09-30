@@ -1,9 +1,8 @@
-# Snippet seeds
+# Snippets
 
-Markdown snippets that ship with the `snippet-mcp` package. On first activation
-the NixOS module copies any file in this directory into
-`/var/lib/snippet-mcp/snippets/` _if and only if_ the target doesn't already
-exist — runtime saves are never overwritten.
+praesidium's `snippet-mcp` store. All snippets live in `snippets.age`, one
+age-encrypted JSON object (name → markdown file) encrypted to the sops key in
+`/etc/age/keys.txt`, so names stay hidden too. Commit it when it changes.
 
 ## Format
 
@@ -43,8 +42,9 @@ Unknown placeholders, missing required args, or extra args cause the call to fai
 
 ## Editing the live store
 
-```sh
-sudo -u snippet-mcp $EDITOR /var/lib/snippet-mcp/snippets/<name>.md
-```
+Use the MCP tools through executor: `_list`, `_get`, `_save`, `_update`, `_delete`.
+To read them by hand:
 
-Or use the MCP tools through executor: `_list`, `_get`, `_save`, `_update`, `_delete`.
+```sh
+sudo age -d -i /etc/age/keys.txt snippets/snippets.age
+```
