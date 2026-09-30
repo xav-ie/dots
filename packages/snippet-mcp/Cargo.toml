@@ -35,6 +35,7 @@ reqwest = { version = "0.13", default-features = false, features = [
   "rustls",
   "json"
 ] }
+age = "0.11"
 
 [profile.release]
 strip = true

@@ -19,6 +19,8 @@ cargo run --release -- --http --port 38973 --host 127.0.0.1
 Env:
 
 - `SNIPPET_DIR` — snippets directory (default `/var/lib/snippet-mcp/snippets`)
+- `SNIPPET_AGE_KEY_FILE` — age key file; when set, all snippets are stored in one
+  `snippets.age` bundle encrypted to its key instead of plaintext `<name>.md` files
 - `EXECUTOR_BASE_URL` — executor host; after writes snippet-mcp POSTs
   `/api/connections/<owner>/<namespace>/<name>/refresh` there to force a
   catalog refresh. Leave unset for local dev.

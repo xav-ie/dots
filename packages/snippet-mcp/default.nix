@@ -46,11 +46,6 @@ rustPlatform.buildRustPackage {
   # binary; cargo's unit tests are empty. Skip checkPhase to keep builds fast.
   doCheck = false;
 
-  postInstall = ''
-    mkdir -p $out/share/snippet-mcp
-    cp -R seeds $out/share/snippet-mcp/seeds
-  '';
-
   meta = {
     description = "MCP server exposing markdown snippets as searchable tools for executor.";
     homepage = "https://github.com/RhysSullivan/executor";

@@ -2,9 +2,10 @@ use crate::types::{Frontmatter, SaveInput, Snippet, SnippetKind, UpdateInput};
 use anyhow::{Context, Result, anyhow, bail};
 use regex::Regex;
 use std::{
+    collections::BTreeMap,
     fs,
     io::{self, ErrorKind, Write},
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::{LazyLock, Mutex},
     time::{SystemTime, UNIX_EPOCH},
 };
@@ -16,15 +17,35 @@ static NAME_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[a-z][a-z0-9_]*
 // executor's catalog (both end up at path `snippets.list`).
 const RESERVED_NAMES: &[&str] = &["list", "get", "save", "update", "delete"];
 
+/// With an identity, every snippet lives in one age-encrypted JSON object
+/// (`snippets.age`, name → markdown) so names stay hidden too.
+const BUNDLE: &str = "snippets.age";
+
 pub struct Registry {
     dir: PathBuf,
+    /// When set, snippets are stored in the encrypted bundle, encrypted to
+    /// this identity's own public key. Otherwise plaintext `<name>.md` files.
+    identity: Option<age::x25519::Identity>,
     write_lock: Mutex<()>,
 }
 
+/// Reads the first x25519 secret key from an age key file.
+// ponytail: single x25519 identity; switch to age::IdentityFile for multi-key or plugin keys.
+pub fn load_identity(path: &Path) -> Result<age::x25519::Identity> {
+    let raw = fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
+    raw.lines()
+        .map(str::trim)
+        .find(|l| l.starts_with("AGE-SECRET-KEY-"))
+        .ok_or_else(|| anyhow!("no AGE-SECRET-KEY in {}", path.display()))?
+        .parse()
+        .map_err(|e: &str| anyhow!("invalid age key in {}: {e}", path.display()))
+}
+
 impl Registry {
-    pub fn new(dir: PathBuf) -> Self {
+    pub fn new(dir: PathBuf, identity: Option<age::x25519::Identity>) -> Self {
         Self {
             dir,
+            identity,
             write_lock: Mutex::new(()),
         }
     }
@@ -34,34 +55,12 @@ impl Registry {
     }
 
     pub fn list(&self) -> Result<Vec<Snippet>> {
-        self.ensure_dir().context("creating snippets dir")?;
         let mut out = Vec::new();
-        let entries = fs::read_dir(&self.dir).context("reading snippets dir")?;
-        for entry in entries {
-            let entry = match entry {
-                Ok(e) => e,
-                Err(err) => {
-                    tracing::warn!(error = %err, "skipping unreadable dirent");
-                    continue;
-                }
-            };
-            let path = entry.path();
-            let Some(stem) = path.file_stem().and_then(|s| s.to_str()) else {
-                continue;
-            };
-            if path.extension().is_none_or(|e| e != "md") {
-                continue;
-            }
-            if stem == "README" {
-                continue;
-            }
-            if !NAME_RE.is_match(stem) {
-                continue;
-            }
-            match self.load(stem) {
+        for name in self.names()? {
+            match self.load(&name) {
                 Ok(s) => out.push(s),
                 Err(err) => {
-                    tracing::warn!(snippet = stem, error = %err, "skipping invalid snippet");
+                    tracing::warn!(snippet = name, error = %err, "skipping invalid snippet");
                 }
             }
         }
@@ -70,9 +69,10 @@ impl Registry {
     }
 
     pub fn load(&self, name: &str) -> Result<Snippet> {
-        let path = self.path_for(name)?;
-        let raw =
-            fs::read_to_string(&path).with_context(|| format!("reading {}", path.display()))?;
+        assert_name(name)?;
+        let raw = self
+            .read_raw(name)?
+            .ok_or_else(|| anyhow!("snippet '{name}' not found"))?;
         let (fm, body) =
             parse(&raw).with_context(|| format!("parsing frontmatter for snippet '{name}'"))?;
         Ok(Snippet {
@@ -83,21 +83,17 @@ impl Registry {
     }
 
     pub fn save(&self, input: SaveInput) -> Result<Snippet> {
-        let path = self.path_for(&input.name)?;
+        assert_name(&input.name)?;
         let _guard = self
             .write_lock
             .lock()
             .map_err(|_| anyhow!("write lock poisoned"))?;
 
-        if !input.overwrite.unwrap_or(false) {
-            match fs::metadata(&path) {
-                Ok(_) => bail!(
-                    "snippet '{}' already exists (pass overwrite:true to replace)",
-                    input.name
-                ),
-                Err(e) if e.kind() == ErrorKind::NotFound => {}
-                Err(e) => return Err(e).context("checking existing snippet"),
-            }
+        if !input.overwrite.unwrap_or(false) && self.read_raw(&input.name)?.is_some() {
+            bail!(
+                "snippet '{}' already exists (pass overwrite:true to replace)",
+                input.name
+            );
         }
         let fm = Frontmatter {
             description: required_non_empty(&input.description, "description")?,
@@ -107,10 +103,7 @@ impl Registry {
             integrations: input.integrations,
         };
         let body = input.body.trim_end_matches('\n').to_string();
-        let serialized = serialize(&fm, &body)?;
-        self.ensure_dir().context("creating snippets dir")?;
-        atomic_write(&path, serialized.as_bytes())
-            .with_context(|| format!("writing {}", path.display()))?;
+        self.write_raw(&input.name, Some(serialize(&fm, &body)?))?;
         drop(_guard);
         self.load(&input.name)
     }
@@ -139,23 +132,75 @@ impl Registry {
     }
 
     pub fn delete(&self, name: &str) -> Result<()> {
-        let path = self.path_for(name)?;
+        assert_name(name)?;
         let _guard = self
             .write_lock
             .lock()
             .map_err(|_| anyhow!("write lock poisoned"))?;
-        fs::remove_file(&path).with_context(|| format!("deleting snippet '{name}'"))
+        if self.read_raw(name)?.is_none() {
+            bail!("deleting snippet '{name}': not found");
+        }
+        self.write_raw(name, None)
     }
 
-    fn path_for(&self, name: &str) -> Result<PathBuf> {
-        assert_name(name)?;
-        let path = self.dir.join(format!("{name}.md"));
-        // Defense-in-depth: even if NAME_RE relaxes, the resolved path must
-        // sit directly inside self.dir.
-        if path.parent() != Some(self.dir.as_path()) {
-            bail!("internal error: snippet path escapes snippets dir");
+    fn names(&self) -> Result<Vec<String>> {
+        let names: Vec<String> = if self.identity.is_some() {
+            self.read_bundle()?.into_keys().collect()
+        } else {
+            self.ensure_dir().context("creating snippets dir")?;
+            fs::read_dir(&self.dir)
+                .context("reading snippets dir")?
+                .filter_map(|e| e.ok()?.file_name().into_string().ok())
+                .filter_map(|n| n.strip_suffix(".md").map(str::to_string))
+                .collect()
+        };
+        Ok(names.into_iter().filter(|n| NAME_RE.is_match(n)).collect())
+    }
+
+    fn read_raw(&self, name: &str) -> Result<Option<String>> {
+        if self.identity.is_some() {
+            return Ok(self.read_bundle()?.remove(name));
         }
-        Ok(path)
+        let path = self.dir.join(format!("{name}.md"));
+        match fs::read_to_string(&path) {
+            Ok(s) => Ok(Some(s)),
+            Err(e) if e.kind() == ErrorKind::NotFound => Ok(None),
+            Err(e) => Err(e).with_context(|| format!("reading {}", path.display())),
+        }
+    }
+
+    /// Writes (`Some`) or removes (`None`) one snippet. Caller holds the write lock.
+    fn write_raw(&self, name: &str, raw: Option<String>) -> Result<()> {
+        self.ensure_dir().context("creating snippets dir")?;
+        let Some(identity) = &self.identity else {
+            let path = self.dir.join(format!("{name}.md"));
+            return match raw {
+                Some(raw) => atomic_write(&path, raw.as_bytes()),
+                None => fs::remove_file(&path),
+            }
+            .with_context(|| format!("writing {}", path.display()));
+        };
+        let mut bundle = self.read_bundle()?;
+        match raw {
+            Some(raw) => bundle.insert(name.to_string(), raw),
+            None => bundle.remove(name),
+        };
+        let json = serde_json::to_vec_pretty(&bundle)?;
+        let bytes = age::encrypt(&identity.to_public(), &json).context("encrypting snippets")?;
+        atomic_write(&self.dir.join(BUNDLE), &bytes).context("writing snippets bundle")
+    }
+
+    fn read_bundle(&self) -> Result<BTreeMap<String, String>> {
+        let Some(identity) = &self.identity else {
+            bail!("internal error: no identity for snippets bundle");
+        };
+        let bytes = match fs::read(self.dir.join(BUNDLE)) {
+            Ok(b) => b,
+            Err(e) if e.kind() == ErrorKind::NotFound => return Ok(BTreeMap::new()),
+            Err(e) => return Err(e).context("reading snippets bundle"),
+        };
+        let json = age::decrypt(identity, &bytes).context("decrypting snippets bundle")?;
+        serde_json::from_slice(&json).context("parsing snippets bundle")
     }
 }
 
@@ -221,7 +266,7 @@ fn serialize(fm: &Frontmatter, body: &str) -> Result<String> {
     Ok(format!("---\n{yaml}---\n\n{body}\n"))
 }
 
-fn atomic_write(path: &std::path::Path, bytes: &[u8]) -> io::Result<()> {
+fn atomic_write(path: &Path, bytes: &[u8]) -> io::Result<()> {
     let dir = path
         .parent()
         .ok_or_else(|| io::Error::new(ErrorKind::InvalidInput, "no parent dir"))?;
@@ -247,4 +292,33 @@ fn atomic_write(path: &std::path::Path, bytes: &[u8]) -> io::Result<()> {
         return Err(e);
     }
     fs::rename(&tmp, path)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn encrypted_round_trip() {
+        let dir = std::env::temp_dir().join(format!("snippet-mcp-test-{}", std::process::id()));
+        let reg = Registry::new(dir.clone(), Some(age::x25519::Identity::generate()));
+        reg.save(SaveInput {
+            name: "secret_thing".into(),
+            description: "d".into(),
+            body: "hunter2".into(),
+            args: None,
+            tags: None,
+            kind: None,
+            integrations: None,
+            overwrite: None,
+        })
+        .unwrap();
+        let on_disk = fs::read(dir.join(BUNDLE)).unwrap();
+        assert!(!String::from_utf8_lossy(&on_disk).contains("hunter2"));
+        assert!(!String::from_utf8_lossy(&on_disk).contains("secret_thing"));
+        assert_eq!(reg.list().unwrap()[0].body, "hunter2\n");
+        reg.delete("secret_thing").unwrap();
+        assert!(reg.list().unwrap().is_empty());
+        fs::remove_dir_all(dir).unwrap();
+    }
 }

@@ -168,6 +168,7 @@
               "**/.terraform.lock.hcl"
               "**/Cargo.lock"
               "**/uv.lock"
+              "*.age" # encrypted
               "*.awk"
               "*.conf"
               "*.nuon" # data/config format, no formatter

@@ -69,7 +69,10 @@ async fn main() -> anyhow::Result<()> {
         .or_else(|| std::env::var_os("SNIPPET_DIR").map(PathBuf::from))
         .unwrap_or_else(|| PathBuf::from("/var/lib/snippet-mcp/snippets"));
 
-    let registry = Arc::new(Registry::new(dir.clone()));
+    let identity = std::env::var_os("SNIPPET_AGE_KEY_FILE")
+        .map(|p| snippets::load_identity(std::path::Path::new(&p)))
+        .transpose()?;
+    let registry = Arc::new(Registry::new(dir.clone(), identity));
     registry.ensure_dir().context("creating snippets dir")?;
 
     tracing::info!(dir = %dir.display(), ?mode, "snippet-mcp starting");
