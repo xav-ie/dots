@@ -65,33 +65,34 @@
           pkgs.sqlite
           pkgs.zstd
         ];
-        text = ''
-          repo=${userHome}/Projects/dots
-          stamp=${userHome}/.local/state/executor-backup.sha256
-          [ -d "$repo/secrets" ] || exit 0
-          sum=$( {
-            cat ${stateJsonc}
-            jq -S 'with_entries(select((.key | startswith("oauth:")) and (.key | endswith(":refresh") | not) | not))' ${stateAuth}
-            sqlite3 -readonly ${stateDb} ${lib.escapeShellArg ''
-              select slug, plugin_id, name, description, config from integration order by slug;
-              select integration, name, template, provider, item_ids, identity_label, oauth_client, oauth_scope from connection order by integration, name;
-              select slug, authorization_url, token_url, grant, client_id, client_secret_item_id, resource from oauth_client order by slug;
-              select id, pattern, action, position from tool_policy order by id;
-            ''}
-          } | sha256sum | cut -d' ' -f1)
-          [ "$sum" = "$(cat "$stamp" 2>/dev/null || true)" ] && exit 0
-          tmp=$(mktemp -d)
-          trap 'rm -rf "$tmp"' EXIT
-          sqlite3 -readonly ${stateDb} ".backup $tmp/data.db"
-          cp ${stateAuth} ${stateJsonc} "$tmp"
-          tar -C "$tmp" --zstd -cf "$tmp/state.tar.zst" data.db auth.json executor.jsonc
-          cd "$repo"
-          sops -e --input-type binary --output-type json --filename-override secrets/executor.json "$tmp/state.tar.zst" > "$tmp/executor.json"
-          mv "$tmp/executor.json" secrets/executor.json
-          mkdir -p "$(dirname "$stamp")"
-          echo "$sum" > "$stamp"
-          echo "wrote $repo/secrets/executor.json"
-        '';
+        text = # sh
+          ''
+            repo=${userHome}/Projects/dots
+            stamp=${userHome}/.local/state/executor-backup.sha256
+            [ -d "$repo/secrets" ] || exit 0
+            sum=$( {
+              cat ${stateJsonc}
+              jq -S 'with_entries(select((.key | startswith("oauth:")) and (.key | endswith(":refresh") | not) | not))' ${stateAuth}
+              sqlite3 -readonly ${stateDb} ${lib.escapeShellArg ''
+                select slug, plugin_id, name, description, config from integration order by slug;
+                select integration, name, template, provider, item_ids, identity_label, oauth_client, oauth_scope from connection order by integration, name;
+                select slug, authorization_url, token_url, grant, client_id, client_secret_item_id, resource from oauth_client order by slug;
+                select id, pattern, action, position from tool_policy order by id;
+              ''}
+            } | sha256sum | cut -d' ' -f1)
+            [ "$sum" = "$(cat "$stamp" 2>/dev/null || true)" ] && exit 0
+            tmp=$(mktemp -d)
+            trap 'rm -rf "$tmp"' EXIT
+            sqlite3 -readonly ${stateDb} ".backup $tmp/data.db"
+            cp ${stateAuth} ${stateJsonc} "$tmp"
+            tar -C "$tmp" --zstd -cf "$tmp/state.tar.zst" data.db auth.json executor.jsonc
+            cd "$repo"
+            sops -e --input-type binary --output-type json --filename-override secrets/executor.json "$tmp/state.tar.zst" > "$tmp/executor.json"
+            mv "$tmp/executor.json" secrets/executor.json
+            mkdir -p "$(dirname "$stamp")"
+            echo "$sum" > "$stamp"
+            echo "wrote $repo/secrets/executor.json"
+          '';
       };
     in
     {

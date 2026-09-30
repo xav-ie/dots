@@ -14,14 +14,15 @@
           pkgs.findutils
           pkgs.jq
         ];
-        text = ''
-          src="$HOME/.config/herdr/session.json"
-          dir="$HOME/.local/state/herdr/session-backups"
-          jq -e '.workspaces | length > 0' "$src" >/dev/null 2>&1 || exit 0
-          mkdir -p "$dir"
-          cp "$src" "$dir/session-$(date +%Y%m%d-%H).json"
-          find "$dir" -name 'session-*.json' -mtime +7 -delete
-        '';
+        text = # sh
+          ''
+            src="$HOME/.config/herdr/session.json"
+            dir="$HOME/.local/state/herdr/session-backups"
+            jq -e '.workspaces | length > 0' "$src" >/dev/null 2>&1 || exit 0
+            mkdir -p "$dir"
+            cp "$src" "$dir/session-$(date +%Y%m%d-%H).json"
+            find "$dir" -name 'session-*.json' -mtime +7 -delete
+          '';
       };
     in
     {

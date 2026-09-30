@@ -211,6 +211,7 @@
                   claude-project-name
                 ];
               }
+              # sh
               ''
                 export HOME=$(mktemp -d)
                 cd "$HOME"
