@@ -88,6 +88,9 @@
         programs = {
           hyprlock = {
             enable = true;
+            package = pkgs.hyprlock.overrideAttrs (old: {
+              patches = (old.patches or [ ]) ++ [ ./hyprlock-zink-flush.patch ];
+            });
             settings = {
               "$font" = fonts.name "sans";
 
