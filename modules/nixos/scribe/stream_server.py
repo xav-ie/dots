@@ -18,6 +18,9 @@ Tunables (set by the Nix module via env):
   SCRIBE_RIGHT_S      right context (lookahead) seconds (default 0.56)
   SCRIBE_TS_OFFSET_S  subtracted from word times (default 0.29): RNNT emits
                       each token a steady ~0.29 s after the word starts
+  SCRIBE_RECORDINGS   where streams asking to be saved land (default
+                      /cache/recordings): <sessionId>/<channel>.flac holds the
+                      16 kHz audio the model heard, <channel>.json its words
 """
 
 import asyncio
@@ -25,8 +28,12 @@ import json
 import logging
 import math
 import os
+import re
+from datetime import datetime, timezone
+from pathlib import Path
 
 import numpy as np
+import soundfile as sf
 import torch
 from omegaconf import OmegaConf, open_dict
 from scipy.signal import resample_poly
@@ -56,6 +63,11 @@ LEFT_S = float(os.environ.get("SCRIBE_LEFT_S", "5.6"))
 CHUNK_S = float(os.environ.get("SCRIBE_CHUNK_S", "0.56"))
 RIGHT_S = float(os.environ.get("SCRIBE_RIGHT_S", "0.56"))
 TS_OFFSET_S = float(os.environ.get("SCRIBE_TS_OFFSET_S", "0.29"))
+RECORDINGS = Path(os.environ.get("SCRIBE_RECORDINGS", "/cache/recordings"))
+# The session id becomes a directory name, so only accept a UUID.
+SESSION_ID_RE = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+)
 
 torch.set_grad_enabled(False)
 
@@ -203,14 +215,82 @@ async def health():
     }
 
 
+class Recording:
+    """One saved stream: the 16 kHz audio fed to the model plus, on close, its words.
+
+    A channel reopened within a session (the mic toggled off and on) gets a
+    numbered stem, so earlier streams are kept.
+    """
+
+    def __init__(self, session_id, channel, src_rate):
+        folder = RECORDINGS / session_id
+        folder.mkdir(parents=True, exist_ok=True)
+        stem, n = channel, 1
+        while (folder / f"{stem}.json").exists() or (folder / f"{stem}.flac").exists():
+            n += 1
+            stem = f"{channel}-{n}"
+        self.audio_path = folder / f"{stem}.flac"
+        self.meta_path = folder / f"{stem}.json"
+        self.meta = {
+            "sessionId": session_id,
+            "channel": channel,
+            "sourceSampleRate": src_rate,
+            "startedAt": datetime.now(timezone.utc).isoformat(),
+            "model": MODEL_ID,
+        }
+        self.audio = sf.SoundFile(
+            self.audio_path,
+            "w",
+            samplerate=SAMPLE_RATE,
+            channels=1,
+            format="FLAC",
+            subtype="PCM_16",
+        )
+
+    def close(self, words, tail):
+        # Each step runs even if an earlier one fails, so a write error (disk
+        # full) still closes the file and keeps the words.
+        try:
+            self.audio.write(tail)
+        finally:
+            try:
+                self.audio.close()
+            finally:
+                # A stream that closed before any audio leaves an unreadable
+                # zero-frame FLAC; keep only the metadata.
+                if self.audio.frames == 0:
+                    self.audio_path.unlink(missing_ok=True)
+                self.meta_path.write_text(json.dumps({**self.meta, "words": words}))
+
+
+def _to_16k(audio, src_rate):
+    if src_rate == SAMPLE_RATE:
+        return audio
+    g = math.gcd(src_rate, SAMPLE_RATE)
+    return resample_poly(audio, SAMPLE_RATE // g, src_rate // g).astype(np.float32)
+
+
+def _open_recording(config, src_rate):
+    session_id, channel = config.get("sessionId"), config.get("channel")
+    if (
+        not config.get("save")
+        or not SESSION_ID_RE.fullmatch(str(session_id))
+        or channel not in ("tab", "mic")
+    ):
+        return None
+    return Recording(session_id, channel, src_rate)
+
+
 @app.websocket("/ws")
 async def ws(websocket: WebSocket):
     await websocket.accept()
     state = StreamState()
+    recording = None
 
     # The extension's AudioContext is usually 48 kHz; a text message
-    # {"sampleRate": N} (sent any time, typically first) sets the source rate and
-    # we resample to 16 kHz here. Binary messages are raw int16-LE mono PCM.
+    # {"sampleRate": N, "sessionId", "channel", "save"} (sent first) sets the
+    # source rate, resampled to 16 kHz here, and whether to keep the audio.
+    # Binary messages are raw int16-LE mono PCM.
     src_rate = SAMPLE_RATE
 
     async def send():
@@ -224,7 +304,10 @@ async def ws(websocket: WebSocket):
             if msg.get("type") == "websocket.disconnect":
                 break
             if msg.get("text"):
-                src_rate = int(json.loads(msg["text"]).get("sampleRate", SAMPLE_RATE))
+                config = json.loads(msg["text"])
+                src_rate = int(config.get("sampleRate", SAMPLE_RATE))
+                if recording is None:
+                    recording = _open_recording(config, src_rate)
                 continue
             raw = msg.get("bytes")
             if not raw:
@@ -237,13 +320,15 @@ async def ws(websocket: WebSocket):
                 size := round(state.step_size() * src_rate / SAMPLE_RATE)
             ):
                 seg, state.pending = state.pending[:size], state.pending[size:]
-                if src_rate != SAMPLE_RATE:
-                    g = math.gcd(src_rate, SAMPLE_RATE)
-                    seg = resample_poly(seg, SAMPLE_RATE // g, src_rate // g).astype(
-                        np.float32
-                    )
+                seg = _to_16k(seg, src_rate)
+                if recording is not None:
+                    recording.audio.write(seg)
                 async with _gpu_lock:
                     await asyncio.to_thread(state.step, seg)
                 await send()
     except WebSocketDisconnect:
         pass
+    finally:
+        if recording is not None:
+            # Keep the tail shorter than one step too, so the file is complete.
+            recording.close(state.words, _to_16k(state.pending, src_rate))

@@ -82,7 +82,7 @@
         dataDir = lib.mkOption {
           type = lib.types.path;
           default = "/var/lib/scribe";
-          description = "Host dir bind-mounted as the HF/NeMo model cache so weights persist.";
+          description = "Host dir bind-mounted as /cache: HF/NeMo model cache, plus saved recordings under recordings/.";
         };
       };
 
