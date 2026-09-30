@@ -1,22 +1,26 @@
-"""Live streaming ASR over WebSocket — NVIDIA NeMo cache-aware FastConformer.
+"""Live streaming ASR over WebSocket — NVIDIA parakeet-unified, NeMo buffered RNNT.
 
-A thin, single-purpose service: accept 16 kHz mono PCM frames over a WebSocket
+A thin, single-purpose service: accept mono int16 PCM frames over a WebSocket
 and stream back incrementally-decoded text with per-word timestamps. NO
 diarization — speaker attribution is done client-side in the extension by
 joining these word timestamps against the meeting's active-speaker timeline.
 
-The cache-aware streaming loop (preprocessor config, pre-encode feature cache,
-conformer_stream_step threading) follows NVIDIA's official live-mic demo:
-tutorials/asr/Online_ASR_Microphone_Demo_Cache_Aware_Streaming.ipynb.
+The chunk loop follows NeMo's buffered streaming script
+(examples/asr/asr_chunked_inference/rnnt/speech_to_text_streaming_infer_rnnt.py,
+v3.0.0) at batch size 1: each step re-encodes left context + chunk + right
+context and greedily decodes only the chunk, carrying the decoder state over.
+Decoded tokens are never revised, so every word sent is final.
 
 Tunables (set by the Nix module via env):
-  SCRIBE_MODEL        HF model id (default the streaming-multi FastConformer)
-  SCRIBE_LOOKAHEAD_MS one of {0,80,480,1040}; ~= algorithmic latency (default 480)
-  SCRIBE_DECODER      rnnt | ctc (default rnnt; rnnt is more accurate)
+  SCRIBE_MODEL        HF model id (default nvidia/parakeet-unified-en-0.6b)
+  SCRIBE_LEFT_S       left context seconds (default 5.6)
+  SCRIBE_CHUNK_S      chunk seconds (default 0.56); a step runs every chunk
+  SCRIBE_RIGHT_S      right context (lookahead) seconds (default 0.56)
+  SCRIBE_TS_OFFSET_S  subtracted from word times (default 0.29): RNNT emits
+                      each token a steady ~0.29 s after the word starts
 """
 
 import asyncio
-import copy
 import json
 import logging
 import math
@@ -28,190 +32,175 @@ from omegaconf import OmegaConf, open_dict
 from scipy.signal import resample_poly
 
 import nemo.collections.asr as nemo_asr
-from nemo.collections.asr.models import EncDecCTCModelBPE
+from nemo.collections.asr.parts.submodules.rnnt_decoding import RNNTDecodingConfig
+from nemo.collections.asr.parts.utils.streaming_utils import (
+    ContextSize,
+    StreamingBatchedAudioBuffer,
+)
 from nemo.utils import logging as nemo_logging
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
-# NeMo logs the full decoding config + train/val/test configs at INFO on model
-# load — pages of noise. Keep WARNING and up. (lhotse's SyntaxWarnings are
-# silenced separately via PYTHONWARNINGS in the Nix module, since they fire at
-# import time before any code here runs.)
+# NeMo logs the full model config on load — pages of noise. Keep WARNING and up.
 nemo_logging.set_verbosity(logging.WARNING)
 
-# GPU-only service: fail loudly rather than silently crawl on CPU. (The NGC
-# entrypoint's "Failed to detect NVIDIA driver version" banner is a cosmetic
-# /proc read that the nvidia-container-toolkit CDI doesn't satisfy on NixOS — the
-# CUDA driver itself is injected fine, which this check confirms positively.)
+# GPU-only service: fail loudly rather than silently crawl on CPU.
 if not torch.cuda.is_available():
-    raise RuntimeError("scribe: no CUDA GPU visible to the container; refusing to run on CPU")
+    raise RuntimeError(
+        "scribe: no CUDA GPU visible to the container; refusing to run on CPU"
+    )
 print(f"[scribe] CUDA ready: {torch.cuda.get_device_name(0)}", flush=True)
 
 SAMPLE_RATE = 16000
-# FastConformer: 10 ms feature window stride * 8x subsampling = 80 ms per encoder
-# output frame. This is the unit for both chunk sizing and timestamp conversion.
-ENCODER_STEP_LENGTH_MS = 80
+MODEL_ID = os.environ.get("SCRIBE_MODEL", "nvidia/parakeet-unified-en-0.6b")
+LEFT_S = float(os.environ.get("SCRIBE_LEFT_S", "5.6"))
+CHUNK_S = float(os.environ.get("SCRIBE_CHUNK_S", "0.56"))
+RIGHT_S = float(os.environ.get("SCRIBE_RIGHT_S", "0.56"))
+TS_OFFSET_S = float(os.environ.get("SCRIBE_TS_OFFSET_S", "0.29"))
 
-MODEL_ID = os.environ.get("SCRIBE_MODEL", "nvidia/stt_en_fastconformer_hybrid_large_streaming_multi")
-LOOKAHEAD_MS = int(os.environ.get("SCRIBE_LOOKAHEAD_MS", "480"))
-DECODER = os.environ.get("SCRIBE_DECODER", "rnnt")
-
-# Per-step audio chunk: lookahead + one encoder frame. The trailing -1 matches
-# NVIDIA's PyAudio frames_per_buffer in the reference demo.
-CHUNK_SAMPLES = int(SAMPLE_RATE * (LOOKAHEAD_MS + ENCODER_STEP_LENGTH_MS) / 1000) - 1
-
-app = FastAPI()
-
-# Serialize GPU calls — one model, one GPU; concurrent conformer_stream_step
-# calls from multiple sockets would race on CUDA. Single-user workload, so a
-# lock is plenty (each socket still keeps its own streaming state).
-_gpu_lock = asyncio.Lock()
+torch.set_grad_enabled(False)
 
 
 def _load_model():
-    # Generic loader resolves the concrete class for both the FastConformer
-    # hybrid model and nemotron-speech-streaming.
-    model = nemo_asr.models.ASRModel.from_pretrained(MODEL_ID)
+    # Cast to bf16 on the CPU before moving to the GPU, so the fp32 weights never
+    # land there: loading fp32 on the GPU and casting afterwards leaves ~1.2 GB
+    # stranded in PyTorch's cache on a card shared with other services.
+    model = nemo_asr.models.ASRModel.from_pretrained(MODEL_ID, map_location="cpu")
+    model.freeze()
+    model = model.to(torch.bfloat16).cuda()
+    torch.cuda.empty_cache()
 
-    # Right-context = lookahead / frame; left context kept at the model default.
-    if LOOKAHEAD_MS not in (0, 80, 480, 1040):
-        raise ValueError(f"SCRIBE_LOOKAHEAD_MS must be one of 0/80/480/1040, got {LOOKAHEAD_MS}")
-    try:
-        left = model.encoder.att_context_size[0]
-        model.encoder.set_default_att_context_size([left, LOOKAHEAD_MS // ENCODER_STEP_LENGTH_MS])
-    except (AttributeError, TypeError):
-        # Streaming-trained models without multi-lookahead — config is baked in.
-        pass
-
-    # Hybrid RNNT/CTC models (FastConformer-streaming-multi) need a head selected
-    # via decoder_type; pure-RNNT models (nemotron-speech-streaming) don't accept
-    # that kwarg and raise TypeError — fall through, they're RNNT already.
-    try:
-        model.change_decoding_strategy(decoder_type=DECODER)
-    except TypeError:
-        pass
-    decoding_cfg = model.cfg.decoding
-    with open_dict(decoding_cfg):
-        decoding_cfg.strategy = "greedy"
-        decoding_cfg.preserve_alignments = False
-        # Leave NeMo's own timestamp computation OFF: on the streaming RNNT path
-        # compute_rnnt_timestamps raises a char_offsets/processed_tokens length
-        # mismatch mid-stream. We don't need it — the greedy decoder still fills
-        # hyp.timestamp with per-token frame indices, which _word_timestamps()
-        # groups into words itself.
-        decoding_cfg.compute_timestamps = False
-        if DECODER == "rnnt" and hasattr(model, "joint"):
-            decoding_cfg.greedy.max_symbols = 10
-            decoding_cfg.fused_batch_size = -1
-    model.change_decoding_strategy(decoding_cfg)
-
+    cfg = OmegaConf.structured(RNNTDecodingConfig())  # greedy_batch + label looping
+    with open_dict(cfg):
+        cfg.greedy.preserve_alignments = False
+        cfg.fused_batch_size = -1
+    model.change_decoding_strategy(cfg)
+    model.preprocessor.featurizer.dither = 0.0
+    model.preprocessor.featurizer.pad_to = 0
     model.eval()
     return model
 
 
-def _build_preprocessor(model):
-    # Streaming-specific preprocessor: no dither, no padding, and crucially
-    # normalize="None" — these models are trained with no input normalization,
-    # so each chunk is preprocessed independently (no cross-chunk feature stats).
-    cfg = copy.deepcopy(model._cfg)
-    OmegaConf.set_struct(cfg.preprocessor, False)
-    cfg.preprocessor.dither = 0.0
-    cfg.preprocessor.pad_to = 0
-    cfg.preprocessor.normalize = "None"
-    pp = EncDecCTCModelBPE.from_config_dict(cfg.preprocessor)
-    pp.to(model.device)
-    return pp
+model = _load_model()
+decoding_computer = model.decoding.decoding.decoding_computer
 
+_stride = model.cfg.preprocessor["window_stride"]
+_sub = model.encoder.subsampling_factor
+ENC_SAMPLES = (
+    (int(SAMPLE_RATE * _stride) // _sub) * _sub * _sub
+)  # samples per encoder frame
+FRAME_S = ENC_SAMPLES / SAMPLE_RATE  # 0.08
+_ctx_frames = ContextSize(
+    left=int(LEFT_S / _stride / _sub),
+    chunk=int(CHUNK_S / _stride / _sub),
+    right=int(RIGHT_S / _stride / _sub),
+)
+CTX = ContextSize(
+    left=_ctx_frames.left * ENC_SAMPLES,
+    chunk=_ctx_frames.chunk * ENC_SAMPLES,
+    right=_ctx_frames.right * ENC_SAMPLES,
+)
+if model.cfg.encoder.att_context_style == "chunked_limited_with_rc":
+    model.encoder.set_default_att_context_size(
+        att_context_size=[_ctx_frames.left, _ctx_frames.chunk, _ctx_frames.right]
+    )
 
-asr_model = _load_model()
-preprocessor = _build_preprocessor(asr_model)
-PRE_ENCODE_CACHE = asr_model.encoder.streaming_cfg.pre_encode_cache_size[1]
-N_MELS = asr_model.cfg.preprocessor.features
+app = FastAPI()
+
+# Serialize GPU calls — one model, one GPU. Each socket keeps its own state.
+_gpu_lock = asyncio.Lock()
 
 
 class StreamState:
-    """All per-connection streaming state — caches must not be shared."""
+    """All per-connection streaming state — buffers and decoder state must not be shared."""
 
     def __init__(self):
-        (self.cache_last_channel,
-         self.cache_last_time,
-         self.cache_last_channel_len) = asr_model.encoder.get_initial_cache_state(batch_size=1)
-        # Small slice of the previous chunk's mel features, prepended each step
-        # to supply left context (zero-padded on the first chunk).
-        self.pre_encode = torch.zeros((1, N_MELS, PRE_ENCODE_CACHE), device=asr_model.device)
-        self.previous_hypotheses = None
-        self.pred_out_stream = None
-        # Total raw audio samples consumed → the stream clock for word stamping.
-        self.processed_samples = 0
-        # Accumulated [{word,start,end}] with stable timestamps, grown per chunk.
-        self.stamped: list[dict] = []
-
-
-def _stamp_words(state, text, t0, t1):
-    """Assign timestamps to words by the chunk window that first decoded them.
-
-    NeMo's per-token timestamps are unreliable on the streaming RNNT path, but we
-    know each chunk's exact audio time span. Words are stable once decoded, so we
-    keep the timestamps of the unchanged prefix and stamp newly-appeared words
-    with this chunk's [t0, t1]. Chunk-grained (~0.5s) — ample for speaker
-    attribution, which the active-speaker signal only resolves to ~0.5s anyway.
-    """
-    words = text.split()
-    keep = 0
-    while keep < len(state.stamped) and keep < len(words) and state.stamped[keep]["word"] == words[keep]:
-        keep += 1
-    state.stamped = state.stamped[:keep]
-    for word in words[keep:]:
-        state.stamped.append({"word": word, "start": round(t0, 2), "end": round(t1, 2)})
-    return state.stamped
-
-
-def _step(state, audio_16k):
-    """Run one cache-aware streaming step. Blocking — call via to_thread."""
-    sig = torch.from_numpy(audio_16k).unsqueeze(0).to(asr_model.device)
-    slen = torch.tensor([audio_16k.shape[0]], device=asr_model.device)
-    processed, processed_len = preprocessor(input_signal=sig, length=slen)
-
-    processed = torch.cat([state.pre_encode, processed], dim=-1)
-    processed_len = processed_len + state.pre_encode.shape[-1]
-    state.pre_encode = processed[:, :, -PRE_ENCODE_CACHE:]
-
-    with torch.no_grad():
-        (state.pred_out_stream,
-         transcribed,
-         state.cache_last_channel,
-         state.cache_last_time,
-         state.cache_last_channel_len,
-         state.previous_hypotheses) = asr_model.conformer_stream_step(
-            processed_signal=processed,
-            processed_signal_length=processed_len,
-            cache_last_channel=state.cache_last_channel,
-            cache_last_time=state.cache_last_time,
-            cache_last_channel_len=state.cache_last_channel_len,
-            keep_all_outputs=False,
-            previous_hypotheses=state.previous_hypotheses,
-            previous_pred_out=state.pred_out_stream,
-            drop_extra_pre_encoded=None,
-            return_transcription=True,
+        self.buffer = StreamingBatchedAudioBuffer(
+            batch_size=1, context_samples=CTX, dtype=torch.float32, device="cuda"
         )
+        self.decoder_state = None
+        self.pending = np.empty(
+            0, dtype=np.float32
+        )  # source-rate audio not yet decoded
+        self.started = False  # the first step needs chunk + right context
+        # Accumulated [{word,start,end}] plus the token ids of each word, so a word
+        # split across chunks keeps growing until the next word starts.
+        self.words: list[dict] = []
+        self.word_ids: list[list[int]] = []
+        self.boundary = False  # a bare ▁ token arrived: the next piece starts a word
 
-    hyp = state.previous_hypotheses[0] if state.previous_hypotheses else None
-    if hyp is not None and hyp.text is not None:
-        text = hyp.text
-    elif transcribed:
-        text = transcribed[0]
-    else:
-        text = ""
+    def step_size(self):
+        return CTX.chunk if self.started else CTX.chunk + CTX.right
 
-    # This chunk's audio time window (raw samples in, not the feature cache).
-    t0 = state.processed_samples / SAMPLE_RATE
-    state.processed_samples += audio_16k.shape[0]
-    t1 = state.processed_samples / SAMPLE_RATE
-    return text.strip(), _stamp_words(state, text.strip(), t0, t1)
+    def step(self, audio_16k, last=False):
+        """Decode one chunk. Blocking — call via to_thread."""
+        n = audio_16k.shape[0]
+        audio = torch.from_numpy(audio_16k).unsqueeze(0).cuda()
+        last_b = torch.tensor([last], device="cuda")
+        with torch.inference_mode():
+            self.buffer.add_audio_batch_(
+                audio,
+                audio_lengths=torch.tensor([n], device="cuda"),
+                is_last_chunk=last,
+                is_last_chunk_batch=last_b,
+            )
+            enc, enc_len = model(
+                input_signal=self.buffer.samples,
+                input_signal_length=self.buffer.context_size_batch.total(),
+            )
+            enc = enc.transpose(1, 2)
+            ec = self.buffer.context_size.subsample(factor=ENC_SAMPLES)
+            ecb = self.buffer.context_size_batch.subsample(factor=ENC_SAMPLES)
+            enc = enc[:, ec.left :]
+            dec_len = torch.where(last_b, enc_len - ecb.left, ecb.chunk)
+            hyps, self.decoder_state = decoding_computer(
+                x=enc, out_len=dec_len, prev_batched_state=self.decoder_state
+            )
+            k = int(hyps.current_lengths[0])
+            ids = hyps.transcript[0, :k].tolist()
+            frames = hyps.timestamps[0, :k].tolist()
+        self._add_tokens(ids, frames)
+        self.started = True
+
+    def _add_tokens(self, ids, frames):
+        # Token timestamps are encoder frames from stream start. SentencePiece marks
+        # a word's first piece with ▁; a bare ▁ is a lone boundary before the next piece.
+        for tid, f in zip(ids, frames):
+            t = f * FRAME_S
+            piece = model.tokenizer.ids_to_tokens([tid])[0]
+            if piece == "▁":
+                self.boundary = True
+                continue
+            if piece.startswith("▁") or self.boundary or not self.words:
+                self.boundary = False
+                self.word_ids.append([tid])
+                self.words.append(
+                    {
+                        "word": "",
+                        "start": round(max(0.0, t - TS_OFFSET_S), 2),
+                        "end": 0.0,
+                    }
+                )
+            else:
+                self.word_ids[-1].append(tid)
+            self.words[-1]["word"] = model.tokenizer.ids_to_text(
+                self.word_ids[-1]
+            ).strip()
+            self.words[-1]["end"] = round(max(0.0, t + FRAME_S - TS_OFFSET_S), 2)
+
+    def text(self):
+        return " ".join(w["word"] for w in self.words)
 
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "model": MODEL_ID, "lookahead_ms": LOOKAHEAD_MS, "decoder": DECODER}
+    return {
+        "status": "ok",
+        "model": MODEL_ID,
+        "left_s": LEFT_S,
+        "chunk_s": CHUNK_S,
+        "right_s": RIGHT_S,
+        "ts_offset_s": TS_OFFSET_S,
+    }
 
 
 @app.websocket("/ws")
@@ -223,8 +212,12 @@ async def ws(websocket: WebSocket):
     # {"sampleRate": N} (sent any time, typically first) sets the source rate and
     # we resample to 16 kHz here. Binary messages are raw int16-LE mono PCM.
     src_rate = SAMPLE_RATE
-    src_chunk = CHUNK_SAMPLES  # source-rate samples per 16 kHz model chunk
-    buf = np.empty(0, dtype=np.float32)
+
+    async def send():
+        await websocket.send_text(
+            json.dumps({"type": "partial", "text": state.text(), "words": state.words})
+        )
+
     try:
         while True:
             msg = await websocket.receive()
@@ -232,20 +225,25 @@ async def ws(websocket: WebSocket):
                 break
             if msg.get("text"):
                 src_rate = int(json.loads(msg["text"]).get("sampleRate", SAMPLE_RATE))
-                src_chunk = int(round(CHUNK_SAMPLES * src_rate / SAMPLE_RATE))
                 continue
             raw = msg.get("bytes")
             if not raw:
                 continue
             chunk = np.frombuffer(raw, dtype=np.int16).astype(np.float32) / 32768.0
-            buf = np.concatenate([buf, chunk])
-            while buf.shape[0] >= src_chunk:
-                seg, buf = buf[:src_chunk], buf[src_chunk:]
+            state.pending = np.concatenate([state.pending, chunk])
+            # Resample one whole step at a time (not each small message), so
+            # filter edge effects land only on step boundaries.
+            while state.pending.shape[0] >= (
+                size := round(state.step_size() * src_rate / SAMPLE_RATE)
+            ):
+                seg, state.pending = state.pending[:size], state.pending[size:]
                 if src_rate != SAMPLE_RATE:
                     g = math.gcd(src_rate, SAMPLE_RATE)
-                    seg = resample_poly(seg, SAMPLE_RATE // g, src_rate // g).astype(np.float32)
+                    seg = resample_poly(seg, SAMPLE_RATE // g, src_rate // g).astype(
+                        np.float32
+                    )
                 async with _gpu_lock:
-                    text, words = await asyncio.to_thread(_step, state, seg)
-                await websocket.send_text(json.dumps({"type": "partial", "text": text, "words": words}))
+                    await asyncio.to_thread(state.step, seg)
+                await send()
     except WebSocketDisconnect:
         pass

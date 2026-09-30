@@ -352,19 +352,10 @@ in
       # Live streaming ASR, wss://scribe.lalala.casa/ws. The Chrome extension
       # streams meeting audio for real-time captions; speaker attribution is
       # done client-side by joining word timestamps against the meeting's
-      # active-speaker timeline (no audio diarization here). NeMo cache-aware
-      # FastConformer on the GPU; needs the `ngc/api_key` sops secret to pull
-      # the NeMo base image. See nixos/scribe/.
-      scribe = {
-        enable = false;
-        # Larger 0.6B streaming model (vs the default 114M FastConformer) for
-        # higher English accuracy. Revert to the default model id if it's not
-        # clearly better.
-        model = "nvidia/nemotron-speech-streaming-en-0.6b";
-        # Max lookahead (most accurate of {0,80,480,1040}ms) — we favour accuracy
-        # over latency for meeting notes.
-        lookaheadMs = 1040;
-      };
+      # active-speaker timeline (no audio diarization here). parakeet-unified
+      # buffered streaming on the GPU, chosen by ~/Projects/asr-evals. See
+      # nixos/scribe/.
+      scribe.enable = true;
     };
 
     location = {
