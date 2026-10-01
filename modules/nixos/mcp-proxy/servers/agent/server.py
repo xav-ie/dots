@@ -33,8 +33,16 @@ ENV = {
 # ponytail: in-memory, jobs are lost when the container restarts; persist to disk if that bites.
 jobs = {}
 
+# Caps concurrent claude processes; extra runs wait here while their job shows "running".
+slots = asyncio.Semaphore(int(os.environ.get("AGENT_CONCURRENCY", "6")))
+
 
 async def claude(prompt, system, schema, model):
+    async with slots:
+        return await run_claude(prompt, system, schema, model)
+
+
+async def run_claude(prompt, system, schema, model):
     args = [
         "claude", "-p",
         "--model", model or DEFAULT_MODEL,
