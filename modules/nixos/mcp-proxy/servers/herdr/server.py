@@ -180,9 +180,12 @@ async def spawn_agent(
         argv += ["--resume", resume]
     if prompt:
         argv.append(prompt)
-    # Names must be unique among live agents; the tab suffix keeps repeated labels apart.
-    slug = re.sub(r"[^a-z0-9_-]+", "-", label.lower()).strip("-")[:24] or "agent"
-    name = f"{slug}-{tab_id.split(':')[-1]}"
+    # herdr names: lowercase letter first, [a-z0-9_-], at most 32 chars. Tab ids
+    # carry uppercase letters (w3:t1D), and the suffix keeps repeated labels apart.
+    suffix = re.sub(r"[^a-z0-9]+", "", tab_id.split(":")[-1].lower())
+    slug = re.sub(r"[^a-z0-9_-]+", "-", label.lower()).strip("-_")
+    slug = slug if slug[:1].isalpha() else f"agent-{slug}".rstrip("-")
+    name = f"{slug[: 31 - len(suffix)].rstrip('-_')}-{suffix}"
     try:
         await rpc("agent.start", {"name": name, "kind": kind, "pane_id": pane_id, "args": argv})
     except Exception:
