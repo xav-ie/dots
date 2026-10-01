@@ -79,6 +79,15 @@ async def settle(method, params, target, tail_lines):
     return {"result": result, "tail": await tail(target, tail_lines)}
 
 
+async def submit(target, text):
+    """agent.prompt, plus the Enter a multi-line prompt needs: Claude Code
+    takes multi-line input as a paste and leaves it unsent."""
+    await rpc("agent.prompt", {"target": target, "text": text})
+    if "\n" in text:
+        await asyncio.sleep(0.5)
+        await rpc("agent.send_keys", {"target": target, "keys": ["Enter"]})
+
+
 @mcp.tool()
 async def list_panes(workspace: str | None = None, tail_lines: int = 0) -> dict:
     """Overview of every pane: workspace/tab labels, agent, status, title, cwd,
@@ -124,6 +133,13 @@ async def prompt_agent(target: str, text: str, wait: bool = True, timeout_s: int
     the last tail_lines of output; if still working, result.timed_out is set
     and wait_agent continues. Rejected if the agent is blocked on a
     permission prompt; use send_keys for that."""
+    if "\n" in text:
+        await submit(target, text)
+        if not wait:
+            return {"result": "submitted"}
+        # Give the submitted prompt a moment to flip the agent to working.
+        await asyncio.sleep(1)
+        return await settle("agent.wait", {"target": target, "timeout_ms": ms(timeout_s)}, target, tail_lines)
     params = {"target": target, "text": text}
     if not wait:
         return {"result": await rpc("agent.prompt", params)}
@@ -166,9 +182,10 @@ async def spawn_agent(
     focus: bool = False,
 ) -> dict:
     """Open a new tab and start an agent in it (default workspace: the focused
-    one). prompt is passed as the agent's initial prompt; resume is a Claude
-    session id to --resume. Returns the new tab and pane ids and agent name;
-    ready is false if the agent is still starting after 30s."""
+    one). prompt is submitted to the agent once it is ready, so it may contain
+    any text; resume is a Claude session id to --resume. Returns the new tab and
+    pane ids, agent name, and whether it became ready and received the prompt
+    (both false if the agent is still starting after 30s)."""
     created = await rpc(
         "tab.create",
         {"workspace_id": await workspace_id(workspace), "cwd": re.sub(r"^~(?=/|$)", HERDR_HOME, cwd), "label": label, "focus": focus},
@@ -178,8 +195,6 @@ async def spawn_agent(
     argv = list(args or [])
     if resume:
         argv += ["--resume", resume]
-    if prompt:
-        argv.append(prompt)
     # herdr names: lowercase letter first, [a-z0-9_-], at most 32 chars. Tab ids
     # carry uppercase letters (w3:t1D), and the suffix keeps repeated labels apart.
     suffix = re.sub(r"[^a-z0-9]+", "", tab_id.split(":")[-1].lower())
@@ -197,7 +212,13 @@ async def spawn_agent(
         if ready := (await rpc("agent.get", {"target": pane_id}))["agent"].get("interactive_ready", False):
             break
         await asyncio.sleep(0.5)
-    return {"tab_id": tab_id, "pane_id": pane_id, "agent": name, "ready": ready}
+    # Delivered as input, not argv: agent.start rejects arguments the target
+    # shell can't quote safely, which any multi-line prompt trips.
+    prompted = False
+    if prompt and ready:
+        await submit(pane_id, prompt)
+        prompted = True
+    return {"tab_id": tab_id, "pane_id": pane_id, "agent": name, "ready": ready, "prompted": prompted}
 
 
 @mcp.tool()
