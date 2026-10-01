@@ -34,12 +34,15 @@
       # State lives in three places: sources/connections/OAuth clients in the db,
       # the secret values they reference in auth.json, and the source list in
       # executor.jsonc. secrets/executor.json is a sops-encrypted tar of all three.
-      stateDb = "${userHome}/.executor/data.db";
+      refreshMarker = "${executorWorkspace}/.refresh-after-restore";
       stateAuth = "${userHome}/.local/share/executor/auth.json";
+      stateDb = "${userHome}/.executor/data.db";
       stateJsonc = "${executorWorkspace}/executor.jsonc";
 
       # A fresh machine (no db) is restored from the backup. Restoring only into
       # an empty state keeps a reset or a newer local state from being clobbered.
+      # The backup carries no tool caches, so the marker has refreshState
+      # rebuild them once the daemon is up.
       restoreState = pkgs.writeShellScript "executor-restore" ''
         set -eu
         [ -e ${stateDb} ] && exit 0
@@ -49,12 +52,41 @@
         ${pkgs.coreutils}/bin/install -Dm600 "$tmp/data.db" ${stateDb}
         ${pkgs.coreutils}/bin/install -Dm600 "$tmp/auth.json" ${stateAuth}
         ${pkgs.coreutils}/bin/install -Dm644 "$tmp/executor.jsonc" ${stateJsonc}
+        ${pkgs.coreutils}/bin/touch ${refreshMarker}
         echo "restored executor state from backup"
       '';
+
+      # Executor only syncs a connection's tools when asked, so after a restore
+      # every connection is refreshed through the daemon's API.
+      refreshState = pkgs.writeShellApplication {
+        name = "executor-refresh";
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.curl
+          pkgs.jq
+          pkgs.sqlite
+        ];
+        text = # sh
+          ''
+            url=http://localhost:${cfg.port |> toString}
+            for _ in $(seq 1 60); do
+              curl -s -o /dev/null -m 2 "$url" && break
+              sleep 1
+            done
+            token=$(jq -r .token ${userHome}/.executor/server-control/auth.json)
+            sqlite3 -readonly ${stateDb} "select owner || '/' || integration || '/' || name from connection" |
+              while read -r c; do
+                curl -s -m 120 -o /dev/null -w "$c %{http_code}\n" -X POST \
+                  -H "Authorization: Bearer $token" "$url/api/connections/$c/refresh" || echo "$c failed"
+              done
+            rm -f ${refreshMarker}
+          '';
+      };
 
       # Rewrites secrets/executor.json in the dots checkout when the fingerprint
       # changes. OAuth access tokens and health/sync timestamps churn constantly,
       # so they are left out of the fingerprint; the file is left uncommitted.
+      # Tool caches are re-derivable and dropped from the snapshot.
       backupState = pkgs.writeShellApplication {
         name = "executor-backup";
         runtimeInputs = [
@@ -84,6 +116,7 @@
             tmp=$(mktemp -d)
             trap 'rm -rf "$tmp"' EXIT
             sqlite3 -readonly ${stateDb} ".backup $tmp/data.db"
+            sqlite3 "$tmp/data.db" "delete from tool; delete from definition; delete from plugin_storage; VACUUM;"
             cp ${stateAuth} ${stateJsonc} "$tmp"
             tar -C "$tmp" --zstd -cf "$tmp/state.tar.zst" data.db auth.json executor.jsonc
             cd "$repo"
@@ -177,6 +210,18 @@
             Type = "oneshot";
             User = defaultUser;
             ExecStart = lib.getExe backupState;
+          };
+        };
+
+        systemd.services.executor-refresh = {
+          description = "Rebuild executor tool caches after a restore";
+          after = [ "executor-web.service" ];
+          wantedBy = [ "executor-web.service" ];
+          unitConfig.ConditionPathExists = refreshMarker;
+          serviceConfig = {
+            Type = "oneshot";
+            User = defaultUser;
+            ExecStart = lib.getExe refreshState;
           };
         };
 
