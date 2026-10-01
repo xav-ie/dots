@@ -110,6 +110,7 @@
                 select integration, name, template, provider, item_ids, identity_label, oauth_client, oauth_scope from connection order by integration, name;
                 select slug, authorization_url, token_url, grant, client_id, client_secret_item_id, resource from oauth_client order by slug;
                 select id, pattern, action, position from tool_policy order by id;
+                select id, title, description, code, bindings from artifact order by id;
               ''}
             } | sha256sum | cut -d' ' -f1)
             [ "$sum" = "$(cat "$stamp" 2>/dev/null || true)" ] && exit 0
