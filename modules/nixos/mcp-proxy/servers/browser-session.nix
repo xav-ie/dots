@@ -14,12 +14,11 @@
         packages = [ pkgs.pkgs-mine.browser-session-mcp ];
         envVars = {
           BROWSER_URL = "https://${chromeHost}";
-          STATE_FILE = "${stateDir}/state.json";
-          LOGS_DIR = "${stateDir}/logs";
-          # Human-takeover: where to drop tickets (shared with the host-side
-          # browser-session takeover daemon via the volume below) and the public
-          # URL to hand the user. The MCP only embeds this URL; it never connects.
-          TAKEOVER_DIR = "${stateDir}/takeover";
+          # Every path (state.json, logs/, states/, takeover/) derives from this;
+          # shared with the host-side daemons via the volume below.
+          STATE_DIR = stateDir;
+          # Public takeover URL to hand the user. The MCP only embeds it; it
+          # never connects.
           TAKEOVER_BASE_URL = "https://${bs.takeover.subdomain}.${baseDomain}";
         };
         # Share state.json + logs/ (created by the browser-session module) with the
