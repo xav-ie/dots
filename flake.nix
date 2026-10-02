@@ -9,7 +9,7 @@
     astal.inputs.nixpkgs.follows = "nixpkgs";
     atuin.url = "github:atuinsh/atuin";
     beads.url = "github:steveyegge/beads";
-    browser-session-mcp.url = "github:xav-ie/browser-session-mcp";
+    browser-session-mcp.url = "git+file:///home/x/Projects/browser-session-mcp";
     browser-session-mcp.inputs.nixpkgs.follows = "nixpkgs";
     ctpv.url = "github:xav-ie/ctpv-nix";
     flake-parts.url = "github:hercules-ci/flake-parts";
