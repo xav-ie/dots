@@ -66,7 +66,14 @@ def catalog [cfg: record]: nothing -> list<any> {
   let fresh = ($file | path exists) and ((date now) - (ls $file | first | get modified) < $CATALOG_TTL)
   if $fresh { return (open $file) }
   let fetched = try {
-    http get --max-time 2sec --headers [Authorization $"Bearer ($env.EXECUTOR_AUTH_TOKEN)"] $"($cfg.executor)/api/tools"
+    http get --max-time 2sec --headers [
+      Authorization
+      $"Bearer ($env.EXECUTOR_AUTH_TOKEN)"
+      CF-Access-Client-Id
+      ($env.CF_ACCESS_CLIENT_ID? | default "")
+      CF-Access-Client-Secret
+      ($env.CF_ACCESS_CLIENT_SECRET? | default "")
+    ] $"($cfg.executor)/api/tools"
     | each {|t| {path: ($t.address | str replace -r '^tools\.' ""), name: $t.name, description: ($t.description? | default "")} }
   } catch { null }
   if $fetched == null {

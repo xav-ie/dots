@@ -479,7 +479,12 @@
                 executor = {
                   type = "http";
                   url = "https://executor.lalala.casa/mcp";
-                  headers.Authorization = "Bearer \${EXECUTOR_AUTH_TOKEN}";
+                  headers = {
+                    Authorization = "Bearer \${EXECUTOR_AUTH_TOKEN}";
+                    # Cloudflare Access service token (Service Auth policy on /mcp).
+                    CF-Access-Client-Id = "\${CF_ACCESS_CLIENT_ID}";
+                    CF-Access-Client-Secret = "\${CF_ACCESS_CLIENT_SECRET}";
+                  };
                 };
               };
             };
