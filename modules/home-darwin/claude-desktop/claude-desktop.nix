@@ -36,18 +36,23 @@
           runtimeInputs = [ pkgs.nodejs ];
           text = # sh
             ''
-              EXECUTOR_AUTH_TOKEN=$(sed -n 's/^EXECUTOR_AUTH_TOKEN=//p' /run/secrets/shell-env)
-              if [ -z "$EXECUTOR_AUTH_TOKEN" ]; then
-                echo "executor-mcp-remote: EXECUTOR_AUTH_TOKEN missing from /run/secrets/shell-env" >&2
-                exit 1
-              fi
-              export EXECUTOR_AUTH_TOKEN
+              for var in EXECUTOR_AUTH_TOKEN CF_ACCESS_CLIENT_ID CF_ACCESS_CLIENT_SECRET; do
+                val=$(sed -n "s/^$var=//p" /run/secrets/shell-env)
+                if [ -z "$val" ]; then
+                  echo "executor-mcp-remote: $var missing from /run/secrets/shell-env" >&2
+                  exit 1
+                fi
+                export "$var=$val"
+              done
 
-              # The token goes through the environment, never argv: /proc/PID/cmdline
+              # Secrets go through the environment, never argv: /proc/PID/cmdline
               # is world-readable (mode 444) while environ is 400. mcp-remote expands
-              # ''${VAR} in header values from its own process env.
+              # ''${VAR} in header values from its own process env. The CF-Access-*
+              # pair is a Cloudflare Access service token (Service Auth policy on /mcp).
               exec npx -y mcp-remote https://executor.lalala.casa/mcp \
-                --header "Authorization:Bearer \''${EXECUTOR_AUTH_TOKEN}"
+                --header "Authorization:Bearer \''${EXECUTOR_AUTH_TOKEN}" \
+                --header "CF-Access-Client-Id:\''${CF_ACCESS_CLIENT_ID}" \
+                --header "CF-Access-Client-Secret:\''${CF_ACCESS_CLIENT_SECRET}"
             '';
         })
 

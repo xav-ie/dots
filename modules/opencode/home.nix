@@ -48,7 +48,11 @@
               type = "remote";
               url = "https://executor.lalala.casa/mcp";
               enabled = true;
-              headers.Authorization = "Bearer {env:EXECUTOR_AUTH_TOKEN}";
+              headers = {
+                Authorization = "Bearer {env:EXECUTOR_AUTH_TOKEN}";
+                CF-Access-Client-Id = "{env:CF_ACCESS_CLIENT_ID}";
+                CF-Access-Client-Secret = "{env:CF_ACCESS_CLIENT_SECRET}";
+              };
             };
           }
         else
