@@ -13,7 +13,7 @@
       # syncthing --home="$HOME/.local/state/syncthing" device-id                 # linux
       deviceIds = {
         nox = "NTG53RG-K4LNPFR-OX3IACD-BOF4AQL-PVNXJA5-C72S5JW-NRSIEOW-PL7HXQK";
-        praesidium = "";
+        praesidium = "5QRVPW4-SFMRVU4-QGQ6DKS-CRTSATN-43B5PLA-4EHC54I-KIZLKC3-GE5NMA6";
       };
 
       peer = if pkgs.stdenv.isDarwin then "praesidium" else "nox";
