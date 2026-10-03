@@ -234,11 +234,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1790976098,
-        "narHash": "sha256-gxfbEb4QMhA5QZuFabNseemv6D075DpcrGIGADudeos=",
+        "lastModified": 1790989910,
+        "narHash": "sha256-X5RVZHIzPFpt545rUYH2ZaMlJCWz272sfzESmeqr3Hk=",
         "ref": "refs/heads/main",
-        "rev": "5ba2faf5c44c970faef0ebbad8eb09bce4d3748f",
-        "revCount": 41,
+        "rev": "4ee12d7918a03e890240295bdd37644e55b3d43c",
+        "revCount": 43,
         "type": "git",
         "url": "file:///home/x/Projects/browser-session-mcp"
       },
