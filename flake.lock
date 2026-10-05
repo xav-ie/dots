@@ -938,16 +938,16 @@
     "herdr": {
       "inputs": {
         "nixpkgs": [
-          "nixpkgs"
+          "nixpkgs-bleeding"
         ],
         "rust-overlay": "rust-overlay_2"
       },
       "locked": {
-        "lastModified": 1787766950,
-        "narHash": "sha256-LGd6fPTMpwrIr+Cn5S+G8CtkMO/DCaX+5HBHMmydZ8A=",
+        "lastModified": 1791225290,
+        "narHash": "sha256-on3rBS4U3dGovrXUcBRyKpzFnXne80pe88spPCGAZCg=",
         "owner": "xav-ie",
         "repo": "herdr",
-        "rev": "bb9c4e454a20b4c0636177a932482004f507d55e",
+        "rev": "dc7613334306560a4a79af20f96d350198b09c3e",
         "type": "github"
       },
       "original": {

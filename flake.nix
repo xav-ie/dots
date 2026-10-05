@@ -16,7 +16,7 @@
     generate-kaomoji.url = "github:xav-ie/generate-kaomoji";
     hardware.url = "github:nixos/nixos-hardware";
     herdr.url = "github:xav-ie/herdr/nushell-completions";
-    herdr.inputs.nixpkgs.follows = "nixpkgs";
+    herdr.inputs.nixpkgs.follows = "nixpkgs-bleeding";
     home-manager.url = "github:nix-community/home-manager";
     hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
     import-tree.url = "github:vic/import-tree";
