@@ -228,6 +228,19 @@ sb-cluster volume right 24 61 (
   [hidewin_mode mouse.entered mouse.exited mouse.clicked]
 )
 
+# mic_denoise — single icon (sb-icon-item, icon_only), LEFT of hidewin. RNNoise
+# virtual mic (packages/mic-denoise): the plugin owns the icon (green = on,
+# orange = enabled but failing, white = off); `mic_denoise_changed` is bound to
+# the agent's com.x.mic-denoise.changed. mouse.clicked opens its settings panel.
+(sketchybar --add event mic_denoise_changed com.x.mic-denoise.changed)
+(sb-icon-item
+  mic_denoise
+  right
+  26
+  $"sketchybar-hover --plugin ($PLUGIN_DIR)/mic_denoise.nu"
+  [mic_denoise_changed mouse.entered mouse.exited mouse.clicked]
+)
+
 # zoom mute — shows ONLY during an active Zoom meeting: white mic.slash when
 # muted, red mic when LIVE. State is read/toggled from Zoom's own "Meeting" menu
 # over Accessibility (see plugins/zoom_mute.nu). Wrapped in sketchybar-hover like

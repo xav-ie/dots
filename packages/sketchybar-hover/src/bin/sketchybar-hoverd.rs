@@ -159,6 +159,7 @@ fn item_configs() -> (NameToTarget, TargetKeys) {
         ("volume_icon", "volume"),
         ("zoom_mute", "zoom_mute"),
         ("hidewin", "hidewin"),
+        ("mic_denoise", "mic_denoise"),
     ]);
     let target_keys: TargetKeys = HashMap::from([
         // clock is now an sb-cluster (like volume/battery): ONE shared
@@ -176,6 +177,7 @@ fn item_configs() -> (NameToTarget, TargetKeys) {
         ("zoom_mute", bg_only),
         // hidewin mirrors control_center (icon-only image button).
         ("hidewin", icon_only),
+        ("mic_denoise", icon_only),
     ]);
     (name_to_target, target_keys)
 }

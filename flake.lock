@@ -1460,6 +1460,26 @@
         "type": "github"
       }
     },
+    "mic-denoise": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1791228159,
+        "narHash": "sha256-VIzYB1H6iNh6Qpre3Dq0lnZnl4by55VZne6yQpb47mk=",
+        "ref": "refs/heads/main",
+        "rev": "f87a11b9415d87dae4d89896024bc7590b1a5ca1",
+        "revCount": 11,
+        "type": "git",
+        "url": "ssh://git@github.com/xav-ie/mic-denoise"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/xav-ie/mic-denoise"
+      }
+    },
     "morlana": {
       "inputs": {
         "ferrix": "ferrix",
@@ -2376,6 +2396,7 @@
         "macos-corner-fix-src": "macos-corner-fix-src",
         "mcp-atlassian-src": "mcp-atlassian-src",
         "mcp-nixos": "mcp-nixos",
+        "mic-denoise": "mic-denoise",
         "morlana": "morlana",
         "morrow": "morrow",
         "muscat": "muscat",
