@@ -50,6 +50,7 @@ in
       };
       casks = [
         "android-studio"
+        "blackhole-2ch"
         "blender"
         "chromium"
         "claude"

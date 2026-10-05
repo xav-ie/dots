@@ -79,6 +79,8 @@
             config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/plugins/front_app.nu";
           "sketchybar/plugins/hidewin.nu".source =
             config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/plugins/hidewin.nu";
+          "sketchybar/plugins/mic_denoise.nu".source =
+            config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/plugins/mic_denoise.nu";
           "sketchybar/plugins/space.nu".source =
             config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/plugins/space.nu";
           "sketchybar/plugins/volume.nu".source =
@@ -113,6 +115,8 @@
                 pkgs.pkgs-mine.sketchybar-icons
                 # The `hidewin` item's click_script runs `hidewin panel`.
                 pkgs.pkgs-mine.hidewin
+                # The `mic_denoise` item's click runs `mic-denoise panel`.
+                pkgs.pkgs-mine.mic-denoise
               ]
               |> lib.makeBinPath
             }:/usr/bin";

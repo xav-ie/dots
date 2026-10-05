@@ -21,6 +21,8 @@
     hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
     import-tree.url = "github:vic/import-tree";
     mcp-nixos.url = "github:utensils/mcp-nixos";
+    mic-denoise.url = "git+ssh://git@github.com/xav-ie/mic-denoise";
+    mic-denoise.inputs.nixpkgs.follows = "nixpkgs";
     morlana.url = "github:ryanccn/morlana";
     morrow.url = "git+ssh://git@github.com/xav-ie/morrow";
     morrow.inputs.nixpkgs.follows = "nixpkgs";

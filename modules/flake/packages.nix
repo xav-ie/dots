@@ -37,6 +37,8 @@
         # browser-session-mcp (extracted to its own repo); linux-only.
         browser-session-mcp-pkg = inputs.browser-session-mcp.packages.${system}.default or null;
         sketchybar-icons-pkg = inputs.sketchybar-icons.packages.${system}.default or null;
+        # mic-denoise virtual mic agent (extracted to its own repo); darwin-only.
+        mic-denoise-pkg = inputs.mic-denoise.packages.${system}.default or null;
         generate-kaomoji = inputs.generate-kaomoji.packages.${system}.default;
         # uair carries an unmerged PR patch from overlays/default.nix: PR#31's
         # newline-flushed `uairctl listen` for the AGS bar. The package-set pkgs
