@@ -1,7 +1,10 @@
 """Live streaming ASR over WebSocket — NVIDIA parakeet-unified, NeMo buffered RNNT.
 
 A thin, single-purpose service: accept mono int16 PCM frames over a WebSocket
-and stream back incrementally-decoded text with per-word timestamps. NO
+and stream back incrementally-decoded words with timestamps. Each update is
+{"type": "words", "from": i, "words": [...]}: replace the client's words from
+index i on. Only the last word already sent can still change (a word split
+across chunks), so an update never resends the rest of the transcript. NO
 diarization — speaker attribution is done client-side in the extension by
 joining these word timestamps against the meeting's active-speaker timeline.
 
@@ -203,9 +206,6 @@ class StreamState:
                 self.word_ids[-1]
             ).strip()
             self.words[-1]["end"] = round(max(0.0, t + FRAME_S - TS_OFFSET_S), 2)
-
-    def text(self):
-        return " ".join(w["word"] for w in self.words)
 
 
 @app.get("/health")
@@ -430,14 +430,47 @@ async def ws(websocket: WebSocket):
     # Binary messages are raw int16-LE mono PCM.
     src_rate = SAMPLE_RATE
 
-    async def send():
-        await websocket.send_text(
-            json.dumps({"type": "partial", "text": state.text(), "words": state.words})
-        )
+    sent = 0  # words the client has; the last of them may still grow
+    connected = True
 
+    async def send():
+        nonlocal sent, connected
+        if not connected:
+            return
+        start = max(0, sent - 1)
+        sent = len(state.words)
+        try:
+            await websocket.send_text(
+                json.dumps(
+                    {"type": "words", "from": start, "words": state.words[start:]}
+                )
+            )
+        except Exception:  # client gone: keep transcribing what it already sent
+            connected = False
+
+    # A client may send audio faster than real time (a recorded file). Take every
+    # message off the socket as soon as it arrives, so the connection's own
+    # traffic (keepalive pongs) is never stuck behind audio still waiting to be
+    # transcribed, and work through the backlog from this queue. Audio received
+    # before a disconnect is still transcribed (and saved).
+    inbox = asyncio.Queue()
+
+    async def read():
+        try:
+            while True:
+                msg = await websocket.receive()
+                await inbox.put(msg)
+                if msg.get("type") == "websocket.disconnect":
+                    return
+        finally:
+            # However the reader ends, the worker sees the end of the stream and
+            # finishes up (saves the recording) instead of waiting forever.
+            inbox.put_nowait({"type": "websocket.disconnect"})
+
+    reader = asyncio.create_task(read())
     try:
         while True:
-            msg = await websocket.receive()
+            msg = await inbox.get()
             if msg.get("type") == "websocket.disconnect":
                 break
             if msg.get("text"):
@@ -470,6 +503,7 @@ async def ws(websocket: WebSocket):
     except WebSocketDisconnect:
         pass
     finally:
+        reader.cancel()
         if recording is not None:
             # Keep the tail shorter than one step too, so the file is complete.
             recording.close(state.words, _to_16k(state.pending, src_rate))
