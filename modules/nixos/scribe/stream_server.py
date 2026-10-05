@@ -25,6 +25,14 @@ Tunables (set by the Nix module via env):
                       /cache/recordings): <sessionId>/<channel>.flac holds the
                       16 kHz audio the model heard, <channel>.json its words,
                       and session.json the extension's record posted at stop
+  SCRIBE_VOCAB        the global boost list, edited in the UI (default
+                      /cache/vocab.json)
+  SCRIBE_BOOST_SCORE  per-token boost inside a phrase (default 1.0; 3.0 began
+                      forcing names into ordinary words in testing)
+  SCRIBE_BOOST_ALPHA  weight of the boost in decoding (default 1.0)
+
+A stream's first text message is {"sampleRate", "sessionId", "channel", "save",
+"boost"}; "boost" (participant names) is boosted along with the vocabulary.
 
 GET / serves ui.html, a browser for those sessions over the /api routes.
 """
@@ -46,6 +54,12 @@ from omegaconf import OmegaConf, open_dict
 from scipy.signal import resample_poly
 
 import nemo.collections.asr as nemo_asr
+from nemo.collections.asr.parts.context_biasing.biasing_multi_model import (
+    BiasingRequestItemConfig,
+)
+from nemo.collections.asr.parts.context_biasing.boosting_graph_batched import (
+    BoostingTreeModelConfig,
+)
 from nemo.collections.asr.parts.submodules.rnnt_decoding import RNNTDecodingConfig
 from nemo.collections.asr.parts.utils.streaming_utils import (
     ContextSize,
@@ -71,6 +85,13 @@ LEFT_S = float(os.environ.get("SCRIBE_LEFT_S", "5.6"))
 CHUNK_S = float(os.environ.get("SCRIBE_CHUNK_S", "0.56"))
 RIGHT_S = float(os.environ.get("SCRIBE_RIGHT_S", "0.56"))
 TS_OFFSET_S = float(os.environ.get("SCRIBE_TS_OFFSET_S", "0.29"))
+# Phrase boosting (names, jargon): per-token bonus inside a phrase and its weight.
+BOOST_SCORE = float(os.environ.get("SCRIBE_BOOST_SCORE", "1.0"))
+BOOST_ALPHA = float(os.environ.get("SCRIBE_BOOST_ALPHA", "1.0"))
+# The global boost list (product names, jargon, people), edited in the UI.
+VOCAB = Path(os.environ.get("SCRIBE_VOCAB", "/cache/vocab.json"))
+MAX_PHRASES = 2000
+MAX_PHRASE_LEN = 100
 RECORDINGS = Path(os.environ.get("SCRIBE_RECORDINGS", "/cache/recordings"))
 # The session id becomes a directory name, so only accept a UUID.
 SESSION_ID_RE = re.compile(
@@ -92,6 +113,11 @@ def _load_model():
     cfg = OmegaConf.structured(RNNTDecodingConfig())  # greedy_batch + label looping
     with open_dict(cfg):
         cfg.greedy.preserve_alignments = False
+        # Each stream can boost its own phrases (a meeting's participant names).
+        cfg.greedy.enable_per_stream_biasing = True
+        # Boosting's PyTorch path loops on data, which CUDA-graph capture of the
+        # decoder can't record.
+        cfg.greedy.use_cuda_graph_decoder = False
         cfg.fused_batch_size = -1
     model.change_decoding_strategy(cfg)
     model.preprocessor.featurizer.dither = 0.0
@@ -102,6 +128,9 @@ def _load_model():
 
 model = _load_model()
 decoding_computer = model.decoding.decoding.decoding_computer
+# Boosting's Triton kernels compile at run time with a C compiler and
+# /sbin/ldconfig, which the Nix image doesn't have; use the PyTorch path.
+decoding_computer.biasing_multi_model.use_triton = False
 
 _stride = model.cfg.preprocessor["window_stride"]
 _sub = model.encoder.subsampling_factor
@@ -147,6 +176,31 @@ class StreamState:
         self.words: list[dict] = []
         self.word_ids: list[list[int]] = []
         self.boundary = False  # a bare ▁ token arrived: the next piece starts a word
+        # This stream's boosting model in the decoder (-1: none).
+        self.boost_id = -1
+        self.boost_ids = torch.tensor([-1], device="cuda")
+
+    def set_boost(self, phrases):
+        """Boost these phrases for the rest of the stream. Blocking — via to_thread."""
+        if self.boost_id >= 0 or not phrases:
+            return
+        request = BiasingRequestItemConfig(
+            boosting_model_cfg=BoostingTreeModelConfig(
+                key_phrases_list=phrases, context_score=BOOST_SCORE, use_triton=False
+            ),
+            boosting_model_alpha=BOOST_ALPHA,
+        )
+        request.add_to_multi_model(
+            tokenizer=model.tokenizer,
+            biasing_multi_model=decoding_computer.biasing_multi_model,
+        )
+        self.boost_id = request.multi_model_id
+        self.boost_ids = torch.tensor([self.boost_id], device="cuda")
+
+    def close(self):
+        if self.boost_id >= 0:
+            decoding_computer.biasing_multi_model.remove_model(self.boost_id)
+            self.boost_id = -1
 
     def step_size(self):
         return CTX.chunk if self.started else CTX.chunk + CTX.right
@@ -173,7 +227,10 @@ class StreamState:
             enc = enc[:, ec.left :]
             dec_len = torch.where(last_b, enc_len - ecb.left, ecb.chunk)
             hyps, self.decoder_state = decoding_computer(
-                x=enc, out_len=dec_len, prev_batched_state=self.decoder_state
+                x=enc,
+                out_len=dec_len,
+                prev_batched_state=self.decoder_state,
+                multi_biasing_ids=self.boost_ids,
             )
             k = int(hyps.current_lengths[0])
             ids = hyps.transcript[0, :k].tolist()
@@ -308,6 +365,27 @@ STEM_RE = re.compile(r"^(tab|mic)(-[0-9]+)?$")
 MAX_SESSION_BYTES = 50 * 2**20
 
 
+def _clean_phrases(items):
+    """Strings only, trimmed, bounded, deduplicated in order."""
+    out = {}
+    for item in items if isinstance(items, list) else []:
+        if (
+            isinstance(item, str)
+            and (p := " ".join(item.split()))
+            and len(p) <= MAX_PHRASE_LEN
+        ):
+            out.setdefault(p, None)
+    return list(out)[:MAX_PHRASES]
+
+
+def _boost_phrases(names):
+    """The vocabulary plus a meeting's participant names, and their first names,
+    which is how people are usually addressed."""
+    names = _clean_phrases(names)
+    firsts = [n.split()[0] for n in names if len(n.split()) > 1]
+    return _clean_phrases((_read_json(VOCAB) or []) + names + firsts)
+
+
 def _session_dir(session_id):
     if not SESSION_ID_RE.fullmatch(session_id):
         raise HTTPException(404)
@@ -410,6 +488,22 @@ async def put_session(session_id: str, request: Request):
     return {"ok": True}
 
 
+@app.get("/api/vocab")
+def get_vocab():
+    return {"phrases": _read_json(VOCAB) or []}
+
+
+@app.put("/api/vocab")
+async def put_vocab(request: Request):
+    try:
+        body = json.loads(await request.body())
+    except ValueError:
+        raise HTTPException(400) from None
+    phrases = _clean_phrases(body.get("phrases") if isinstance(body, dict) else None)
+    await asyncio.to_thread(_write_json, VOCAB, phrases)
+    return {"phrases": phrases}
+
+
 @app.get("/api/sessions/{session_id}/audio/{stem}")
 def get_audio(session_id: str, stem: str):
     path = _session_dir(session_id) / f"{stem}.flac"
@@ -479,6 +573,12 @@ async def ws(websocket: WebSocket):
                     src_rate = int(config["sampleRate"])
                     if recording is None:
                         recording = _open_recording(config, src_rate)
+                    phrases = _boost_phrases(config.get("boost"))
+                    if phrases:
+                        async with _gpu_lock:
+                            await asyncio.to_thread(state.set_boost, phrases)
+                    if recording is not None:
+                        recording.meta["boost"] = phrases
                 # Wall-clock ms of the stream's first sample, sent once audio starts.
                 if recording is not None and "epoch" in config:
                     recording.meta["epoch"] = config["epoch"]
@@ -504,6 +604,8 @@ async def ws(websocket: WebSocket):
         pass
     finally:
         reader.cancel()
+        async with _gpu_lock:
+            await asyncio.to_thread(state.close)
         if recording is not None:
             # Keep the tail shorter than one step too, so the file is complete.
             recording.close(state.words, _to_16k(state.pending, src_rate))
