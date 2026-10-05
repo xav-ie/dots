@@ -52,9 +52,11 @@ async def snapshot():
 async def workspace_id(ws):
     if ws is None:
         return None
-    ids = [w["workspace_id"] for w in (await snapshot())["workspaces"] if ws in (w["workspace_id"], w["label"])]
+    workspaces = (await snapshot())["workspaces"]
+    ids = [w["workspace_id"] for w in workspaces if ws in (w["workspace_id"], w["label"])]
     if len(ids) != 1:
-        raise ValueError(f"workspace {ws!r} matches {ids or 'nothing'}")
+        labels = [w["label"] for w in workspaces]
+        raise ValueError(f"workspace {ws!r} matches {ids or 'nothing'}; workspaces: {labels}")
     return ids[0]
 
 
@@ -174,18 +176,21 @@ async def send_keys(pane_id: str, keys: list[str] | None = None, text: str | Non
 async def spawn_agent(
     cwd: str,
     label: str,
-    workspace: str | None = None,
+    workspace: str,
     prompt: str | None = None,
     resume: str | None = None,
     kind: str = "claude",
     args: list[str] | None = None,
     focus: bool = False,
 ) -> dict:
-    """Open a new tab and start an agent in it (default workspace: the focused
-    one). prompt is submitted to the agent once it is ready, so it may contain
-    any text; resume is a Claude session id to --resume. Returns the new tab and
-    pane ids, agent name, and whether it became ready and received the prompt
-    (both false if the agent is still starting after 30s)."""
+    """Open a new tab and start an agent in it. Workspaces group tabs by
+    project; pass the one the work belongs to, by label or id. list_panes
+    shows existing labels, and
+    an unknown name errors with the full list. prompt is submitted to the agent
+    once it is ready, so it may contain any text; resume is a Claude session id
+    to --resume. Returns the new tab and pane ids, agent name, and whether it
+    became ready and received the prompt (both false if the agent is still
+    starting after 30s)."""
     created = await rpc(
         "tab.create",
         {"workspace_id": await workspace_id(workspace), "cwd": re.sub(r"^~(?=/|$)", HERDR_HOME, cwd), "label": label, "focus": focus},
