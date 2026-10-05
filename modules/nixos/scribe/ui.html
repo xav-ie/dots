@@ -37,6 +37,34 @@
         text-decoration: none;
         font-weight: 600;
       }
+      header a.nav {
+        margin-left: auto;
+        font-weight: 400;
+        color: var(--muted);
+      }
+      textarea {
+        width: 100%;
+        min-height: 50vh;
+        background: var(--panel);
+        color: var(--text);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 10px;
+        font: 13px/1.5 ui-monospace, monospace;
+      }
+      button {
+        background: var(--accent);
+        color: white;
+        border: 0;
+        border-radius: 6px;
+        padding: 7px 14px;
+        cursor: pointer;
+      }
+      details summary {
+        cursor: pointer;
+        color: var(--muted);
+        margin: 10px 0 4px;
+      }
       main {
         max-width: 1000px;
         margin: 0 auto;
@@ -144,6 +172,7 @@
   <body>
     <header>
       <a href="#/">scribe</a><span class="muted" id="where"></span>
+      <a class="nav" href="#/vocab">vocabulary</a>
     </header>
     <main id="app"></main>
     <script>
@@ -364,6 +393,17 @@
             ),
           ),
         ];
+        const boosted = [...new Set(channels.flatMap((c) => c.boost ?? []))];
+        if (boosted.length > 0) {
+          body.push(
+            el(
+              "details",
+              {},
+              el("summary", { textContent: `boosted ${boosted.length} phrases` }),
+              el("div", {}, ...boosted.map(chip)),
+            ),
+          );
+        }
         if (players.length > 0) {
           body.push(
             el(
@@ -393,10 +433,43 @@
         app.replaceChildren(...body);
       }
 
+      // The global boost list: names and jargon scribe should favour when unsure.
+      // Each stream also boosts its meeting's participant names.
+      async function vocab() {
+        where.textContent = "/ vocabulary";
+        const { phrases } = await api("/api/vocab");
+        const box = el("textarea", { value: phrases.join("\n"), spellcheck: false });
+        const status = el("span", { className: "muted" });
+        const save = el("button", {
+          textContent: "Save",
+          onclick: async () => {
+            const r = await fetch("/api/vocab", {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ phrases: box.value.split("\n") }),
+            });
+            const saved = r.ok ? (await r.json()).phrases : null;
+            if (saved) box.value = saved.join("\n");
+            status.textContent = saved
+              ? ` saved ${saved.length} phrases; used by recordings started from now on`
+              : ` save failed (${r.status})`;
+          },
+        });
+        app.replaceChildren(
+          el("p", {
+            className: "muted",
+            textContent:
+              "One phrase per line: people, products, jargon. Recordings boost these, plus each meeting's participant names.",
+          }),
+          box,
+          el("p", {}, save, status),
+        );
+      }
+
       async function route() {
         const m = location.hash.match(/^#\/s\/([0-9a-f-]{36})$/);
         try {
-          await (m ? show(m[1]) : list());
+          await (location.hash === "#/vocab" ? vocab() : m ? show(m[1]) : list());
         } catch (e) {
           app.replaceChildren(el("pre", { textContent: String(e) }));
         }
