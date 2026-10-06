@@ -34,7 +34,9 @@ Tunables (set by the Nix module via env):
 A stream's first text message is {"sampleRate", "sessionId", "channel", "save",
 "boost"}; "boost" (participant names) is boosted along with the vocabulary.
 
-GET / serves ui.html, a browser for those sessions over the /api routes.
+GET / serves ui.html, a browser for those sessions over the /api routes, and
+/mcp is an MCP server (streamable HTTP) for listing, reading and searching
+meeting transcripts and editing the vocabulary.
 """
 
 import asyncio
@@ -68,6 +70,8 @@ from nemo.collections.asr.parts.utils.streaming_utils import (
 from nemo.utils import logging as nemo_logging
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, HTMLResponse
+from mcp.server.mcpserver import MCPServer
+from mcp.server.transport_security import TransportSecuritySettings
 
 # NeMo logs the full model config on load — pages of noise. Keep WARNING and up.
 nemo_logging.set_verbosity(logging.WARNING)
@@ -609,3 +613,125 @@ async def ws(websocket: WebSocket):
         if recording is not None:
             # Keep the tail shorter than one step too, so the file is complete.
             recording.close(state.words, _to_16k(state.pending, src_rate))
+
+
+# --- MCP ---------------------------------------------------------------------
+
+mcp = MCPServer(
+    "scribe",
+    instructions=(
+        "Transcripts of meetings recorded by the meeting capture extension. "
+        "Times are UTC. Speakers come from the meeting's active-speaker "
+        "indicator; 'Unknown' is speech it couldn't attribute."
+    ),
+)
+
+
+def _iso(ms):
+    return datetime.fromtimestamp(ms / 1000, timezone.utc).isoformat() if ms else None
+
+
+def _epoch_ms(iso):
+    t = datetime.fromisoformat(iso)
+    return (t if t.tzinfo else t.replace(tzinfo=timezone.utc)).timestamp() * 1000
+
+
+def _sessions_between(since, until):
+    lo = _epoch_ms(since) if since else -math.inf
+    hi = _epoch_ms(until) if until else math.inf
+    return [s for s in list_sessions() if s["startedAt"] and lo <= s["startedAt"] <= hi]
+
+
+def _clock(sec):
+    return f"{int(sec // 60)}:{int(sec % 60):02d}"
+
+
+@mcp.tool()
+def list_meetings(
+    since: str | None = None, until: str | None = None, limit: int = 20
+) -> list[dict]:
+    """Recorded meetings, newest first. since/until are ISO 8601 times bounding
+    when a meeting started (UTC when no offset is given)."""
+    return [
+        {
+            "sessionId": s["sessionId"],
+            "startedAt": _iso(s["startedAt"]),
+            "stoppedAt": _iso(s["stoppedAt"]),
+            "platform": s["platform"],
+            "speakers": s["speakers"],
+            "words": s["words"],
+        }
+        for s in _sessions_between(since, until)[:limit]
+    ]
+
+
+@mcp.tool()
+def get_transcript(session_id: str) -> str:
+    """A meeting's transcript as "[m:ss] Speaker: text" lines, m:ss from the
+    start of the recording."""
+    session = _read_session(_session_dir(session_id))
+    if not session:
+        raise ValueError(f"no transcript for session {session_id}")
+    head = f"Meeting {session_id}, started {_iso(session.get('startedAt'))}, on {session.get('platform')}"
+    lines = [
+        f"[{_clock(s['start'])}] {s['speaker']}: {s['text']}"
+        for s in session.get("segments") or []
+    ]
+    return "\n".join([head, "", *lines])
+
+
+@mcp.tool()
+def search_transcripts(
+    query: str, since: str | None = None, until: str | None = None, limit: int = 50
+) -> list[dict]:
+    """Case-insensitive text search across meeting transcripts, newest meeting
+    first. Each hit has the meeting, when in it, who spoke, and the text
+    around the match."""
+    needle = query.lower().strip()
+    if not needle:
+        raise ValueError("query is empty")
+    hits = []
+    for s in _sessions_between(since, until):
+        session = _read_session(RECORDINGS / s["sessionId"]) or {}
+        for seg in session.get("segments") or []:
+            text = seg["text"]
+            at = text.lower().find(needle)
+            if at < 0:
+                continue
+            hits.append(
+                {
+                    "sessionId": s["sessionId"],
+                    "startedAt": _iso(s["startedAt"]),
+                    "at": _clock(seg["start"]),
+                    "speaker": seg["speaker"],
+                    "text": text[max(0, at - 300) : at + len(needle) + 300],
+                }
+            )
+            if len(hits) >= limit:
+                return hits
+    return hits
+
+
+@mcp.tool()
+def get_vocab() -> list[str]:
+    """Phrases (names, companies, terms) boosted in every meeting's recognition."""
+    return _read_json(VOCAB) or []
+
+
+@mcp.tool()
+def add_vocab(phrases: list[str]) -> list[str]:
+    """Add phrases to the boost list and return the whole list. Boost proper
+    nouns the recognizer gets wrong; common words can hurt recognition."""
+    vocab = _clean_phrases((_read_json(VOCAB) or []) + phrases)
+    _write_json(VOCAB, vocab)
+    return vocab
+
+
+# Served at /mcp. Mounted last so every route above takes precedence. Host
+# checks are off like the rest of the API; access is limited to the tailnet.
+_mcp_app = mcp.streamable_http_app(
+    stateless_http=True,
+    transport_security=TransportSecuritySettings(enable_dns_rebinding_protection=False),
+)
+app.router.lifespan_context = _mcp_app.router.lifespan_context
+app.mount("", _mcp_app)
