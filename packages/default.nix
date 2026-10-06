@@ -153,6 +153,7 @@ rec {
   firefox-pip-mover = pkgs.callPackage ./firefox-pip-mover { };
   hidewin = pkgs.callPackage ./hidewin { };
   move-pip = pkgs.callPackage ./move-pip { };
+  polish-recording = pkgs.callPackage ./polish-recording { };
   sketchybar-battery = pkgs.callPackage ./sketchybar-battery { inherit writeNuApplication; };
   sketchybar-hover = pkgs.callPackage ./sketchybar-hover { };
   sketchybar-icons = sketchybar-icons-pkg;

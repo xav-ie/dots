@@ -9,6 +9,7 @@
             fix-yabai
             hidewin
             move-pip
+            polish-recording
             sketchybar-battery
           ];
         };
