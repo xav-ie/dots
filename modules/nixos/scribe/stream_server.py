@@ -40,6 +40,8 @@ meeting transcripts and editing the vocabulary.
 """
 
 import asyncio
+import ctypes
+import gc
 import json
 import logging
 import math
@@ -131,6 +133,10 @@ def _load_model():
 
 
 model = _load_model()
+# Loading frees the CPU-side fp32 weights and checkpoint (~4 GB), but glibc keeps
+# the freed heap mapped; hand it back to the OS.
+gc.collect()
+ctypes.CDLL("libc.so.6").malloc_trim(0)
 decoding_computer = model.decoding.decoding.decoding_computer
 # Boosting's Triton kernels compile at run time with a C compiler and
 # /sbin/ldconfig, which the Nix image doesn't have; use the PyTorch path.
