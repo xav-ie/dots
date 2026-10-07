@@ -31,6 +31,8 @@
   # mic-denoise, extracted to its own repo
   # (inputs.mic-denoise.packages.<system>.default); darwin-only.
   mic-denoise-pkg ? null,
+  # softap-ie from the tether-link repo (inputs.tether-link.packages.<system>.softap-ie).
+  softap-ie-pkg,
   # uair patched with PR#31 (overlays/default.nix), threaded in from packages.nix:
   # `uairctl listen` must be newline-delimited and flushed so the AGS bar can
   # stream it. Forwarded to the bar below.
@@ -124,6 +126,7 @@ rec {
   nu_plugin_prompt = pkgs.callPackage ./nu_plugin_prompt { inherit pkgs-bleeding; };
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
   slack-mcp-server = pkgs.callPackage ./slack-mcp-server { src = slack-mcp-server-src; };
+  softap-ie = softap-ie-pkg;
   ssh-praesidium-route = pkgs.callPackage ./ssh-praesidium-route { inherit writeNuApplication; };
   toggle-theme = pkgs.callPackage ./toggle-theme { inherit writeNuApplication; };
   toml-merge = pkgs.callPackage ./toml-merge { };
