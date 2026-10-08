@@ -2,7 +2,6 @@
 # Bluetooth. An Essentials automation on the phone (Bluetooth connected → Turn On
 # Hotspot) turns its hotspot on, and macOS auto-joins it as a known network. Pokes
 # back off 2s → 30s; each is a brief connect/disconnect so the phone sees a fresh event.
-# `softap-ie apple` (xav-ie/tether-link) makes macOS treat that hotspot as a Personal Hotspot.
 _: {
   flake.modules.darwin.macos =
     { config, pkgs, ... }:

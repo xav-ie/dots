@@ -43,7 +43,7 @@ def read-wifi [] {
 # True when tethered to a Personal Hotspot, via Location-free signals (SSID
 # would need Location permission): macOS marks Wi-Fi "expensive" when the
 # network's beacon carries Apple's personal-hotspot element (iPhones, and
-# Android hotspots set up with tether-link's softap-ie), and iPhone USB/Bluetooth
+# Android hotspots running TetherLink), and iPhone USB/Bluetooth
 # tethering hands out gateway 172.20.10.1. Full paths since the launchd agent's
 # PATH doesn't include /sbin or /usr/sbin.
 def is-hotspot [] {

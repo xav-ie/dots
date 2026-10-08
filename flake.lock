@@ -1885,7 +1885,6 @@
         "sops-nix": "sops-nix",
         "systems": "systems",
         "terranix": "terranix",
-        "tether-link": "tether-link",
         "treefmt-nix": "treefmt-nix",
         "uv2nix": "uv2nix",
         "virtual-headset": "virtual-headset",
@@ -2089,26 +2088,6 @@
         "owner": "terranix",
         "repo": "terranix",
         "type": "github"
-      }
-    },
-    "tether-link": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1791431366,
-        "narHash": "sha256-UmqlgBEIPHquP0Btn0M0WTQ/BBdF3avbK0gw4F4jFow=",
-        "ref": "refs/heads/main",
-        "rev": "13361b9cd6901382fd6e2fd3ea7dadd97aba0e12",
-        "revCount": 35,
-        "type": "git",
-        "url": "ssh://git@github.com/xav-ie/TetherLink"
-      },
-      "original": {
-        "type": "git",
-        "url": "ssh://git@github.com/xav-ie/TetherLink"
       }
     },
     "treefmt-nix": {
