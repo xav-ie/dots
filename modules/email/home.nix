@@ -32,16 +32,21 @@
                 ]
               }"
             ];
+            # `neverest sync` covers only the default account, so each one is
+            # named. One account failing still lets the others sync, but fails
+            # the unit.
             ExecStart = toString (
               pkgs.writeShellScript "neverest-sync" # sh
                 ''
                   # $XDG_RUNTIME_DIR, not /run/user/$(id -u): there is no `id`
                   # on the service PATH, and systemd always sets this.
-                  ${pkgs.util-linux}/bin/flock \
-                    --nonblock \
-                    --conflict-exit-code 0 \
-                    "$XDG_RUNTIME_DIR/neverest.lock" \
-                    ${lib.getExe pkgs.neverest} sync
+                  exec 9>"$XDG_RUNTIME_DIR/neverest.lock"
+                  ${pkgs.util-linux}/bin/flock --nonblock 9 || exit 0
+                  status=0
+                  for account in ${lib.escapeShellArgs (map (a: a.name) (import ./_accounts.nix).accounts)}; do
+                    ${lib.getExe pkgs.neverest} sync -a "$account" || status=1
+                  done
+                  exit $status
                 ''
             );
           };
