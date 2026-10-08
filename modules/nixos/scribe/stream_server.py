@@ -36,7 +36,9 @@ A stream's first text message is {"sampleRate", "sessionId", "channel", "save",
 
 GET / serves ui.html, a browser for those sessions over the /api routes, and
 /mcp is an MCP server (streamable HTTP) for listing, reading and searching
-meeting transcripts and editing the vocabulary.
+meeting transcripts, keeping cleanups of them (cleanups/<id>.json: notes and a
+cleaned transcript an MCP client made; the transcript itself never changes)
+and editing the vocabulary.
 """
 
 import asyncio
@@ -58,6 +60,7 @@ import torch
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, HTMLResponse
 from mcp.server.mcpserver import MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
 from mcp.server.transport_security import TransportSecuritySettings
 from nemo.collections.asr.parts.context_biasing.biasing_multi_model import (
     BiasingRequestItemConfig,
@@ -650,6 +653,21 @@ def _sessions_between(since, until):
     return [s for s in list_sessions() if s["startedAt"] and lo <= s["startedAt"] <= hi]
 
 
+# Tile names that aren't people: unnamed tiles and recording bots.
+NOT_A_PERSON_RE = re.compile(r"^\?$|notetaker|fireflies|otter\.ai|read\.ai|fathom", re.IGNORECASE)
+
+
+def _participants(session):
+    """Everyone the meeting UI showed (its participant tiles, from the
+    extension's snapshots) plus everyone who spoke, sorted. A tile's
+    "(Presentation)" style suffix is dropped."""
+    names = {s["speaker"] for s in session.get("segments") or []}
+    for snapshot in session.get("diagnostics") or []:
+        for name in snapshot.get("names") or []:
+            names.add(re.sub(r"\s*\([^)]*\)$", "", name).strip())
+    return sorted(n for n in names if n and n != "Unknown" and not NOT_A_PERSON_RE.search(n))
+
+
 def _clock(sec):
     return f"{int(sec // 60)}:{int(sec % 60):02d}"
 
@@ -659,18 +677,29 @@ def list_meetings(
     since: str | None = None, until: str | None = None, limit: int = 20
 ) -> list[dict]:
     """Recorded meetings, newest first. since/until are ISO 8601 times bounding
-    when a meeting started (UTC when no offset is given)."""
-    return [
-        {
-            "sessionId": s["sessionId"],
-            "startedAt": _iso(s["startedAt"]),
-            "stoppedAt": _iso(s["stoppedAt"]),
-            "platform": s["platform"],
-            "speakers": s["speakers"],
-            "words": s["words"],
-        }
-        for s in _sessions_between(since, until)[:limit]
-    ]
+    when a meeting started (UTC when no offset is given). title is from the
+    newest finished cleanup, and cleanup is the newest cleanup's status.
+    participants is everyone shown in the meeting, speaking or not."""
+    out = []
+    for s in _sessions_between(since, until)[:limit]:
+        cleanups = _cleanups(s["sessionId"])
+        done = [c for c in cleanups if c["status"] == "done"]
+        out.append(
+            {
+                "sessionId": s["sessionId"],
+                "title": done[-1]["notes"].get("title") if done else None,
+                "startedAt": _iso(s["startedAt"]),
+                "stoppedAt": _iso(s["stoppedAt"]),
+                "platform": s["platform"],
+                "speakers": s["speakers"],
+                "participants": _participants(
+                    _read_session(RECORDINGS / s["sessionId"]) or {}
+                ),
+                "words": s["words"],
+                "cleanup": cleanups[-1]["status"] if cleanups else None,
+            }
+        )
+    return out
 
 
 @mcp.tool()
@@ -679,8 +708,8 @@ def get_transcript(session_id: str) -> str:
     start of the recording."""
     session = _read_session(_session_dir(session_id))
     if not session:
-        raise ValueError(f"no transcript for session {session_id}")
-    head = f"Meeting {session_id}, started {_iso(session.get('startedAt'))}, on {session.get('platform')}"
+        raise ToolError(f"no transcript for session {session_id}")
+    head = f"Meeting {session_id}, started {_iso(session.get('startedAt'))}, on {session.get('platform')}\nParticipants: {', '.join(_participants(session))}"
     lines = [
         f"[{_clock(s['start'])}] {s['speaker']}: {s['text']}"
         for s in session.get("segments") or []
@@ -697,7 +726,7 @@ def search_transcripts(
     around the match."""
     needle = query.lower().strip()
     if not needle:
-        raise ValueError("query is empty")
+        raise ToolError("query is empty")
     hits = []
     for s in _sessions_between(since, until):
         session = _read_session(RECORDINGS / s["sessionId"]) or {}
@@ -720,8 +749,90 @@ def search_transcripts(
     return hits
 
 
+def _cleanups(session_id):
+    """A meeting's cleanup records, oldest first."""
+    folder = _session_dir(session_id) / "cleanups"
+    records = [_read_json(p) for p in folder.glob("*.json")] if folder.is_dir() else []
+    return sorted(filter(None, records), key=lambda c: c["startedAt"])
+
+
+def _summary(c):
+    return {k: v for k, v in c.items() if k != "notes"} | {
+        "title": (c.get("notes") or {}).get("title")
+    }
+
+
+def _now():
+    return datetime.now(UTC).isoformat()
+
+
 @mcp.tool()
-def get_vocab() -> list[str]:
+def create_cleanup(session_id: str, model: str, job_id: str | None = None) -> dict:
+    """Record that a cleanup of a meeting's transcript has started. Scribe only
+    keeps the record: the caller runs the model (job_id is its job, so another
+    client can follow it) and reports back with finish_cleanup. A meeting can
+    have any number of cleanups; its transcript itself never changes."""
+    folder = _session_dir(session_id)
+    if not (folder / "session.json").exists():
+        raise ToolError(f"no transcript for session {session_id}")
+    record = {
+        "id": uuid.uuid4().hex[:12],
+        "status": "running",
+        "model": model,
+        "jobId": job_id,
+        "startedAt": _now(),
+    }
+    (folder / "cleanups").mkdir(exist_ok=True)
+    _write_json(folder / "cleanups" / f"{record['id']}.json", record)
+    return record
+
+
+@mcp.tool()
+def finish_cleanup(
+    session_id: str,
+    cleanup_id: str,
+    notes: dict | None = None,
+    error: str | None = None,
+) -> dict:
+    """Finish a cleanup with its notes, or with an error when it failed.
+    Conventional note keys: title, summary, updates, decisions, action_items,
+    open_questions, and cleaned_transcript ("[m:ss] Speaker: text" lines)."""
+    if (notes is None) == (error is None):
+        raise ToolError("pass exactly one of notes or error")
+    if notes is not None and len(json.dumps(notes)) > MAX_SESSION_BYTES:
+        raise ToolError("notes are too large")
+    path = _session_dir(session_id) / "cleanups" / f"{cleanup_id}.json"
+    record = _read_json(path) if re.fullmatch(r"[0-9a-f]{12}", cleanup_id) else None
+    if record is None:
+        raise ToolError(f"no cleanup {cleanup_id} for session {session_id}")
+    record |= {
+        "status": "failed" if error else "done",
+        "notes": notes,
+        "error": error,
+        "finishedAt": _now(),
+    }
+    _write_json(path, record)
+    return _summary(record)
+
+
+@mcp.tool()
+def list_cleanups(session_id: str) -> list[dict]:
+    """A meeting's cleanups, newest first, without their notes."""
+    return [_summary(c) for c in reversed(_cleanups(session_id))]
+
+
+@mcp.tool()
+def get_cleanup(session_id: str, cleanup_id: str | None = None) -> dict | None:
+    """One cleanup with its notes; without cleanup_id, the newest finished one.
+    Null when there is none."""
+    done = [c for c in _cleanups(session_id) if c["status"] == "done"]
+    if cleanup_id is None:
+        return done[-1] if done else None
+    return next((c for c in _cleanups(session_id) if c["id"] == cleanup_id), None)
+
+
+@mcp.tool(name="get_vocab")
+def mcp_get_vocab() -> list[str]:
     """Phrases (names, companies, terms) boosted in every meeting's recognition."""
     return _read_json(VOCAB) or []
 
@@ -731,6 +842,15 @@ def add_vocab(phrases: list[str]) -> list[str]:
     """Add phrases to the boost list and return the whole list. Boost proper
     nouns the recognizer gets wrong; common words can hurt recognition."""
     vocab = _clean_phrases((_read_json(VOCAB) or []) + phrases)
+    _write_json(VOCAB, vocab)
+    return vocab
+
+
+@mcp.tool()
+def remove_vocab(phrases: list[str]) -> list[str]:
+    """Remove phrases from the boost list and return the whole list."""
+    drop = set(_clean_phrases(phrases))
+    vocab = [p for p in _read_json(VOCAB) or [] if p not in drop]
     _write_json(VOCAB, vocab)
     return vocab
 
