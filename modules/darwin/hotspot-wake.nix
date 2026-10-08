@@ -17,52 +17,56 @@ _: {
               pkgs.cctools
               pkgs.darwin.sigtool
             ];
-          }
+          } # sh
           ''
             mkdir -p $out/bin
             cp ${pkgs.blueutil}/bin/blueutil $out/bin/
             chmod u+w $out/bin/blueutil
-            codesign -f -s - --entitlements ${pkgs.writeText "blueutil.entitlements" ''
-              <?xml version="1.0" encoding="UTF-8"?>
-              <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-              <plist version="1.0"><dict>
-                <key>com.apple.private.tcc.allow</key>
-                <array><string>kTCCServiceBluetoothAlways</string></array>
-              </dict></plist>
-            ''} $out/bin/blueutil
+            codesign -f -s - --entitlements ${entitlements} $out/bin/blueutil
+          '';
+      entitlements =
+        pkgs.writeText "blueutil.entitlements" # xml
+          ''
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+            <plist version="1.0"><dict>
+              <key>com.apple.private.tcc.allow</key>
+              <array><string>kTCCServiceBluetoothAlways</string></array>
+            </dict></plist>
           '';
       hotspot-wake = pkgs.writeShellApplication {
         name = "hotspot-wake";
         runtimeInputs = [ blueutil ];
-        text = ''
-          phone=$(cat ${config.sops.secrets."hotspot-wake/phone_bt_address".path})
-          offline_since=0
-          while sleep 2; do
-            now=$(date +%s)
-            if /usr/sbin/ipconfig getifaddr en0 >/dev/null ||
-              [ "$(/usr/sbin/networksetup -getairportpower en0 | awk '{print $NF}')" != On ] ||
-              [ "$(blueutil --power)" != 1 ]; then
-              offline_since=0
-              continue
-            fi
-            if [ "$offline_since" = 0 ]; then
-              # Give macOS's own auto-join (which bursts on wake) a head start.
-              offline_since=$now
-              next_poke=$((now + 5))
-              backoff=2
-              /usr/bin/osascript -e 'display notification "Asking phone to turn on its hotspot…" with title "No Wi-Fi"'
-            fi
-            [ "$now" -lt "$next_poke" ] && continue
-            echo "$(date) no Wi-Fi, poking phone"
-            # Disconnect again so every poke is a fresh "connected" event for the phone.
-            if blueutil --connect "$phone"; then
-              sleep 2
-              blueutil --disconnect "$phone" || true
-            fi
-            next_poke=$(($(date +%s) + backoff))
-            backoff=$((backoff * 2 > 30 ? 30 : backoff * 2))
-          done
-        '';
+        text = # sh
+          ''
+            phone=$(cat ${config.sops.secrets."hotspot-wake/phone_bt_address".path})
+            offline_since=0
+            while sleep 2; do
+              now=$(date +%s)
+              if /usr/sbin/ipconfig getifaddr en0 >/dev/null ||
+                [ "$(/usr/sbin/networksetup -getairportpower en0 | awk '{print $NF}')" != On ] ||
+                [ "$(blueutil --power)" != 1 ]; then
+                offline_since=0
+                continue
+              fi
+              if [ "$offline_since" = 0 ]; then
+                # Give macOS's own auto-join (which bursts on wake) a head start.
+                offline_since=$now
+                next_poke=$((now + 5))
+                backoff=2
+                /usr/bin/osascript -e 'display notification "Asking phone to turn on its hotspot…" with title "No Wi-Fi"'
+              fi
+              [ "$now" -lt "$next_poke" ] && continue
+              echo "$(date) no Wi-Fi, poking phone"
+              # Disconnect again so every poke is a fresh "connected" event for the phone.
+              if blueutil --connect "$phone"; then
+                sleep 2
+                blueutil --disconnect "$phone" || true
+              fi
+              next_poke=$(($(date +%s) + backoff))
+              backoff=$((backoff * 2 > 30 ? 30 : backoff * 2))
+            done
+          '';
       };
     in
     {
