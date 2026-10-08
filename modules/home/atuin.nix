@@ -6,7 +6,7 @@
         programs.atuin = {
           enable = true;
           # super buggy on macos
-          daemon.enable = pkgs.stdenv.isLinux;
+          daemon.enable = pkgs.stdenv.hostPlatform.isLinux;
           enableZshIntegration = false;
           # https://docs.atuin.sh/configuration/config
           settings = {

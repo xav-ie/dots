@@ -1,7 +1,6 @@
 # Shared NixOS + darwin nix settings, flake registry, `defaultUser`, and gcroots.
 let
   cacheEndpoint = "https://cache.lalala.casa";
-  curlUserAgent = "--user-agent=nixpkgs-fetchurl";
   # Self-hosted atticd caches (single-sourced from _lib/caches.nix, same list the
   # CI push actions and cachectl use). Wired as substituters so local builds pull
   # prebuilt paths instead of rebuilding these repos from source.
@@ -50,18 +49,9 @@ let
 
         nix = {
           enable = true;
-
-          # crates.io 403s any request whose User-Agent starts with `curl/`, which
-          # is exactly what nixpkgs' fetchurl sends — every uncached crate fails.
-          # `NIX_CURL_FLAGS` is a fetchurl impureEnvVar appended after its own
-          # `--user-agent`, so the last flag wins. Must contain no spaces: the
-          # builder splats it unquoted. Set on the daemon two ways because
-          # `nix.envVars` only reaches the daemon on NixOS — nix-darwin doesn't
-          # own the nix-daemon plist, so darwin needs the `impure-env` route.
-          envVars.NIX_CURL_FLAGS = curlUserAgent;
           # https://nixos.wiki/wiki/Storage_optimization
           gc = {
-            automatic = pkgs.stdenv.isDarwin;
+            automatic = pkgs.stdenv.hostPlatform.isDarwin;
             # these two options do not have an effect on macos... >:(
             # persistent = true;
             # dates = "weekly";
@@ -76,18 +66,20 @@ let
             # TODO: do I need this?
             # builders = lib.mkForce "ssh-ng://builder@linux-builder aarch64-linux /etc/nix/builder_ed25519 4 - - - c3NoLWVkMjU1MTkgQUFBQUMzTnphQzFsWkRJMU5URTVBQUFBSUpCV2N4Yi9CbGFxdDFhdU90RStGOFFVV3JVb3RpQzVxQkorVXVFV2RWQ2Igcm9vdEBuaXhvcwo=";
             experimental-features = [
-              "configurable-impure-env"
               "nix-command"
               "flakes"
               "pipe-operators"
             ];
-            impure-env = "NIX_CURL_FLAGS=${curlUserAgent}";
-            # Actively pull from the self-hosted caches (not just allow them).
-            extra-substituters = cacheSubstituters;
+            # Actively pull from these (not just allow them). `trusted-` alone
+            # only grants permission to request a cache, so a CUDA cache listed
+            # there is never consulted and every CUDA package gets built from
+            # source — which is hours for torch and magma.
+            extra-substituters = cacheSubstituters ++ [
+              "https://cache.nixos-cuda.org"
+            ];
             extra-trusted-substituters = [
               "https://nix-community.cachix.org"
               "https://devenv.cachix.org"
-              "https://cache.nixos-cuda.org"
             ];
             extra-trusted-public-keys = [
               "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
@@ -97,10 +89,15 @@ let
             ++ cachePublicKeys;
             trusted-users = [ config.defaultUser ];
             fallback = true; # allow building from src
-            # use max cores/threads when `enableParallelBuilding` is set for package
-            cores = 0;
-            # use max CPUs for nix build jobs
-            max-jobs = "auto";
+            # `cores` multiplies by `max-jobs`, it does not divide the machine
+            # between them. The defaults (0 = every core per job, auto = one job
+            # per core) therefore mean cores² concurrent compilers, and a
+            # C++/CUDA-heavy rebuild will happily hold a thousand compilers'
+            # worth of peak RSS at once. Keep the product at roughly the core
+            # count so the compiler count stays bounded by the CPU rather than
+            # by RAM running out.
+            cores = 4;
+            max-jobs = 4;
             sandbox = "relaxed";
           };
         };

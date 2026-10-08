@@ -9,6 +9,11 @@ extend-exclude = [
   "*.patch",
 ]
 
+[default]
+# Base64 keys are not prose; the commented-out dnscrypt minisign key in
+# modules/dnsmasq.nix trips on "Iz" inside its payload.
+extend-ignore-re = ['minisign_key = "[A-Za-z0-9+/=]+"']
+
 [default.extend-words]
 ags = "ags"
 hass = "hass"

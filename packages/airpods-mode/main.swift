@@ -106,9 +106,10 @@ func applyMode(_ modeString: String, hint: String, verbose: Bool) -> Bool {
 // possible only under amfi_get_out_of_my_way=1. Otherwise reads wedge on play.
 func runDaemon(hint: String, verbose: Bool) -> Never {
   typealias RegisterFn = @convention(c) (DispatchQueue) -> Void
-  typealias IsPlayingFn = @convention(c) (
-    DispatchQueue, @escaping @convention(block) (Bool) -> Void
-  )
+  typealias IsPlayingFn =
+    @convention(c) (
+      DispatchQueue, @escaping @convention(block) (Bool) -> Void
+    )
     -> Void
 
   guard

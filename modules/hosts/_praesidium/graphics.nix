@@ -35,6 +35,14 @@ let
         patches = builtins.filter (p: !(lib.hasInfix "musl" (baseNameOf p))) (old.patches or [ ]) ++ [
           ./zink-nvidia-import-no-export.patch
         ];
+        # nixpkgs supplies CLC bitcode from the mesa-libclc fork, whose
+        # pkg-config name is `mesa-libclc`; this rev still asks for `libclc`
+        # (nixpkgs dropped that attribute). Same `libexecdir` variable and same
+        # `spirv*-mesa3d-.spv` payload, so the rename is the whole difference.
+        postPatch = (old.postPatch or "") + ''
+          substituteInPlace meson.build \
+            --replace-fail "dependency('libclc')" "dependency('mesa-libclc')"
+        '';
       });
 in
 {

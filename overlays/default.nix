@@ -99,7 +99,7 @@ in
           };
         };
       alacritty-theme =
-        if final.stdenv.isLinux then
+        if final.stdenv.hostPlatform.isLinux then
           inputs.alacritty-theme.packages.${final.stdenv.hostPlatform.system}
         else
           null;
@@ -119,7 +119,7 @@ in
       };
       pkgs-mine = toplevel.self.packages.${final.stdenv.hostPlatform.system};
       notification-cleaner =
-        if final.stdenv.isDarwin then
+        if final.stdenv.hostPlatform.isDarwin then
           inputs.notification-cleaner.packages.${final.stdenv.hostPlatform.system}.default
         else
           null;
@@ -267,65 +267,16 @@ in
           '';
       beads = inputs.beads.packages.${final.stdenv.hostPlatform.system}.default;
       herdr = inputs.herdr.packages.${final.stdenv.hostPlatform.system}.default;
-      himalaya =
-        let
-          base = inputs.himalaya-latest.packages.${final.stdenv.hostPlatform.system}.default;
-        in
-        base.overrideAttrs (old: {
-          postPatch = (old.postPatch or "") + ''
-            emailLibDir=$(find /build -maxdepth 3 -name 'email-lib-*' -type d | head -1)
-            # Replace vendored email-lib src with pimalaya-core flake input.
-            # Remove this override once email-lib > 0.27.0 is released.
-            cp -rT ${inputs.pimalaya-core}/email/src "$emailLibDir/src"
-          '';
-        });
       neverest = inputs.neverest.packages.${final.stdenv.hostPlatform.system}.default;
       zjstatus = inputs.zjstatus.packages.${final.stdenv.hostPlatform.system}.default;
       atuin = inputs.atuin.packages.${final.stdenv.hostPlatform.system}.default.overrideAttrs (old: {
-        pname = "atuin";
-        version = "18.16.0";
-        # Layer my unmerged PRs on top of upstream main: three pty-proxy fixes
-        # plus a nushell ESC-char fix. They touch non-overlapping regions and
-        # don't add vendored deps (percent-encoding is already in the lock), so
-        # they apply cleanly. Drop each patch once it merges upstream. (#3327
-        # --shell already merged, so it's no longer here.)
-        patches = (old.patches or [ ]) ++ [
-          (final.fetchpatch {
-            name = "atuin-pr3529-pty-proxy-pixel-size.patch";
-            url = "https://github.com/atuinsh/atuin/pull/3529.patch";
-            hash = "sha256-2Bz8TMcDgz6qxAzwjSfyQf0pYn+LH/nAfWXPyZZGGmo=";
-          })
-          (final.fetchpatch {
-            name = "atuin-pr3461-pty-proxy-osc7.patch";
-            url = "https://github.com/atuinsh/atuin/pull/3461.patch";
-            hash = "sha256-TX8KlehDImXYm+FDVMByF+OUJ6IY2QatagkY5Q2/fr4=";
-          })
-          # #3510's OSC 133 nushell helpers call `(char esc)`, which is not a
-          # valid Nushell named character — `atuin init nu` errors on every nu
-          # version. This switches it to `(char -u 1b)`. Drop once merged.
-          (final.fetchpatch {
-            name = "atuin-pr3530-nu-char-esc.patch";
-            url = "https://github.com/atuinsh/atuin/pull/3530.patch";
-            hash = "sha256-c565RbIGBOUNi1fgmuqM/0xonS2PWyc80OlyuADLy7k=";
-          })
-          # pty-proxy spawns the inner shell but never sets SHELL on it, so the
-          # child — and `$SHELL -c` consumers like fzf's `become` — inherit a
-          # stale shell from the parent env. Point SHELL at the shell we spawn.
-          (final.fetchpatch {
-            name = "atuin-pty-proxy-shell-env.patch";
-            url = "https://github.com/atuinsh/atuin/pull/3548.patch";
-            hash = "sha256-WRibHKn9Xd3OdsbcAkd8xqMfJJHrV2lja2XSkx39cxU=";
-          })
-        ];
-        # #3461 adds `percent-encoding` to atuin-pty-proxy's Cargo.lock dep list.
-        # The crate is already vendored (used transitively elsewhere), but
-        # importCargoLock's consistency check diffs the patched lockfile against
-        # the vendored copy and fails on the textual mismatch. Re-sync the
-        # vendored copy — runs before cargoSetupPostPatchHook validates. Drop
-        # this together with the #3461 patch once that PR merges.
-        postPatch = (old.postPatch or "") + ''
-          cp Cargo.lock "$cargoDepsCopy/Cargo.lock"
-        '';
+        # PR #3529 (forward the terminal's pixel size to the child pty), rebased
+        # onto upstream main. Vendored rather than fetched from the PR's .patch
+        # URL: that URL always serves the PR's current state, so it silently
+        # stops applying whenever the branch is force-pushed or main moves.
+        # Regenerate with `git format-patch upstream/main..rebase/3529` in
+        # ~/Projects/atuin; drop it once the PR merges.
+        patches = (old.patches or [ ]) ++ [ ./atuin-pty-proxy-pixel-size.patch ];
       });
 
       voquill =
@@ -430,8 +381,8 @@ in
                 final.orc
                 final.stdenv.cc.cc.lib
                 final.vulkan-loader
-                final.xorg.libX11
-                final.xorg.libxcb
+                final.libx11
+                final.libxcb
                 final.zlib
               ];
               runtimeDependencies = [ bundledLibs ];
@@ -517,8 +468,8 @@ in
             final.pango
             final.stdenv.cc.cc.lib
             final.vulkan-loader
-            final.xorg.libX11
-            final.xorg.libxcb
+            final.libx11
+            final.libxcb
             final.zlib
           ];
 
@@ -669,6 +620,11 @@ in
                 nativeBuildInputs = with final.python3Packages; [
                   poetry-core
                 ];
+
+                # The wheel caps `trakit<0.3.0`, but knowit only ever calls
+                # `trakit.api.trakit(string, options)`, which is unchanged in
+                # 0.4.0 (upstream knowit declares a bare `trakit>=0.2.2`).
+                pythonRelaxDeps = [ "trakit" ];
 
                 propagatedBuildInputs = with final.python3Packages; [
                   babelfish

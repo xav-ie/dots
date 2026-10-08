@@ -8,17 +8,32 @@
     astal.url = "github:aylur/astal";
     astal.inputs.nixpkgs.follows = "nixpkgs";
     atuin.url = "github:atuinsh/atuin";
+    atuin.inputs.crane.follows = "crane";
+    atuin.inputs.fenix.follows = "fenix";
+    atuin.inputs.flake-compat.follows = "flake-compat";
+    atuin.inputs.flake-parts.follows = "flake-parts";
+    atuin.inputs.nixpkgs.follows = "nixpkgs";
     beads.url = "github:steveyegge/beads";
     browser-session-mcp.url = "git+file:///home/x/Projects/browser-session-mcp";
     browser-session-mcp.inputs.nixpkgs.follows = "nixpkgs";
+    browser-session-mcp.inputs.crane.follows = "crane";
+    browser-session-mcp.inputs.flake-parts.follows = "flake-parts";
+    browser-session-mcp.inputs.rust-overlay.follows = "rust-overlay";
+    browser-session-mcp.inputs.treefmt-nix.follows = "treefmt-nix";
     ctpv.url = "github:xav-ie/ctpv-nix";
     flake-parts.url = "github:hercules-ci/flake-parts";
     generate-kaomoji.url = "github:xav-ie/generate-kaomoji";
     hardware.url = "github:nixos/nixos-hardware";
+    hardware.inputs.nixpkgs.follows = "nixpkgs";
     herdr.url = "github:xav-ie/herdr/nushell-completions";
     herdr.inputs.nixpkgs.follows = "nixpkgs-bleeding";
+    herdr.inputs.rust-overlay.follows = "rust-overlay";
     home-manager.url = "github:nix-community/home-manager";
     hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
+    # xdph pulls its own hyprgraphics, which duplicates the one hyprland already
+    # pins. Both come from hyprwm and release in lockstep, so point xdph at
+    # hyprland's copy. A follows target need not be a root input.
+    hyprland.inputs.xdph.inputs.hyprgraphics.follows = "hyprland/hyprgraphics";
     import-tree.url = "github:vic/import-tree";
     mcp-nixos.url = "github:utensils/mcp-nixos";
     mic-denoise.url = "git+ssh://git@github.com/xav-ie/mic-denoise";
@@ -27,23 +42,26 @@
     morrow.url = "git+ssh://git@github.com/xav-ie/morrow";
     morrow.inputs.nixpkgs.follows = "nixpkgs";
     morrow.inputs.ags.follows = "ags";
+    morrow.inputs.treefmt-nix.follows = "treefmt-nix";
     muscat.url = "github:xav-ie/Muscat";
     muscat.inputs.nixpkgs.follows = "nixpkgs";
     muscat.inputs.flake-utils.follows = "flake-utils";
-    himalaya-latest.url = "github:xav-ie/himalaya?ref=xav/fix-deprecation-warnings";
-    pimalaya-core.url = "github:pimalaya/core";
-    pimalaya-core.flake = false;
     neverest.url = "github:pimalaya/neverest";
+    neverest.inputs.fenix.follows = "fenix";
+    neverest.inputs.nixpkgs.follows = "nixpkgs";
     nix-auto-follow.url = "github:xav-ie/nix-auto-follow/feat-consolidation";
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
     nix-homebrew.inputs.brew-src.follows = "brew-src";
     nixpkgs-bleeding.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixpkgs-homeassistant.url = "github:nixos/nixpkgs/master";
+    nixpkgs-homeassistant.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-26.05";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nuenv.url = "github:xav-ie/nuenv";
     nufmt.url = "github:nushell/nufmt";
+    # Deliberately no `nufmt.inputs.nixpkgs.follows`: nufmt's flake pins
+    # rustPackages_1_97 by name, which this nixpkgs does not carry. Also listed
+    # in flake-edit.toml's ignore list so `just dedupe` stops re-adding it.
     openspec.url = "github:Fission-AI/OpenSpec";
     openspec.inputs.nixpkgs.follows = "nixpkgs";
     plover-flake.url = "github:openstenoproject/plover-flake";
@@ -56,8 +74,13 @@
     quadlet-nix.url = "github:SEIAROTg/quadlet-nix";
     ream.url = "git+ssh://git@github.com/xav-ie/ream";
     ream.inputs.nixpkgs.follows = "nixpkgs";
+    ream.inputs.flake-parts.follows = "flake-parts";
+    ream.inputs.treefmt-nix.follows = "treefmt-nix";
     sketchybar-icons.url = "github:xav-ie/sketchybar-icons";
     sketchybar-icons.inputs.nixpkgs.follows = "nixpkgs";
+    sketchybar-icons.inputs.flake-parts.follows = "flake-parts";
+    sketchybar-icons.inputs.nufmt.follows = "nufmt";
+    sketchybar-icons.inputs.treefmt-nix.follows = "treefmt-nix";
     sketchybar-src.url = "github:FelixKratz/SketchyBar/v2.23.0";
     sketchybar-src.flake = false;
     sops-nix.url = "github:Mic92/sops-nix";
@@ -71,11 +94,11 @@
     xdusk.url = "github:xav-ie/xdusk";
     xdusk.inputs.nixpkgs.follows = "nixpkgs";
     xdusk.inputs.treefmt-nix.follows = "treefmt-nix";
+    xdusk.inputs.flake-parts.follows = "flake-parts";
+    xdusk.inputs.import-tree.follows = "import-tree";
     systems.url = "github:xav-ie/dots-systems";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     zjstatus.url = "github:dj95/zjstatus";
-    # Swift is broken on Linux with GCC 14 (nixpkgs#462451), pin to last working version
-    nixpkgs-swift.url = "github:nixos/nixpkgs/3c3988cce18bf31db263dd0374e34cb65e696def";
     # TODO: figure out how to use from misterio and vimjoyer
     # impermanence.url = "github:nix-community/impermanence";
     # nix-colors.url = "github:misterio77/nix-colors";
@@ -86,14 +109,16 @@
     disko.inputs.nixpkgs.follows = "nixpkgs";
     terranix.url = "github:terranix/terranix";
     terranix.inputs.nixpkgs.follows = "nixpkgs";
+    terranix.inputs.flake-parts.follows = "flake-parts";
+    terranix.inputs.import-tree.follows = "import-tree";
+    terranix.inputs.systems.follows = "systems";
     fenix.url = "github:nix-community/fenix";
-    fenix-neverest.url = "github:soywod/fenix";
+    fenix.inputs.nixpkgs.follows = "nixpkgs";
+    fenix.inputs.rust-analyzer-src.follows = "rust-analyzer-src";
     flake-compat.url = "github:edolstra/flake-compat";
     flake-utils.url = "github:numtide/flake-utils";
     gitignore.url = "github:hercules-ci/gitignore.nix";
     nixpkgs-lib.url = "github:nix-community/nixpkgs.lib";
-    pimalaya-neverest.url = "github:xav-ie/nix?ref=xav/fix-warnings-neverest-compat";
-    pimalaya-neverest.flake = false;
     # Fork carrying the `fix(mastra): use dedicated postgres schema`
     # change. Revert to `github:gitroomhq/postiz-app/v2.21.6` (or
     # whatever release ships the fix) once it lands upstream.
@@ -148,7 +173,7 @@
     ralph-src.flake = false;
     simulstreaming-src.url = "github:ufal/SimulStreaming";
     simulstreaming-src.flake = false;
-    mcp-atlassian-src.url = "github:sooperset/mcp-atlassian/v0.21.0";
+    mcp-atlassian-src.url = "github:sooperset/mcp-atlassian/v0.23.1";
     mcp-atlassian-src.flake = false;
     slack-mcp-server.url = "github:korotovsky/slack-mcp-server/v1.3.0";
     slack-mcp-server.flake = false;
@@ -160,8 +185,6 @@
     executor-src.flake = false;
     bun-demincer-src.url = "github:xav-ie/bun-demincer/fix/linux-dataStart-byte-count";
     bun-demincer-src.flake = false;
-    clauhist-src.url = "github:lef237/clauhist";
-    clauhist-src.flake = false;
     macos-corner-fix-src.url = "github:m4rkw/macos-corner-fix/147f2708cb468475567139acbad7d714859a4b67";
     macos-corner-fix-src.flake = false;
     workspace-mcp-src.url = "github:gemini-cli-extensions/workspace/preview-2026-08-03";
@@ -172,7 +195,6 @@
     # no way around this :/
     alacritty-theme.inputs.flake-parts.follows = "flake-parts";
     alacritty-theme.inputs.nixpkgs.follows = "nixpkgs";
-    beads.inputs.flake-utils.follows = "flake-utils";
     beads.inputs.nixpkgs.follows = "nixpkgs";
     ctpv.inputs.flake-utils.follows = "flake-utils";
     ctpv.inputs.nixpkgs.follows = "nixpkgs";
@@ -181,21 +203,22 @@
     generate-kaomoji.inputs.nixpkgs.follows = "nixpkgs";
     gitignore.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    himalaya-latest.inputs.nixpkgs.follows = "nixpkgs";
     hyprland.inputs.nixpkgs.follows = "nixpkgs";
     hyprland.inputs.systems.follows = "systems";
+    hyprland.inputs.pre-commit-hooks.inputs.flake-compat.follows = "flake-compat";
     mcp-nixos.inputs.flake-parts.follows = "flake-parts";
     mcp-nixos.inputs.nixpkgs.follows = "nixpkgs";
-    fenix-neverest.inputs.nixpkgs.follows = "nixpkgs";
-    fenix-neverest.inputs.rust-analyzer-src.follows = "rust-analyzer-src";
     morlana.inputs.nixpkgs.follows = "nixpkgs";
-    neverest.inputs.fenix.follows = "fenix-neverest";
-    neverest.inputs.pimalaya.follows = "pimalaya-neverest";
+    # neverest takes no `follows`: it builds against the rust toolchain its own
+    # `fenix` input pins, and the vendored `io-imap` only compiles on rustc
+    # newer than 1.91.
+
     nix-auto-follow.inputs.nixpkgs.follows = "nixpkgs";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
     nuenv.inputs.nixpkgs.follows = "nixpkgs";
     nuenv.inputs.systems.follows = "systems";
     plover-flake.inputs.nixpkgs.follows = "nixpkgs";
+    plover-flake.inputs.treefmt-nix.follows = "treefmt-nix";
     rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
@@ -206,6 +229,7 @@
     virtual-headset.inputs.nuenv.follows = "nuenv";
     virtual-headset.inputs.systems.follows = "systems";
     virtual-headset.inputs.treefmt-nix.follows = "treefmt-nix";
+    virtual-headset.inputs.ags.follows = "ags";
     zjstatus.inputs.crane.follows = "crane";
     zjstatus.inputs.flake-utils.follows = "flake-utils";
     zjstatus.inputs.nixpkgs.follows = "nixpkgs";

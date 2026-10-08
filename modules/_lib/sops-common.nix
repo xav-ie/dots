@@ -126,7 +126,7 @@
     # Ensure that no one may read my key file
     system.activationScripts.preActivation =
       let
-        rootGroup = if pkgs.stdenv.isLinux then "root" else "wheel";
+        rootGroup = if pkgs.stdenv.hostPlatform.isLinux then "root" else "wheel";
       in
       {
         text = # sh

@@ -37,7 +37,7 @@
         # llvmpipe. Trade-off is Xwayland's usual caveats (scaling, IME).
         # Revisit once the upstream zink/NVIDIA bug is fixed.
         programs.ghostty.package =
-          if pkgs.stdenv.isLinux then
+          if pkgs.stdenv.hostPlatform.isLinux then
             pkgs.symlinkJoin {
               name = "ghostty-nvidia-x11";
               paths = [ pkgs.pkgs-bleeding.ghostty ];
@@ -60,10 +60,10 @@
               ''
                 # vim: set ft=sh:
                 # Empty values reset the configuration to the default value
-                ${lib.optionalString pkgs.stdenv.isDarwin ''
+                ${lib.optionalString pkgs.stdenv.hostPlatform.isDarwin ''
                   custom-shader = shaders/watersubtle-darwin.glsl
                   custom-shader-animation = true''}
-                ${lib.optionalString pkgs.stdenv.isLinux "background-opacity = 0.95"}
+                ${lib.optionalString pkgs.stdenv.hostPlatform.isLinux "background-opacity = 0.95"}
                 font-family = "${fonts.configs.ghostty.font-family-1}"
                 font-family = "${fonts.configs.ghostty.font-family-2}"
                 font-family = "${fonts.configs.ghostty.font-family-3}"
@@ -92,7 +92,7 @@
         ];
 
         # Linux: Install via Nix package (macOS uses Homebrew cask in darwinConfigurations)
-        home.packages = lib.optionals pkgs.stdenv.isLinux [ config.programs.ghostty.package ];
+        home.packages = lib.optionals pkgs.stdenv.hostPlatform.isLinux [ config.programs.ghostty.package ];
       };
     };
 }

@@ -23,7 +23,7 @@
           }
 
           # Linux-only: systemd service + Hyprland keybinding
-          (lib.mkIf pkgs.stdenv.isLinux {
+          (lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
             systemd.user.services.voxtype = {
               Unit = {
                 Description = "Voxtype voice-to-text daemon";

@@ -221,7 +221,8 @@ struct ContentView: View {
     .navigationSubtitle(
       input.map {
         "\(formatBytes(bytes($0))) · \(Duration.seconds(duration).formatted(.time(pattern: .minuteSecond)))"
-      } ?? "")
+      } ?? ""
+    )
     .dropDestination(for: URL.self) { urls, _ in
       guard let url = urls.first else { return false }
       load(url)

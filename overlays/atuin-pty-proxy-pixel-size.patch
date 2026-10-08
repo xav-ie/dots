@@ -1,0 +1,150 @@
+From c707058ba583f73d19a49c8d9afec50000457149 Mon Sep 17 00:00:00 2001
+From: Xavier Ruiz <github@xav.ie>
+Date: Mon, 21 Sep 2026 19:59:33 -0700
+Subject: [PATCH 1/2] fix(pty-proxy): forward terminal pixel size to the child
+ pty
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The pty was created (and resized on SIGWINCH) with pixel_width=0 /
+pixel_height=0, so TIOCGWINSZ inside the proxy reported no pixel
+dimensions. Programs that need the cell size in pixels (e.g. image.nvim)
+then fall back to an assumed 8x16 cell — far smaller than a HiDPI
+terminal's real cell — and render inline images too small.
+
+Query the controlling terminal with crossterm's window_size() (which
+includes pixel dimensions) and forward them at pty creation and on every
+SIGWINCH resize.
+---
+ crates/atuin-pty-proxy/src/runtime.rs | 49 ++++++++++++++++-----------
+ 1 file changed, 29 insertions(+), 20 deletions(-)
+
+diff --git a/crates/atuin-pty-proxy/src/runtime.rs b/crates/atuin-pty-proxy/src/runtime.rs
+index 338d4736..f2fb54c6 100644
+--- a/crates/atuin-pty-proxy/src/runtime.rs
++++ b/crates/atuin-pty-proxy/src/runtime.rs
+@@ -75,17 +75,27 @@ enum Error {
+     Io(#[from] std::io::Error),
+ }
+ 
++/// Query the active terminal size, including pixel dimensions.
++///
++/// Uses `window_size()` (rather than `size()`) so the child pty inherits the
++/// controlling terminal's pixel width/height; programs inside (e.g. image.nvim)
++/// derive the cell size in pixels via TIOCGWINSZ from those, and inline images
++/// render too small on HiDPI terminals when they're left at 0.
++fn query_size() -> std::io::Result<PtySize> {
++    let ws = terminal::window_size()?;
++
++    Ok(PtySize {
++        rows: ws.rows,
++        cols: ws.columns,
++        pixel_width: ws.width,
++        pixel_height: ws.height,
++    })
++}
++
+ fn run(options: RuntimeOptions) -> Result<(), Error> {
+-    let (cols, rows) = terminal::size()?;
++    let pty_size = query_size()?;
+     let pty_system = native_pty_system();
+-    let pair = pty_system
+-        .openpty(PtySize {
+-            rows,
+-            cols,
+-            pixel_width: 0,
+-            pixel_height: 0,
+-        })
+-        .map_err(|e| Error::OpenPty(e.into()))?;
++    let pair = pty_system.openpty(pty_size).map_err(|e| Error::OpenPty(e.into()))?;
+ 
+     // The PTY proxy server and the path of its socket.
+     let server_and_path: Option<(SocketServer, atuin_common::fs::RemoveOnDropPath)> = pair
+@@ -115,10 +125,11 @@ fn run(options: RuntimeOptions) -> Result<(), Error> {
+         .ok();
+ 
+     let (msg_tx, msg_rx) = mpsc::sync_channel::<Msg>(64);
+-    let _parser_handle = screen::spawn_parser_thread(rows, cols, msg_rx, screen::ParserOptions {
+-        command_capture: options.command_capture,
+-        debug_markers: options.debug_markers,
+-    });
++    let _parser_handle =
++        screen::spawn_parser_thread(pty_size.rows, pty_size.cols, msg_rx, screen::ParserOptions {
++            command_capture: options.command_capture,
++            debug_markers: options.debug_markers,
++        });
+ 
+     let socket_path = if let Some((server, path)) = server_and_path {
+         server.spawn(msg_tx.clone());
+@@ -233,14 +244,12 @@ fn spawn_resize_handler(
+ 
+     std::thread::spawn(move || {
+         for _ in signals.forever() {
+-            if let Ok((cols, rows)) = terminal::size() {
+-                let _ = master.resize(PtySize {
+-                    rows,
+-                    cols,
+-                    pixel_width: 0,
+-                    pixel_height: 0,
++            if let Ok(size) = query_size() {
++                let _ = master.resize(size);
++                let _ = resize_tx.send(Msg::Resize {
++                    rows: size.rows,
++                    cols: size.cols,
+                 });
+-                let _ = resize_tx.send(Msg::Resize { rows, cols });
+             }
+         }
+     });
+-- 
+2.51.2
+
+
+From 3c52fb765444461d5210479cb2b538758508a4e3 Mon Sep 17 00:00:00 2001
+From: Marko Vejnovic <marko@atuin.sh>
+Date: Mon, 21 Sep 2026 20:14:03 -0700
+Subject: [PATCH 2/2] deslop
+
+---
+ crates/atuin-pty-proxy/src/runtime.rs | 15 +++++++--------
+ 1 file changed, 7 insertions(+), 8 deletions(-)
+
+diff --git a/crates/atuin-pty-proxy/src/runtime.rs b/crates/atuin-pty-proxy/src/runtime.rs
+index f2fb54c6..cc90ad90 100644
+--- a/crates/atuin-pty-proxy/src/runtime.rs
++++ b/crates/atuin-pty-proxy/src/runtime.rs
+@@ -76,11 +76,6 @@ enum Error {
+ }
+ 
+ /// Query the active terminal size, including pixel dimensions.
+-///
+-/// Uses `window_size()` (rather than `size()`) so the child pty inherits the
+-/// controlling terminal's pixel width/height; programs inside (e.g. image.nvim)
+-/// derive the cell size in pixels via TIOCGWINSZ from those, and inline images
+-/// render too small on HiDPI terminals when they're left at 0.
+ fn query_size() -> std::io::Result<PtySize> {
+     let ws = terminal::window_size()?;
+ 
+@@ -125,11 +120,15 @@ fn run(options: RuntimeOptions) -> Result<(), Error> {
+         .ok();
+ 
+     let (msg_tx, msg_rx) = mpsc::sync_channel::<Msg>(64);
+-    let _parser_handle =
+-        screen::spawn_parser_thread(pty_size.rows, pty_size.cols, msg_rx, screen::ParserOptions {
++    let _parser_handle = screen::spawn_parser_thread(
++        pty_size.rows,
++        pty_size.cols,
++        msg_rx,
++        screen::ParserOptions {
+             command_capture: options.command_capture,
+             debug_markers: options.debug_markers,
+-        });
++        },
++    );
+ 
+     let socket_path = if let Some((server, path)) = server_and_path {
+         server.spawn(msg_tx.clone());
+-- 
+2.51.2
+

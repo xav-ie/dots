@@ -20,8 +20,9 @@
           # AI chat client
           claude.enable = true;
           claude.nativeInstall = false;
-          # fuzzy finder
+          # fuzzy finder; atuin owns Ctrl-R, so fzf's history widget stays unbound
           fzf.enable = true;
+          fzf.historyWidget.nushell.command = "";
           # GitHub CLI + declaratively-managed extensions
           gh = {
             enable = true;
@@ -48,8 +49,10 @@
               pi-show-diffs
             ];
           };
-          # automatic merge conflicts resolver
+          # automatic merge conflicts resolver, wired into both VCSes
           mergiraf.enable = true;
+          mergiraf.enableGitIntegration = true;
+          mergiraf.enableJujutsuIntegration = true;
           # autonomous AI agent loop
           ralph.enable = true;
           # fast grep
@@ -67,8 +70,9 @@
           # fall-through); --no-cmd keeps zoxide's dir-tracking hook but drops its
           # own z/zi aliases, which would otherwise load *after* and shadow ours.
           zoxide.options = [ "--no-cmd" ];
-          # file manager
+          # file manager; `yy` is the cwd-preserving shell wrapper
           yazi.enable = true;
+          yazi.shellWrapperName = "yy";
           worktrunk.enable = true;
         };
         home = {
@@ -117,7 +121,6 @@
               base-ref
               browse
               cache-command
-              clauhist
               ff
               firefox-router
               flint

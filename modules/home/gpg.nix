@@ -17,7 +17,12 @@
       gpg-unlock =
         pkgs.writeShellScriptBin "gpg-unlock" # sh
           ''
-            for k in ${gpgKeys |> lib.attrValues |> map (key: key.id) |> lib.concatStringsSep " "}; do
+            for k in ${
+              gpgKeys
+              |> lib.attrValues
+              |> map (key: key.id)
+              |> lib.concatStringsSep " "
+            }; do
               # `--pinentry-mode cancel` fails rather than prompting, so only
               # keys the agent has not cached yet cost you a passphrase.
               echo unlock | ${pkgs.gnupg}/bin/gpg --pinentry-mode cancel --clearsign -u "$k" -o /dev/null 2>/dev/null ||

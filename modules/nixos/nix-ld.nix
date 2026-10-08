@@ -91,20 +91,20 @@
           vulkan-loader
           webkitgtk_4_1
           woff2.lib
-          xorg.libICE
-          xorg.libX11
-          xorg.libxcb
-          xorg.libXcomposite
-          xorg.libXdamage
-          xorg.libXext
-          xorg.libXfixes
-          xorg.libXi
-          xorg.libxkbfile
-          xorg.libXrandr
-          xorg.libXrender
-          xorg.libXScrnSaver
-          xorg.libxshmfence
-          xorg.libXtst
+          libice
+          libx11
+          libxcb
+          libxcomposite
+          libxdamage
+          libxext
+          libxfixes
+          libxi
+          libxkbfile
+          libxrandr
+          libxrender
+          libxscrnsaver
+          libxshmfence
+          libxtst
           zlib
           (rigsofrods-bin.overrideAttrs {
             # nix-ld only looks at top level lib and share

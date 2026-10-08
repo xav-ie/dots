@@ -50,7 +50,9 @@
         border: 1px solid var(--line);
         border-radius: 6px;
         padding: 10px;
-        font: 13px/1.5 ui-monospace, monospace;
+        font:
+          13px/1.5 ui-monospace,
+          monospace;
       }
       button {
         background: var(--accent);
@@ -399,7 +401,9 @@
             el(
               "details",
               {},
-              el("summary", { textContent: `boosted ${boosted.length} phrases` }),
+              el("summary", {
+                textContent: `boosted ${boosted.length} phrases`,
+              }),
               el("div", {}, ...boosted.map(chip)),
             ),
           );
@@ -438,7 +442,10 @@
       async function vocab() {
         where.textContent = "/ vocabulary";
         const { phrases } = await api("/api/vocab");
-        const box = el("textarea", { value: phrases.join("\n"), spellcheck: false });
+        const box = el("textarea", {
+          value: phrases.join("\n"),
+          spellcheck: false,
+        });
         const status = el("span", { className: "muted" });
         const save = el("button", {
           textContent: "Save",
@@ -469,7 +476,11 @@
       async function route() {
         const m = location.hash.match(/^#\/s\/([0-9a-f-]{36})$/);
         try {
-          await (location.hash === "#/vocab" ? vocab() : m ? show(m[1]) : list());
+          await (location.hash === "#/vocab"
+            ? vocab()
+            : m
+              ? show(m[1])
+              : list());
         } catch (e) {
           app.replaceChildren(el("pre", { textContent: String(e) }));
         }

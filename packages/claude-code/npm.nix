@@ -99,8 +99,8 @@ stdenv.mkDerivation {
     nodejs_25
     nushell
   ]
-  ++ lib.optionals stdenv.isLinux [ autoPatchelfHook ]
-  ++ lib.optionals stdenv.isDarwin [ rcodesign ];
+  ++ lib.optionals stdenv.hostPlatform.isLinux [ autoPatchelfHook ]
+  ++ lib.optionals stdenv.hostPlatform.isDarwin [ rcodesign ];
 
   installPhase = ''
     runHook preInstall
@@ -116,7 +116,7 @@ stdenv.mkDerivation {
     # splice.nu edits bytes inside the __BUN segment, so segment offsets stay
     # valid but the original adhoc signature now covers stale bytes. macOS
     # arm64 SIGKILLs binaries with broken signatures, so re-sign with rcodesign.
-    ${lib.optionalString (stdenv.isDarwin && patches != [ ]) ''
+    ${lib.optionalString (stdenv.hostPlatform.isDarwin && patches != [ ]) ''
       rcodesign sign "$out/bin/.claude-wrapped"
     ''}
 

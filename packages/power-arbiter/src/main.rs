@@ -390,11 +390,7 @@ fn print_status() {
         );
     }
     let total = s.active_s + s.idle_s;
-    let pct = if total > 0 {
-        s.active_s * 100 / total
-    } else {
-        0
-    };
+    let pct = (s.active_s * 100).checked_div(total).unwrap_or(0);
     println!(
         "  since start: active {} / idle {} ({pct}% active), {} transitions, {} http wakes",
         fmt_dur(s.active_s),

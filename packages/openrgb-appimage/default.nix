@@ -1,14 +1,13 @@
 {
   appimageTools,
-  coreutils,
   fetchurl,
-  runCommand,
+  openrgb,
   stdenv,
 }:
 let
   pname = "openrgb";
-  release = "0.9";
-  releaseCommit = "b5f46e3";
+  release = "1.0";
+  releaseCommit = "81bbe18";
   arch = builtins.elemAt (builtins.split "-" stdenv.hostPlatform.system) 0;
   version =
     [
@@ -19,26 +18,15 @@ let
     |> builtins.concatStringsSep "_";
 
   src = fetchurl {
-    url = "https://openrgb.org/releases/release_${release}/OpenRGB_${version}.AppImage";
-    hash = "sha256-tVMBABLTo03AtXDhE410ZvAPCIFYzPn1SaUtiNYbHsA=";
+    url = "https://codeberg.org/OpenRGB/OpenRGB/releases/download/release_${release}/OpenRGB_${version}.AppImage";
+    hash = "sha256-p32f6pqx5Z5ewrXOxKsi1Q8EM1lMToPrE95OXDz63r8=";
   };
 
-  contents = appimageTools.extract { inherit pname version src; };
-
-  # The AppImage ships the device udev rules at usr/lib/udev/rules.d, which
-  # NixOS's services.udev.packages doesn't scan. Surface them at lib/udev so
-  # they get installed — needed for serverless `openrgb -p` to reach devices
-  # without root (uaccess ACLs) when the --server daemon isn't running. The
-  # bundled rules call /bin/chmod (ASUS TUF laptop lines); NixOS's udev rule
-  # validator rejects non-store absolute paths, so rewrite it to coreutils.
-  udevRules = runCommand "openrgb-udev-rules" { } ''
-    install -Dm444 ${contents}/usr/lib/udev/rules.d/60-openrgb.rules \
-      $out/lib/udev/rules.d/60-openrgb.rules
-    substituteInPlace $out/lib/udev/rules.d/60-openrgb.rules \
-      --replace-quiet /bin/chmod ${coreutils}/bin/chmod
-  '';
-
-  rulesFile = "${udevRules}/lib/udev/rules.d/60-openrgb.rules";
+  # The 1.0 AppImage no longer bundles the device udev rules, so take nixpkgs'
+  # openrgb copy (same release, already store-path-patched for the udev rule
+  # validator) — needed for serverless `openrgb -p` to reach devices without
+  # root (uaccess ACLs) when the --server daemon isn't running.
+  rulesFile = "${openrgb}/lib/udev/rules.d/60-openrgb.rules";
 in
 appimageTools.wrapType2 {
   inherit pname version src;

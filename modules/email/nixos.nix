@@ -68,37 +68,27 @@
           passFile,
           default ? false,
         }:
+        # Gmail is the account's only source and the local pimdir store its
+        # destination, so the two merge two-way and `retain` keeps bodies on
+        # disk. The store lives under $XDG_STATE_HOME/neverest/${name}.
         # toml
         ''
           [accounts.${name}]
           default = ${if default then "true" else "false"}
-          folder.filters.include = [${
+          retain = true
+
+          imap.server = "imaps://imap.gmail.com:993"
+          imap.sasl.plain.username = "${addressPlaceholder}"
+          imap.sasl.plain.password.command = "${pkgs.coreutils}/bin/cat ${passFile}"
+
+          imap.collection.filter.include = [${
             lib.concatMapStringsSep ", " (f: "\"${f.gmailRemote}\"") emailData.folders
           }]
 
-          left.backend.type = "maildir"
-          left.backend.root-dir = "/home/${defaultUser}/.mail/${name}"
-
-          left.folder.permissions.create = true
-          left.folder.permissions.delete = true
-          left.flag.permissions.update = true
-          left.message.permissions.create = true
-          left.message.permissions.delete = true
-
-          right.backend.type = "imap"
-          right.backend.host = "imap.gmail.com"
-          right.backend.port = 993
-          right.backend.encryption = "tls"
-          right.backend.login = "${addressPlaceholder}"
-          right.backend.auth.type = "password"
-          right.backend.auth.cmd = "${pkgs.coreutils}/bin/cat ${passFile}"
-
-          right.folder.permissions.delete = false
-          right.message.permissions.delete = false
-
-          ${lib.concatMapStrings (
-            f: "right.folder.aliases.${f.name} = \"${f.gmailRemote}\"\n"
-          ) emailData.folders}
+          imap.collection.create = false
+          imap.collection.delete = false
+          imap.item.create = true
+          imap.item.delete = false
         '';
     in
     {

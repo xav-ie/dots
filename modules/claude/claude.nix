@@ -302,7 +302,7 @@
                 # sandbox-exec profile. Run outside the chroot to scrape
                 # `--help`. Linux's sandbox permits JIT, so keep it sandboxed
                 # there (requires sandbox = "relaxed", set in modules/common.nix).
-                __noChroot = pkgs.stdenv.isDarwin;
+                __noChroot = pkgs.stdenv.hostPlatform.isDarwin;
               }
               ''
                 export HOME=$(mktemp -d)
@@ -442,7 +442,7 @@
             cfg.pluginSyncPackage
             updateMarketplacesPackage
           ]
-          ++ lib.optionals pkgs.stdenv.isLinux [
+          ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [
             pkgs.pkgs-mine.claude-yolo
             pkgs.pkgs-mine.claude-overlay
           ];

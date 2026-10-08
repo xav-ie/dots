@@ -65,6 +65,7 @@
         };
 
         home.pointerCursor = {
+          enable = true;
           name = "phinger-cursors-dark";
           package = pkgs.phinger-cursors;
           size = 36;
@@ -317,6 +318,8 @@
           {
             enable = true;
             package = hyprland;
+            # `settings` below is written as hyprlang, not Lua.
+            configType = "hyprlang";
             systemd.enable = true;
             xwayland.enable = true;
             settings = {

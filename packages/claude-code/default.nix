@@ -32,7 +32,10 @@ stdenv.mkDerivation {
   # Stripping corrupts the bundled binary
   dontStrip = true;
 
-  nativeBuildInputs = [ makeBinaryWrapper ] ++ lib.optionals stdenv.isLinux [ autoPatchelfHook ];
+  nativeBuildInputs = [
+    makeBinaryWrapper
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isLinux [ autoPatchelfHook ];
 
   installPhase = ''
     mkdir -p $out/bin

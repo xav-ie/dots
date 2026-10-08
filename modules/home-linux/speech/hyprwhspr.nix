@@ -56,7 +56,7 @@
           }
 
           # Linux-only: systemd service + Hyprland keybinding to consume the shortcut
-          (lib.mkIf pkgs.stdenv.isLinux {
+          (lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
             wayland.windowManager.hyprland.settings = {
               # Consume SUPER+G so it doesn't pass through to the focused window
               bind = [

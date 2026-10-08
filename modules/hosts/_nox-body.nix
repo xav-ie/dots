@@ -266,21 +266,23 @@ in
             focus = "${pkgs.pkgs-mine.focus-daemon}/bin/focusd";
             move-pip = "${pkgs.pkgs-mine.move-pip}/bin/move-pip";
             confirm-open = "${pkgs.pkgs-mine.confirm-open}/bin/confirm-open";
-            spotlight-clipboard = pkgs.writeText "spotlight-clipboard.js" ''
-              ObjC.import('CoreGraphics');
-              function key(code, flags = 0x100010) {
-                for (const down of [true, false]) {
-                  const e = $.CGEventCreateKeyboardEvent($(), code, down);
-                  $.CGEventSetFlags(e, flags);
-                  $.CGEventPost($.kCGHIDEventTap, e);
-                }
-              }
-              key(49); // space
-              delay(0.4);
-              key(21); // 4
-              delay(0.6);
-              key(125, 0xa00000); // down (fn+numpad flags, like a real arrow): select first entry
-            '';
+            spotlight-clipboard =
+              pkgs.writeText "spotlight-clipboard.js" # javascript
+                ''
+                  ObjC.import('CoreGraphics');
+                  function key(code, flags = 0x100010) {
+                    for (const down of [true, false]) {
+                      const e = $.CGEventCreateKeyboardEvent($(), code, down);
+                      $.CGEventSetFlags(e, flags);
+                      $.CGEventPost($.kCGHIDEventTap, e);
+                    }
+                  }
+                  key(49); // space
+                  delay(0.4);
+                  key(21); // 4
+                  delay(0.6);
+                  key(125, 0xa00000); // down (fn+numpad flags, like a real arrow): select first entry
+                '';
           in
           # sh
           ''

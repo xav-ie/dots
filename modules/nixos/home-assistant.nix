@@ -15,38 +15,6 @@
       };
 
       home-assistant-custom = pkgs-homeassistant.home-assistant.override {
-        packageOverrides = self: _: {
-          govee-local-api = pkgs-homeassistant.python313Packages.govee-local-api.overridePythonAttrs (_: {
-            version = "2.0.2";
-            src = pkgs.fetchFromGitHub {
-              owner = "akash329d";
-              repo = "govee-local-api";
-              rev = "develop";
-              hash = "sha256-ChI/rIZwT/YMXFD83N1/cIIYkio318S3p1IgVu+P1sY=";
-            };
-          });
-          protobuf = pkgs-homeassistant.python313Packages.protobuf.overridePythonAttrs (_old: {
-            version = "6.31.1";
-            src = pkgs.fetchPypi {
-              pname = "protobuf";
-              version = "6.31.1";
-              hash = "sha256-2MrEyYLwuVek3HOoDi6iT6sI5nnA3p3rg19KEtaaypo=";
-            };
-          });
-          pyatv =
-            (pkgs-homeassistant.python313Packages.pyatv.override {
-              inherit (self) protobuf;
-            }).overridePythonAttrs
-              (_old: {
-                version = "0.16.1";
-                src = pkgs.fetchFromGitHub {
-                  owner = "postlund";
-                  repo = "pyatv";
-                  rev = "v0.16.1";
-                  hash = "sha256-b5u9u5CD/1W422rCxHvoyBqT5CuBAh68/EUBzNDcXoE=";
-                };
-              });
-        };
         extraPackages =
           ps: with ps; [
             getmac

@@ -13,8 +13,8 @@ const MIN_WIDTH = 26
 
 def render [state: string] {
   let color = match $state {
-    "on" => "0xff30d158"
-    "error" => "0xffffa000"
+    on => "0xff30d158"
+    error => "0xffffa000"
     _ => "0xffffffff"
   }
   let out = $"($CACHE)/bar-($state)-($POINT_SIZE).png"
@@ -37,7 +37,13 @@ def main [] {
       if $x == null { mic-denoise panel } else { mic-denoise panel $"($x)" }
     }
     _ => {
-      let state = (try { open $"($CACHE)/state" | str trim } catch { "off" })
+      let state = (
+        try {
+          open $"($CACHE)/state" | str trim
+        } catch {
+          "off"
+        }
+      )
       sketchybar --set $env.NAME $"icon.background.image=(render $state)"
     }
   }
