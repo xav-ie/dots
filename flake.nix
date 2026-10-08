@@ -84,7 +84,7 @@
     sketchybar-src.url = "github:FelixKratz/SketchyBar/v2.23.0";
     sketchybar-src.flake = false;
     sops-nix.url = "github:Mic92/sops-nix";
-    tether-link.url = "git+ssh://git@github.com/xav-ie/tether-link";
+    tether-link.url = "git+ssh://git@github.com/xav-ie/TetherLink";
     tether-link.inputs.nixpkgs.follows = "nixpkgs";
     uv2nix.url = "github:pyproject-nix/uv2nix";
     uv2nix.inputs.nixpkgs.follows = "nixpkgs";
