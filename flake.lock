@@ -2104,11 +2104,11 @@
         "rev": "13361b9cd6901382fd6e2fd3ea7dadd97aba0e12",
         "revCount": 35,
         "type": "git",
-        "url": "ssh://git@github.com/xav-ie/tether-link"
+        "url": "ssh://git@github.com/xav-ie/TetherLink"
       },
       "original": {
         "type": "git",
-        "url": "ssh://git@github.com/xav-ie/tether-link"
+        "url": "ssh://git@github.com/xav-ie/TetherLink"
       }
     },
     "treefmt-nix": {
