@@ -146,7 +146,6 @@
               pgpod
               pr-summary
               searcher
-              softap-ie
               toggle-theme
               tsc-filter
               uair-toggle-and-notify
