@@ -8,11 +8,14 @@ reach the other backends' secrets in this container.
 
 import asyncio
 import json
+import logging
 import os
 import time
 import uuid
 
 from mcp.server.fastmcp import FastMCP
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_MODEL = os.environ.get("AGENT_MODEL", "sonnet")
 TIMEOUT = 600
@@ -64,9 +67,9 @@ async def run_claude(prompt, system, schema, model):
     )
     try:
         out, err = await asyncio.wait_for(proc.communicate(prompt.encode()), TIMEOUT)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         proc.kill()
-        raise RuntimeError(f"claude timed out after {TIMEOUT}s")
+        raise RuntimeError(f"claude timed out after {TIMEOUT}s") from None
     if proc.returncode != 0:
         raise RuntimeError(f"claude exited {proc.returncode}: {(err or out).decode().strip()}")
     res = json.loads(out)
@@ -76,10 +79,13 @@ async def run_claude(prompt, system, schema, model):
 
 
 async def track(job, coro):
+    # Catches everything on purpose: any escaping failure would leave the job
+    # polling as "running" forever, so it has to land in the job's own record.
     try:
         job["result"] = await coro
         job["status"] = "done"
     except Exception as e:
+        logger.debug("job %s failed", job.get("id"), exc_info=True)
         job["error"] = str(e)
         job["status"] = "error"
     job["finished"] = time.time()
@@ -106,7 +112,8 @@ async def ask(prompt: str, system: str = "", schema: dict | None = None, model: 
 async def start(prompt: str, system: str = "", schema: dict | None = None, model: str = "") -> dict:
     """Start the same run as `ask` in the background and return { id } immediately.
 
-    Poll `get` with the id for the result. Jobs live until the server restarts.
+    Pass that id to `get` as `job_id` for the result. Jobs live until the
+    server restarts.
     """
     job_id = uuid.uuid4().hex[:12]
     job = jobs[job_id] = {"id": job_id, "status": "running", "started": time.time(), "prompt": prompt[:120]}
@@ -121,15 +128,16 @@ def view(job, full):
 
 
 @mcp.tool()
-async def get(id: str, wait: int = 0) -> dict:
+async def get(job_id: str, wait: int = 0) -> dict:
     """Status of a background job: { id, status: running|done|error, elapsed_s, result?, error? }.
 
+    job_id: the `id` returned by `start`.
     wait: seconds (max 60) to hold the request while the job is still running,
     so clients without timers can poll in a plain loop.
     """
-    if id not in jobs:
-        raise ValueError(f"unknown job {id}")
-    job = jobs[id]
+    if job_id not in jobs:
+        raise ValueError(f"unknown job {job_id}")
+    job = jobs[job_id]
     if wait > 0 and job["status"] == "running":
         await asyncio.wait({job["task"]}, timeout=min(wait, 60))
     return view(job, True)

@@ -1,0 +1,37 @@
+# Pin the lint policy. Without this file ruff's own defaults ARE the policy, so a
+# nixpkgs ruff bump silently redefines it — 0.14 → 0.16 added BLE/S/ISC/SIM/UP/I
+# to the defaults and turned a clean tree into 22 errors mid-rebuild.
+#
+# `extend-select` rather than `select`: keep ruff's defaults (which already span
+# a broad set, though only a subset of rules within each group) and add to them.
+# The oldest runtime any of these files actually execute under: scribe pins
+# python312 (`modules/nixos/scribe/scribe.nix`), while the mcp-proxy servers get
+# 3.14 and discord-mcp 3.13. Claiming a newer floor here would let ruff suggest
+# rewrites that are wrong on 3.12 — `UP041` in particular, since
+# `asyncio.TimeoutError` is only an alias of the builtin from 3.11 on.
+target-version = "py312"
+
+[lint]
+extend-select = [
+  "A", # builtin shadowing
+  "ARG", # unused arguments
+  "B", # bugbear — real bug patterns, the highest value per fix here
+  "C4", # comprehensions
+  "DTZ", # naive datetimes
+  "LOG", # logging misuse
+  "N", # pep8 naming
+  "PERF", # performance antipatterns
+  "RET", # returns
+  "RUF", # ruff's own
+
+]
+# Candidates deliberately left off, with the violation count each would add
+# today, so the trade is visible rather than rediscovered:
+#   "PTH"   12  pathlib over os.path — good hygiene, worth doing next
+#   "EM"    14  exception messages in variables
+#   "TRY"   15  exception-handling style
+#   "PL"    18  pylint; includes too-many-arguments style limits
+#   "T20"    9  bans `print` — wrong here, these are CLI scripts where print is the output
+#   "E501"  46  line length; the formatter's job, not the linter's
+#   "D"    109  docstrings; too noisy for 12 small scripts
+#   "ANN"  145  annotations; same

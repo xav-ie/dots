@@ -1,5 +1,6 @@
 import glob
 import json
+import logging
 import os
 import pathlib
 import shutil
@@ -12,12 +13,18 @@ from urllib.parse import urlsplit
 
 RULES_PATH = os.environ.get("FIREFOX_ROUTER_RULES") or "/run/secrets/firefox-router/rules"
 
+# This runs as the handler for every link click, so every lookup below degrades
+# to "no opinion" rather than raising: a link that opens in the default profile
+# beats a link that does not open. The debug logs are the only trace of why.
+logger = logging.getLogger(__name__)
+
 
 def load_rules():
     try:
         with open(RULES_PATH) as f:
             return json.load(f)
     except Exception:
+        logger.debug("unreadable rules at %s", RULES_PATH, exc_info=True)
         return None
 
 
@@ -37,6 +44,7 @@ def store_id(root):
     try:
         cp.read(ini)
     except Exception:
+        logger.debug("unreadable profiles.ini at %s", ini, exc_info=True)
         return None
     fallback = None
     for sec in cp.sections():
@@ -69,12 +77,13 @@ def profile_dir(root, name):
     if not db:
         return None
     try:
-        con = sqlite3.connect("file:%s?mode=ro&immutable=1" % db, uri=True)
+        con = sqlite3.connect(f"file:{db}?mode=ro&immutable=1", uri=True)
         row = con.execute(
             "SELECT path FROM Profiles WHERE name = ?", (name,)
         ).fetchone()
         con.close()
     except Exception:
+        logger.debug("profile lookup failed for %r in %s", name, db, exc_info=True)
         return None
     if not row or not row[0]:
         return None
@@ -146,15 +155,14 @@ def main():
             pdir = profile_dir(root, name)
             if pdir:
                 args = ["--profile", pdir, "--profiles-activate"]
-        launch(ff, args + [url])
+        launch(ff, [*args, url])
 
 
 def launch(ff, args):
-    devnull = open(os.devnull, "wb")
     subprocess.Popen(
-        [ff] + args,
-        stdout=devnull,
-        stderr=devnull,
+        [ff, *args],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
         start_new_session=True,
     )
 

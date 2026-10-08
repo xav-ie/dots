@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 
 import discord
 
 from .client import get_client
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -115,10 +118,10 @@ def _is_truly_unread(
 
     if effective == discord.NotificationLevel.all_messages:
         return True, badge
-    elif effective == discord.NotificationLevel.only_mentions:
+    if effective == discord.NotificationLevel.only_mentions:
         return badge > 0, badge
-    else:  # nothing / none
-        return False, 0
+    # nothing / none
+    return False, 0
 
 
 def _channel_display_name(ch: discord.abc.Messageable) -> str:
@@ -166,8 +169,8 @@ async def send_message(channel_id: str, content: str) -> str:
     if rs is not None:
         try:
             await rs.ack(msg.id)
-        except Exception:
-            pass  # Non-critical; don't fail the send
+        except Exception:  # non-critical: the send itself already succeeded
+            logger.debug("ack failed for message %s", msg.id, exc_info=True)
 
     return f"Message sent (id={msg.id}) in #{getattr(channel, 'name', channel_id)}"
 
@@ -188,9 +191,7 @@ async def read_messages(channel_id: str, limit: int = 10) -> str:
         channel = await client.fetch_channel(int(channel_id))
 
     limit = min(max(1, limit), 100)
-    messages: list[discord.Message] = []
-    async for msg in channel.history(limit=limit):
-        messages.append(msg)
+    messages: list[discord.Message] = [msg async for msg in channel.history(limit=limit)]
 
     if not messages:
         return "No messages found."
@@ -260,9 +261,10 @@ async def list_servers() -> str:
     if not client.guilds:
         return "You are not in any servers."
 
-    lines: list[str] = []
-    for guild in sorted(client.guilds, key=lambda g: g.name.lower()):
-        lines.append(f"- {guild.name}  (id={guild.id}, members={guild.member_count})")
+    lines: list[str] = [
+        f"- {guild.name}  (id={guild.id}, members={guild.member_count})"
+        for guild in sorted(client.guilds, key=lambda g: g.name.lower())
+    ]
     return "\n".join(lines)
 
 
@@ -368,9 +370,7 @@ async def list_server_unread(server_id: str) -> str:
 
         # Fetch last few messages as preview
         try:
-            messages: list[discord.Message] = []
-            async for msg in ch.history(limit=5):
-                messages.append(msg)
+            messages: list[discord.Message] = [msg async for msg in ch.history(limit=5)]
 
             if messages:
                 for msg in reversed(messages):
@@ -382,7 +382,8 @@ async def list_server_unread(server_id: str) -> str:
                 sections.append("    (no recent messages)")
         except discord.Forbidden:
             sections.append("    (no access)")
-        except Exception as e:
+        except Exception as e:  # one bad channel must not sink the whole listing
+            logger.debug("channel scan failed", exc_info=True)
             sections.append(f"    (error: {e})")
 
     return f"Unread channels in {guild.name}:\n" + "\n".join(sections)
@@ -474,7 +475,7 @@ async def list_all_unread_servers() -> str:
                 (
                     unread_count,
                     f"- {guild.name}: {unread_count} unread"
-                    f"{mention_str}  (server_id={guild.id})",
+                    + f"{mention_str}  (server_id={guild.id})",
                 )
             )
 
@@ -517,7 +518,7 @@ async def list_unread_messages() -> str:
                 (
                     rs.badge_count,
                     f"- {name} ({username})  "
-                    f"(channel_id={ch.id}, user_id={user_id}, unread={rs.badge_count})",
+                    + f"(channel_id={ch.id}, user_id={user_id}, unread={rs.badge_count})",
                 )
             )
         elif isinstance(ch, discord.GroupChannel):
@@ -547,9 +548,12 @@ async def list_unread_messages() -> str:
         # Skip mentions we've already read
         ch = msg.channel
         rs = getattr(ch, "read_state", None)
-        if rs is not None and rs.last_acked_id is not None:
-            if msg.id <= rs.last_acked_id:
-                continue
+        if (
+            rs is not None
+            and rs.last_acked_id is not None
+            and msg.id <= rs.last_acked_id
+        ):
+            continue
 
         ts = msg.created_at.strftime("%Y-%m-%d %H:%M")
         author = msg.author.display_name
@@ -592,7 +596,8 @@ async def mark_as_read(channel_ids: list[str]) -> str:
         if channel is None:
             try:
                 channel = await client.fetch_channel(cid)
-            except Exception:
+            except Exception:  # unreachable channel: report it and keep going
+                logger.debug("fetch_channel failed for %s", cid_str, exc_info=True)
                 results.append(f"- Channel {cid_str}: not found, skipped")
                 continue
 
@@ -613,9 +618,10 @@ async def mark_as_read(channel_ids: list[str]) -> str:
     if states:
         try:
             await asyncio.wait_for(client.http.ack_bulk(states), timeout=15)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             results.append("  (warning: bulk ack timed out, some may not be marked)")
         except Exception as e:
+            logger.debug("bulk ack failed", exc_info=True)
             results.append(f"  (warning: bulk ack failed: {e})")
 
     if not results:
@@ -709,12 +715,13 @@ async def mark_server_as_read(server_ids: list[str]) -> str:
             batch = all_states[i : i + 100]
             try:
                 await asyncio.wait_for(client.http.ack_bulk(batch), timeout=15)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 results.append(
                     f"  (batch {i // 100 + 1} timed out, "
                     f"{len(batch)} channels may not be marked)"
                 )
             except Exception as e:
+                logger.debug("batch ack %s failed", i // 100 + 1, exc_info=True)
                 results.append(f"  (batch {i // 100 + 1} failed: {e})")
 
         for name, count in guild_counts:

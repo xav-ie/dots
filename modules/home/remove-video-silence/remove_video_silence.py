@@ -1,7 +1,9 @@
 import sys
-from moviepy.editor import concatenate_videoclips, VideoFileClip
+
+from moviepy.editor import VideoFileClip, concatenate_videoclips
 from pydub import AudioSegment
 from pydub.silence import detect_nonsilent
+
 
 def remove_silence(input_video, output_video, silence_threshold=-50, min_silence_len=1000):
     # Load video
