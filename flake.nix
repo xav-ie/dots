@@ -160,7 +160,7 @@
     glsl_analyzer.flake = false;
     glsl_analyzer.url = "github:xav-ie/glsl_analyzer/format";
     brew-src.flake = false;
-    brew-src.url = "github:Homebrew/brew/6.0.9";
+    brew-src.url = "github:Homebrew/brew/7.0.4";
     homebrew-bundle.flake = false;
     homebrew-bundle.url = "github:homebrew/homebrew-bundle";
     homebrew-cask.flake = false;
