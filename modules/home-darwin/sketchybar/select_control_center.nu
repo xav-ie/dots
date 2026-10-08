@@ -31,7 +31,7 @@ export def find_item [item: string] {
 # click the item in control center with the given name
 export def select_item [item: string] {
   let index = (find_item $item)
-  osascript -e $"tell application \"System Events\" to tell process \"Control Center\" to perform action \"AXPress\" of menu bar item ($index) of menu bar 1" | ignore
+  menubar-reveal osascript -e $"tell application \"System Events\" to tell process \"Control Center\" to perform action \"AXPress\" of menu bar item ($index) of menu bar 1" | ignore
 }
 
 # select the item in control center with the given name
