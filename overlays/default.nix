@@ -166,10 +166,13 @@ in
       # silently drifting. fetchpatch re-normalizes GitHub's generated diff so the
       # output hash is stable unless the content actually changes. v2.23.0 matches
       # nixpkgs' base (no extra nixpkgs patches to preserve).
-      # Version string is left as-is: sketchybar bakes "v2.23.0" into its
-      # --version output, and nixpkgs' versionCheckPhase greps for it, so a
-      # suffixed version would fail the check.
+      # `version` has to track the pin, not nixpkgs: versionCheckPhase greps the
+      # attr's own version out of `sketchybar --version`, which reports the tag
+      # baked into the source. Letting nixpkgs' version ride broke the build the
+      # moment it moved to 2.24.0. Bumping the pin means re-cutting both patches
+      # against the new tag.
       sketchybar = prev.sketchybar.overrideAttrs (old: {
+        version = "2.23.0";
         src = inputs.sketchybar-src;
         patches = (old.patches or [ ]) ++ [
           # Align right/center text by the typographic advance width instead of
