@@ -16,7 +16,13 @@
   alsa-lib,
   mesa,
   systemdLibs,
-  xorg,
+  libx11,
+  libxcb,
+  libxcomposite,
+  libxdamage,
+  libxext,
+  libxfixes,
+  libxrandr,
 }:
 let
   version = "154.0.8037.92";
@@ -58,13 +64,13 @@ stdenv.mkDerivation {
     alsa-lib
     mesa
     systemdLibs
-    xorg.libX11
-    xorg.libXcomposite
-    xorg.libXdamage
-    xorg.libXext
-    xorg.libXfixes
-    xorg.libXrandr
-    xorg.libxcb
+    libx11
+    libxcomposite
+    libxdamage
+    libxext
+    libxfixes
+    libxrandr
+    libxcb
   ];
 
   installPhase = ''

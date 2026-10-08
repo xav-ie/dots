@@ -2,7 +2,7 @@
 # nixpkgs#…` and `<nixpkgs>` resolve to this flake's inputs. Handy interactively,
 # but it drags every input source tree (~2 GB+) into the closure — so it lives on
 # the interactive sets (`linux`, `darwin.macos`), not the lean server `base`.
-{ ... }:
+_:
 let
   registryModule =
     {

@@ -5,8 +5,8 @@
   pkgs-unfree ? pkgs, # For packages needing allowUnfree (claude-code)
   pkgs-bleeding ? pkgs, # For packages needing newer Python deps (mcp-atlassian)
   # Platform flags passed from caller to avoid pkgs.stdenv access here
-  isDarwin ? pkgs.stdenv.isDarwin,
-  isLinux ? pkgs.stdenv.isLinux,
+  isDarwin ? pkgs.stdenv.hostPlatform.isDarwin,
+  isLinux ? pkgs.stdenv.hostPlatform.isLinux,
   # ags package set (inputs.ags.packages.<system>); null on darwin, unused there.
   agsPackages ? null,
   # virtual-headset mute control CLI (inputs.virtual-headset); linux-only, used
@@ -36,7 +36,6 @@
   # stream it. Forwarded to the bar below.
   uair,
   bun-demincer-src,
-  clauhist-src,
   executor-src,
   generate-kaomoji,
   mcp-atlassian-src,
@@ -84,7 +83,6 @@ rec {
   };
   claude-resume = pkgs.callPackage ./claude-resume { inherit writeNuApplication; };
   collie = pkgs.callPackage ./collie { };
-  clauhist = pkgs.callPackage ./clauhist { inherit clauhist-src; };
   ff = pkgs.callPackage ./ff { };
   firefox-router = pkgs.callPackage ./firefox-router { };
   flint = pkgs.callPackage ./flint { inherit format-staged lint-staged writeNuApplication; };

@@ -43,7 +43,7 @@
             ++ lib.optional cfg.settings.enable-webtorrent pkgs.mpvScripts.webtorrent-mpv-hook
             ++
               # extends mpv to be controllable with MPD
-              lib.optional pkgs.stdenv.isLinux pkgs.mpvScripts.mpris;
+              lib.optional pkgs.stdenv.hostPlatform.isLinux pkgs.mpvScripts.mpris;
 
           settings.enable-webtorrent = true;
 
@@ -106,7 +106,7 @@
         };
 
         # xdg.mimeApps is Linux-only; this module is cross-platform (common).
-        xdg.mimeApps.defaultApplications = lib.optionalAttrs pkgs.stdenv.isLinux {
+        xdg.mimeApps.defaultApplications = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
           "video/*" = [ "mpv.desktop" ];
         };
         home.sessionVariables = {

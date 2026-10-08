@@ -1,16 +1,15 @@
-diff --git a/src/renderer/AsyncResourceGatherer.cpp b/src/renderer/AsyncResourceGatherer.cpp
-index 943e3e6..e6b6388 100644
---- a/src/renderer/AsyncResourceGatherer.cpp
-+++ b/src/renderer/AsyncResourceGatherer.cpp
-@@ -195,6 +195,11 @@ bool CAsyncResourceGatherer::apply() {
-             Debug::log(ERR, "Unsupported type in ::apply(): {}", (int)t.type);
+diff --git a/src/renderer/AsyncResourceManager.cpp b/src/renderer/AsyncResourceManager.cpp
+--- a/src/renderer/AsyncResourceManager.cpp
++++ b/src/renderer/AsyncResourceManager.cpp
+@@ -323,6 +323,11 @@
      }
- 
-+    // Submit the uploads even when no frame is presented (DPMS off). Zink only
+     glTexImage2D(GL_TEXTURE_2D, 0, glIFormat, texture->m_vSize.x, texture->m_vSize.y, 0, glFormat, glType, RESOURCE->m_asset.cairoSurface->data());
+
++    // Submit the upload even when no frame is presented (DPMS off). Zink only
 +    // retires deleted textures and staging buffers on batch submission, so
 +    // without this every label refresh leaks VRAM until allocation segfaults.
 +    glFlush();
 +
-     return true;
- }
- 
+     m_assets[id].texture = texture;
+
+     for (const auto& widget : WIDGETS) {

@@ -16,7 +16,7 @@
         praesidium = "5QRVPW4-SFMRVU4-QGQ6DKS-CRTSATN-43B5PLA-4EHC54I-KIZLKC3-GE5NMA6";
       };
 
-      peer = if pkgs.stdenv.isDarwin then "praesidium" else "nox";
+      peer = if pkgs.stdenv.hostPlatform.isDarwin then "praesidium" else "nox";
 
       # An empty ID is rejected by the config API, so declare nothing until both are set.
       paired = deviceIds.nox != "" && deviceIds.praesidium != "";

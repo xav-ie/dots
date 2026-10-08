@@ -21,7 +21,12 @@ let
       hash = "sha256-xPmJkiKp4H0iwmemnpzuH9+MhPkWsN6/IGSgvORDu5Y=";
     };
 
-    dependencies = with python3Packages; [ protobuf ];
+    # mypy-protobuf is only used to generate the stubs, but the published wheel
+    # declares it at runtime and pythonRuntimeDepsCheck enforces that.
+    dependencies = with python3Packages; [
+      mypy-protobuf
+      protobuf
+    ];
     pythonImportsCheck = [ "discord_protos" ];
   };
 

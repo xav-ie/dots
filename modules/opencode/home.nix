@@ -90,7 +90,7 @@
             "opencode-claude-auth@latest"
           ];
         };
-        rules = # markdown
+        context = # markdown
           ''
             # Xavier's Development Environment Rules
             ${lib.optionalString useExecutor ''

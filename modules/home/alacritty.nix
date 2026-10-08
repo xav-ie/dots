@@ -20,7 +20,7 @@
               blur = true;
               #option_as_alt = "Both";
             };
-            general.import = lib.optional pkgs.stdenv.isLinux pkgs.alacritty-theme.monokai_charcoal;
+            general.import = lib.optional pkgs.stdenv.hostPlatform.isLinux pkgs.alacritty-theme.monokai_charcoal;
           };
         };
       };

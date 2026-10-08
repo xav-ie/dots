@@ -76,7 +76,6 @@
         muscat-pkg = inputs.muscat.packages.${system}.muscat;
         inherit (inputs)
           bun-demincer-src
-          clauhist-src
           executor-src
           mcp-atlassian-src
           protonmail-mcp-src

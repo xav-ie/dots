@@ -20,7 +20,7 @@
           }
 
           # Linux-only: systemd service + Hyprland keybinding
-          (lib.mkIf pkgs.stdenv.isLinux {
+          (lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
             wayland.windowManager.hyprland.settings = {
               # Push-to-talk: hold to record, release to stop
               bind = [

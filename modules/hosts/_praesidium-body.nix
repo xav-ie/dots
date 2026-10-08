@@ -6,7 +6,15 @@
   ...
 }:
 let
-  gpu = import ../_lib/gpu.nix;
+  greetings =
+    pkgs.runCommand "praesidium-greetings" { } # sh
+      ''
+        mkdir -p "$out"
+        for cow in $(${pkgs.cowsay}/bin/cowsay -l | tail -n +2); do
+          printf 'Hello, this is Praesidium.' \
+            | ${pkgs.cowsay}/bin/cowsay -n -f "$cow" > "$out/$cow" || rm -f "$out/$cow"
+        done
+      '';
   # The nvidia module actually loaded (open vs proprietary). nixpkgs embeds the
   # kernel version in its name only when it built a per-kernel module, so a name
   # missing the kernel version means "no .ko for this kernel" — the exact silent
@@ -38,11 +46,14 @@ in
     # See modules/nixos/cursortab-observability/.
     services.cursortab-observability.enable = true;
 
-    nixpkgs.config = {
-      cudaSupport = true;
-      inherit (gpu) cudaCapabilities;
-      cudaForwardCompat = true;
-    };
+    # CUDA is NOT enabled host-wide. `cudaSupport` is a global rebuild switch:
+    # it turns on CUDA for every package that can take it, which drags firefox,
+    # opencv, openvino and faiss out of the binary cache and into hours of local
+    # compilation — openvino and opencv for a 3D-printer slicer, on a machine
+    # where nothing asks either of them for a GPU. Packages that genuinely want
+    # the GPU take it from `pkgs-bleeding-cuda` instead (see overlays/default.nix
+    # and the hyprwhspr/obs-backgroundremoval consumers), which is what that
+    # second package set exists for.
 
     boot = {
       # binfmt.emulatedSystems = [
@@ -88,10 +99,26 @@ in
         options v4l2loopback exclusive_caps=1 card_label="Virtual Camera"
       '';
       initrd = {
-        preDeviceCommands = ''
-          message="Hello, this is Praesidium."
-          printf "$message" | ${pkgs.cowsay}/bin/cowsay -n
-        '';
+        # One of cowsay's 50 cows, picked per boot. Rendered at build time: all
+        # 50 together are 24 KiB, where putting cowsay itself in the initrd
+        # costs 21 MiB compressed (~110 ms to decompress) for its perl closure.
+        systemd = {
+          storePaths = [ greetings ];
+          services.greeting = {
+            description = "Greet from Praesidium";
+            wantedBy = [ "initrd.target" ];
+            before = [ "initrd-root-device.target" ];
+            serviceConfig = {
+              Type = "oneshot";
+              StandardOutput = "tty";
+            };
+            script = # sh
+              ''
+                cows=(${greetings}/*)
+                printf '%s\n' "$(<"''${cows[RANDOM % ''${#cows[@]}]}")"
+              '';
+          };
+        };
       };
     };
 
@@ -300,9 +327,7 @@ in
         #     sni = "dns.quad9.net";
         #   in
         #   map (ip: "${ip}#${sni}") ips;
-        extraConfig = ''
-          DNSStubListener=no
-        '';
+        settings.Resolve.DNSStubListener = "no";
       };
       # udev = {
       #   # TODO: for `ns-usbloader`
@@ -364,13 +389,13 @@ in
     };
 
     # Ensure proper suspend-to-RAM (keeps RAM powered, fast resume)
-    systemd.sleep.extraConfig = ''
-      AllowSuspend=yes
-      AllowHibernation=no
-      AllowSuspendThenHibernate=no
-      AllowHybridSleep=no
-      SuspendState=mem
-    '';
+    systemd.sleep.settings.Sleep = {
+      AllowHibernation = false;
+      AllowHybridSleep = false;
+      AllowSuspend = true;
+      AllowSuspendThenHibernate = false;
+      SuspendState = "mem";
+    };
 
     # NetworkManager-wait-online blocks boot unnecessarily - network services
     # already have proper After=network-online.target dependencies

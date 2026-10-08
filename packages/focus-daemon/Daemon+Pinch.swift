@@ -22,9 +22,10 @@ private typealias MTDeviceRef = UnsafeMutableRawPointer
 // (device, touches, numTouches, timestamp, frame) — touches is an array of the
 // private MTTouch struct; we read only what we need via byte offsets so the
 // callback stays @convention(c)-representable (a typed struct pointer isn't).
-private typealias MTContactCallback = @convention(c) (
-  Int32, UnsafeRawPointer?, Int32, Double, Int32
-) -> Int32
+private typealias MTContactCallback =
+  @convention(c) (
+    Int32, UnsafeRawPointer?, Int32, Double, Int32
+  ) -> Int32
 
 // MTTouch layout (stable across many OS versions): normalized.position is two
 // Floats at byte offset 32; the struct stride is 0x60. We only touch those.

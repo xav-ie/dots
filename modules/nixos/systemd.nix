@@ -7,13 +7,13 @@
     {
       config = {
         # Configure systemd journal to reduce disk I/O and prevent log spam
-        services.journald.extraConfig = ''
-          SystemMaxUse=500M
-          RuntimeMaxUse=100M
-          MaxRetentionSec=1week
-          RateLimitIntervalSec=30s
-          RateLimitBurst=10000
-        '';
+        services.journald.settings.Journal = {
+          MaxRetentionSec = "1week";
+          RateLimitBurst = 10000;
+          RateLimitIntervalSec = "30s";
+          RuntimeMaxUse = "100M";
+          SystemMaxUse = "500M";
+        };
 
         systemd = {
           # must be system service due to journalctl needing elevated permissions

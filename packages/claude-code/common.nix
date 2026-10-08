@@ -66,7 +66,7 @@ in
     (
       (envVars |> lib.mapAttrsToList (k: v: "--set ${k} ${v}"))
       ++ [ "--prefix PATH : ${binPath}" ]
-      ++ lib.optional stdenv.isLinux "--prefix PATH : ${linuxBinPath}"
+      ++ lib.optional stdenv.hostPlatform.isLinux "--prefix PATH : ${linuxBinPath}"
     )
     |> lib.concatStringsSep " ";
 

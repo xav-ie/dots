@@ -26,6 +26,10 @@ stdenv.mkDerivation rec {
     cmake
   ];
 
+  # 1.1.0 drops a `const` qualifier in obs-utils.c and builds with -Werror.
+  # gcc 14 only warned; gcc 16 promoted discarded-qualifiers to an error.
+  env.NIX_CFLAGS_COMPILE = "-Wno-error=discarded-qualifiers";
+
   postInstall = ''
     rm -rf "$out/share"
     mkdir -p "$out/share/obs"

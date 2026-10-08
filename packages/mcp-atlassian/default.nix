@@ -3,111 +3,9 @@
   mcp-atlassian-src,
 }:
 let
-  # Use Python 3.13 — python314Packages.fastmcp is broken in nixpkgs
-  # due to py-key-value-aio pulling in aioboto3 → moto → cfn-lint →
-  # aws-sam-translator which doesn't support 3.14
-  python3Packages = pkgs-bleeding.python313Packages.overrideScope (
-    final: prev: {
-      # mcp-atlassian caps fastmcp <2.15.0, but nixpkgs-bleeding moved to the
-      # fastmcp 3.x line (a breaking major that also restructured the nixpkgs
-      # recipe into fastmcp + fastmcp-slim). Pin the last-known-good 2.14.5,
-      # mirroring the recipe bleeding shipped before the bump — all of its
-      # dependency bounds (mcp <2.0, cyclopts >=4, py-key-value-aio <0.4, …)
-      # are still satisfied by the current set. Deps come from `final` so the
-      # py-key-value-aio here uses the lupa/fakeredis overrides below. Its own
-      # test suite is skipped (we only consume it as a library). Drop once
-      # mcp-atlassian supports fastmcp 3.x.
-      fastmcp = prev.buildPythonPackage rec {
-        pname = "fastmcp";
-        version = "2.14.5";
-        pyproject = true;
-
-        src = pkgs-bleeding.fetchFromGitHub {
-          owner = "jlowin";
-          repo = "fastmcp";
-          tag = "v${version}";
-          hash = "sha256-j3aUvAKm0rW5X/l1VXoSBc5fCjSLxnyznwzj1D3E7Ck=";
-        };
-
-        env.UV_DYNAMIC_VERSIONING_BYPASS = version;
-
-        build-system = [
-          final.hatchling
-          final.uv-dynamic-versioning
-        ];
-
-        pythonRelaxDeps = [ "pydocket" ];
-        dependencies = [
-          final.authlib
-          final.cyclopts
-          final.exceptiongroup
-          final.httpx
-          final.jsonref
-          final.jsonschema-path
-          final.mcp
-          final.openapi-pydantic
-          final.packaging
-          final.platformdirs
-          final.py-key-value-aio
-          final.pydantic
-          final.pydocket
-          final.pyperclip
-          final.python-dotenv
-          final.rich
-          final.uvicorn
-          final.websockets
-        ]
-        ++ final.py-key-value-aio.optional-dependencies.disk
-        ++ final.py-key-value-aio.optional-dependencies.keyring
-        ++ final.py-key-value-aio.optional-dependencies.memory
-        ++ final.pydantic.optional-dependencies.email;
-
-        pythonImportsCheck = [ "fastmcp" ];
-        doCheck = false;
-      };
-
-      # FastMCP >=2.13 starts a pydocket worker on a memory:// (fakeredis)
-      # backend for every server, including stdio. fakeredis's async can_read
-      # busy-polled the in-memory queue (sleep(0.01) loop), so the worker spun
-      # ~1 core at idle. cunla/fakeredis-py PR #506 replaces that poll with an
-      # event-based wakeup. Tracked through the open PR (its head sha moves);
-      # `includes` drops the PR's test hunk, which targets a newer test file
-      # than 2.33.0 ships. https://github.com/cunla/fakeredis-py/pull/506
-      fakeredis = prev.fakeredis.overridePythonAttrs (old: {
-        patches = (old.patches or [ ]) ++ [
-          (pkgs-bleeding.fetchpatch {
-            name = "fakeredis-can-read-event-wakeup-pr506.patch";
-            url = "https://github.com/cunla/fakeredis-py/pull/506.diff";
-            includes = [ "fakeredis/aioredis.py" ];
-            hash = "sha256-ACu7y5hdLKHJysfxqVGQ7edLWX260nIIYRpegj8LgII=";
-          })
-        ];
-      });
-
-      # nixpkgs-bleeding's lupa 2.8 build only produces a combined
-      # lua.cpython-*.so. py-key-value-aio's memory backend does
-      # `import lupa.lua51`, which fails with ModuleNotFoundError and
-      # crashes mcp-atlassian on startup. Build the 2.5 recipe instead;
-      # it lays out the per-Lua-version submodules (lua51, lua52, …).
-      lupa = prev.buildPythonPackage rec {
-        pname = "lupa";
-        version = "2.5";
-        pyproject = true;
-        src = prev.fetchPypi {
-          inherit pname version;
-          hash = "sha256-acaonyt7CKMEDX7Soe7MujejHdyS+hmTOcU6KuPEjDQ=";
-        };
-        build-system = [
-          prev.cython
-          prev.setuptools
-        ];
-        pythonImportsCheck = [
-          "lupa"
-          "lupa.lua51"
-        ];
-      };
-    }
-  );
+  # mcp-atlassian caps fastmcp <4.0.0. python313Packages.fastmcp is 3.4.7;
+  # python314Packages has already moved to the 4.x line.
+  python3Packages = pkgs-bleeding.python313Packages;
 
   # Type stubs for cachetools — not in nixpkgs.
   # Must use wheel because the sdist has a hyphenated package-data key
@@ -123,16 +21,19 @@ let
     };
   };
 
-  # Markdown-to-Confluence converter — not in nixpkgs
+  # Markdown-to-Confluence converter — not in nixpkgs. mcp-atlassian wants
+  # >=0.6.0,<0.7.0; 0.6.2 is the release in that range whose dependency
+  # bounds nixpkgs-bleeding satisfies unrelaxed (0.6.3+ want orjson >=3.12
+  # and cattrs >=26.2).
   markdown-to-confluence = python3Packages.buildPythonPackage rec {
     pname = "markdown-to-confluence";
-    version = "0.3.5";
+    version = "0.6.2";
     pyproject = true;
 
     src = python3Packages.fetchPypi {
       pname = "markdown_to_confluence";
       inherit version;
-      hash = "sha256-QwmvYlaC9tMA4ReZK4fmRZqK5rZT3uL5Empnis8Hbws=";
+      hash = "sha256-FfROlA1fKJTD5Sr85R/BL46dPJujQe2XGvG9neNj2Mg=";
     };
 
     build-system = [
@@ -141,20 +42,15 @@ let
     ];
 
     dependencies = with python3Packages; [
+      cattrs
       lxml
       markdown
+      orjson
+      pathspec
       pymdown-extensions
       pyyaml
       requests
-    ];
-
-    # v0.3.5 wheel on PyPI still lists type stubs as runtime deps even
-    # though upstream has since moved them to optional dev deps
-    pythonRemoveDeps = [
-      "types-lxml"
-      "types-markdown"
-      "types-PyYAML"
-      "types-requests"
+      truststore
     ];
 
     pythonImportsCheck = [ "md2conf" ];
@@ -162,7 +58,7 @@ let
 in
 python3Packages.buildPythonApplication rec {
   pname = "mcp-atlassian";
-  version = "0.21.0";
+  version = "0.23.1";
   pyproject = true;
 
   src = mcp-atlassian-src;
@@ -171,38 +67,18 @@ python3Packages.buildPythonApplication rec {
   # bypass it since we know the version from the flake input tag
   env.UV_DYNAMIC_VERSIONING_BYPASS = version;
 
-  # FastMCP starts a pydocket worker (memory://fakeredis) even for stdio
-  # servers. The fakeredis patch above removes its inner busy-poll, but the
-  # docket worker still wakes every minimum_check_interval (250ms) to read an
-  # in-memory queue this server never uses — mcp-atlassian registers no
-  # background tasks. No-op _docket_lifespan so the worker never starts,
-  # taking idle wakeups to zero. https://github.com/sooperset/mcp-atlassian/issues/868
-  postPatch = ''
-        cat >> src/mcp_atlassian/__init__.py <<'PYEOF'
-
-    import contextlib as _docket_ctx
-    import fastmcp.server.server as _fastmcp_srv
-
-
-    @_docket_ctx.asynccontextmanager
-    async def _noop_docket_lifespan(self):
-        yield
-
-
-    _fastmcp_srv.FastMCP._docket_lifespan = _noop_docket_lifespan
-    PYEOF
-  '';
-
   build-system = with python3Packages; [
     hatchling
     uv-dynamic-versioning
   ];
 
   dependencies = with python3Packages; [
+    anyio
     atlassian-python-api
     beautifulsoup4
     cachetools
     click
+    fakeredis
     fastmcp
     httpx
     keyring
@@ -211,6 +87,7 @@ python3Packages.buildPythonApplication rec {
     markdownify
     mcp
     pydantic
+    pysocks
     python-dateutil
     python-dotenv
     requests
@@ -228,9 +105,10 @@ python3Packages.buildPythonApplication rec {
   # No tests in the source tree without fixtures
   doCheck = false;
 
-  # nixpkgs-bleeding has urllib3 2.6.0 but mcp-atlassian wants >=2.6.3;
-  # the difference is trivial bugfixes, safe to relax
-  pythonRelaxDeps = [ "urllib3" ];
+  # fakeredis only backs fastmcp's docket task queue, which stays unstarted
+  # because mcp-atlassian registers no task=True components; nixpkgs-bleeding's
+  # 2.36.2 is past the declared <2.35.0 cap
+  pythonRelaxDeps = [ "fakeredis" ];
 
   pythonImportsCheck = [ "mcp_atlassian" ];
 

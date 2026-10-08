@@ -27,6 +27,8 @@
         home.packages = [ pkgs.firefoxpwa ];
         programs.firefox = {
           enable = true;
+          # Profiles and native messaging hosts live under ~/.mozilla/firefox.
+          configPath = ".mozilla/firefox";
           # The PDF/JSON/dark-favicon autoconfig script (see home-manager/firefox).
           # macOS symlinks these live into the mutable .app bundle; on Nix Linux
           # Firefox is read-only in the store, so they're baked into the package —

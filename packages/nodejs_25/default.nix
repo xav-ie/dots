@@ -30,8 +30,11 @@ stdenv.mkDerivation {
     url = "https://nodejs.org/dist/v${version}/node-v${version}-${info.platform}.tar.xz";
     inherit (info) hash;
   };
-  nativeBuildInputs = [ makeBinaryWrapper ] ++ lib.optionals stdenv.isLinux [ autoPatchelfHook ];
-  buildInputs = lib.optionals stdenv.isLinux [ stdenv.cc.cc.lib ];
+  nativeBuildInputs = [
+    makeBinaryWrapper
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isLinux [ autoPatchelfHook ];
+  buildInputs = lib.optionals stdenv.hostPlatform.isLinux [ stdenv.cc.cc.lib ];
   dontBuild = true;
   dontStrip = true;
   installPhase = ''

@@ -5,9 +5,6 @@
       lib,
       ...
     }:
-    let
-      emailData = import ./_accounts.nix;
-    in
     {
       config = {
         home.packages = [
@@ -15,21 +12,6 @@
           pkgs.msmtp
           pkgs.neverest
         ];
-
-        # Ensure Maildir directories exist (each needs cur/new/tmp subdirs)
-        systemd.user.tmpfiles.rules =
-          let
-            accounts = map (acc: acc.name) emailData.accounts;
-            inherit (emailData) folders;
-            subdirs = [
-              "cur"
-              "new"
-              "tmp"
-            ];
-            mkRules =
-              account: folder: map (sub: "d %h/.mail/${account}/${folder.name}/${sub} 0700 - - -") subdirs;
-          in
-          accounts |> lib.concatMap (account: lib.concatMap (mkRules account) folders);
 
         # Periodic mail sync — config at ~/.config/neverest/config.toml via sops template
         # flock prevents concurrent runs

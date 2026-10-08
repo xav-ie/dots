@@ -278,7 +278,7 @@
           # Backing tools for the nix-ide extension (nixd LSP + nixfmt),
           # matching the nixd/nixfmt setup used in xnixvim.
           pkgs.nixd
-          pkgs.nixfmt-rfc-style
+          pkgs.nixfmt
         ];
 
         # Let VSCodeVim repeat held keys (j/k/…) instead of popping macOS's
@@ -394,7 +394,7 @@
                 # alejandra/treefmt/...), no longer a path — nixd does the real
                 # formatting via `nixd.formatting.command` (the store nixfmt).
                 "nix.formatterPath" = "nixfmt";
-                "nix.serverSettings".nixd.formatting.command = [ (lib.getExe pkgs.nixfmt-rfc-style) ];
+                "nix.serverSettings".nixd.formatting.command = [ (lib.getExe pkgs.nixfmt) ];
 
                 # todo-tree bundles @vscode/ripgrep (github.com/microsoft/vscode-ripgrep),
                 # a prebuilt rg binary that nix-vscode-extensions strips from the build

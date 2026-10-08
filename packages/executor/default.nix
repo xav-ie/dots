@@ -52,7 +52,7 @@ let
 
     outputHashAlgo = "sha256";
     outputHashMode = "recursive";
-    outputHash = "sha256-c2H5cIbeFOIoSHMoVd5+MDR4r4Kn7MM8G2+kAzNuJ3U=";
+    outputHash = "sha256-aBV2Y4eNn1FFQrWiscT0570Pknu1/3GSb5BvJ95s6eM=";
   };
 in
 stdenv.mkDerivation {
@@ -88,7 +88,7 @@ stdenv.mkDerivation {
     pkgs.nodejs # for patchShebangs
     makeBinaryWrapper
   ]
-  ++ lib.optionals stdenv.isLinux [ autoPatchelfHook ];
+  ++ lib.optionals stdenv.hostPlatform.isLinux [ autoPatchelfHook ];
 
   buildInputs = [ stdenv.cc.cc.lib ];
 

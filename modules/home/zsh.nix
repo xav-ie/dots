@@ -1,6 +1,6 @@
 {
   flake.modules.homeManager.common =
-    { pkgs, ... }:
+    { config, pkgs, ... }:
     {
       config = {
         programs.zsh =
@@ -25,6 +25,8 @@
           in
           {
             enable = true;
+            # zsh dotfiles stay at ~/.zshrc rather than under ~/.config/zsh.
+            dotDir = config.home.homeDirectory;
             enableCompletion = true;
             autosuggestion.enable = true;
             syntaxHighlighting.enable = true;

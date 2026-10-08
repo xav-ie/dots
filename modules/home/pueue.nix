@@ -11,11 +11,11 @@
         ];
 
         services.pueue = {
-          enable = pkgs.stdenv.isLinux;
+          enable = pkgs.stdenv.hostPlatform.isLinux;
         };
 
         launchd.agents.pueueDaemon = {
-          enable = pkgs.stdenv.isDarwin;
+          enable = pkgs.stdenv.hostPlatform.isDarwin;
           config = {
             Debug = true;
             Program = pueueDaemon;

@@ -25,7 +25,11 @@ let
     sectionName: attrs:
     let
       fixedSection = lowerSectionOnly sectionName;
-      baseSection = sectionName |> lib.splitString " " |> builtins.head |> lib.toLower;
+      baseSection =
+        sectionName
+        |> lib.splitString " "
+        |> builtins.head
+        |> lib.toLower;
       sectionVars = canonical.${baseSection} or { };
 
       badSection = sectionName != fixedSection;

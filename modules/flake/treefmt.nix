@@ -12,12 +12,12 @@
       treefmt =
         { options, ... }:
         let
-          # Swift is broken on Linux with GCC 14, use pinned nixpkgs
-          pkgs-swift = import inputs.nixpkgs-swift { inherit system; };
-
           glsl_analyzer = pkgs.glsl_analyzer.overrideAttrs (_oldAttrs: {
             src = inputs.glsl_analyzer;
-            nativeBuildInputs = [ pkgs.zig.hook ];
+            # The `format` fork's sources use the 0.15 unmanaged-by-default
+            # std.ArrayList, so neither nixpkgs' own zig_0_14 pin nor the
+            # current `pkgs.zig` compiles it. Pin 0.15 explicitly.
+            nativeBuildInputs = [ pkgs.zig_0_15.hook ];
             postPatch = ''
               substituteInPlace build.zig \
                 --replace-fail 'b.run(&.{ "git", "describe", "--tags", "--always" })' '"dev"'
@@ -116,7 +116,7 @@
             };
             deadnix.enable = true;
             # dockerfmt is broken on Darwin; Dockerfiles are excluded there below.
-            dockerfmt.enable = pkgs.stdenv.isLinux;
+            dockerfmt.enable = pkgs.stdenv.hostPlatform.isLinux;
             glsl_analyzer = {
               enable = true;
               package = glsl_analyzer;
@@ -148,10 +148,7 @@
             rustfmt.enable = true;
             shfmt.enable = true;
             statix.enable = true;
-            swift-format = {
-              enable = true;
-              package = pkgs-swift.swift-format;
-            };
+            swift-format.enable = true;
           };
           settings = {
             # Sort before prettier so prettier has the final say on style.
@@ -182,7 +179,18 @@
               "secrets/*.json" # sops managed
               "secrets/*.yaml" # sops has its own formatter
             ]
-            ++ pkgs.lib.optionals pkgs.stdenv.isDarwin [
+            # Binary image/icon assets. `on-unmatched = "fatal"` means any file
+            # no formatter claims fails the whole run, so these are listed by
+            # extension rather than path. `*.svg` is text and excluded above.
+            ++ [
+              "*.icns"
+              "*.ico"
+              "*.jpeg"
+              "*.jpg"
+              "*.png"
+              "*.webp"
+            ]
+            ++ pkgs.lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
               "**/Dockerfile" # dockerfmt broken on Darwin
             ];
           };

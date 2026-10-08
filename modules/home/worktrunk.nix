@@ -1,3 +1,5 @@
+# `git wt` subcommand. Everything else about worktrunk (package, settings, shell
+# integrations) comes from home-manager's own `programs.worktrunk` module.
 {
   flake.modules.homeManager.common =
     {
@@ -10,48 +12,13 @@
       cfg = config.programs.worktrunk;
     in
     {
-      options.programs.worktrunk = {
-        enable = lib.mkEnableOption "worktrunk (wt) - git worktree management for parallel AI agent workflows";
-
-        package = lib.mkOption {
-          type = lib.types.package;
-          default = pkgs.pkgs-bleeding.worktrunk;
-          defaultText = lib.literalExpression "pkgs.pkgs-bleeding.worktrunk";
-          description = "The worktrunk package to use";
-        };
-
-        enableNushellIntegration = lib.mkOption {
-          type = lib.types.bool;
-          default = config.programs.nushell.enable;
-          defaultText = lib.literalExpression "config.programs.nushell.enable";
-          description = "Whether to enable nushell integration (wrapper function + completions)";
-        };
-
-        enableGitSubcommand = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Whether to install a git-wt subcommand so `git wt` invokes worktrunk";
-        };
-      };
-
-      config = lib.mkIf cfg.enable {
+      config = lib.mkIf (cfg.enable && cfg.package != null) {
         home.packages = [
-          cfg.package
-        ]
-        ++ lib.optional cfg.enableGitSubcommand (
-          pkgs.runCommand "git-wt" { } ''
+          (pkgs.runCommand "git-wt" { } ''
             mkdir -p "$out/bin"
-            ln -s ${cfg.package}/bin/wt "$out/bin/git-wt"
-          ''
-        );
-
-        programs.nushell.extraConfig = lib.mkIf cfg.enableNushellIntegration ''
-          source ${
-            pkgs.runCommand "worktrunk-nushell-integration.nu" { } ''
-              ${cfg.package}/bin/wt config shell init nu > "$out"
-            ''
-          }
-        '';
+            ln -s ${lib.getExe cfg.package} "$out/bin/git-wt"
+          '')
+        ];
       };
     };
 }
