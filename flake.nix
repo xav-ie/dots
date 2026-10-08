@@ -84,6 +84,8 @@
     sketchybar-src.url = "github:FelixKratz/SketchyBar/v2.23.0";
     sketchybar-src.flake = false;
     sops-nix.url = "github:Mic92/sops-nix";
+    tetherbug.url = "git+ssh://git@github.com/xav-ie/Tetherbug";
+    tetherbug.inputs.nixpkgs.follows = "nixpkgs";
     uv2nix.url = "github:pyproject-nix/uv2nix";
     uv2nix.inputs.nixpkgs.follows = "nixpkgs";
     uv2nix.inputs.pyproject-nix.follows = "pyproject-nix";

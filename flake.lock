@@ -1885,6 +1885,7 @@
         "sops-nix": "sops-nix",
         "systems": "systems",
         "terranix": "terranix",
+        "tetherbug": "tetherbug",
         "treefmt-nix": "treefmt-nix",
         "uv2nix": "uv2nix",
         "virtual-headset": "virtual-headset",
@@ -2088,6 +2089,26 @@
         "owner": "terranix",
         "repo": "terranix",
         "type": "github"
+      }
+    },
+    "tetherbug": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1791442505,
+        "narHash": "sha256-QKQXMnWsjoSL7gVd7NtlLYABaPaOjj1wr920KJLMiaY=",
+        "ref": "refs/heads/main",
+        "rev": "49cf5e618089f213758501078bf7500d370b4b22",
+        "revCount": 85,
+        "type": "git",
+        "url": "ssh://git@github.com/xav-ie/Tetherbug"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/xav-ie/Tetherbug"
       }
     },
     "treefmt-nix": {
