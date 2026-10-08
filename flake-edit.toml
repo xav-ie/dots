@@ -1,0 +1,13 @@
+# Config for `just dedupe`, which runs `flake-edit follow --transitive`.
+# Auto-loaded from the project root; no --config flag needed.
+[follow]
+# Only write `parent.child.follows`. Deeper declarations are self-defeating
+# here: once `atuin.flake-parts` follows the top-level `flake-parts`, the node
+# `atuin/flake-parts/nixpkgs-lib` stops existing, so a depth-2 follows for it
+# is dead on arrival. flake-edit then reports it as stale and, when removing
+# it, takes the load-bearing parent line with it. Capping at 1 keeps dedupe
+# idempotent instead of thrashing those lines every run.
+max_depth = 1
+# nufmt's flake asks for `rustPackages_1_97` by name, which this nixpkgs does
+# not carry, so nufmt keeps its own nixpkgs.
+ignore = ["nufmt.nixpkgs"]

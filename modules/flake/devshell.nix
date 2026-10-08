@@ -33,19 +33,23 @@
             nom-run
             nix-output-monitor
           ])
-          ++ lib.optionals pkgs.stdenv.isLinux (
+          ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux (
             (with pkgs-bleeding; [
               nh
               nixos-rebuild
             ])
             ++ [ config.packages.cachectl ]
           )
-          ++ lib.optionals pkgs.stdenv.isDarwin [
+          ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
             inputs.morlana.packages.${system}.default
             inputs.nix-darwin.packages.${system}.default
           ]
           ++ [ config.formatter ]
-          ++ [ inputs.nix-auto-follow.packages.${system}.default ];
+          ++ [
+            inputs.nix-auto-follow.packages.${system}.default
+            # `just lock` drives this.
+            pkgs.flake-edit
+          ];
 
         shellHook = ''
           printf "\n🐢 Use \e[32;40mjust\e[0m to build the system."
