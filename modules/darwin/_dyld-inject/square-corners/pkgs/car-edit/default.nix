@@ -2,6 +2,13 @@
   lib,
   stdenvNoCC,
 }:
+let
+  # Xcode's toolchain has to win over nix for `swift`. Kept scoped to the two
+  # swift calls rather than exported: an exported PATH survives into
+  # fixupPhase, where /usr/bin's BSD find shadows nix's and the
+  # make-symlinks-relative and strip hooks fail on GNU `find -printf`.
+  swiftPath = "$DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/usr/bin:/usr/bin:/bin:$PATH";
+in
 stdenvNoCC.mkDerivation {
   pname = "car-edit";
   version = "0.1.0";
@@ -28,10 +35,9 @@ stdenvNoCC.mkDerivation {
     runHook preBuild
 
     export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
-    export PATH="$DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/usr/bin:/usr/bin:/bin:$PATH"
     export SDKROOT="$DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
 
-    swift build -c release --disable-sandbox
+    PATH="${swiftPath}" swift build -c release --disable-sandbox
 
     runHook postBuild
   '';
@@ -39,7 +45,7 @@ stdenvNoCC.mkDerivation {
   installPhase = ''
     runHook preInstall
     mkdir -p "$out/bin"
-    bin_path=$(swift build -c release --disable-sandbox --show-bin-path)
+    bin_path=$(PATH="${swiftPath}" swift build -c release --disable-sandbox --show-bin-path)
     cp "$bin_path/car-edit" "$out/bin/car-edit"
     chmod 755 "$out/bin/car-edit"
     runHook postInstall
