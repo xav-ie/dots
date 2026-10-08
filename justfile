@@ -25,7 +25,11 @@ system:
         morlana switch --flake . --no-confirm -- --show-trace --out-link result
       }
       "Linux" => {
-        nh os switch . -o result -- --show-trace
+        # `nh os switch` only writes the boot entry once activation succeeds, so
+        # one failed unit leaves a live generation the next reboot can't reach.
+        # Boot first, then activate; nu stops here if boot fails.
+        nh os boot . -o result -- --show-trace
+        nh os test . -o result -- --show-trace
       }
       _ => {
         error make { msg: "Unknown OS" }
@@ -76,17 +80,42 @@ reboot-auto-login:
     }
     sudo systemctl reboot $"--boot-loader-entry=($entry.id)"
 
-# fix the lockfile for auto-follow
+# refresh the lockfile
 lock:
+    #!/usr/bin/env nu
+    # direnv is denied for the write and re-allowed even on failure: a bare
+    # `direnv allow` as the last line leaves the repo denied whenever something
+    # above it fails.
     direnv deny
-    nix flake lock
-    nom-run ../nix-auto-follow -- -i --consolidate
-    nom-run ../nix-auto-follow -- -c
+    let err = (try { nix flake lock; null } catch { |e| $e.msg })
     direnv allow
+    if $err != null { error make { msg: $"just lock failed: ($err)" } }
+
+# Writes follows into flake.nix source, not the lock: a follows that no
+# flake.nix declares reads as absent and is recomputed from the declared URL,
+# so rewriting only the lock is undone by the next `nix flake lock`.
+#
+# Deliberately NOT part of `just lock`. It rewrites declarations and cannot
+# tell an intentional exception from an oversight: it re-adds a follows removed
+# on purpose (nufmt pins rustPackages by name, so it must keep its own nixpkgs)
+# and drops overrides it sees no lock evidence for (alacritty-theme).
+#
+# collapse duplicated inputs onto top-level ones -- review the diff after
+dedupe:
+    #!/usr/bin/env nu
+    # `--inputs-from .` takes flake-edit from this flake's own nixpkgs, so this
+    # does not depend on the devshell.
+    nix run --inputs-from . nixpkgs#flake-edit -- follow --transitive
+    nix flake lock
+    print "\nReview `git diff flake.nix` before keeping this."
 
 # update all inputs
 update:
-    nix flake update
+    #!/usr/bin/env nu
+    # Unauthenticated, api.github.com rate-limits at ~60/hr and nix answers a
+    # 403 by silently reusing its *cached* HEAD — so inputs appear up to date
+    # while actually being pinned days behind, with no non-zero exit.
+    nix flake update --option access-tokens $"github.com=(gh auth token)"
 
 # update input nixpkgs-bleeding
 bleed:
