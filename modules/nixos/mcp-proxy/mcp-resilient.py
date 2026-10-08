@@ -39,7 +39,7 @@ def _stub():
             continue
         try:
             msg = json.loads(line)
-        except Exception:
+        except json.JSONDecodeError:
             continue
         mid = msg.get("id")
         if mid is None:

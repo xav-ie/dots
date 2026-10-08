@@ -73,11 +73,11 @@ async def get_client() -> DiscordSelfClient:
     # Wait for the client to be fully connected
     try:
         await asyncio.wait_for(_client.wait_until_ready(), timeout=30)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         log.error("Timed out after 30s waiting for Discord ready event")
         _client_task.cancel()
         _client = None
         _client_task = None
-        raise RuntimeError("Timed out waiting for Discord connection")
+        raise RuntimeError("Timed out waiting for Discord connection") from None
 
     return _client

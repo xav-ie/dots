@@ -48,16 +48,17 @@ import math
 import os
 import re
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
+import nemo.collections.asr as nemo_asr
 import numpy as np
 import soundfile as sf
 import torch
-from omegaconf import OmegaConf, open_dict
-from scipy.signal import resample_poly
-
-import nemo.collections.asr as nemo_asr
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import FileResponse, HTMLResponse
+from mcp.server.mcpserver import MCPServer
+from mcp.server.transport_security import TransportSecuritySettings
 from nemo.collections.asr.parts.context_biasing.biasing_multi_model import (
     BiasingRequestItemConfig,
 )
@@ -70,13 +71,13 @@ from nemo.collections.asr.parts.utils.streaming_utils import (
     StreamingBatchedAudioBuffer,
 )
 from nemo.utils import logging as nemo_logging
-from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse, HTMLResponse
-from mcp.server.mcpserver import MCPServer
-from mcp.server.transport_security import TransportSecuritySettings
+from omegaconf import OmegaConf, open_dict
+from scipy.signal import resample_poly
 
 # NeMo logs the full model config on load — pages of noise. Keep WARNING and up.
 nemo_logging.set_verbosity(logging.WARNING)
+
+logger = logging.getLogger(__name__)
 
 # GPU-only service: fail loudly rather than silently crawl on CPU.
 if not torch.cuda.is_available():
@@ -251,7 +252,7 @@ class StreamState:
     def _add_tokens(self, ids, frames):
         # Token timestamps are encoder frames from stream start. SentencePiece marks
         # a word's first piece with ▁; a bare ▁ is a lone boundary before the next piece.
-        for tid, f in zip(ids, frames):
+        for tid, f in zip(ids, frames, strict=True):
             t = f * FRAME_S
             piece = model.tokenizer.ids_to_tokens([tid])[0]
             if piece == "▁":
@@ -307,7 +308,7 @@ class Recording:
             "sessionId": session_id,
             "channel": channel,
             "sourceSampleRate": src_rate,
-            "startedAt": datetime.now(timezone.utc).isoformat(),
+            "startedAt": datetime.now(UTC).isoformat(),
             "model": MODEL_ID,
         }
         self.audio = sf.SoundFile(
@@ -499,7 +500,7 @@ async def put_session(session_id: str, request: Request):
 
 
 @app.get("/api/vocab")
-def get_vocab():
+def read_vocab():
     return {"phrases": _read_json(VOCAB) or []}
 
 
@@ -550,6 +551,7 @@ async def ws(websocket: WebSocket):
                 )
             )
         except Exception:  # client gone: keep transcribing what it already sent
+            logger.debug("word push failed; client disconnected", exc_info=True)
             connected = False
 
     # A client may send audio faster than real time (a recorded file). Take every
@@ -634,12 +636,12 @@ mcp = MCPServer(
 
 
 def _iso(ms):
-    return datetime.fromtimestamp(ms / 1000, timezone.utc).isoformat() if ms else None
+    return datetime.fromtimestamp(ms / 1000, UTC).isoformat() if ms else None
 
 
 def _epoch_ms(iso):
     t = datetime.fromisoformat(iso)
-    return (t if t.tzinfo else t.replace(tzinfo=timezone.utc)).timestamp() * 1000
+    return (t if t.tzinfo else t.replace(tzinfo=UTC)).timestamp() * 1000
 
 
 def _sessions_between(since, until):
