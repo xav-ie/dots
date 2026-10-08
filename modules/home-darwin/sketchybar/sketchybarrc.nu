@@ -160,30 +160,6 @@ sb-cluster clock right 24 0 (
   "click_script=$HOME/.config/sketchybar/select_control_center.nu \"Clock\""
 ]
 
-# wifi — single icon (sb-icon-item). Native icon rendered by `sketchybar-icons`
-# (SF Symbol -> PNG via CoreWLAN signal). `wifi_change` is emitted by the
-# sketchybar-wifi daemon straight off CoreWLAN events — that's what makes
-# connect/disconnect/signal instant. `network_change` (the
-# com.apple.system.config.network_change distributed notification) is kept ONLY
-# for route changes, i.e. hotspot tether on/off, which CoreWLAN can't see; it is
-# posted by configd once the whole stack settles, so it is seconds late on its
-# own. NO `update_freq` — both sources are push, so nothing here polls.
-# wifi is `bg_only`:
-# the hover highlight is the item's OWN full-footprint background, so --extra
-# re-enables it (the primitive turns background.drawing off by default). NO
-# background.padding — under the tiling primitives every item already abuts, so
-# the old -1px seam-closer now just overlaps control_center's highlight.
-# click_script opens Control Center > Wi-Fi.
-(sketchybar --add event network_change com.apple.system.config.network_change)
-(sketchybar --add event wifi_change)
-sb-icon-item wifi right 26 $"sketchybar-hover --plugin ($PLUGIN_DIR)/wifi.nu" [wifi_change network_change mouse.entered mouse.exited] --extra [
-  "click_script=$HOME/.config/sketchybar/select_control_center.nu \"Wi-Fi\""
-  "background.height=24"
-  "background.corner_radius=6"
-  "background.drawing=on"
-  "background.color=0x00000000"
-]
-
 # control center — single icon (sb-icon-item, icon_only highlight).
 sb-icon-item control_center right 26 $"sketchybar-hover --plugin ($PLUGIN_DIR)/control_center.nu" [mouse.entered mouse.exited] --extra [
   "click_script=$HOME/.config/sketchybar/select_control_center.nu \"Control Center\""
@@ -199,6 +175,30 @@ sb-cluster battery right 36 0 (
   $"sketchybar-hover --plugin ($PLUGIN_DIR)/battery.nu"
 ) [battery_change mouse.entered mouse.exited] --label-extra ["click_script=$HOME/.config/sketchybar/select_control_center.nu \"Battery\""] --icon-extra ["click_script=$HOME/.config/sketchybar/select_control_center.nu \"Battery\""]
 
+# wifi — single icon (sb-icon-item). Native icon rendered by `sketchybar-icons`
+# (SF Symbol -> PNG via CoreWLAN signal). `wifi_change` is emitted by the
+# sketchybar-wifi daemon straight off CoreWLAN events — that's what makes
+# connect/disconnect/signal instant. `network_change` (the
+# com.apple.system.config.network_change distributed notification) is kept ONLY
+# for route changes, i.e. hotspot tether on/off, which CoreWLAN can't see; it is
+# posted by configd once the whole stack settles, so it is seconds late on its
+# own. NO `update_freq` — both sources are push, so nothing here polls.
+# wifi is `bg_only`:
+# the hover highlight is the item's OWN full-footprint background, so --extra
+# re-enables it (the primitive turns background.drawing off by default). NO
+# background.padding — under the tiling primitives every item already abuts, so
+# the old -1px seam-closer now just overlaps its neighbour's highlight.
+# click_script opens Control Center > Wi-Fi.
+(sketchybar --add event network_change com.apple.system.config.network_change)
+(sketchybar --add event wifi_change)
+sb-icon-item wifi right 26 $"sketchybar-hover --plugin ($PLUGIN_DIR)/wifi.nu" [wifi_change network_change mouse.entered mouse.exited] --extra [
+  "click_script=$HOME/.config/sketchybar/select_control_center.nu \"Wi-Fi\""
+  "background.height=24"
+  "background.corner_radius=6"
+  "background.drawing=on"
+  "background.color=0x00000000"
+]
+
 # volume — icon+label cluster (sb-cluster). icon_w=24 == the speaker glyph width,
 # so zone==pull==24 (was 28, the 4px overhang that overlapped hidewin). label_w=61
 # fixes the number box (volume.nu re-sizes it per digit-count via an animated
@@ -211,8 +211,10 @@ sb-cluster volume right 24 61 (
   $"sketchybar-hover --plugin ($PLUGIN_DIR)/volume.nu"
 ) [volume_change mouse.entered mouse.exited] --label-extra [
   "label.align=right"
-  "click_script=$HOME/.config/sketchybar/open_volume_control.scpt"
-] --icon-extra ["click_script=$HOME/.config/sketchybar/open_volume_control.scpt"]
+  "click_script=menubar-reveal $HOME/.config/sketchybar/open_volume_control.scpt"
+] --icon-extra [
+  "click_script=menubar-reveal $HOME/.config/sketchybar/open_volume_control.scpt"
+]
 
 # hidewin — single icon (sb-icon-item, icon_only). Screen-capture hiding toggle
 # (packages/hidewin-bar), placed to the LEFT of the volume icon (right items add

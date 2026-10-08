@@ -117,6 +117,8 @@
                 pkgs.pkgs-mine.hidewin
                 # The `mic_denoise` item's click runs `mic-denoise panel`.
                 pkgs.pkgs-mine.mic-denoise
+                # Control Center click_scripts skip the menu bar slide-down.
+                pkgs.pkgs-mine.menubar-reveal
               ]
               |> lib.makeBinPath
             }:/usr/bin";

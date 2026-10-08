@@ -603,6 +603,8 @@ in
       };
 
       defaults = {
+        # Sound menu bar item: sketchybar's volume click AXPresses it directly
+        controlcenter.Sound = true;
         dock = {
           autohide = true;
           autohide-delay = 0.0;
