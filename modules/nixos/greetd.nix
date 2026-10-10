@@ -16,6 +16,11 @@
       sessionCommand = "zsh -lc start-hyprland";
     in
     lib.mkIf hyprlandEnabled {
+      boot.kernelParams = [
+        # when to power off the frame buffer after X seconds of inactivity
+        "consoleblank=300"
+      ];
+
       services.greetd = {
         enable = true;
         settings = {
