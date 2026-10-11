@@ -99,8 +99,10 @@
             enable = true;
             settings = {
               ipc = "on";
-              preload = [ "~/Pictures/desktop.jpg" ];
-              wallpaper = [ ",~/Pictures/desktop.jpg" ];
+              wallpaper = {
+                monitor = "*";
+                path = "~/Pictures/desktop.jpg";
+              };
             };
           };
           udiskie = {

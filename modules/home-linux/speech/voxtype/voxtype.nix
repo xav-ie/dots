@@ -45,10 +45,19 @@
             wayland.windowManager.hyprland.settings = {
               # Push-to-talk: hold to record, release to transcribe
               bind = [
-                "${cfg.pushToTalk.modifier}, ${cfg.pushToTalk.key}, exec, ${pkgs.voxtype}/bin/voxtype record start"
-              ];
-              bindr = [
-                "${cfg.pushToTalk.modifier}, ${cfg.pushToTalk.key}, exec, ${pkgs.voxtype}/bin/voxtype record stop"
+                {
+                  _args = [
+                    cfg.pushToTalk.hyprlandKeys
+                    (lib.generators.mkLuaInline ''hl.dsp.exec_cmd("${pkgs.voxtype}/bin/voxtype record start")'')
+                  ];
+                }
+                {
+                  _args = [
+                    cfg.pushToTalk.hyprlandKeys
+                    (lib.generators.mkLuaInline ''hl.dsp.exec_cmd("${pkgs.voxtype}/bin/voxtype record stop")'')
+                    { release = true; }
+                  ];
+                }
               ];
             };
           })

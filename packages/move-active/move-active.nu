@@ -62,7 +62,7 @@ def windowInfo [window_dimensions: record<width: number, height: number, x: numb
   let border_size = (hyprctl getoption general:border_size -j
                      | from json | get int)
   let gaps = (hyprctl getoption general:gaps_out -j
-              | from json | get custom | split words
+              | from json | get css | split words
               | each {|| $in | into int })
   let gap_top = $gaps.0
   let gap_right = $gaps.1
@@ -124,8 +124,17 @@ def windowInfo [window_dimensions: record<width: number, height: number, x: numb
   }
 }
 
+# Build a Lua `hl.dsp.window.<name>({ ... })` dispatcher call from a record.
+def window_dispatch [name: string, args: record] {
+  let fields = $args | items {|k, v|
+    let value = if ($v | describe) == "string" { $v | to json } else { $v }
+    $"($k) = ($value)"
+  } | str join ", "
+  $"hl.dsp.window.($name)\({ ($fields) }\)"
+}
+
 def reset_position [] {
-  hyprctl dispatch moveactive exact 0 0
+  hyprctl dispatch (window_dispatch move {x: 0, y: 0})
 }
 
 def move_position [
@@ -146,16 +155,17 @@ def move_position [
     middle => $window_info.window_h_middle
     right => $window_info.window_right
   } | math round
-  let resize_params = $"exact ($x) ($y)"
-
-  let command = if $use_active {
-    $"moveactive ($resize_params)"
+  if $use_active {
+    window_dispatch move {x: $x, y: $y}
   } else if $selector != "" {
-    $"movewindowpixel ($resize_params),($selector)"
+    window_dispatch move {x: $x, y: $y, window: $selector}
   } else {
-    $"movewindowpixel ($resize_params),address:($window_info.address)"
+    window_dispatch move {
+      x: $x
+      y: $y
+      window: $"address:($window_info.address)"
+    }
   }
-  $command
 }
 
 def move_window [position: record<v: string, h: string>, selector: string = ""] {
@@ -227,7 +237,7 @@ def resize [percentage: number] {
   let move_command = (move_position $window_info.window_quadrant (should_use_active) ""
                       $window_dimensions_override)
   let batchCommand = [
-    $"dispatch resizewindowpixel exact ($resized_width) ($resized_height),address:($window_info.address)"
+    $"dispatch (window_dispatch resize {x: $resized_width, y: $resized_height, window: $"address:($window_info.address)"})"
     $"dispatch ($move_command)"
   ]
   print $"batchCommand ($batchCommand); \ndispactch ($move_command)"

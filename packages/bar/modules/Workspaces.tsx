@@ -21,7 +21,9 @@ export default function Workspaces() {
           <button
             class={focused((f) => (f && f.id === ws.id ? "active" : ""))}
             tooltipText={`Workspace ${ws.id}`}
-            onClicked={() => hypr.dispatch("workspace", String(ws.id))}
+            onClicked={() =>
+              hypr.message(`dispatch hl.dsp.focus({ workspace = ${ws.id} })`)
+            }
           >
             <label label={String(ws.id)} />
           </button>
