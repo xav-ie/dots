@@ -1,6 +1,7 @@
 {
   flake.modules.homeManager.linux =
     {
+      config,
       lib,
       ...
     }:
@@ -27,6 +28,15 @@
             type = lib.types.str;
             default = "G";
             description = "Key for the push-to-talk keybinding.";
+          };
+
+          hyprlandKeys = lib.mkOption {
+            type = lib.types.str;
+            readOnly = true;
+            default = lib.concatStringsSep " + " (
+              lib.splitString " " config.speech.pushToTalk.modifier ++ [ config.speech.pushToTalk.key ]
+            );
+            description = "The push-to-talk chord in Hyprland's Lua bind syntax, e.g. `SUPER + G`.";
           };
         };
       };

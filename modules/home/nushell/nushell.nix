@@ -28,8 +28,8 @@
             n = ''nu -e "$env.PATH = ($env.PATH | prepend '${pkgs.nodejs}/bin' | prepend '${pkgs.pnpm}/bin' | prepend '${pkgs.yarn}/bin')"'';
             s = "sudo -E";
             ss = "sudo -E !!";
-            vnc720 = "hyprctl keyword monitor HDMI-A-2,1280x720@30,auto,0.80";
-            vnc1080 = "hyprctl keyword monitor HDMI-A-2,1920x1080@30,auto,1";
+            vnc720 = "hyprctl eval 'hl.monitor({ output = \"HDMI-A-2\", mode = \"1280x720@30\", position = \"auto\", scale = 0.8 })'";
+            vnc1080 = "hyprctl eval 'hl.monitor({ output = \"HDMI-A-2\", mode = \"1920x1080@30\", position = \"auto\", scale = 1 })'";
             w = "watson";
           };
           # (3) Files in $nu.vendor-autoload-dirs are loaded. These files can be

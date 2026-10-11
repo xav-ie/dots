@@ -60,7 +60,12 @@
             wayland.windowManager.hyprland.settings = {
               # Consume SUPER+G so it doesn't pass through to the focused window
               bind = [
-                "${cfg.pushToTalk.modifier}, ${cfg.pushToTalk.key}, exec, :"
+                {
+                  _args = [
+                    cfg.pushToTalk.hyprlandKeys
+                    (lib.generators.mkLuaInline "hl.dsp.no_op()")
+                  ];
+                }
               ];
             };
 

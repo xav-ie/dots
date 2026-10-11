@@ -210,7 +210,7 @@
                 # also lock before systemd suspend
                 before_sleep_cmd = "loginctl lock-session";
                 # prevent having to press key twice
-                after_sleep_cmd = "hyprctl dispatch dpms on";
+                after_sleep_cmd = "hyprctl dispatch 'hl.dsp.dpms({ action = \"on\" })'";
                 # pidof guard: a second hyprlock racing the first for the GPU fails
                 # zink's vkCreateDevice and falls back to llvmpipe (~2 cores, fans).
                 lock_cmd = "${pkgs.procps}/bin/pidof hyprlock || ${config.programs.hyprlock.package}/bin/hyprlock --grace 10 || true";
@@ -229,8 +229,8 @@
                 }
                 {
                   timeout = 1200;
-                  on-timeout = "hyprctl dispatch dpms off";
-                  on-resume = "hyprctl dispatch dpms on";
+                  on-timeout = "hyprctl dispatch 'hl.dsp.dpms({ action = \"off\" })'";
+                  on-resume = "hyprctl dispatch 'hl.dsp.dpms({ action = \"on\" })'";
                 }
               ]
               ++ lib.optionals osConfig.services.power-save.enable [
@@ -299,366 +299,413 @@
           let
             inherit (inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}) hyprland;
             inherit (cfg) borderSizeNumeric gapsNumeric;
+            inherit (lib.generators) mkLuaInline;
+            toLua = lib.generators.toLua { };
             barHeightNumeric = barCfg.barHeight;
             gapAndBorderNumeric = gapsNumeric + borderSizeNumeric;
             barSpaceNumeric = gapAndBorderNumeric + barHeightNumeric - borderSizeNumeric;
             windowTopNumeric = gapAndBorderNumeric + barSpaceNumeric;
             windowLeftNumeric = gapsNumeric + borderSizeNumeric;
 
-            gaps = gapsNumeric |> toString;
-            windowLeft = windowLeftNumeric |> toString;
-            windowTop = windowTopNumeric |> toString;
-
             pipHeight = 324;
             move-active = "${pkgs.pkgs-mine.move-active}/bin/move-active";
+            spotlight = "${pkgs.pkgs-mine.pickers}/bin/spotlight";
+            pactl = lib.getExe' pkgs.pulseaudio "pactl";
             virtual-headset-ctl = "${
               inputs.virtual-headset.packages.${pkgs.stdenv.hostPlatform.system}.virtual-headset-ctl
             }/bin/virtual-headset-ctl";
+
+            mod = "SUPER";
+            dsp = action: mkLuaInline "hl.dsp.${action}";
+            exec = command: mkLuaInline "hl.dsp.exec_cmd(${toLua command})";
+            # hl.bind(keys, dispatcher[, opts])
+            bind = keys: action: {
+              _args = [
+                keys
+                action
+              ];
+            };
+            bindWith = opts: keys: action: {
+              _args = [
+                keys
+                action
+                opts
+              ];
+            };
+            locked = bindWith { locked = true; };
+            release = bindWith { release = true; };
+            repeating = bindWith { repeating = true; };
+            repeatingLocked = bindWith {
+              locked = true;
+              repeating = true;
+            };
+            matchTitle = title: rule: { match.title = title; } // rule;
+            # Layer surfaces that draw a near-opaque panel over a transparent
+            # click-catcher: blur only where the panel is.
+            frosted = namespace: alpha: {
+              match.namespace = namespace;
+              blur = true;
+              ignore_alpha = alpha;
+            };
           in
           {
             enable = true;
             package = hyprland;
-            # `settings` below is written as hyprlang, not Lua.
-            configType = "hyprlang";
+            configType = "lua";
             systemd.enable = true;
             xwayland.enable = true;
             settings = {
-              env = [
-                "XCURSOR_THEME,${config.home.pointerCursor.name}"
-                "XCURSOR_SIZE,${config.home.pointerCursor.size |> builtins.toString}"
-                "HYPRCURSOR_THEME,${config.home.pointerCursor.name}"
-                "HYPRCURSOR_SIZE,${config.home.pointerCursor.size |> builtins.toString}"
+              env = map (args: { _args = args; }) [
+                [
+                  "XCURSOR_THEME"
+                  config.home.pointerCursor.name
+                ]
+                [
+                  "XCURSOR_SIZE"
+                  (toString config.home.pointerCursor.size)
+                ]
+                [
+                  "HYPRCURSOR_THEME"
+                  config.home.pointerCursor.name
+                ]
+                [
+                  "HYPRCURSOR_SIZE"
+                  (toString config.home.pointerCursor.size)
+                ]
               ];
 
-              # For all categories, see https://wiki.hyprland.org/Configuring/Variables/
-              input = {
-                kb_layout = "us";
-                # kb_variant =
-                # kb_model =
-                # kb_rules =
-                # probably don't do this
-                # kb_options = caps:swapescape
-                follow_mouse = 1;
-
-                touchpad = {
-                  natural_scroll = "yes";
-                  scroll_factor = 0.8;
+              # For all options, see https://wiki.hypr.land/configuring/core/config-options/
+              config = {
+                input = {
+                  kb_layout = "us";
+                  follow_mouse = 1;
+                  touchpad = {
+                    natural_scroll = true;
+                    scroll_factor = 0.8;
+                  };
+                  # -1.0 - 1.0, 0 means no modification.
+                  sensitivity = 0.0;
                 };
-                # -1.0 - 1.0, 0 means no modification.
-                sensitivity = 0.0;
+
+                general = {
+                  gaps_in = gapsNumeric / 2;
+                  gaps_out = gapsNumeric;
+                  border_size = borderSizeNumeric;
+                  # darker/saturated take on packages/pickers accent ($accent #bb9af7)
+                  col = {
+                    inactive_border = "rgb(3a2e5e)";
+                    active_border = "rgb(7c5cba)";
+                  };
+                  layout = "dwindle";
+                };
+
+                decoration = {
+                  # make it match border-width for ultimate roundness
+                  rounding = 4;
+                  blur = {
+                    enabled = true;
+                    size = 8;
+                    passes = 3;
+                  };
+                  shadow.enabled = false;
+                };
+
+                dwindle.preserve_split = true;
+                master.new_status = "master";
+
+                gestures = {
+                  workspace_swipe_distance = 300;
+                  workspace_swipe_min_speed_to_force = 0;
+                  workspace_swipe_cancel_ratio = 0;
+                };
+
+                misc = {
+                  allow_session_lock_restore = true;
+                  animate_manual_resizes = true;
+                  animate_mouse_windowdragging = true;
+                  focus_on_activate = true;
+                };
+
+                cursor.hide_on_key_press = true;
+                animations.enabled = true;
               };
-              general = {
-                # See https://wiki.hyprland.org/Configuring/Variables/ for more
-                gaps_in = (gapsNumeric / 2) |> toString;
-                gaps_out = gaps;
-                border_size = borderSizeNumeric |> toString;
 
-                # darker/saturated take on packages/pickers accent ($accent #bb9af7)
-                "col.inactive_border" = "rgb(3a2e5e)";
-                "col.active_border" = "rgb(7c5cba)";
-
-                layout = "dwindle";
+              # See https://wiki.hypr.land/configuring/core/monitors/
+              monitor = {
+                output = "";
+                mode = "preferred";
+                position = "auto";
+                scale = "auto";
               };
 
-              decoration = {
-                # See https://wiki.hyprland.org/Configuring/Variables/ for more
-                # make it match border-width for ultimate roundness
-                rounding = 4;
-
-                blur = {
+              # See https://wiki.hypr.land/configuring/core/animations/
+              curve = map (args: { _args = args; }) [
+                [
+                  "myBezier"
+                  {
+                    type = "bezier";
+                    points = [
+                      [
+                        5.0e-2
+                        0.9
+                      ]
+                      [
+                        0.1
+                        1.05
+                      ]
+                    ];
+                  }
+                ]
+                [
+                  "overshot"
+                  {
+                    type = "bezier";
+                    points = [
+                      [
+                        5.0e-2
+                        0.9
+                      ]
+                      [
+                        0.1
+                        1.1
+                      ]
+                    ];
+                  }
+                ]
+              ];
+              animation = [
+                {
+                  leaf = "windows";
                   enabled = true;
-                  size = 8;
-                  passes = 3;
-                };
-
-                shadow = {
+                  speed = 4;
+                  bezier = "overshot";
+                  style = "popin 80%";
+                }
+                {
+                  leaf = "windowsOut";
+                  enabled = true;
+                  speed = 4;
+                  bezier = "default";
+                  style = "popin 90%";
+                }
+                {
+                  leaf = "border";
+                  enabled = true;
+                  speed = 2;
+                  bezier = "default";
+                }
+                {
+                  leaf = "borderangle";
+                  enabled = true;
+                  speed = 15;
+                  bezier = "overshot";
+                }
+                {
+                  leaf = "fade";
+                  enabled = true;
+                  speed = 4;
+                  bezier = "default";
+                }
+                {
+                  leaf = "workspaces";
                   enabled = false;
-                };
-              };
-
-              dwindle = {
-                # See https://wiki.hyprland.org/Configuring/Dwindle-Layout/ for more
-                pseudotile = "yes"; # master switch for pseudotiling. Enabling is bound to mainMod + P in the keybinds section below
-                preserve_split = "yes"; # you probably want this
-              };
-
-              master = {
-                # See https://wiki.hyprland.org/Configuring/Master-Layout/ for more
-                new_status = "master"; # "slave"
-              };
-
-              gestures = {
-                # See https://wiki.hyprland.org/Configuring/Variables/ for more
-                # workspace_swipe = "on";
-                workspace_swipe_distance = 300;
-                workspace_swipe_min_speed_to_force = 0;
-                workspace_swipe_cancel_ratio = 0;
-              };
-
-              misc = {
-                allow_session_lock_restore = true;
-                animate_manual_resizes = true;
-                animate_mouse_windowdragging = true;
-                focus_on_activate = true;
-              };
-
-              cursor = {
-                hide_on_key_press = true;
-              };
-
-              debug = {
-                # damage_tracking = false
-              };
-
-              # Execute your favorite apps at launch.
-              # hyprpaper is started via its own home-manager systemd user service —
-              # no need to launch it here.
-              exec-once = [
-                "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type text --watch cliphist store"
-                "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type image --watch cliphist store"
-                # Pre-warm the spotlight launcher so the picker keybinds open
-                # instantly (it stays resident and just switches/toggles its mode).
-                "${pkgs.pkgs-mine.pickers}/bin/spotlight --daemon"
-                "[workspace 2 silent] ${config.programs.firefox.package}/bin/firefox"
-                "[workspace 1 silent] ${config.programs.ghostty.package}/bin/ghostty"
+                }
               ];
 
-              animations = {
-                enabled = "yes";
-
-                # Some default animations, see https://wiki.hyprland.org/Configuring/Animations/ for more
-                bezier = [
-                  "myBezier, 0.05, 0.9, 0.1, 1.05"
-                  "overshot,0.05,0.9,0.1,1.1"
-                ];
-                animation = [
-                  "windows, 1, 4, overshot, popin 80%"
-                  "windowsOut, 1, 4, default, popin 90%"
-                  "border, 1, 2, default"
-                  "borderangle, 1, 15, overshot"
-                  "fade, 1, 4, default"
-                  "workspaces, 0, 0, default"
-                ];
-              };
-
-              windowrule = [
-                # https://wiki.hyprland.org/Configuring/Window-Rules/
+              # See https://wiki.hypr.land/configuring/core/rules/
+              window_rule = [
                 # firefox pip (hacky workaround)
                 # https://github.com/hyprwm/Hyprland/issues/2942#issuecomment-1923813933
-                "match:title Picture-in-Picture, float on"
-                "match:title Picture-in-Picture, move (monitor_w-window_w-${windowLeft}) (monitor_h-${
-                  (pipHeight + gapAndBorderNumeric) |> toString
-                })"
-                "match:title Picture-in-Picture, no_initial_focus on"
-                "match:title Picture-in-Picture, pin on"
-                "match:title Picture-in-Picture, size 576 ${pipHeight |> toString}"
-
+                (matchTitle "Picture-in-Picture" {
+                  float = true;
+                  move = "(monitor_w-window_w-${toString windowLeftNumeric}) (monitor_h-${
+                    toString (pipHeight + gapAndBorderNumeric)
+                  })";
+                  no_initial_focus = true;
+                  pin = true;
+                  size = "576 ${toString pipHeight}";
+                })
                 # shimeji desktop pets
-                "match:title com-group_finity-mascot-Main, float on"
-                "match:title com-group_finity-mascot-Main, no_blur on"
-                "match:title com-group_finity-mascot-Main, border_size 0"
-                "match:title com-group_finity-mascot-Main, no_focus on"
-                "match:title com-group_finity-mascot-Main, no_shadow on"
-
+                (matchTitle "com-group_finity-mascot-Main" {
+                  float = true;
+                  no_blur = true;
+                  border_size = 0;
+                  no_focus = true;
+                  no_shadow = true;
+                })
                 # elkowar's wacky widgets
-                "match:title eww, float on"
-
+                (matchTitle "eww" { float = true; })
                 # zoom windows?
-                "match:title ^$, center on"
-                "match:title ^$, float on"
-                "match:title ^$, no_blur on"
-                "match:title ^$, border_size 0"
-                "match:title ^$, no_shadow on"
-                "match:title ^$, size 25% 100%"
-
+                (matchTitle "^$" {
+                  center = true;
+                  float = true;
+                  no_blur = true;
+                  border_size = 0;
+                  no_shadow = true;
+                  size = "25% 100%";
+                })
                 # improve animation on ueberzugpp windows
-                "match:title ueberzugpp.*, animation slide right"
-
-                # zenity
-                "match:title zenity, pin on"
-
+                (matchTitle "ueberzugpp.*" { animation = "slide right"; })
+                (matchTitle "zenity" { pin = true; })
                 # xdph screenshare picker (hyprland-share-picker)
-                "match:title Select what to share, float on"
-                "match:title Select what to share, size 500 700"
-                "match:title Select what to share, center on"
-
+                (matchTitle "Select what to share" {
+                  float = true;
+                  size = "500 700";
+                  center = true;
+                })
                 # gtk portal file picker (Save As / Open dialogs from Firefox/Chromium)
-                "match:class xdg-desktop-portal-gtk, float on"
-                "match:class xdg-desktop-portal-gtk, center on"
+                {
+                  match.class = "xdg-desktop-portal-gtk";
+                  float = true;
+                  center = true;
+                }
               ];
 
-              # See https://wiki.hyprland.org/Configuring/Monitors/
-              monitor = ",preferred,auto,auto";
-
-              layerrule = [
-                # spotlight hosts every picker mode in one layer. Only blur where the
-                # panel is (ignore_alpha) — the rest of the layer is a transparent
-                # click-catcher — and the panel stays near-opaque (see style.scss) so
-                # clipboard-mode image thumbnails don't bloom into the blur.
-                "match:namespace spotlight, blur on"
-                "match:namespace spotlight, ignore_alpha 0.6"
-                # askpass is the same shape — a near-opaque centered panel over a
-                # transparent click-catcher — so it takes spotlight's blur as-is.
-                "match:namespace askpass, blur on"
-                "match:namespace askpass, ignore_alpha 0.6"
-                # The notification center is the same shape as spotlight (opaque panel
-                # over a transparent click-catcher); the popups are opaque cards over a
-                # transparent surface. ignore_alpha keeps the blur on the cards only.
-                "match:namespace notification-center, blur on"
-                "match:namespace notification-center, ignore_alpha 0.6"
-                "match:namespace notification-center-popups, blur on"
-                "match:namespace notification-center-popups, ignore_alpha 0.6"
+              layer_rule = [
+                # spotlight hosts every picker mode in one layer; the panel stays
+                # near-opaque (see style.scss) so clipboard-mode image thumbnails
+                # don't bloom into the blur.
+                (frosted "spotlight" 0.6)
+                (frosted "askpass" 0.6)
+                (frosted "notification-center" 0.6)
+                (frosted "notification-center-popups" 0.6)
                 # Don't let Hyprland animate the popup layer's resize as toasts stack
                 # (that's the vertical "stretch"); they fade in via CSS opacity instead.
-                "match:namespace notification-center-popups, no_anim on"
-                # The volume OSD is one opaque card over a transparent overlay,
-                # same frosted-glass treatment as the popups.
-                "match:namespace osd, blur on"
-                "match:namespace osd, ignore_alpha 0.6"
-                "match:namespace bar, blur on"
+                {
+                  match.namespace = "notification-center-popups";
+                  no_anim = true;
+                }
+                (frosted "osd" 0.6)
                 # Threshold (not 0): skip the bar's fully transparent margins so they
                 # stay see-through instead of rendering as an opaque blurred band.
                 # Must sit below the .bar background alpha so the pill itself blurs.
-                "match:namespace bar, ignore_alpha 0.4"
+                (frosted "bar" 0.4)
                 # The screen-share frame is a solid red edge over an OVERLAY layer:
                 # keep it crisp (no blur) and don't animate the strips sliding in.
-                "match:namespace screencast-border, blur off"
-                "match:namespace screencast-border, no_anim on"
-              ];
-              # Move/resize windows with mainMod + LMB/RMB and dragging
-              bindm = [
-                "$mainMod, mouse:272, movewindow"
-                "$mainMod SHIFT, mouse:272, resizewindow"
+                {
+                  match.namespace = "screencast-border";
+                  blur = false;
+                  no_anim = true;
+                }
               ];
 
-              binde = [
-                "$mainMod, minus, exec,${move-active} shrink"
-                "$mainMod SHIFT, minus, exec,${move-active} grow"
-              ];
+              # https://wiki.hypr.land/configuring/core/gestures/
+              gesture = {
+                fingers = 4;
+                direction = "horizontal";
+                action = "workspace";
+              };
 
-              # https://github.com/sulmone/X11/blob/master/include/X11/XF86keysym.h
-              bindel = [
-                ", XF86AudioPlay, exec, ${pkgs.playerctl}/bin/playerctl play-pause"
-                ", XF86AudioNext, exec, ${pkgs.playerctl}/bin/playerctl next"
-                ", XF86AudioPrev, exec, ${pkgs.playerctl}/bin/playerctl previous"
-                ", XF86AudioRaiseVolume, exec, ${lib.getExe' pkgs.pulseaudio "pactl"} set-sink-volume @DEFAULT_SINK@ +5%"
-                ", XF86AudioLowerVolume, exec, ${lib.getExe' pkgs.pulseaudio "pactl"} set-sink-volume @DEFAULT_SINK@ -5%"
-              ];
+              # Execute your favorite apps at launch. hyprpaper is started via its
+              # own home-manager systemd user service.
+              on = {
+                _args = [
+                  "hyprland.start"
+                  (mkLuaInline ''
+                    function()
+                      hl.exec_cmd(${toLua "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type text --watch cliphist store"})
+                      hl.exec_cmd(${toLua "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type image --watch cliphist store"})
+                      -- Pre-warm the spotlight launcher so the picker keybinds open
+                      -- instantly (it stays resident and just switches/toggles its mode).
+                      hl.exec_cmd(${toLua "${spotlight} --daemon"})
+                      hl.exec_cmd(${toLua "${config.programs.firefox.package}/bin/firefox"}, { workspace = "2 silent" })
+                      hl.exec_cmd(${toLua "${config.programs.ghostty.package}/bin/ghostty"}, { workspace = "1 silent" })
+                    end'')
+                ];
+              };
 
-              bindl = [
-                ", XF86AudioMute, exec, ${lib.getExe' pkgs.pulseaudio "pactl"} set-sink-mute @DEFAULT_SINK@ toggle"
-                "$mainMod, A, exec, ${virtual-headset-ctl} unmute"
-              ];
-
-              # Push-to-talk: trigger on key release
-              bindr = [
-                "$mainMod, A, exec, ${virtual-headset-ctl} mute"
-              ];
-
-              # https://wiki.hypr.land/Configuring/Gestures/
-              gesture = [
-                "4, horizontal, workspace"
-              ];
-
-              # See https://wiki.hyprland.org/Configuring/Keywords/ for more
-              "$mainMod" = "SUPER";
-
-              # Example binds, see https://wiki.hyprland.org/Configuring/Binds/ for more
+              # See https://wiki.hypr.land/configuring/core/binds/
               bind = [
-                "$mainMod, Q, killactive,"
-                "$mainMod, T, exec, ${config.programs.ghostty.package}/bin/ghostty"
-                "$mainMod SHIFT, F, togglefloating,"
-                ''$mainMod, F, exec, hyprctl --batch "dispatch togglefloating active; dispatch pin active; dispatch moveactive exact ${windowLeft} ${windowTop}; dispatch resizeactive exact 640 360"''
-                "$mainMod ALT,1,exec,${move-active} topLeft"
-                "$mainMod ALT,2,exec,${move-active} topRight"
-                "$mainMod ALT,3,exec,${move-active} bottomRight"
-                "$mainMod ALT,4,exec,${move-active} bottomLeft"
-                "$mainMod ALT,5,exec,${move-active} topMiddle"
-                "$mainMod ALT,6,exec,${move-active} middleMiddle"
-                "$mainMod ALT,7,exec,${move-active} bottomMiddle"
-                "$mainMod, P, pin,"
-                "$mainMod, Escape, exec, ${pkgs.pkgs-mine.pickers}/bin/spotlight power"
-                "$mainMod, B, exec, ${pkgs.pkgs-mine.pickers}/bin/spotlight bluetooth"
-                "$mainMod, E, exec, ${pkgs.pkgs-mine.pickers}/bin/spotlight emoji"
-                "$mainMod, SPACE, exec, ${pkgs.pkgs-mine.pickers}/bin/spotlight app"
-                # "$mainMod, P, pseudo, # dwindle"
-                # "$mainMod, T, togglesplit, # dwindle"
-                "$mainMod, V, exec, ${pkgs.pkgs-mine.pickers}/bin/spotlight clipboard"
-                "$mainMod, S, exec, ${pkgs.hyprshot}/bin/hyprshot -m region -z --clipboard-only"
-                "$mainMod SHIFT, S, exec, ${pkgs.hyprshot}/bin/hyprshot -m region -z -o ~/Pictures"
+                (bind "${mod} + Q" (dsp "window.close()"))
+                (bind "${mod} + T" (exec "${config.programs.ghostty.package}/bin/ghostty"))
+                (bind "${mod} + SHIFT + F" (dsp ''window.float({ action = "toggle" })''))
+                (bind "${mod} + F" (mkLuaInline ''
+                  function()
+                    hl.dispatch(hl.dsp.window.float({ action = "toggle" }))
+                    hl.dispatch(hl.dsp.window.pin())
+                    hl.dispatch(hl.dsp.window.move({ x = ${toString windowLeftNumeric}, y = ${toString windowTopNumeric} }))
+                    hl.dispatch(hl.dsp.window.resize({ x = 640, y = 360 }))
+                  end''))
+                (bind "${mod} + ALT + 1" (exec "${move-active} topLeft"))
+                (bind "${mod} + ALT + 2" (exec "${move-active} topRight"))
+                (bind "${mod} + ALT + 3" (exec "${move-active} bottomRight"))
+                (bind "${mod} + ALT + 4" (exec "${move-active} bottomLeft"))
+                (bind "${mod} + ALT + 5" (exec "${move-active} topMiddle"))
+                (bind "${mod} + ALT + 6" (exec "${move-active} middleMiddle"))
+                (bind "${mod} + ALT + 7" (exec "${move-active} bottomMiddle"))
+                (bind "${mod} + P" (dsp "window.pin()"))
+                (bind "${mod} + Escape" (exec "${spotlight} power"))
+                (bind "${mod} + B" (exec "${spotlight} bluetooth"))
+                (bind "${mod} + E" (exec "${spotlight} emoji"))
+                (bind "${mod} + SPACE" (exec "${spotlight} app"))
+                (bind "${mod} + V" (exec "${spotlight} clipboard"))
+                (bind "${mod} + S" (exec "${pkgs.hyprshot}/bin/hyprshot -m region -z --clipboard-only"))
+                (bind "${mod} + SHIFT + S" (exec "${pkgs.hyprshot}/bin/hyprshot -m region -z -o ~/Pictures"))
                 # Region screenshot → annotate in satty → copy to clipboard.
-                "$mainMod CTRL, S, exec, ${pkgs.hyprshot}/bin/hyprshot -m region --raw | ${pkgs.satty}/bin/satty --filename - --copy-command wl-copy"
-                "$mainMod, N, exec, ${lib.getExe' pkgs.pkgs-mine.notification-center "notifctl"} -t"
-                "$mainMod, C, exec, ${config.programs.mpv.package}/bin/mpv av://v4l2:/dev/video1"
-                "$mainMod SHIFT, M, exit,"
-                "$mainMod, U, exec, ${pkgs.pkgs-mine.uair-toggle-and-notify}/bin/uair-toggle-and-notify"
-                # Move focus with mainMod + arrow keys
-                "$mainMod, H, movefocus, l"
-                "$mainMod, L, movefocus, r"
-                "$mainMod, J, movefocus, u"
-                "$mainMod, K, movefocus, d"
-                # change focus to another window
-                "$mainMod, Tab, cyclenext"
+                (bind "${mod} + CTRL + S" (
+                  exec "${pkgs.hyprshot}/bin/hyprshot -m region --raw | ${pkgs.satty}/bin/satty --filename - --copy-command wl-copy"
+                ))
+                (bind "${mod} + N" (exec "${lib.getExe' pkgs.pkgs-mine.notification-center "notifctl"} -t"))
+                (bind "${mod} + C" (exec "${config.programs.mpv.package}/bin/mpv av://v4l2:/dev/video1"))
+                (bind "${mod} + SHIFT + M" (dsp "exit()"))
+                (bind "${mod} + U" (exec "${pkgs.pkgs-mine.uair-toggle-and-notify}/bin/uair-toggle-and-notify"))
+                (bind "${mod} + H" (dsp ''focus({ direction = "left" })''))
+                (bind "${mod} + L" (dsp ''focus({ direction = "right" })''))
+                (bind "${mod} + J" (dsp ''focus({ direction = "up" })''))
+                (bind "${mod} + K" (dsp ''focus({ direction = "down" })''))
+                (bind "${mod} + Tab" (dsp "window.cycle_next()"))
+                (bind "ALT + R" (dsp ''submap("resize")''))
 
-                # Switch workspaces with mainMod + [0-9]
-                "$mainMod, 1, workspace, 1"
-                "$mainMod, 2, workspace, 2"
-                "$mainMod, 3, workspace, 3"
-                "$mainMod, 4, workspace, 4"
-                "$mainMod, 5, workspace, 5"
-                "$mainMod, 6, workspace, 6"
-                "$mainMod, 7, workspace, 7"
-                "$mainMod, 8, workspace, 8"
-                "$mainMod, 9, workspace, 9"
-                "$mainMod, 0, workspace, 10"
+                # Move/resize windows with mainMod + LMB/RMB and dragging
+                (bindWith { mouse = true; } "${mod} + mouse:272" (dsp "window.drag()"))
+                (bindWith { mouse = true; } "${mod} + SHIFT + mouse:272" (dsp "window.resize()"))
 
-                # Move active window to a workspace with mainMod + SHIFT + [0-9]
-                "$mainMod SHIFT, 1, movetoworkspace, 1"
-                "$mainMod SHIFT, 2, movetoworkspace, 2"
-                "$mainMod SHIFT, 3, movetoworkspace, 3"
-                "$mainMod SHIFT, 4, movetoworkspace, 4"
-                "$mainMod SHIFT, 5, movetoworkspace, 5"
-                "$mainMod SHIFT, 6, movetoworkspace, 6"
-                "$mainMod SHIFT, 7, movetoworkspace, 7"
-                "$mainMod SHIFT, 8, movetoworkspace, 8"
-                "$mainMod SHIFT, 9, movetoworkspace, 9"
-                "$mainMod SHIFT, 0, movetoworkspace, 10"
+                (repeating "${mod} + minus" (exec "${move-active} shrink"))
+                (repeating "${mod} + SHIFT + minus" (exec "${move-active} grow"))
 
-                # Scroll through existing workspaces with mainMod + scroll
-                # "$mainMod, mouse_down, workspace, e+1"
-                # "$mainMod, mouse_up, workspace, e-1"
+                # https://github.com/sulmone/X11/blob/master/include/X11/XF86keysym.h
+                (repeatingLocked "XF86AudioPlay" (exec "${pkgs.playerctl}/bin/playerctl play-pause"))
+                (repeatingLocked "XF86AudioNext" (exec "${pkgs.playerctl}/bin/playerctl next"))
+                (repeatingLocked "XF86AudioPrev" (exec "${pkgs.playerctl}/bin/playerctl previous"))
+                (repeatingLocked "XF86AudioRaiseVolume" (exec "${pactl} set-sink-volume @DEFAULT_SINK@ +5%"))
+                (repeatingLocked "XF86AudioLowerVolume" (exec "${pactl} set-sink-volume @DEFAULT_SINK@ -5%"))
+                (locked "XF86AudioMute" (exec "${pactl} set-sink-mute @DEFAULT_SINK@ toggle"))
 
-                # will switch to a submap called resize
-                "ALT,R,submap,resize"
-              ];
-
+                # Push-to-talk: unmute on press, mute on release
+                (locked "${mod} + A" (exec "${virtual-headset-ctl} unmute"))
+                (release "${mod} + A" (exec "${virtual-headset-ctl} mute"))
+              ]
+              # Switch workspaces with mainMod + [0-9]; move the active window
+              # there with mainMod + SHIFT + [0-9]
+              ++ lib.concatMap (
+                ws:
+                let
+                  key = toString (lib.mod ws 10);
+                in
+                [
+                  (bind "${mod} + ${key}" (dsp "focus({ workspace = ${toString ws} })"))
+                  (bind "${mod} + SHIFT + ${key}" (dsp "window.move({ workspace = ${toString ws} })"))
+                ]
+              ) (lib.range 1 10);
             };
 
-            extraConfig = # hyprlang
-              ''
-                # will start a submap called "resize"
-                submap=resize
-                # sets repeatable binds for resizing the active window
-                binde=,right,resizeactive,10 0
-                binde=,left,resizeactive,-10 0
-                binde=,up,resizeactive,0 -10
-                binde=,down,resizeactive,0 10
-                binde=,minus,resizeactive,-128 -72
-                binde=SHIFT,minus,resizeactive,128 72
-                bind=,1,exec,${move-active} topLeft
-                bind=,2,exec,${move-active} topRight
-                bind=,3,exec,${move-active} bottomRight
-                bind=,4,exec,${move-active} bottomLeft
-                binde=,l,moveactive,${gaps} 0
-                binde=,h,moveactive,-${gaps} 0
-                binde=,j,moveactive,0 ${gaps}
-                binde=,k,moveactive,0 -${gaps}
-
-                bind=,escape,submap,reset
-
-                # will reset the submap, meaning end the current one and return to the global one
-                submap=reset
-              '';
+            submaps.resize.settings.bind = [
+              (repeating "right" (dsp "window.resize({ x = 10, y = 0, relative = true })"))
+              (repeating "left" (dsp "window.resize({ x = -10, y = 0, relative = true })"))
+              (repeating "up" (dsp "window.resize({ x = 0, y = -10, relative = true })"))
+              (repeating "down" (dsp "window.resize({ x = 0, y = 10, relative = true })"))
+              (repeating "minus" (dsp "window.resize({ x = -128, y = -72, relative = true })"))
+              (repeating "SHIFT + minus" (dsp "window.resize({ x = 128, y = 72, relative = true })"))
+              (bind "1" (exec "${move-active} topLeft"))
+              (bind "2" (exec "${move-active} topRight"))
+              (bind "3" (exec "${move-active} bottomRight"))
+              (bind "4" (exec "${move-active} bottomLeft"))
+              (repeating "l" (dsp "window.move({ x = ${toString gapsNumeric}, y = 0, relative = true })"))
+              (repeating "h" (dsp "window.move({ x = -${toString gapsNumeric}, y = 0, relative = true })"))
+              (repeating "j" (dsp "window.move({ x = 0, y = ${toString gapsNumeric}, relative = true })"))
+              (repeating "k" (dsp "window.move({ x = 0, y = -${toString gapsNumeric}, relative = true })"))
+              (bind "escape" (dsp ''submap("reset")''))
+            ];
           };
       };
     };

@@ -24,10 +24,19 @@
             wayland.windowManager.hyprland.settings = {
               # Push-to-talk: hold to record, release to stop
               bind = [
-                "${cfg.pushToTalk.modifier}, ${cfg.pushToTalk.key}, exec, $HOME/.config/com.voquill.desktop/trigger-hotkey.sh dictate"
-              ];
-              bindr = [
-                "${cfg.pushToTalk.modifier}, ${cfg.pushToTalk.key}, exec, $HOME/.config/com.voquill.desktop/trigger-hotkey.sh dictate"
+                {
+                  _args = [
+                    cfg.pushToTalk.hyprlandKeys
+                    (lib.generators.mkLuaInline ''hl.dsp.exec_cmd("$HOME/.config/com.voquill.desktop/trigger-hotkey.sh dictate")'')
+                  ];
+                }
+                {
+                  _args = [
+                    cfg.pushToTalk.hyprlandKeys
+                    (lib.generators.mkLuaInline ''hl.dsp.exec_cmd("$HOME/.config/com.voquill.desktop/trigger-hotkey.sh dictate")'')
+                    { release = true; }
+                  ];
+                }
               ];
             };
 

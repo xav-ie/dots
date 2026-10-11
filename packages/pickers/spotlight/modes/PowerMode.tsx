@@ -34,7 +34,7 @@ const ACTIONS: PowerAction[] = [
     id: "logout",
     label: "Log Out",
     icon: "system-log-out-symbolic",
-    argv: ["hyprctl", "dispatch", "exit"],
+    argv: ["hyprctl", "dispatch", "hl.dsp.exit()"],
     confirm: true,
   },
   {
