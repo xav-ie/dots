@@ -13,5 +13,5 @@
   # NVIDIA Vulkan ICD manifest, installed under /run/opengl-driver by
   # hardware.graphics. Consumers that bypass the normal loader search path
   # (headless Chrome, AppImage-derived apps) point VK_ICD_FILENAMES at it.
-  vulkanIcd = "/run/opengl-driver/share/vulkan/icd.d/nvidia_icd.x86_64.json";
+  vulkanIcd = "/run/opengl-driver/share/vulkan/icd.d/nvidia_icd.json";
 }
