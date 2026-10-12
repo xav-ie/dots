@@ -428,6 +428,26 @@
         "type": "github"
       }
     },
+    "divvy": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1791991058,
+        "narHash": "sha256-7+H5R/G3OJ+FLXa6rSpECH0XGIsw7sygx2Ctb7qKJk0=",
+        "ref": "refs/heads/main",
+        "rev": "095ba12d29fe39bdc3802e8748399533bfe70f83",
+        "revCount": 1,
+        "type": "git",
+        "url": "ssh://git@github.com/xav-ie/divvy"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/xav-ie/divvy"
+      }
+    },
     "executor-src": {
       "flake": false,
       "locked": {
@@ -645,11 +665,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791225290,
-        "narHash": "sha256-on3rBS4U3dGovrXUcBRyKpzFnXne80pe88spPCGAZCg=",
+        "lastModified": 1791986786,
+        "narHash": "sha256-+2drZWHZI1gxXNC51h3xoovsAGxj/IcGXqApi1xWm7k=",
         "owner": "xav-ie",
         "repo": "herdr",
-        "rev": "dc7613334306560a4a79af20f96d350198b09c3e",
+        "rev": "5e2e85016eee9c294dc7bcd43d9737dcadee6aa9",
         "type": "github"
       },
       "original": {
@@ -1827,6 +1847,7 @@
         "crane": "crane",
         "ctpv": "ctpv",
         "disko": "disko",
+        "divvy": "divvy",
         "executor-src": "executor-src",
         "fenix": "fenix",
         "flake-compat": "flake-compat",
