@@ -84,6 +84,7 @@
               devenv
               dig
               fd
+              forgejo-cli # Codeberg/Forgejo CLI (fj)
               # a wrapper around ffmpeg that adds a progress bar and ETA
               ffpb
               ffmpeg
