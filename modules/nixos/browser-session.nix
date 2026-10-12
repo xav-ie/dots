@@ -41,12 +41,17 @@
           package = pkgs.pkgs-mine.browser-session-mcp;
 
           chrome = {
-            package = pkgs.pkgs-mine.chrome-headless-shell;
+            # Branded Chrome in new headless mode: its plugins, window.chrome and
+            # Client Hints are the real ones, which is what lets bot-managed
+            # logins (Verizon's Akamai) load; chrome-headless-shell gets 418s.
+            package = pkgs.google-chrome;
+            executable = "google-chrome-stable";
             # Real-GPU WebGL via ANGLE-over-Vulkan on the NVIDIA driver: the
             # renderer string stays genuine (a software-GL spoof gets flagged for
             # inconsistency). Vulkan initializes headlessly — the GL/GLX path
             # fails with "Could not open the default X display".
             extraArgs = [
+              "--headless"
               "--use-gl=angle"
               "--use-angle=vulkan"
               "--enable-features=Vulkan"

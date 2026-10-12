@@ -134,7 +134,7 @@ You locate elements by **CSS selector**, not by scanning uids. The loop:
 When a flow needs credentials you must not handle (passwords, passkeys, 2FA),
 **do not type them and do not ask the user for them.** Hand the live page over:
 
-1. `request_human_takeover({ sessionId, ttl? })` → `{ url, token, expiresAtMs }`
+1. `request_human_takeover({ sessionId, ttlMinutes? })` → `{ url, token, expiresAtMs }`
    — returns immediately. **Show the `url` to the user** and ask them to open it
    and log in (they see a live view of the page; credentials go page→Chrome
    directly and never pass through you).
