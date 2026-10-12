@@ -89,6 +89,7 @@
               ffmpeg
               generate-kaomoji
               git-absorb
+              glab # GitLab CLI
               gnumake
               go-jira
               hyperfine # performance tester
