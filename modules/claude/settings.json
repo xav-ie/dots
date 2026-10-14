@@ -31,9 +31,6 @@
     "vscode-langservers@claude-code-lsps": false,
     "vtsls@claude-code-lsps": false
   },
-  "env": {
-    "CLAUDE_TOOL_SUGGEST": "inject"
-  },
   "hooks": {
     "Notification": [
       {
