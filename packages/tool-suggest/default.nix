@@ -34,7 +34,7 @@ pkgs.runCommand "tool-suggest"
     # fails the build.
     ${pkgs.bun}/bin/bun $out/lib/tool-suggest/cli.ts selftest | grep -q '^ok$'
     cat > $out/bin/tool-suggest <<EOF
-    #!${pkgs.bun}/bin/bun
+    #!${pkgs.runtimeShell}
     exec ${pkgs.bun}/bin/bun $out/lib/tool-suggest/cli.ts "\$@"
     EOF
     chmod +x $out/bin/tool-suggest
