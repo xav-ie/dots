@@ -133,7 +133,7 @@ rec {
   wakafetch = pkgs.callPackage ./wakafetch { };
   wakatime-cli = pkgs.callPackage ./wakatime-cli { };
   whisper-transcribe = pkgs.callPackage ./whisper-transcribe {
-    inherit pkgs-unfree writeNuApplication;
+    inherit writeNuApplication;
   };
   workspace-mcp = pkgs.callPackage ./workspace-mcp { src = workspace-mcp-src; };
   pi-executor = pkgs.callPackage ./pi-executor { };

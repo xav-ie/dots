@@ -152,9 +152,19 @@
               tsc-filter
               uair-toggle-and-notify
               update-pr
-              whisper-transcribe
             ])
             ++ [
+              # whisper.cpp backend: on Linux use the same pkgs-bleeding-cuda
+              # build the hyprwhspr speech module already puts in the closure
+              # (pinned to the host GPU arch, so no extra CUDA compile); CPU
+              # build on darwin.
+              (pkgs.pkgs-mine.whisper-transcribe.override {
+                whisper-cpp =
+                  if pkgs.stdenv.hostPlatform.isLinux then
+                    pkgs.pkgs-bleeding-cuda.whisper-cpp
+                  else
+                    pkgs.whisper-cpp;
+              })
               inputs.nix-auto-follow.packages.${pkgs.stdenv.hostPlatform.system}.default
               inputs.openspec.packages.${pkgs.stdenv.hostPlatform.system}.default
             ];
