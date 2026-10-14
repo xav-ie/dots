@@ -80,9 +80,13 @@
       programs.opencode = {
         enable = true;
         settings = {
-          model = "anthropic/claude-sonnet-4-20250514";
+          # GLM via the z.ai coding plan; the key lives in opencode's own
+          # credential store (`opencode auth login` → auth.json), so the
+          # provider block stays empty here.
+          model = "zai-coding-plan/glm-5.3";
           provider = {
             anthropic = { };
+            "zai-coding-plan" = { };
           };
           mcp = mcpConfig;
           plugin = [
