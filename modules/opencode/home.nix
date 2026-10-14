@@ -135,6 +135,13 @@
         # to the live repo checkout load on next opencode start.
         "opencode/plugins/tool-suggest.ts".source =
           config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/packages/tool-suggest/src/opencode-plugin.ts";
+
+        # Vision shim: pasted images are described by glm-5.3-flash and the
+        # description replaces the image part, so text-only coding models
+        # (the rest of the coding plan) still accept them. Native vision
+        # models are left untouched. Same live-editable deployment.
+        "opencode/plugins/image-describe.ts".source =
+          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/opencode/image-describe.ts";
       };
 
       # Stable path the plugin shim (and fingers) use to invoke the shared
