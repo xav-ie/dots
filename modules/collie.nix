@@ -1,5 +1,4 @@
-# Collie — the other phone UI for the herd, running alongside herdr-mobile-relay
-# so the two can be compared.
+# Collie — the other phone UI for the herd.
 #
 # bridge/config.ts reads every setting from process.env, so the unit is the
 # whole configuration: no .env file, and none of upstream's collie-ctl.sh, which
