@@ -62,7 +62,6 @@
     # 37s → 20s with eval-cores = 0. Back to stock nix once it ships.
     nix-src.url = "github:DeterminateSystems/nix-src/auto-parallelize";
     nixpkgs-bleeding.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixpkgs-homeassistant.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-26.05";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nuenv.url = "github:xav-ie/nuenv";

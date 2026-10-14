@@ -60,8 +60,16 @@ let
       ''
     )
     + "/import-cargo-lock.nix";
+
+  # While `just bleed` hasn't moved nixpkgs-bleeding past nixpkgs, a second
+  # import of the same rev only doubles eval (~7s on praesidium), so
+  # pkgs-bleeding reuses the main set and the main set carries bleeding's pins.
+  bleedingInSync = inputs.nixpkgs-bleeding.rev == inputs.nixpkgs.rev;
 in
 {
+  # Must sort before `modifications`: its `prev` is what pkgs-bleeding reuses.
+  bleeding-pins = if bleedingInSync then import ./_bleeding-pins.nix else _: _: { };
+
   nuenv = inputs.nuenv.overlays.default;
 
   modifications =
@@ -106,7 +114,8 @@ in
       ctpv = inputs.ctpv.packages.${final.stdenv.hostPlatform.system}.default;
       generate-kaomoji = inputs.generate-kaomoji.packages.${final.stdenv.hostPlatform.system}.default;
       # Plain bleeding: no CUDA (avoids cache misses), carries package pins.
-      pkgs-bleeding = mkBleeding { };
+      # `prev`, not `final`: overlays like voxtype below read pkgs-bleeding.
+      pkgs-bleeding = if bleedingInSync then prev else mkBleeding { };
       # Same bleeding channel, but pinned to praesidium's GPU so CUDA packages
       # compile a single arch instead of the full 9-arch fat binary. ~5-9x faster
       # onnxruntime/whisper-cpp builds; the trade-off is these hashes no longer

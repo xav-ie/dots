@@ -2,19 +2,12 @@
   flake.modules.nixos.praesidium =
     {
       config,
-      inputs,
       lib,
       pkgs,
       ...
     }:
     let
-      # Import nixpkgs-homeassistant only when this module is evaluated (not in overlay)
-      pkgs-homeassistant = import inputs.nixpkgs-homeassistant {
-        inherit (pkgs) config;
-        inherit (pkgs.stdenv.hostPlatform) system;
-      };
-
-      home-assistant-custom = pkgs-homeassistant.home-assistant.override {
+      home-assistant-custom = pkgs.home-assistant.override {
         extraPackages =
           ps: with ps; [
             getmac
