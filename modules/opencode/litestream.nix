@@ -68,7 +68,7 @@
               (lib.getExe pkgs.litestream)
               "replicate"
               "-config"
-              litestreamConfig
+              "${litestreamConfig}"
             ];
             KeepAlive = {
               Crashed = true;
