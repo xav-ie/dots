@@ -1,4 +1,6 @@
-# Transcribe audio/video files using faster-whisper (GPU accelerated)
+# Transcribe audio/video files using whisper.cpp (GPU accelerated when the
+# whisper-cpp package is built with CUDA — see modules/home/base.nix, which
+# overrides it with the pkgs-bleeding-cuda build on Linux)
 def main [] {
   print "Usage: whisper-transcribe <command>"
   print ""
@@ -12,102 +14,106 @@ def main [] {
   print "Run 'whisper-transcribe <command> --help' for more info"
 }
 
-# List available audio capture devices and their IDs (for use with --capture)
+# Resolve (downloading once into ~/.cache/whisper-models if needed) the path to
+# a ggml model. Any name from https://huggingface.co/ggerganov/whisper.cpp
+# works: tiny, base, small, medium, large-v3, large-v3-turbo, and quantized
+# suffixes like large-v3-turbo-q8_0.
+def ensure_model [model: string]: nothing -> string {
+  let dir = ($env.HOME | path join ".cache" "whisper-models")
+  let path = ($dir | path join $"ggml-($model).bin")
+  if not ($path | path exists) {
+    mkdir $dir
+    let url = $"https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-($model).bin"
+    print $"Downloading ($url) \(one-time, cached in ($dir))..."
+    let tmp = $"($path).part"
+    curl -L --fail -C - --progress-bar -o $tmp $url
+    mv -f $tmp $path
+  }
+  $path
+}
+
+# The Silero VAD model whisper.cpp needs for --vad.
+def ensure_vad_model []: nothing -> string {
+  let dir = ($env.HOME | path join ".cache" "whisper-models")
+  let path = ($dir | path join "ggml-silero-v5.1.2.bin")
+  if not ($path | path exists) {
+    mkdir $dir
+    let url = "https://huggingface.co/ggml-org/whisper-vad/resolve/main/ggml-silero-v5.1.2.bin"
+    print $"Downloading ($url) \(one-time, cached in ($dir))..."
+    let tmp = $"($path).part"
+    curl -L --fail -C - --progress-bar -o $tmp $url
+    mv -f $tmp $path
+  }
+  $path
+}
+
+# List available audio capture devices and their IDs (for use with
+# `stream --capture`)
 def "main list-devices" [] {
   python3 -m sounddevice
 }
 
 # Live transcription from microphone/audio input in real-time
 def "main stream" [
-  --model: string = "large-v3"                  # Whisper model (tiny, base, small, medium, large-v2, large-v3, turbo)
+  --model: string = "large-v3"                  # Whisper model (tiny, base, small, medium, large-v3, large-v3-turbo, or a quantized variant like large-v3-turbo-q8_0)
   --language: string = "en"                     # Language code (en, es, fr) or "auto" for detection
   --capture: int = -1                           # Audio capture device ID (-1 = default, see list-devices)
-  --sample-rate: int = 0                        # Input device sample rate (0 = auto-detect from device)
-  --volume-threshold: float = 0.01               # Minimum volume to trigger transcription
-  --device: string = "auto"                     # Compute device: auto, cpu, or cuda
-  --compute-type: string = "auto"               # Quantization: auto, float16, int8, etc.
-  --word-timestamps                             # Enable word-level timestamps
+  --step: int = 3000                            # Audio step size in milliseconds
+  --length: int = 10000                         # Audio length in milliseconds
+  --vad-threshold: float = 0.6                  # Voice activity detection threshold (0-1; only transcribes when speech is detected)
+  --output: string                              # Live transcript output file
+  --save-audio                                  # Save the recorded audio to a file
+  --device: string = "auto"                     # Compute device: auto (GPU if available) or cpu
 ] {
-  # Pre-download and warm up model
-  print $"Loading model ($model)..."
-  let silent = (mktemp -t whisper-XXXX --suffix .wav)
-  ffmpeg -f lavfi -i anullsrc=r=16000:cl=mono -t 0.1 -y $silent err> /dev/null
-  let result = (
-    whisper-ctranslate2 --model $model --device $device --compute_type $compute_type --language $language $silent
-    | complete
-  )
-  rm -f $silent
-  if $result.exit_code != 0 {
-    print -e $result.stderr
-    exit $result.exit_code
-  }
+  let model_path = (ensure_model $model)
 
-  print $"Starting real-time transcription \(model: ($model), device: ($device)\)..."
+  print $"Starting real-time transcription \(model: ($model), device: ($device))..."
   print "Press Ctrl+C to stop"
 
   mut args = [
     --model
-    $model
-    --device
-    $device
-    --compute_type
-    $compute_type
-    --live_transcribe
-    true
-    --live_volume_threshold
-    $volume_threshold
+    $model_path
+    --language
+    $language
+    --step
+    $step
+    --length
+    $length
+    --vad-thold
+    $vad_threshold
   ]
 
-  if $language != "auto" {
-    $args = ($args | append [--language $language])
-  }
-
   if $capture != -1 {
-    $args = ($args | append [--live_input_device $capture])
-
-    # Auto-detect sample rate from the device if not explicitly set
-    let rate = if $sample_rate == 0 {
-      let result = (
-        python3 -c $"import sounddevice; print\(int\(sounddevice.query_devices\(($capture)\)['default_samplerate']\)\)"
-        | complete
-      )
-      if $result.exit_code != 0 {
-        print -e $"Error: Invalid capture device ID ($capture)"
-        print -e ""
-        print -e "Available devices:"
-        python3 -m sounddevice
-        exit 1
-      }
-      $result.stdout | str trim | into int
-    } else {
-      $sample_rate
-    }
-    $args = ($args | append [--live_input_device_sample_rate $rate])
-  } else if $sample_rate != 0 {
-    $args = ($args | append [--live_input_device_sample_rate $sample_rate])
+    $args = ($args | append [--capture $capture])
   }
 
-  if $word_timestamps {
-    $args = ($args | append [--word_timestamps true])
+  if ($output | is-not-empty) {
+    $args = ($args | append [--file $output])
   }
 
-  whisper-ctranslate2 ...$args
+  if $save_audio {
+    $args = ($args | append [--save-audio])
+  }
+
+  if $device == "cpu" {
+    $args = ($args | append [--no-gpu])
+  }
+
+  whisper-stream ...$args
 }
 
-# Transcribe an audio or video file to text (txt, srt, vtt, json, tsv)
+# Transcribe an audio or video file to text (txt, srt, vtt, json, csv)
 def "main file" [
   file: path                                    # Audio or video file to transcribe
-  --model: string = "large-v3"                  # Whisper model (tiny, base, small, medium, large-v2, large-v3, turbo)
+  --model: string = "large-v3"                  # Whisper model (tiny, base, small, medium, large-v3, large-v3-turbo, or a quantized variant like large-v3-turbo-q8_0)
   --language: string = "en"                     # Language code (en, es, fr) or "auto" for detection
   --output: string                              # Output file path (defaults to input with new extension)
-  --format: string = "txt"                      # Output format (txt, srt, vtt, json, tsv)
+  --format: string = "txt"                      # Output format (txt, srt, vtt, json, csv)
   --extract-audio                               # Extract and save audio file (for video files)
   --audio-track: int = -1                       # Audio track number (0 = first, -1 = auto-select)
-  --device: string = "auto"                     # Compute device: auto, cpu, or cuda
-  --compute-type: string = "auto"               # Quantization: auto, float16, int8, etc.
+  --device: string = "auto"                     # Compute device: auto (GPU if available) or cpu
   --vad                                         # Enable voice activity detection filter
-  --batched                                     # Use batched transcription for 2-4x speedup
-  --word-timestamps                             # Enable word-level timestamps
+  --no-timestamps                               # Do not print timestamps
 ] {
   # Expand tilde if present
   let file_path = if ($file | str starts-with '~') {
@@ -120,6 +126,18 @@ def "main file" [
     print $"Error: File '($file)' does not exist"
     exit 1
   }
+
+  # whisper.cpp writes CSV ("tsv" in the faster-whisper days); accept either name
+  let format = if $format == "tsv" { "csv" } else { $format }
+  let format_flag = {
+    txt: "--output-txt"
+    srt: "--output-srt"
+    vtt: "--output-vtt"
+    json: "--output-json"
+    csv: "--output-csv"
+  } | get $format
+
+  let model_path = (ensure_model $model)
 
   # Determine output directory (default to current dir if no directory component)
   let output_dir = if ($output | is-empty) {
@@ -140,7 +158,7 @@ def "main file" [
     flv
     webm
   ]
-  let file_ext = $file_path | path parse | get extension | str downcase
+  let file_ext = $file_path | path parse | get extension | str lowercase
   let needs_extraction = $file_ext in $video_extensions
 
   # Determine which audio track to use
@@ -206,45 +224,48 @@ def "main file" [
     $audio_file
   }
 
+  # whisper-cli's -of takes a path WITHOUT extension and appends the format's
+  # own extension (.txt, .srt, ...). Point it at the desired output base.
+  let outbase = if ($output | is-not-empty) {
+    let p = ($output | path parse)
+    $p.parent | path join $p.stem
+  } else {
+    let p = ($file_path | path parse)
+    $p.parent | path join $p.stem
+  }
+
   mut args = [
     --model
-    $model
-    --device
-    $device
-    --compute_type
-    $compute_type
-    --output_dir
-    $output_dir
-    --output_format
-    $format
+    $model_path
+    --file
+    $final_audio
+    --language
+    $language
+    --output-file
+    $outbase
+    $format_flag
   ]
 
-  if $language != "auto" {
-    $args = ($args | append [--language $language])
-  }
-
   if $vad {
-    $args = ($args | append [--vad_filter true])
+    $args = ($args | append [--vad --vad-model (ensure_vad_model)])
   }
 
-  if $batched {
-    $args = ($args | append [--batched true])
+  if $no_timestamps {
+    $args = ($args | append [--no-timestamps])
   }
 
-  if $word_timestamps {
-    $args = ($args | append [--word_timestamps true])
+  if $device == "cpu" {
+    $args = ($args | append [--no-gpu])
   }
 
-  $args = ($args | append [$final_audio])
-
-  print $"Transcribing with faster-whisper \(model: ($model), device: ($device)\)..."
-  whisper-ctranslate2 ...$args
+  print $"Transcribing with whisper.cpp \(model: ($model), device: ($device))..."
+  whisper-cli ...$args
 
   # Handle custom output path if specified
   if ($output | is-not-empty) {
-    let default_output = $final_audio | path parse | update extension $format | path join
-    if $default_output != $output and ($default_output | path exists) {
-      mv $default_output $output
+    let written = $"($outbase).($format)"
+    if $written != $output and ($written | path exists) {
+      mv $written $output
       print $"Transcription saved to: ($output)"
     }
   } else {
