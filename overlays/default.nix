@@ -140,6 +140,15 @@ in
             --prefix PYTHONPATH : "${final.speechd}/lib/${final.python3.libPrefix}/site-packages"
         '';
       });
+      # speechd embeds mbrola paths (via the espeak mbrolaSupport patch),
+      # dragging the ~1 GiB mbrola-voices data set into the closure. We use
+      # espeak-ng/flite/pico voices, never mbrola — build it without. Must
+      # override `speechd`, the real attr: orca's wrapper above references
+      # final.speechd and `speech-dispatcher` is only an alias, so overriding
+      # the alias rebuilds a derivation nothing consumes.
+      speechd = prev.speechd.override {
+        espeak = final.espeak-ng.override { mbrolaSupport = false; };
+      };
       # nixpkgs pins nvidia-vaapi-driver 0.0.14; 0.0.17 has the per-plane block
       # height + decode-sync fixes needed for stable NVDEC decode under zink/
       # WebRender. Must be an overlay, not an extraPackages entry: the nixos
