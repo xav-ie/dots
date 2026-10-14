@@ -185,7 +185,6 @@ rec {
   claude-overlay = pkgs.callPackage ./claude-overlay { };
   claude-yolo = pkgs.callPackage ./claude-yolo { };
   executor = pkgs.callPackage ./executor { inherit executor-src; };
-  herdr-mobile-relay = pkgs.callPackage ./herdr-mobile-relay { };
   move-active = pkgs.callPackage ./move-active { inherit writeNuApplication; };
   # Built upstream in the morrow flake; override only the fonts so it tracks the
   # same lib/fonts.nix `sans`/`mono` families as the rest of the GTK config.
