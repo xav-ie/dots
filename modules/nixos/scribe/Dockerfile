@@ -3,7 +3,10 @@
 # pyproject.toml + uv.lock — the one validated by ~/Projects/asr-evals
 # (NeMo 3.0.0, torch 2.14.0) — but the ~3.9 GiB of CUDA wheels lives only in
 # podman's store instead of the system closure.
-FROM python:3.12-slim
+# Fully qualified: this host's registries.conf defines no
+# unqualified-search-registries, so bare "python:3.12-slim" fails with
+# "short-name did not resolve to an alias".
+FROM docker.io/library/python:3.12-slim
 
 # soundfile dlopens libsndfile; ca-certificates for the HF model download.
 # The CUDA stack ships inside the torch/nvidia-* wheels themselves, so a slim
