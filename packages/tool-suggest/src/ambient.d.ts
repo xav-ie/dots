@@ -79,3 +79,42 @@ declare module "node:path" {
   export function join(...paths: string[]): string;
   export function dirname(path: string): string;
 }
+
+// Minimal shape of OpenCode V2's plugin API — kept deliberately loose (the
+// authoritative types ship with @opencode/plugin, which is provided by the
+// opencode runtime at load time, not by this build).
+declare module "@opencode/plugin" {
+  // Deliberately loose: the authoritative types ship with @opencode/plugin,
+  // which the opencode runtime provides at load time, not this build.
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  type Any = any;
+
+  export interface PluginContext {
+    session: {
+      hook(
+        name: string,
+        callback: (event: Any) => Promise<void> | void,
+        options?: { providerID?: string },
+      ): Promise<unknown>;
+      get(input: { sessionID: string }): Promise<Any>;
+    };
+    tool: {
+      hook(
+        name: string,
+        callback: (event: Any) => Promise<void> | void,
+      ): Promise<unknown>;
+    };
+    model: {
+      list(): Promise<Any[]>;
+    };
+  }
+
+  export interface PluginDefinition {
+    id: string;
+    setup: (ctx: PluginContext) => Promise<void | (() => void)>;
+  }
+
+  export const Plugin: {
+    define(definition: PluginDefinition): PluginDefinition;
+  };
+}

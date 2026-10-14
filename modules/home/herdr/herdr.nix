@@ -70,14 +70,18 @@
           rewriteHome = true;
         };
 
-        opencode = {
-          rels = [
-            ".config/opencode/herdr-tui-session.js"
-            ".config/opencode/plugins/herdr-agent-state.js"
-            ".config/opencode/tui.jsonc"
-          ];
-          seed = ''mkdir -p "$HOME/.config/opencode"'';
-        };
+        # opencode: NOT deployed. herdr's integration files (server plugin,
+        # TUI plugin, tui.jsonc) target the V1 plugin API and tui.json, which
+        # OpenCode V2 does not run. Re-add once herdr ships a V2 integration
+        # (see src/integration/assets/opencode upstream).
+        # opencode = {
+        #   rels = [
+        #     ".config/opencode/herdr-tui-session.js"
+        #     ".config/opencode/plugins/herdr-agent-state.js"
+        #     ".config/opencode/tui.jsonc"
+        #   ];
+        #   seed = ''mkdir -p "$HOME/.config/opencode"'';
+        # };
 
         pi = {
           rels = [ ".pi/agent/extensions/herdr-agent-state.ts" ];
