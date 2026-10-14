@@ -89,10 +89,19 @@
             "zai-coding-plan" = { };
           };
           mcp = mcpConfig;
-          plugin = [
-            # "@ex-machina/opencode-anthropic-auth"
-            # has auto-token refresh with keychain support
-            "opencode-claude-auth@latest"
+          # V2 plugins key (V1 `plugin` is normalized, but be native). Both
+          # npm entries publish V2 support; opencode-claude-auth is V1-only
+          # and dropped (anthropic auth already lives in opencode's own
+          # credential store). The two local shims below are auto-discovered
+          # from ~/.config/opencode/plugins/.
+          plugins = [
+            # time tracking, opencode counterpart of claude-code-wakatime;
+            # uses ~/.wakatime.cfg and the wakatime-cli already on PATH
+            "opencode-wakatime"
+            # dynamic context pruning, the context-mode counterpart: swaps
+            # stale tool outputs for summaries/placeholders before each LLM
+            # call, model-invoked compress tool, session history untouched
+            "@tarquinen/opencode-dcp@latest"
           ];
         };
         context = # markdown
