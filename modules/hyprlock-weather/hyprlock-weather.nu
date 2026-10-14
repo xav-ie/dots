@@ -71,7 +71,7 @@ try {
       desc: (
         $src.weatherDesc.0.value
         | str trim
-        | str downcase
+        | str lowercase
         | str capitalize
       )
     }

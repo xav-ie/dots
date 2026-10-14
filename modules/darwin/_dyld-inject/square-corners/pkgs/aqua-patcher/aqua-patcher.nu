@@ -32,11 +32,11 @@ def md5_of [path: string] {
 }
 
 def require_security_disabled [] {
-  let sip = ^csrutil status | str downcase
+  let sip = ^csrutil status | str lowercase
   if not ($sip | str contains "disabled") {
     err "SIP is enabled — boot to Recovery and run: csrutil disable"
   }
-  let ar = ^csrutil authenticated-root status | str downcase
+  let ar = ^csrutil authenticated-root status | str lowercase
   if not ($ar | str contains "disabled") {
     err "Authenticated Root is enabled — boot to Recovery and run: csrutil authenticated-root disable"
   }
