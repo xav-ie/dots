@@ -1,11 +1,12 @@
 {
-  pkgs-bleeding,
+  pkgs,
   mcp-atlassian-src,
 }:
 let
-  # mcp-atlassian caps fastmcp <4.0.0. python313Packages.fastmcp is 3.4.7;
-  # python314Packages has already moved to the 4.x line.
-  python3Packages = pkgs-bleeding.python313Packages;
+  # mcp-atlassian caps fastmcp <4.0.0. Main nixpkgs python3Packages (= 3.14)
+  # still carries 3.4.7, so we can share the system's default Python set
+  # instead of maintaining a second one (nixpkgs-bleeding python313 island).
+  python3Packages = pkgs.python3Packages;
 
   # Type stubs for cachetools — not in nixpkgs.
   # Must use wheel because the sdist has a hyphenated package-data key
@@ -15,7 +16,7 @@ let
     version = "6.2.0.20260317";
     format = "wheel";
 
-    src = pkgs-bleeding.fetchurl {
+    src = pkgs.fetchurl {
       url = "https://files.pythonhosted.org/packages/17/9a/b00b23054934c4d569c19f7278c4fb32746cd36a64a175a216d3073a4713/types_cachetools-6.2.0.20260317-py3-none-any.whl";
       hash = "sha256-kvqbxQ5GKeMfymfOs/sd5xeR4xT6FsCg0nKHJNwiLIs=";
     };
@@ -115,7 +116,7 @@ python3Packages.buildPythonApplication rec {
   meta = {
     description = "MCP server for Atlassian Jira and Confluence";
     homepage = "https://github.com/sooperset/mcp-atlassian";
-    license = pkgs-bleeding.lib.licenses.mit;
+    license = pkgs.lib.licenses.mit;
     mainProgram = "mcp-atlassian";
   };
 }

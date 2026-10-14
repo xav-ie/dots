@@ -104,7 +104,7 @@ rec {
   herdr-space-headers = pkgs.callPackage ./herdr-space-headers { inherit writeNuApplication; };
   lint-staged = pkgs.callPackage ./lint-staged { inherit writeNuApplication; };
   localip = pkgs.callPackage ./localip { inherit writeNuApplication; };
-  mcp-atlassian = pkgs.callPackage ./mcp-atlassian { inherit mcp-atlassian-src pkgs-bleeding; };
+  mcp-atlassian = pkgs.callPackage ./mcp-atlassian { inherit mcp-atlassian-src; };
   mcp-sse-client = pkgs.callPackage ./mcp-sse-client { };
   nix-flamegraph = pkgs.callPackage ./nix-flamegraph { inherit writeNuApplication; };
   nodejs_25 = pkgs.callPackage ./nodejs_25 { };
