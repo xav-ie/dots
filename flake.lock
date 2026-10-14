@@ -435,11 +435,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791991058,
-        "narHash": "sha256-7+H5R/G3OJ+FLXa6rSpECH0XGIsw7sygx2Ctb7qKJk0=",
+        "lastModified": 1791996944,
+        "narHash": "sha256-6Ld0hTMMEQ+460T5XwGxRes1MrxSTpkquQKX1wGBuOI=",
         "ref": "refs/heads/main",
-        "rev": "095ba12d29fe39bdc3802e8748399533bfe70f83",
-        "revCount": 1,
+        "rev": "e80a622bb531759f5dcca07d979243ef74e1f568",
+        "revCount": 2,
         "type": "git",
         "url": "ssh://git@github.com/xav-ie/divvy"
       },
