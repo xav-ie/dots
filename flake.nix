@@ -55,6 +55,9 @@
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
     nix-homebrew.inputs.brew-src.follows = "brew-src";
+    # Parallel derivationStrict (DeterminateSystems/nix-src#572): system eval
+    # 37s → 20s with eval-cores = 0. Back to stock nix once it ships.
+    nix-src.url = "github:DeterminateSystems/nix-src/auto-parallelize";
     nixpkgs-bleeding.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-homeassistant.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-26.05";
