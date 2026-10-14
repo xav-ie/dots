@@ -29,14 +29,14 @@
       obs-backgroundremoval = # remove background
         (pkgs.obs-studio-plugins.obs-backgroundremoval.override {
           # The plugin picks its execution provider at runtime from whatever the
-          # linked ONNX Runtime offers, so the GPU path only exists if that
-          # runtime was built with CUDA. Take it from `pkgs-bleeding-cuda` (the
-          # host's `pkgs` is deliberately CUDA-free so opencv/openvino/firefox
-          # stay cache hits), spelled exactly as `speech/hyprwhspr.nix` spells
-          # it so both consumers share one derivation instead of each compiling
-          # their own. OpenVINO is Intel-only inference, unused on this GPU, and
-          # dropping it takes a full opencv build with it.
-          onnxruntime = pkgs.pkgs-bleeding-cuda.onnxruntime.override { openvinoSupport = false; };
+          # linked ONNX Runtime offers. Host `pkgs` is CUDA-free (see
+          # _praesidium-body.nix), so stock onnxruntime means CPU inference —
+          # a deliberate trade: the CUDA runtime (via `pkgs-bleeding-cuda`)
+          # pulled tensorrt + cudnn + a 3.5GiB onnxruntime into the system
+          # closure for this one filter. If CPU inference proves too slow on
+          # the 3060 Ti's parallel workloads, revisit with a runtime-loaded
+          # provider instead of a closure-wide CUDA runtime.
+          onnxruntime = pkgs.onnxruntime;
         }).overrideAttrs
           (oldAttrs: {
             src = inputs.obs-backgroundremoval;
