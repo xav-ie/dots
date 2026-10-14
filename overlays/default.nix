@@ -63,22 +63,17 @@ let
 
   # While `just bleed` hasn't moved nixpkgs-bleeding past nixpkgs, a second
   # import of the same rev only doubles eval (~7s on praesidium), so
-  # pkgs-bleeding reuses the main set and the main set carries bleeding's pins.
+  # pkgs-bleeding reuses the main set.
   bleedingInSync = inputs.nixpkgs-bleeding.rev == inputs.nixpkgs.rev;
 in
 {
-  # Must sort before `modifications`: its `prev` is what pkgs-bleeding reuses.
-  bleeding-pins = if bleedingInSync then import ./_bleeding-pins.nix else _: _: { };
-
   nuenv = inputs.nuenv.overlays.default;
 
   modifications =
     final: prev:
     let
       # nixpkgs-bleeding pinned to this host's platform via the shared
-      # constructor (which bakes in the version pins). CUDA variants pass
-      # cudaSupport + capabilities; the plain variant carries package-pin
-      # overlays.
+      # constructor. CUDA variants pass cudaSupport + capabilities.
       mkBleeding =
         args:
         import ./_bleeding.nix (
