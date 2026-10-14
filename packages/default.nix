@@ -126,6 +126,7 @@ rec {
   ssh-praesidium-route = pkgs.callPackage ./ssh-praesidium-route { inherit writeNuApplication; };
   toggle-theme = pkgs.callPackage ./toggle-theme { inherit writeNuApplication; };
   toml-merge = pkgs.callPackage ./toml-merge { };
+  tool-suggest = pkgs.callPackage ./tool-suggest { };
   tsc-filter = pkgs.callPackage ./tsc-filter { inherit writeNuApplication; };
   update-pr = pkgs.callPackage ./update-pr { inherit pr-summary writeNuApplication; };
   wakafetch = pkgs.callPackage ./wakafetch { };

@@ -498,6 +498,13 @@
             ".claude/plugins/known_marketplaces.json".text = knownMarketplacesJson;
             ".claude/hooks/context-mode-cache-heal.mjs".source =
               "${inputs.claude-marketplace-context-mode}/hooks/cache-heal.mjs";
+
+            # Tool suggestions: the compiled TS binary (packages/tool-suggest)
+            # replaces the former nu hook — it speaks the same stdin/stdout
+            # hook JSON contract, so settings.json keeps invoking
+            # ~/.claude/tool-suggest. Shared with opencode, which spawns the
+            # same binary via its plugin shim.
+            ".claude/tool-suggest".source = "${pkgs.pkgs-mine.tool-suggest}/bin/tool-suggest";
           }
           # Nushell hook scripts: each gets a live-editable .nu plus a store
           # wrapper (~/.claude/<name>) that pins the interpreter. settings.json
@@ -507,7 +514,6 @@
           // (mkNuHook "record-pending-tool")
           // (mkNuHook "format-and-lint")
           // (mkNuHook "statusline")
-          // (mkNuHook "tool-suggest")
           // marketplaceFiles;
 
           # Daily check: always reports the changelog for pending releases,

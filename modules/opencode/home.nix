@@ -1,6 +1,7 @@
 {
   flake.modules.homeManager.common =
     {
+      config,
       inputs,
       lib,
       pkgs,
@@ -123,6 +124,17 @@
           "${claude-plugins-src}/delivery-ticket-solver/skills";
         "opencode/skill/product-ticket-solver".source =
           "${claude-plugins-src}/product-ticket-solver/skills";
+
+        # Tool-suggest plugin: thin shim that spawns the compiled TS engine
+        # (packages/tool-suggest, shared with claude's hooks) and injects its
+        # additionalContext as synthetic parts. Out-of-store symlink so edits
+        # to the live repo checkout load on next opencode start.
+        "opencode/plugins/tool-suggest.ts".source =
+          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/packages/tool-suggest/src/opencode-plugin.ts";
       };
+
+      # Stable path the plugin shim (and fingers) use to invoke the shared
+      # tool-suggest engine — the same compiled binary claude's hooks run.
+      home.file.".local/bin/tool-suggest".source = "${pkgs.pkgs-mine.tool-suggest}/bin/tool-suggest";
     };
 }
