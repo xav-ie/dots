@@ -1,4 +1,3 @@
-{ inputs, ... }:
 {
   flake.modules.nixos.praesidium =
     {
@@ -14,67 +13,17 @@
       fullHostName = "${subdomain}.${baseDomain}";
       containerPort = 8000;
 
-      # Python env from pyproject.toml + uv.lock: the exact wheels validated by
-      # ~/Projects/asr-evals (NeMo 3.0.0, torch 2.14.0), pinned by hash.
-      workspace = inputs.uv2nix.lib.workspace.loadWorkspace { workspaceRoot = ./.; };
-      # torch and the nvidia-* wheels link each other's libraries by relative
-      # paths, which break once each wheel is its own store path; the entrypoint
-      # puts every nvidia lib dir on LD_LIBRARY_PATH instead. The rest are the
-      # driver (injected at run time) and multi-node transports never loaded here.
-      fixups =
-        final: prev:
-        lib.genAttrs (builtins.filter (n: n == "torch" || lib.hasPrefix "nvidia-" n) (
-          builtins.attrNames prev
-        )) (n: prev.${n}.overrideAttrs { autoPatchelfIgnoreMissingDeps = true; })
-        // {
-          # Optional TBB threading layer; numba falls back to its own pool.
-          numba = prev.numba.overrideAttrs { autoPatchelfIgnoreMissingDeps = [ "libtbb.so.12" ]; };
-          antlr4-python3-runtime = prev.antlr4-python3-runtime.overrideAttrs (old: {
-            nativeBuildInputs = old.nativeBuildInputs ++ final.resolveBuildSystem { setuptools = [ ]; };
-          });
-        };
-      pythonSet =
-        (pkgs.callPackage inputs.pyproject-nix.build.packages { python = pkgs.python312; }).overrideScope
-          (
-            lib.composeManyExtensions [
-              inputs.pyproject-build-systems.overlays.wheel
-              (workspace.mkPyprojectOverlay { sourcePreference = "wheel"; })
-              fixups
-            ]
-          );
-      venv = pythonSet.mkVirtualEnv "scribe-env" workspace.deps.default;
-      nvidiaLibPath = pkgs.runCommand "scribe-nvidia-libpath" { } ''
-        find -L ${venv}/${pkgs.python312.sitePackages}/nvidia -name '*.so*' -printf '%h\n' | sort -u | paste -sd: > $out
-      '';
-
-      server = pkgs.runCommand "scribe-server" { } ''
+      # Build context: the Dockerfile plus its inputs, copied into a single
+      # store path so the runtime image rebuilds when (and only when) they
+      # change. The files must be git-tracked for the flake to see them.
+      scribeSrc = pkgs.runCommand "scribe-src" { } ''
         mkdir -p $out
+        cp ${./Dockerfile} $out/Dockerfile
+        cp ${./pyproject.toml} $out/pyproject.toml
+        cp ${./uv.lock} $out/uv.lock
         cp ${./stream_server.py} $out/stream_server.py
         cp ${./ui.html} $out/ui.html
       '';
-
-      # Nix binaries ignore the ld.so cache the NVIDIA CDI hook writes, so point
-      # the loader at the driver libraries the hook mounts (NVIDIA_CTK_LIBCUDA_DIR)
-      # and the CUDA libraries shipped in the nvidia-* wheels. soundfile dlopens a
-      # system libsndfile.
-      entrypoint = pkgs.writeShellScript "scribe" ''
-        export LD_LIBRARY_PATH="$NVIDIA_CTK_LIBCUDA_DIR:$(< ${nvidiaLibPath}):${lib.getLib pkgs.libsndfile}/lib"
-        exec ${venv}/bin/uvicorn stream_server:app --app-dir ${server} --host 0.0.0.0 --port ${toString containerPort}
-      '';
-
-      image = pkgs.dockerTools.streamLayeredImage {
-        name = "localhost/scribe";
-        tag = "latest";
-        contents = [ pkgs.cacert ];
-        extraCommands = "mkdir -m 1777 tmp";
-        config = {
-          Cmd = [ entrypoint ];
-          Env = [
-            "HOME=/tmp"
-            "SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
-          ];
-        };
-      };
     in
     {
       options.services.scribe = {
@@ -96,9 +45,30 @@
           "d ${cfg.dataDir} 0755 root root -"
         ];
 
+        # Build the image once per activation (no-op after the first build
+        # unless the Dockerfile/workspace change). Mirrors build-whisperx-image.
+        # The python env (torch 2.14 + the nvidia-* cu13 wheels pinned by
+        # uv.lock, ~3.9 GiB) is assembled by `uv sync` inside the image instead
+        # of uv2nix, so it never enters the system closure — and podman no
+        # longer double-stores a streamed nix image after load.
+        systemd.services."build-scribe-image" = {
+          description = "Build scribe streaming ASR container image";
+          wantedBy = [ "multi-user.target" ];
+          before = [ "podman-${subdomain}.service" ];
+          path = [ pkgs.podman ];
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+            # First build pulls python:3.12-slim + the pinned CUDA wheels.
+            TimeoutStartSec = "60min";
+          };
+          script = ''
+            podman build -f ${scribeSrc}/Dockerfile -t localhost/${subdomain}:latest ${scribeSrc}
+          '';
+        };
+
         virtualisation.oci-containers.containers.${subdomain} = {
           autoStart = true;
-          imageStream = image;
           image = "localhost/scribe:latest";
           environment = {
             HF_HOME = "/cache/huggingface";
@@ -134,8 +104,12 @@
           };
         };
 
-        # Headroom for the first-boot model download before the container is up.
-        systemd.services."podman-${subdomain}".serviceConfig.TimeoutStartSec = lib.mkForce "30min";
+        systemd.services."podman-${subdomain}" = {
+          after = [ "build-scribe-image.service" ];
+          requires = [ "build-scribe-image.service" ];
+          # Headroom for the first-boot model download before the container is up.
+          serviceConfig.TimeoutStartSec = lib.mkForce "30min";
+        };
       };
     };
 }
