@@ -53,7 +53,7 @@ def main [
       }
       print ""
 
-      let confirm = input "Proceed? [y/N] " | str trim | str downcase
+      let confirm = input "Proceed? [y/N] " | str trim | str lowercase
       if $confirm != "y" {
         print "Aborted."
         return

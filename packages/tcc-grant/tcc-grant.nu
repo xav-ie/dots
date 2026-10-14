@@ -65,7 +65,7 @@ def main [
       | lines
       | str join ""
       | str trim
-      | str upcase
+      | str uppercase
     )
     if ($hex | is-empty) {
       error make {msg: $"could not compile designated requirement: ($dr)"}
@@ -82,7 +82,7 @@ def main [
       | default ""
       | str replace "CDHash=" ""
       | str trim
-      | str upcase
+      | str uppercase
     )
     if ($cdhash | is-empty) {
       error make {msg: $"could not read CDHash from ($app_path) — is it signed?"}

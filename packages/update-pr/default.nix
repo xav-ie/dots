@@ -17,9 +17,9 @@ writeNuApplication {
         let pr_state = (gh pr view --json state -q .state)
 
         if ($pr_state in ["CLOSED", "MERGED"]) {
-          print $"Warning: This PR is ($pr_state | str downcase)."
+          print $"Warning: This PR is ($pr_state | str lowercase)."
           let confirm = (input "Do you want to update it anyway? (y/N): ")
-          if ($confirm | str downcase) != "y" {
+          if ($confirm | str lowercase) != "y" {
             print "Aborted."
             exit 0
           }
