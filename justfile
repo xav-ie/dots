@@ -280,8 +280,10 @@ esphome device="colorshadowrgb":
 # generate Collie's Web Push (VAPID) keypair into sops; run `just` after
 collie-vapid:
     #!/usr/bin/env nu
-    let cli = (nix build .#collie --no-link --print-out-paths | str trim) + "/share/collie/node_modules/web-push/src/cli.js"
-    let keys = (nix shell nixpkgs#nodejs -c node $cli generate-vapid-keys --json | from json)
-    sudo sops set secrets/main.yaml '["collie"]["vapid_public"]' ($keys.publicKey | to json)
-    sudo sops set secrets/main.yaml '["collie"]["vapid_private"]' ($keys.privateKey | to json)
+    let dir = (mktemp -d)
+    HERDR_PLUGIN_CONFIG_DIR=$dir nix run --inputs-from . collie -- push-keys | ignore
+    let keys = (open $"($dir)/.env" | lines | parse 'COLLIE_VAPID_{k}={v}' | transpose -rd)
+    rm -r $dir
+    sudo sops set secrets/main.yaml '["collie"]["vapid_public"]' ($keys.PUBLIC | to json)
+    sudo sops set secrets/main.yaml '["collie"]["vapid_private"]' ($keys.PRIVATE | to json)
     print "Stored Collie VAPID keys in secrets/main.yaml. Run `just` to apply."

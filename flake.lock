@@ -366,6 +366,27 @@
         "type": "github"
       }
     },
+    "collie": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1791983582,
+        "narHash": "sha256-WvcAYRA+t7mG1c6pS2oP9PQZOoZFmFguGzHMZl/1hoo=",
+        "owner": "AltanS",
+        "repo": "collie",
+        "rev": "01d4ee859888abf2f71654c7d928d243987e981e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "AltanS",
+        "ref": "packaging/1.21.2",
+        "repo": "collie",
+        "type": "github"
+      }
+    },
     "crane": {
       "locked": {
         "lastModified": 1790899423,
@@ -1942,6 +1963,7 @@
         "claude-marketplace-outsmartly": "claude-marketplace-outsmartly",
         "claude-marketplace-ponytail": "claude-marketplace-ponytail",
         "claude-marketplace-wakatime": "claude-marketplace-wakatime",
+        "collie": "collie",
         "crane": "crane",
         "ctpv": "ctpv",
         "disko": "disko",
