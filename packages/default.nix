@@ -122,6 +122,7 @@ rec {
   protonmail-mcp = pkgs.callPackage ./protonmail-mcp { src = protonmail-mcp-src; };
   nu_plugin_prompt = pkgs.callPackage ./nu_plugin_prompt { inherit pkgs-bleeding; };
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
+  secrets-diff = pkgs.callPackage ./secrets-diff { };
   slack-mcp-server = pkgs.callPackage ./slack-mcp-server { src = slack-mcp-server-src; };
   ssh-praesidium-route = pkgs.callPackage ./ssh-praesidium-route { inherit writeNuApplication; };
   toggle-theme = pkgs.callPackage ./toggle-theme { inherit writeNuApplication; };
