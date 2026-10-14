@@ -14,11 +14,10 @@
   gobject-introspection,
   gjs,
   agsPackages,
-  # The weather widget shells out to curl (wttr.in).
+  # The weather widget shells out to curl (wttr.in); the screen-filter widget
+  # drives hyprctl (decoration:screen_shader) from hyprland.
   curl,
-  # The screen-filter widget drives hyprshade (toggles the generated GLSL
-  # warmth/brightness shaders from modules/home-linux/hyprland/hyprshade.nix).
-  hyprshade,
+  hyprland,
   # System UI font family, threaded in from lib/fonts.nix so the center tracks
   # the same `sans` font as the bar and pickers.
   fontName,
@@ -49,9 +48,9 @@ stdenv.mkDerivation {
 
   # notifctl re-invokes its sibling `notification-center` (single-instance argv
   # forwarding) to toggle the control center, so put $out/bin on the wrapper PATH;
-  # curl is for the weather widget, hyprshade for the screen-filter widget.
+  # curl is for the weather widget, hyprctl (hyprland) for the screen filter.
   preFixup = ''
-    gappsWrapperArgs+=(--prefix PATH : "$out/bin:${curl}/bin:${hyprshade}/bin")
+    gappsWrapperArgs+=(--prefix PATH : "$out/bin:${curl}/bin:${hyprland}/bin")
   '';
 
   installPhase = ''
