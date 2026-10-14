@@ -18,6 +18,10 @@ pkgs.runCommand "tool-suggest"
       pkgs.bun
       pkgs.typescript
     ];
+    # bun's compile temp files collide (EEXIST .bun-build) inside the macOS
+    # sandbox-exec profile, same class of problem as claude-code-extract's
+    # JIT kills: build outside the chroot on darwin, sandboxed on linux.
+    __noChroot = pkgs.stdenv.hostPlatform.isDarwin;
     meta.mainProgram = "tool-suggest";
   }
   # sh
