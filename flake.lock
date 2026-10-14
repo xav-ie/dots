@@ -208,15 +208,15 @@
       "locked": {
         "lastModified": 1791837104,
         "narHash": "sha256-A4qeh4AaLrcadKf8LqejnTsX4YnmuFgGQXOSlPQNzEc=",
-        "ref": "refs/heads/main",
+        "owner": "xav-ie",
+        "repo": "browser-session-mcp",
         "rev": "d3eef437f82d1c65f988719392f37a2cc1d6d86c",
-        "revCount": 49,
-        "type": "git",
-        "url": "file:///home/x/Projects/browser-session-mcp"
+        "type": "github"
       },
       "original": {
-        "type": "git",
-        "url": "file:///home/x/Projects/browser-session-mcp"
+        "owner": "xav-ie",
+        "repo": "browser-session-mcp",
+        "type": "github"
       }
     },
     "bun-demincer-src": {
