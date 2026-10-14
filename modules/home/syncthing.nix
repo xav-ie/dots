@@ -47,6 +47,15 @@
             devices = [ peer ];
             inherit versioning;
           };
+
+          # opencode session-db WAL replicas (modules/opencode/litestream.nix).
+          # Per-host subdirectories: each machine writes only its own, so the
+          # folder is conflict-free by construction.
+          folders."${home}/.local/share/opencode/replicas" = {
+            id = "opencode-replicas";
+            devices = [ peer ];
+            inherit versioning;
+          };
         };
       };
 
