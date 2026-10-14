@@ -27,9 +27,10 @@ system:
       "Linux" => {
         # `nh os switch` only writes the boot entry once activation succeeds, so
         # one failed unit leaves a live generation the next reboot can't reach.
-        # Boot first, then activate; nu stops here if boot fails.
+        # Boot first, then activate the same build (a second nh run would
+        # re-evaluate the whole config); nu stops here if boot fails.
         nh os boot . -o result -- --show-trace
-        nh os test . -o result -- --show-trace
+        sudo ./result/bin/switch-to-configuration test
       }
       _ => {
         error make { msg: "Unknown OS" }
