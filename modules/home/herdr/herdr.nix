@@ -70,18 +70,21 @@
           rewriteHome = true;
         };
 
-        # opencode: NOT deployed. herdr's integration files (server plugin,
-        # TUI plugin, tui.jsonc) target the V1 plugin API and tui.json, which
-        # OpenCode V2 does not run. Re-add once herdr ships a V2 integration
-        # (see src/integration/assets/opencode upstream).
-        # opencode = {
-        #   rels = [
-        #     ".config/opencode/herdr-tui-session.js"
-        #     ".config/opencode/plugins/herdr-agent-state.js"
-        #     ".config/opencode/tui.jsonc"
-        #   ];
-        #   seed = ''mkdir -p "$HOME/.config/opencode"'';
-        # };
+        # OpenCode V2: the server plugin is dual-entrypoint (V1 server() +
+        # V2 setup()), and the TUI plugin moved from tui.jsonc to a
+        # herdr-opencode/ directory registered in cli.json (merged
+        # idempotently below). tui.jsonc is still deployed because herdr's
+        # own health check requires the V1 registration to exist alongside
+        # the V2 one — V2 itself ignores tui.jsonc once cli.json exists.
+        opencode = {
+          rels = [
+            ".config/opencode/plugins/herdr-agent-state.js"
+            ".config/opencode/herdr-tui-session.js"
+            ".config/opencode/herdr-opencode/tui.js"
+            ".config/opencode/tui.jsonc"
+          ];
+          seed = ''mkdir -p "$HOME/.config/opencode/plugins" "$HOME/.config/opencode/herdr-opencode"'';
+        };
 
         pi = {
           rels = [ ".pi/agent/extensions/herdr-agent-state.ts" ];
@@ -137,5 +140,37 @@
       # claude's settings.json (managed elsewhere) invokes the hook as
       # `~/.claude/hooks/herdr-agent-state.sh session`.
       home.file = integrationFiles;
+
+      # Register herdr's opencode TUI plugin (./herdr-opencode) in the V2
+      # terminal client's cli.json — the edit the installer would otherwise
+      # make imperatively. Idempotent merge preserving TUI-owned settings
+      # (theme, permissions mode); skips with a warning on invalid JSON
+      # rather than blocking the switch.
+      home.activation.herdrOpencodeCliPlugin =
+        lib.hm.dag.entryAfter [ "linkGeneration" ] # sh
+          ''
+            CFG="${config.xdg.configHome}/opencode/cli.json"
+            mkdir -p "$(dirname "$CFG")"
+            # Absent or empty file bootstraps with the schema, like the TUI.
+            [ -s "$CFG" ] || printf '{\n  "$schema": "https://opencode.ai/v2/cli.json"\n}\n' > "$CFG"
+            if ! ${pkgs.jq}/bin/jq empty "$CFG" >/dev/null 2>&1; then
+              # jsonc (comments, trailing commas) is valid to the TUI but not
+              # to jq; leave it alone rather than guess.
+              echo "herdrOpencodeCliPlugin: $CFG is not strict JSON (jsonc or corrupt), skipping" >&2
+            else
+              # Same-dir tmp so mv is rename(2); the TUI's hot-reload watcher
+              # must never see a half-written file.
+              tmp=$(mktemp "$CFG.XXXXXX")
+              if ${pkgs.jq}/bin/jq --argjson entry '{"package":"./herdr-opencode"}' \
+                'if any(.plugins[]?; . == "./herdr-opencode" or .package? == "./herdr-opencode") then .
+                 else .plugins = ((.plugins // []) + [$entry]) end' \
+                "$CFG" > "$tmp"; then
+                mv "$tmp" "$CFG"
+              else
+                rm -f "$tmp"
+                echo "herdrOpencodeCliPlugin: merge failed, skipping" >&2
+              fi
+            fi
+          '';
     };
 }
