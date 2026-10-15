@@ -733,9 +733,9 @@
                 (repeatingLocked "XF86AudioLowerVolume" (exec "${pactl} set-sink-volume @DEFAULT_SINK@ -5%"))
                 (locked "XF86AudioMute" (exec "${pactl} set-sink-mute @DEFAULT_SINK@ toggle"))
 
-                # Push-to-talk: unmute on press, mute on release
-                (locked "${mod} + A" (exec "${virtual-headset-ctl} unmute"))
-                (release "${mod} + A" (exec "${virtual-headset-ctl} mute"))
+                # Push-to-talk: hold to talk, tap to stay unmuted until the next press
+                (locked "${mod} + A" (exec "${virtual-headset-ctl} ptt-press"))
+                (release "${mod} + A" (exec "${virtual-headset-ctl} ptt-release"))
               ]
               # Switch workspaces with mainMod + [0-9]; move the active window
               # there with mainMod + SHIFT + [0-9]
