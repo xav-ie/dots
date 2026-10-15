@@ -4,7 +4,10 @@ cache="${XDG_CACHE_HOME:-$HOME/.cache}/hyprlock/agenda.json"
 mkdir -p "$(dirname "$cache")"
 
 fetch() {
-  token=$(jq -r .token ~/.executor/server-control/auth.json)
+  # v1 kept a rotating token in ~/.executor/server-control/auth.json; v2 has
+  # no such file — reuse the same EXECUTOR_AUTH_TOKEN the MCP clients read
+  # from the sops shell-env blob (modules/claude/claude.nix, modules/opencode/home.nix).
+  token=$(sed -n 's/^EXECUTOR_AUTH_TOKEN=//p' /run/secrets/shell-env)
   url=http://127.0.0.1:38972/mcp
   hdr=(-H "Authorization: Bearer $token" -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream')
   today=$(date +%F) tomorrow=$(date -d tomorrow +%F) after=$(date -d '2 days' +%F) tz=$(date +%:z)

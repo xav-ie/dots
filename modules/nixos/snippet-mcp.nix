@@ -30,32 +30,6 @@
           description = "HTTP listen port. Picked just above executor (38972) and opencode (38971).";
         };
 
-        executorBaseUrl = lib.mkOption {
-          type = lib.types.nullOr lib.types.str;
-          default =
-            if config.services.executor.enable then
-              "https://${config.services.executor.subdomain}.${config.services.local-networking.baseDomain}"
-            else
-              null;
-          defaultText = lib.literalExpression ''"https://''${services.executor.subdomain}.''${baseDomain}" when executor is enabled, else null'';
-          example = "https://executor.lalala.casa";
-          description = ''
-            Base URL of the executor host. When set, snippet-mcp dynamically
-            discovers the workspace scope id (workspace-specific, not stable
-            across recreations) and POSTs a refresh after save/update/delete so
-            executor re-probes its catalogue without a restart. Set to null to
-            skip the refresh; the service degrades gracefully.
-          '';
-        };
-
-        executorRefreshNamespace = lib.mkOption {
-          type = lib.types.str;
-          default = "snippets";
-          description = ''
-            Namespace executor uses for the snippets source (the `namespace` field
-            in `executor.jsonc`). Sent in the refresh POST body.
-          '';
-        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -75,15 +49,15 @@
           wantedBy = [ "multi-user.target" ];
           after = [ "network.target" ];
 
+          # EXECUTOR_BASE_URL/EXECUTOR_AUTH_TOKEN_FILE/EXECUTOR_REFRESH_NAMESPACE
+          # drove a POST to v1's /api/connections/.../refresh after
+          # save/update/delete; v2 has no such endpoint, and its tool listings
+          # refresh on their own within EXECUTOR_TOOL_LISTING_FRESH_SECONDS
+          # (default 30s), so snippet-mcp just degrades to that instead.
           environment = {
             SNIPPET_DIR = snippetsDir;
             SNIPPET_AGE_KEY_FILE = "%d/age-key";
             RUST_LOG = "snippet_mcp=info,rmcp=warn";
-            EXECUTOR_REFRESH_NAMESPACE = cfg.executorRefreshNamespace;
-          }
-          // lib.optionalAttrs (cfg.executorBaseUrl != null) {
-            EXECUTOR_BASE_URL = cfg.executorBaseUrl;
-            EXECUTOR_AUTH_TOKEN_FILE = "%d/executor-auth";
           };
 
           serviceConfig = {
@@ -100,15 +74,13 @@
             ];
             # The user owns the repo checkout, so saved files stay committable.
             User = config.defaultUser;
-            # The sops age key (root-only) decrypts and encrypts snippets;
-            # executor's bearer token is owned by the executor user. systemd
-            # hands the service private copies under $CREDENTIALS_DIRECTORY.
+            # The sops age key (root-only) decrypts and encrypts snippets.
+            # systemd hands the service a private copy under
+            # $CREDENTIALS_DIRECTORY. No executor-auth credential anymore:
+            # the v1-only refresh call that used it is gone (see above).
             LoadCredential = [
               "age-key:${config.sops.age.keyFile}"
-            ]
-            ++ lib.optional (
-              cfg.executorBaseUrl != null
-            ) "executor-auth:/home/${config.defaultUser}/.executor/server-control/auth.json";
+            ];
             Restart = "on-failure";
             RestartSec = 5;
             StandardOutput = "journal";

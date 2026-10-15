@@ -1,0 +1,307 @@
+From 55c41151cfed3b0a7e772c77f2d6988ec21d3291 Mon Sep 17 00:00:00 2001
+From: Xavier Ruiz <github@xav.ie>
+Date: Thu, 15 Oct 2026 15:04:22 -0400
+Subject: [PATCH 2/3] Add an opt-in JSONL usage log of MCP searches and tool
+ calls
+
+EXECUTOR_USAGE_LOG=<path> makes the local server append one line per search
+(tools.search, the MCP search tool and CodeMode's global search()), describe
+and tool call, with canonical paths, outcome and timing but never arguments
+or results. Each line carries the MCP session ID and a per request execution
+ID, so offline evals can join a search to the tools the session called next.
+
+The shared MCP package records through an McpUsage reference that is unset by
+default, so hosts that do not provide it behave as before.
+---
+ apps/local/server/src/implementation/mcp.ts   | 17 ++++-
+ .../server/src/implementation/usage-log.ts    | 40 +++++++++++
+ packages/mcp/src/implementation/execute.ts    | 51 ++++++++++++--
+ packages/mcp/src/implementation/usage.ts      | 69 +++++++++++++++++++
+ packages/mcp/src/index.ts                     |  1 +
+ 5 files changed, 172 insertions(+), 6 deletions(-)
+ create mode 100644 apps/local/server/src/implementation/usage-log.ts
+ create mode 100644 packages/mcp/src/implementation/usage.ts
+
+diff --git a/apps/local/server/src/implementation/mcp.ts b/apps/local/server/src/implementation/mcp.ts
+index d7e02b91a..8485589cb 100644
+--- a/apps/local/server/src/implementation/mcp.ts
++++ b/apps/local/server/src/implementation/mcp.ts
+@@ -12,8 +12,15 @@ import {
+ import { localRequest } from "./auth.ts";
+ import type { ServerConfig } from "../contracts/config.ts";
+ import { LocalMcpUnauthorized, type LocalMcpOAuth } from "./mcp-oauth.ts";
++import { localUsageLog } from "./usage-log.ts";
+ /** Local access and documentation I/O for the shared MCP implementation. */
+-import { makeMcp, refusedMcpRequest, type McpBackend, type McpLimits } from "@executor-js/mcp";
++import {
++  makeMcp,
++  McpUsage,
++  refusedMcpRequest,
++  type McpBackend,
++  type McpLimits,
++} from "@executor-js/mcp";
+ import { annotateSkillRead, executorIntro } from "@executor-js/app-templates/executor";
+ import {
+   ElicitationFailed,
+@@ -197,6 +204,7 @@ export const localMcp = (
+       limits,
+       annotateSkillRead,
+     });
++    const usage = yield* localUsageLog;
+     const http = Effect.gen(function* () {
+       const request = yield* localRequest(config.port, config.browserOrigin);
+       const address = requestedMcpAddress(new URL(request.url, oauth.origin));
+@@ -221,6 +229,13 @@ export const localMcp = (
+       return yield* host.http.pipe(
+         Effect.provideService(RequestBackend, backend),
+         Effect.provideService(Caller, grant.id),
++        Effect.provideService(
++          McpUsage,
++          usage?.({
++            sessionId: request.headers["mcp-session-id"],
++            executionId: crypto.randomUUID(),
++          }),
++        ),
+       );
+     }).pipe(
+       Effect.catchTags({
+diff --git a/apps/local/server/src/implementation/usage-log.ts b/apps/local/server/src/implementation/usage-log.ts
+new file mode 100644
+index 000000000..bad8f6931
+--- /dev/null
++++ b/apps/local/server/src/implementation/usage-log.ts
+@@ -0,0 +1,40 @@
++/**
++ * `EXECUTOR_USAGE_LOG=<path>` appends one JSON line per MCP search, describe and tool call to the
++ * file, for evaluating search offline. Each line carries the MCP session and a per-request
++ * execution ID, so a search joins the calls the same session made after it. Lines are written in
++ * order by one fiber; a failed write is dropped and reported at most once a minute.
++ */
++import type { McpUsageEvent } from "@executor-js/mcp";
++import { Clock, Config, DateTime, Effect, FileSystem, Option, Queue } from "effect";
++
++/** The usage sink for one MCP request, or undefined when the log is off. */
++export const localUsageLog = Effect.gen(function* () {
++  const file = yield* Config.String("EXECUTOR_USAGE_LOG").pipe(Config.option);
++  if (Option.isNone(file) || file.value === "") return undefined;
++  const fs = yield* FileSystem.FileSystem;
++  const lines = yield* Queue.unbounded<string>();
++  let reportedAt = Number.NEGATIVE_INFINITY;
++  yield* Effect.forkScoped(
++    Effect.forever(
++      Queue.takeAll(lines).pipe(
++        Effect.flatMap((batch) => fs.writeFileString(file.value, batch.join(""), { flag: "a" })),
++        Effect.catch((error) =>
++          Effect.gen(function* () {
++            const now = yield* Clock.currentTimeMillis;
++            if (now - reportedAt < 60_000) return;
++            reportedAt = now;
++            yield* Effect.logWarning(`Usage log write to ${file.value} failed`, error);
++          }),
++        ),
++      ),
++    ),
++  );
++  return (request: { readonly sessionId: string | undefined; readonly executionId: string }) =>
++    (event: McpUsageEvent) =>
++      Effect.flatMap(DateTime.now, (now) =>
++        Queue.offer(
++          lines,
++          `${JSON.stringify({ ts: DateTime.formatIso(now), ...request, ...event })}\n`,
++        ),
++      ).pipe(Effect.asVoid);
++});
+diff --git a/packages/mcp/src/implementation/execute.ts b/packages/mcp/src/implementation/execute.ts
+index d0ca503bf..bcee6849b 100644
+--- a/packages/mcp/src/implementation/execute.ts
++++ b/packages/mcp/src/implementation/execute.ts
+@@ -25,7 +25,7 @@ import {
+   type ToolSearchScope,
+   type ToolSearchTarget,
+ } from "@executor-js/sdk/core";
+-import { Clock, Deferred, Duration, Effect, Option, Schema, Semaphore } from "effect";
++import { Clock, Deferred, Duration, Effect, Exit, Option, Schema, Semaphore } from "effect";
+ import {
+   diagnostic,
+   diagnosticSummary,
+@@ -34,6 +34,7 @@ import {
+   reportFailure,
+ } from "./diagnostics.ts";
+ import { nearest } from "./suggestions.ts";
++import { recordUsage, usageErrorCode, usageResults, type McpUsageEvent } from "./usage.ts";
+ import type { McpAppAccounts } from "../contracts/targets.ts";
+ import type { McpBackend } from "../contracts/backend.ts";
+ import { accountSummary, accountsKey, discoveryAccounts } from "./accounts.ts";
+@@ -572,6 +573,28 @@ const fill = <A, B, E>(
+     return items;
+   });
+ 
++/** A search as the usage log records it, with the canonical paths of its first results. */
++const searchUsage =
++  (input: {
++    readonly query?: string | undefined;
++    readonly namespace?: string | undefined;
++    readonly limit?: number | undefined;
++    readonly offset?: number | undefined;
++  }) =>
++  <E>(
++    exit: Exit.Exit<{ readonly items: ReadonlyArray<{ readonly path: string }> }, E>,
++  ): McpUsageEvent => ({
++    type: "search",
++    query: input.query ?? "",
++    namespace: input.namespace,
++    limit: input.limit,
++    offset: input.offset,
++    ok: Exit.isSuccess(exit),
++    results: Exit.isSuccess(exit)
++      ? exit.value.items.slice(0, usageResults).map((item) => ({ path: canonical(item.path) }))
++      : [],
++  });
++
+ /**
+  * One page of `tools.search`: exact callable paths, one-line descriptions and input types, with
+  * each app and titled router listed once. `remaining` and `next` count from the last item the
+@@ -629,7 +652,7 @@ const searchPage = <E extends Error>(
+       remaining,
+       next: remaining > 0 ? { ...input, offset: offset + page.length } : null,
+     };
+-  });
++  }).pipe(recordUsage(searchUsage(input)));
+ 
+ /**
+  * One page of CodeMode's global `search()`, ranked as `tools.search` ranks, in the shape CodeMode's
+@@ -668,7 +691,7 @@ const globalSearchPage = <E extends Error>(
+     );
+     const remaining = ranked.remaining + ranked.items.length - items.length;
+     return { items, remaining, next: remaining > 0 ? { offset: offset + items.length } : null };
+-  });
++  }).pipe(recordUsage(searchUsage(input)));
+ 
+ /**
+  * Full detail for exact tool paths. A path that names no tool is reported with the paths in its
+@@ -705,7 +728,13 @@ const describeTools = <E>(described: Described<E>, paths: ReadonlyArray<string>)
+         namespaces.set(space.path, space);
+     }
+     return { items, namespaces: [...namespaces.values()], missing };
+-  });
++  }).pipe(
++    recordUsage((exit) => ({
++      type: "describe",
++      paths: paths.map(canonical),
++      ok: Exit.isSuccess(exit),
++    })),
++  );
+ 
+ /**
+  * The apps a program names, which discovery loads before it runs, and why it may reach others.
+@@ -963,7 +992,19 @@ function catalog(
+               });
+               if (result.status !== "completed") return yield* approvalRequired(result);
+               return result.value;
+-            }).pipe(Effect.mapError((error) => toolError(diagnostic(error)))),
++            }).pipe(
++              recordUsage((exit, durationMs) => {
++                const errorCode = usageErrorCode(exit);
++                return {
++                  type: "call",
++                  path: entry.path,
++                  ok: errorCode === undefined,
++                  durationMs,
++                  ...(errorCode === undefined ? {} : { errorCode }),
++                };
++              }),
++              Effect.mapError((error) => toolError(diagnostic(error))),
++            ),
+           ),
+         );
+     /** The program's own tool for an entry, built when the program's catalog takes its app. */
+diff --git a/packages/mcp/src/implementation/usage.ts b/packages/mcp/src/implementation/usage.ts
+new file mode 100644
+index 000000000..69d069ecf
+--- /dev/null
++++ b/packages/mcp/src/implementation/usage.ts
+@@ -0,0 +1,69 @@
++/**
++ * An optional record of what agents search for and which tools they call afterwards, so search can
++ * be evaluated offline against real use. A host provides `McpUsage` to receive events; without it
++ * nothing is recorded. Events hold canonical paths, outcomes and timing, never arguments or results.
++ */
++import { Cause, Clock, Context, Effect, Exit, Option, Predicate } from "effect";
++
++export type McpUsageEvent =
++  | {
++      readonly type: "search";
++      readonly query: string;
++      readonly namespace: string | undefined;
++      readonly limit: number | undefined;
++      readonly offset: number | undefined;
++      readonly ok: boolean;
++      /** The first results, best first. */
++      readonly results: ReadonlyArray<{ readonly path: string }>;
++    }
++  | { readonly type: "describe"; readonly paths: ReadonlyArray<string>; readonly ok: boolean }
++  | {
++      readonly type: "call";
++      readonly path: string;
++      readonly ok: boolean;
++      readonly durationMs: number;
++      readonly errorCode?: string;
++    };
++
++/** Receives the usage events of the current request, when the host records them. */
++export const McpUsage = Context.Reference<
++  ((event: McpUsageEvent) => Effect.Effect<void>) | undefined
++>("@executor-js/mcp/McpUsage", { defaultValue: () => undefined });
++
++/** Results a search event keeps. */
++export const usageResults = 10;
++
++/** Run an operation unchanged, and record its outcome when the host records usage. */
++export const recordUsage =
++  <A, E>(event: (exit: Exit.Exit<A, E>, durationMs: number) => McpUsageEvent) =>
++  <R>(effect: Effect.Effect<A, E, R>): Effect.Effect<A, E, R> =>
++    Effect.flatMap(McpUsage, (record) =>
++      record === undefined
++        ? effect
++        : Effect.flatMap(Clock.currentTimeMillis, (started) =>
++            effect.pipe(
++              Effect.onExit((exit) =>
++                Effect.flatMap(Clock.currentTimeMillis, (ended) =>
++                  record(event(exit, ended - started)),
++                ),
++              ),
++            ),
++          ),
++    );
++
++/**
++ * Why a call failed, as its event's error code: the failure's tag, or `ToolResultError` for an
++ * MCP result with `isError: true`, which a call returns as its value. Undefined when it succeeded.
++ */
++export const usageErrorCode = (exit: Exit.Exit<unknown, unknown>) => {
++  if (Exit.isSuccess(exit))
++    return Predicate.hasProperty(exit.value, "isError") && exit.value.isError === true
++      ? "ToolResultError"
++      : undefined;
++  if (Cause.hasInterruptsOnly(exit.cause)) return "Interrupted";
++  const error = Option.getOrUndefined(Cause.findErrorOption(exit.cause));
++  if (error === undefined) return "Defect";
++  return Predicate.hasProperty(error, "_tag") && typeof error._tag === "string"
++    ? error._tag
++    : "Error";
++};
+diff --git a/packages/mcp/src/index.ts b/packages/mcp/src/index.ts
+index 651a6fadf..89fc93396 100644
+--- a/packages/mcp/src/index.ts
++++ b/packages/mcp/src/index.ts
+@@ -8,6 +8,7 @@ export { mcp, makeMcp } from "./implementation/server.ts";
+ export { skills } from "./implementation/skills.ts";
+ export { makeExecutions, runningPrograms } from "./implementation/executions.ts";
+ export { refusedMcpRequest } from "./implementation/diagnostics.ts";
++export { McpUsage, type McpUsageEvent } from "./implementation/usage.ts";
+ 
+ export * from "./contracts/browser.ts";
+ export * from "./contracts/browser-tools.ts";
+-- 
+2.55.0
+

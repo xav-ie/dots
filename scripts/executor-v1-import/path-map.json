@@ -1,0 +1,3451 @@
+{
+  "generatedAt": "2026-10-15T20:58:36.768Z",
+  "note": "v1 had no shorter accepted form than tools.<integration>.org.<connection>.<tool> (see executor.ts's parseToolAddress at v1.6.10: owner and connection are always required segments, there is no tools.<integration>.<tool> shortcut). v2Path is the canonical <appSlug>.<tool> path (what tools.search and the usage log show); v2 is the exact expression an agent writes -- tools.<appSlug>.<tool> when the slug is a valid JS identifier, or tools[\"<appSlug>\"].<tool> otherwise (every slug with a hyphen: atlassian-delivery/product, google-workspace-personal/work, browser-session, proton-mail). Every v1 and v2 call is plain input, no accountId.",
+  "entries": [
+    {
+      "v1": "tools.agent.org.workspace.ask",
+      "v2": "tools.agent.ask",
+      "v2Path": "agent.ask",
+      "app": "agent"
+    },
+    {
+      "v1": "tools.agent.org.workspace.get",
+      "v2": "tools.agent.get",
+      "v2Path": "agent.get",
+      "app": "agent"
+    },
+    {
+      "v1": "tools.agent.org.workspace.list_jobs",
+      "v2": "tools.agent.list_jobs",
+      "v2Path": "agent.list_jobs",
+      "app": "agent"
+    },
+    {
+      "v1": "tools.agent.org.workspace.start",
+      "v2": "tools.agent.start",
+      "v2Path": "agent.start",
+      "app": "agent"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_add_comment",
+      "v2": "tools[\"atlassian-delivery\"].confluence_add_comment",
+      "v2Path": "atlassian-delivery.confluence_add_comment",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_add_inline_comment",
+      "v2": "tools[\"atlassian-delivery\"].confluence_add_inline_comment",
+      "v2Path": "atlassian-delivery.confluence_add_inline_comment",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_add_label",
+      "v2": "tools[\"atlassian-delivery\"].confluence_add_label",
+      "v2Path": "atlassian-delivery.confluence_add_label",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_check_content_permissions",
+      "v2": "tools[\"atlassian-delivery\"].confluence_check_content_permissions",
+      "v2Path": "atlassian-delivery.confluence_check_content_permissions",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_copy_page",
+      "v2": "tools[\"atlassian-delivery\"].confluence_copy_page",
+      "v2Path": "atlassian-delivery.confluence_copy_page",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_create_page",
+      "v2": "tools[\"atlassian-delivery\"].confluence_create_page",
+      "v2Path": "atlassian-delivery.confluence_create_page",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_create_page_from_template",
+      "v2": "tools[\"atlassian-delivery\"].confluence_create_page_from_template",
+      "v2Path": "atlassian-delivery.confluence_create_page_from_template",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_delete_attachment",
+      "v2": "tools[\"atlassian-delivery\"].confluence_delete_attachment",
+      "v2Path": "atlassian-delivery.confluence_delete_attachment",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_delete_page",
+      "v2": "tools[\"atlassian-delivery\"].confluence_delete_page",
+      "v2Path": "atlassian-delivery.confluence_delete_page",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_download_attachment",
+      "v2": "tools[\"atlassian-delivery\"].confluence_download_attachment",
+      "v2Path": "atlassian-delivery.confluence_download_attachment",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_download_content_attachments",
+      "v2": "tools[\"atlassian-delivery\"].confluence_download_content_attachments",
+      "v2Path": "atlassian-delivery.confluence_download_content_attachments",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_get_attachments",
+      "v2": "tools[\"atlassian-delivery\"].confluence_get_attachments",
+      "v2Path": "atlassian-delivery.confluence_get_attachments",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_get_comments",
+      "v2": "tools[\"atlassian-delivery\"].confluence_get_comments",
+      "v2Path": "atlassian-delivery.confluence_get_comments",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_get_inline_comments",
+      "v2": "tools[\"atlassian-delivery\"].confluence_get_inline_comments",
+      "v2Path": "atlassian-delivery.confluence_get_inline_comments",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_get_labels",
+      "v2": "tools[\"atlassian-delivery\"].confluence_get_labels",
+      "v2Path": "atlassian-delivery.confluence_get_labels",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_get_page",
+      "v2": "tools[\"atlassian-delivery\"].confluence_get_page",
+      "v2Path": "atlassian-delivery.confluence_get_page",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_get_page_children",
+      "v2": "tools[\"atlassian-delivery\"].confluence_get_page_children",
+      "v2Path": "atlassian-delivery.confluence_get_page_children",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_get_page_diff",
+      "v2": "tools[\"atlassian-delivery\"].confluence_get_page_diff",
+      "v2Path": "atlassian-delivery.confluence_get_page_diff",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_get_page_history",
+      "v2": "tools[\"atlassian-delivery\"].confluence_get_page_history",
+      "v2Path": "atlassian-delivery.confluence_get_page_history",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_get_page_images",
+      "v2": "tools[\"atlassian-delivery\"].confluence_get_page_images",
+      "v2Path": "atlassian-delivery.confluence_get_page_images",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_get_page_restrictions",
+      "v2": "tools[\"atlassian-delivery\"].confluence_get_page_restrictions",
+      "v2Path": "atlassian-delivery.confluence_get_page_restrictions",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_get_page_template",
+      "v2": "tools[\"atlassian-delivery\"].confluence_get_page_template",
+      "v2Path": "atlassian-delivery.confluence_get_page_template",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_get_page_views",
+      "v2": "tools[\"atlassian-delivery\"].confluence_get_page_views",
+      "v2Path": "atlassian-delivery.confluence_get_page_views",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_get_space_page_tree",
+      "v2": "tools[\"atlassian-delivery\"].confluence_get_space_page_tree",
+      "v2Path": "atlassian-delivery.confluence_get_space_page_tree",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_get_space_permissions",
+      "v2": "tools[\"atlassian-delivery\"].confluence_get_space_permissions",
+      "v2Path": "atlassian-delivery.confluence_get_space_permissions",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_list_page_templates",
+      "v2": "tools[\"atlassian-delivery\"].confluence_list_page_templates",
+      "v2Path": "atlassian-delivery.confluence_list_page_templates",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_move_page",
+      "v2": "tools[\"atlassian-delivery\"].confluence_move_page",
+      "v2Path": "atlassian-delivery.confluence_move_page",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_reply_to_comment",
+      "v2": "tools[\"atlassian-delivery\"].confluence_reply_to_comment",
+      "v2Path": "atlassian-delivery.confluence_reply_to_comment",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_search",
+      "v2": "tools[\"atlassian-delivery\"].confluence_search",
+      "v2Path": "atlassian-delivery.confluence_search",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_search_user",
+      "v2": "tools[\"atlassian-delivery\"].confluence_search_user",
+      "v2Path": "atlassian-delivery.confluence_search_user",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_set_page_restrictions",
+      "v2": "tools[\"atlassian-delivery\"].confluence_set_page_restrictions",
+      "v2Path": "atlassian-delivery.confluence_set_page_restrictions",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_update_page",
+      "v2": "tools[\"atlassian-delivery\"].confluence_update_page",
+      "v2Path": "atlassian-delivery.confluence_update_page",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_update_page_section",
+      "v2": "tools[\"atlassian-delivery\"].confluence_update_page_section",
+      "v2Path": "atlassian-delivery.confluence_update_page_section",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_upload_attachment",
+      "v2": "tools[\"atlassian-delivery\"].confluence_upload_attachment",
+      "v2Path": "atlassian-delivery.confluence_upload_attachment",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.confluence_upload_attachments",
+      "v2": "tools[\"atlassian-delivery\"].confluence_upload_attachments",
+      "v2Path": "atlassian-delivery.confluence_upload_attachments",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_add_comment",
+      "v2": "tools[\"atlassian-delivery\"].jira_add_comment",
+      "v2Path": "atlassian-delivery.jira_add_comment",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_add_issues_to_sprint",
+      "v2": "tools[\"atlassian-delivery\"].jira_add_issues_to_sprint",
+      "v2Path": "atlassian-delivery.jira_add_issues_to_sprint",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_add_watcher",
+      "v2": "tools[\"atlassian-delivery\"].jira_add_watcher",
+      "v2Path": "atlassian-delivery.jira_add_watcher",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_add_worklog",
+      "v2": "tools[\"atlassian-delivery\"].jira_add_worklog",
+      "v2Path": "atlassian-delivery.jira_add_worklog",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_assign_issue",
+      "v2": "tools[\"atlassian-delivery\"].jira_assign_issue",
+      "v2Path": "atlassian-delivery.jira_assign_issue",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_batch_create_issues",
+      "v2": "tools[\"atlassian-delivery\"].jira_batch_create_issues",
+      "v2Path": "atlassian-delivery.jira_batch_create_issues",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_batch_create_versions",
+      "v2": "tools[\"atlassian-delivery\"].jira_batch_create_versions",
+      "v2Path": "atlassian-delivery.jira_batch_create_versions",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_batch_get_changelogs",
+      "v2": "tools[\"atlassian-delivery\"].jira_batch_get_changelogs",
+      "v2Path": "atlassian-delivery.jira_batch_get_changelogs",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_create_customer_request",
+      "v2": "tools[\"atlassian-delivery\"].jira_create_customer_request",
+      "v2Path": "atlassian-delivery.jira_create_customer_request",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_create_issue",
+      "v2": "tools[\"atlassian-delivery\"].jira_create_issue",
+      "v2Path": "atlassian-delivery.jira_create_issue",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_create_issue_link",
+      "v2": "tools[\"atlassian-delivery\"].jira_create_issue_link",
+      "v2Path": "atlassian-delivery.jira_create_issue_link",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_create_remote_issue_link",
+      "v2": "tools[\"atlassian-delivery\"].jira_create_remote_issue_link",
+      "v2Path": "atlassian-delivery.jira_create_remote_issue_link",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_create_sprint",
+      "v2": "tools[\"atlassian-delivery\"].jira_create_sprint",
+      "v2Path": "atlassian-delivery.jira_create_sprint",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_create_version",
+      "v2": "tools[\"atlassian-delivery\"].jira_create_version",
+      "v2Path": "atlassian-delivery.jira_create_version",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_delete_issue",
+      "v2": "tools[\"atlassian-delivery\"].jira_delete_issue",
+      "v2Path": "atlassian-delivery.jira_delete_issue",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_download_attachments",
+      "v2": "tools[\"atlassian-delivery\"].jira_download_attachments",
+      "v2Path": "atlassian-delivery.jira_download_attachments",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_edit_comment",
+      "v2": "tools[\"atlassian-delivery\"].jira_edit_comment",
+      "v2Path": "atlassian-delivery.jira_edit_comment",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_agile_boards",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_agile_boards",
+      "v2Path": "atlassian-delivery.jira_get_agile_boards",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_all_projects",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_all_projects",
+      "v2Path": "atlassian-delivery.jira_get_all_projects",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_board_issues",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_board_issues",
+      "v2Path": "atlassian-delivery.jira_get_board_issues",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_create_fields",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_create_fields",
+      "v2Path": "atlassian-delivery.jira_get_create_fields",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_cross_project_dependencies",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_cross_project_dependencies",
+      "v2Path": "atlassian-delivery.jira_get_cross_project_dependencies",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_field_options",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_field_options",
+      "v2Path": "atlassian-delivery.jira_get_field_options",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_issue",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_issue",
+      "v2Path": "atlassian-delivery.jira_get_issue",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_issue_dates",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_issue_dates",
+      "v2Path": "atlassian-delivery.jira_get_issue_dates",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_issue_development_info",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_issue_development_info",
+      "v2Path": "atlassian-delivery.jira_get_issue_development_info",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_issue_images",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_issue_images",
+      "v2Path": "atlassian-delivery.jira_get_issue_images",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_issue_proforma_forms",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_issue_proforma_forms",
+      "v2Path": "atlassian-delivery.jira_get_issue_proforma_forms",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_issue_sla",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_issue_sla",
+      "v2Path": "atlassian-delivery.jira_get_issue_sla",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_issue_watchers",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_issue_watchers",
+      "v2Path": "atlassian-delivery.jira_get_issue_watchers",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_issues_development_info",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_issues_development_info",
+      "v2Path": "atlassian-delivery.jira_get_issues_development_info",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_link_types",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_link_types",
+      "v2Path": "atlassian-delivery.jira_get_link_types",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_proforma_form_details",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_proforma_form_details",
+      "v2Path": "atlassian-delivery.jira_get_proforma_form_details",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_project_components",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_project_components",
+      "v2Path": "atlassian-delivery.jira_get_project_components",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_project_epic_hierarchy",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_project_epic_hierarchy",
+      "v2Path": "atlassian-delivery.jira_get_project_epic_hierarchy",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_project_fields",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_project_fields",
+      "v2Path": "atlassian-delivery.jira_get_project_fields",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_project_issue_types",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_project_issue_types",
+      "v2Path": "atlassian-delivery.jira_get_project_issue_types",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_project_issues",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_project_issues",
+      "v2Path": "atlassian-delivery.jira_get_project_issues",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_project_versions",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_project_versions",
+      "v2Path": "atlassian-delivery.jira_get_project_versions",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_queue_issues",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_queue_issues",
+      "v2Path": "atlassian-delivery.jira_get_queue_issues",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_request_type_fields",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_request_type_fields",
+      "v2Path": "atlassian-delivery.jira_get_request_type_fields",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_request_types",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_request_types",
+      "v2Path": "atlassian-delivery.jira_get_request_types",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_service_desk_for_project",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_service_desk_for_project",
+      "v2Path": "atlassian-delivery.jira_get_service_desk_for_project",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_service_desk_queues",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_service_desk_queues",
+      "v2Path": "atlassian-delivery.jira_get_service_desk_queues",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_sprint_issues",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_sprint_issues",
+      "v2Path": "atlassian-delivery.jira_get_sprint_issues",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_sprints_from_board",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_sprints_from_board",
+      "v2Path": "atlassian-delivery.jira_get_sprints_from_board",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_transitions",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_transitions",
+      "v2Path": "atlassian-delivery.jira_get_transitions",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_user_profile",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_user_profile",
+      "v2Path": "atlassian-delivery.jira_get_user_profile",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_get_worklog",
+      "v2": "tools[\"atlassian-delivery\"].jira_get_worklog",
+      "v2Path": "atlassian-delivery.jira_get_worklog",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_link_to_epic",
+      "v2": "tools[\"atlassian-delivery\"].jira_link_to_epic",
+      "v2Path": "atlassian-delivery.jira_link_to_epic",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_move_issue",
+      "v2": "tools[\"atlassian-delivery\"].jira_move_issue",
+      "v2Path": "atlassian-delivery.jira_move_issue",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_move_issues_to_backlog",
+      "v2": "tools[\"atlassian-delivery\"].jira_move_issues_to_backlog",
+      "v2Path": "atlassian-delivery.jira_move_issues_to_backlog",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_remove_issue_link",
+      "v2": "tools[\"atlassian-delivery\"].jira_remove_issue_link",
+      "v2Path": "atlassian-delivery.jira_remove_issue_link",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_remove_watcher",
+      "v2": "tools[\"atlassian-delivery\"].jira_remove_watcher",
+      "v2Path": "atlassian-delivery.jira_remove_watcher",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_search",
+      "v2": "tools[\"atlassian-delivery\"].jira_search",
+      "v2Path": "atlassian-delivery.jira_search",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_search_assignable_users",
+      "v2": "tools[\"atlassian-delivery\"].jira_search_assignable_users",
+      "v2Path": "atlassian-delivery.jira_search_assignable_users",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_search_fields",
+      "v2": "tools[\"atlassian-delivery\"].jira_search_fields",
+      "v2Path": "atlassian-delivery.jira_search_fields",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_search_projects",
+      "v2": "tools[\"atlassian-delivery\"].jira_search_projects",
+      "v2Path": "atlassian-delivery.jira_search_projects",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_transition_issue",
+      "v2": "tools[\"atlassian-delivery\"].jira_transition_issue",
+      "v2Path": "atlassian-delivery.jira_transition_issue",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_update_issue",
+      "v2": "tools[\"atlassian-delivery\"].jira_update_issue",
+      "v2Path": "atlassian-delivery.jira_update_issue",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_update_proforma_form_answers",
+      "v2": "tools[\"atlassian-delivery\"].jira_update_proforma_form_answers",
+      "v2Path": "atlassian-delivery.jira_update_proforma_form_answers",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_update_sprint",
+      "v2": "tools[\"atlassian-delivery\"].jira_update_sprint",
+      "v2Path": "atlassian-delivery.jira_update_sprint",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.delivery.jira_update_version",
+      "v2": "tools[\"atlassian-delivery\"].jira_update_version",
+      "v2Path": "atlassian-delivery.jira_update_version",
+      "app": "atlassian-delivery"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_add_comment",
+      "v2": "tools[\"atlassian-product\"].confluence_add_comment",
+      "v2Path": "atlassian-product.confluence_add_comment",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_add_inline_comment",
+      "v2": "tools[\"atlassian-product\"].confluence_add_inline_comment",
+      "v2Path": "atlassian-product.confluence_add_inline_comment",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_add_label",
+      "v2": "tools[\"atlassian-product\"].confluence_add_label",
+      "v2Path": "atlassian-product.confluence_add_label",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_check_content_permissions",
+      "v2": "tools[\"atlassian-product\"].confluence_check_content_permissions",
+      "v2Path": "atlassian-product.confluence_check_content_permissions",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_copy_page",
+      "v2": "tools[\"atlassian-product\"].confluence_copy_page",
+      "v2Path": "atlassian-product.confluence_copy_page",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_create_page",
+      "v2": "tools[\"atlassian-product\"].confluence_create_page",
+      "v2Path": "atlassian-product.confluence_create_page",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_create_page_from_template",
+      "v2": "tools[\"atlassian-product\"].confluence_create_page_from_template",
+      "v2Path": "atlassian-product.confluence_create_page_from_template",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_delete_attachment",
+      "v2": "tools[\"atlassian-product\"].confluence_delete_attachment",
+      "v2Path": "atlassian-product.confluence_delete_attachment",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_delete_page",
+      "v2": "tools[\"atlassian-product\"].confluence_delete_page",
+      "v2Path": "atlassian-product.confluence_delete_page",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_download_attachment",
+      "v2": "tools[\"atlassian-product\"].confluence_download_attachment",
+      "v2Path": "atlassian-product.confluence_download_attachment",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_download_content_attachments",
+      "v2": "tools[\"atlassian-product\"].confluence_download_content_attachments",
+      "v2Path": "atlassian-product.confluence_download_content_attachments",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_get_attachments",
+      "v2": "tools[\"atlassian-product\"].confluence_get_attachments",
+      "v2Path": "atlassian-product.confluence_get_attachments",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_get_comments",
+      "v2": "tools[\"atlassian-product\"].confluence_get_comments",
+      "v2Path": "atlassian-product.confluence_get_comments",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_get_inline_comments",
+      "v2": "tools[\"atlassian-product\"].confluence_get_inline_comments",
+      "v2Path": "atlassian-product.confluence_get_inline_comments",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_get_labels",
+      "v2": "tools[\"atlassian-product\"].confluence_get_labels",
+      "v2Path": "atlassian-product.confluence_get_labels",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_get_page",
+      "v2": "tools[\"atlassian-product\"].confluence_get_page",
+      "v2Path": "atlassian-product.confluence_get_page",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_get_page_children",
+      "v2": "tools[\"atlassian-product\"].confluence_get_page_children",
+      "v2Path": "atlassian-product.confluence_get_page_children",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_get_page_diff",
+      "v2": "tools[\"atlassian-product\"].confluence_get_page_diff",
+      "v2Path": "atlassian-product.confluence_get_page_diff",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_get_page_history",
+      "v2": "tools[\"atlassian-product\"].confluence_get_page_history",
+      "v2Path": "atlassian-product.confluence_get_page_history",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_get_page_images",
+      "v2": "tools[\"atlassian-product\"].confluence_get_page_images",
+      "v2Path": "atlassian-product.confluence_get_page_images",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_get_page_restrictions",
+      "v2": "tools[\"atlassian-product\"].confluence_get_page_restrictions",
+      "v2Path": "atlassian-product.confluence_get_page_restrictions",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_get_page_template",
+      "v2": "tools[\"atlassian-product\"].confluence_get_page_template",
+      "v2Path": "atlassian-product.confluence_get_page_template",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_get_page_views",
+      "v2": "tools[\"atlassian-product\"].confluence_get_page_views",
+      "v2Path": "atlassian-product.confluence_get_page_views",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_get_space_page_tree",
+      "v2": "tools[\"atlassian-product\"].confluence_get_space_page_tree",
+      "v2Path": "atlassian-product.confluence_get_space_page_tree",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_get_space_permissions",
+      "v2": "tools[\"atlassian-product\"].confluence_get_space_permissions",
+      "v2Path": "atlassian-product.confluence_get_space_permissions",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_list_page_templates",
+      "v2": "tools[\"atlassian-product\"].confluence_list_page_templates",
+      "v2Path": "atlassian-product.confluence_list_page_templates",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_move_page",
+      "v2": "tools[\"atlassian-product\"].confluence_move_page",
+      "v2Path": "atlassian-product.confluence_move_page",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_reply_to_comment",
+      "v2": "tools[\"atlassian-product\"].confluence_reply_to_comment",
+      "v2Path": "atlassian-product.confluence_reply_to_comment",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_search",
+      "v2": "tools[\"atlassian-product\"].confluence_search",
+      "v2Path": "atlassian-product.confluence_search",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_search_user",
+      "v2": "tools[\"atlassian-product\"].confluence_search_user",
+      "v2Path": "atlassian-product.confluence_search_user",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_set_page_restrictions",
+      "v2": "tools[\"atlassian-product\"].confluence_set_page_restrictions",
+      "v2Path": "atlassian-product.confluence_set_page_restrictions",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_update_page",
+      "v2": "tools[\"atlassian-product\"].confluence_update_page",
+      "v2Path": "atlassian-product.confluence_update_page",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_update_page_section",
+      "v2": "tools[\"atlassian-product\"].confluence_update_page_section",
+      "v2Path": "atlassian-product.confluence_update_page_section",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_upload_attachment",
+      "v2": "tools[\"atlassian-product\"].confluence_upload_attachment",
+      "v2Path": "atlassian-product.confluence_upload_attachment",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.confluence_upload_attachments",
+      "v2": "tools[\"atlassian-product\"].confluence_upload_attachments",
+      "v2Path": "atlassian-product.confluence_upload_attachments",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_add_comment",
+      "v2": "tools[\"atlassian-product\"].jira_add_comment",
+      "v2Path": "atlassian-product.jira_add_comment",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_add_issues_to_sprint",
+      "v2": "tools[\"atlassian-product\"].jira_add_issues_to_sprint",
+      "v2Path": "atlassian-product.jira_add_issues_to_sprint",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_add_watcher",
+      "v2": "tools[\"atlassian-product\"].jira_add_watcher",
+      "v2Path": "atlassian-product.jira_add_watcher",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_add_worklog",
+      "v2": "tools[\"atlassian-product\"].jira_add_worklog",
+      "v2Path": "atlassian-product.jira_add_worklog",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_assign_issue",
+      "v2": "tools[\"atlassian-product\"].jira_assign_issue",
+      "v2Path": "atlassian-product.jira_assign_issue",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_batch_create_issues",
+      "v2": "tools[\"atlassian-product\"].jira_batch_create_issues",
+      "v2Path": "atlassian-product.jira_batch_create_issues",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_batch_create_versions",
+      "v2": "tools[\"atlassian-product\"].jira_batch_create_versions",
+      "v2Path": "atlassian-product.jira_batch_create_versions",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_batch_get_changelogs",
+      "v2": "tools[\"atlassian-product\"].jira_batch_get_changelogs",
+      "v2Path": "atlassian-product.jira_batch_get_changelogs",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_create_customer_request",
+      "v2": "tools[\"atlassian-product\"].jira_create_customer_request",
+      "v2Path": "atlassian-product.jira_create_customer_request",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_create_issue",
+      "v2": "tools[\"atlassian-product\"].jira_create_issue",
+      "v2Path": "atlassian-product.jira_create_issue",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_create_issue_link",
+      "v2": "tools[\"atlassian-product\"].jira_create_issue_link",
+      "v2Path": "atlassian-product.jira_create_issue_link",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_create_remote_issue_link",
+      "v2": "tools[\"atlassian-product\"].jira_create_remote_issue_link",
+      "v2Path": "atlassian-product.jira_create_remote_issue_link",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_create_sprint",
+      "v2": "tools[\"atlassian-product\"].jira_create_sprint",
+      "v2Path": "atlassian-product.jira_create_sprint",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_create_version",
+      "v2": "tools[\"atlassian-product\"].jira_create_version",
+      "v2Path": "atlassian-product.jira_create_version",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_delete_issue",
+      "v2": "tools[\"atlassian-product\"].jira_delete_issue",
+      "v2Path": "atlassian-product.jira_delete_issue",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_download_attachments",
+      "v2": "tools[\"atlassian-product\"].jira_download_attachments",
+      "v2Path": "atlassian-product.jira_download_attachments",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_edit_comment",
+      "v2": "tools[\"atlassian-product\"].jira_edit_comment",
+      "v2Path": "atlassian-product.jira_edit_comment",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_agile_boards",
+      "v2": "tools[\"atlassian-product\"].jira_get_agile_boards",
+      "v2Path": "atlassian-product.jira_get_agile_boards",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_all_projects",
+      "v2": "tools[\"atlassian-product\"].jira_get_all_projects",
+      "v2Path": "atlassian-product.jira_get_all_projects",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_board_issues",
+      "v2": "tools[\"atlassian-product\"].jira_get_board_issues",
+      "v2Path": "atlassian-product.jira_get_board_issues",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_create_fields",
+      "v2": "tools[\"atlassian-product\"].jira_get_create_fields",
+      "v2Path": "atlassian-product.jira_get_create_fields",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_cross_project_dependencies",
+      "v2": "tools[\"atlassian-product\"].jira_get_cross_project_dependencies",
+      "v2Path": "atlassian-product.jira_get_cross_project_dependencies",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_field_options",
+      "v2": "tools[\"atlassian-product\"].jira_get_field_options",
+      "v2Path": "atlassian-product.jira_get_field_options",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_issue",
+      "v2": "tools[\"atlassian-product\"].jira_get_issue",
+      "v2Path": "atlassian-product.jira_get_issue",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_issue_dates",
+      "v2": "tools[\"atlassian-product\"].jira_get_issue_dates",
+      "v2Path": "atlassian-product.jira_get_issue_dates",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_issue_development_info",
+      "v2": "tools[\"atlassian-product\"].jira_get_issue_development_info",
+      "v2Path": "atlassian-product.jira_get_issue_development_info",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_issue_images",
+      "v2": "tools[\"atlassian-product\"].jira_get_issue_images",
+      "v2Path": "atlassian-product.jira_get_issue_images",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_issue_proforma_forms",
+      "v2": "tools[\"atlassian-product\"].jira_get_issue_proforma_forms",
+      "v2Path": "atlassian-product.jira_get_issue_proforma_forms",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_issue_sla",
+      "v2": "tools[\"atlassian-product\"].jira_get_issue_sla",
+      "v2Path": "atlassian-product.jira_get_issue_sla",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_issue_watchers",
+      "v2": "tools[\"atlassian-product\"].jira_get_issue_watchers",
+      "v2Path": "atlassian-product.jira_get_issue_watchers",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_issues_development_info",
+      "v2": "tools[\"atlassian-product\"].jira_get_issues_development_info",
+      "v2Path": "atlassian-product.jira_get_issues_development_info",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_link_types",
+      "v2": "tools[\"atlassian-product\"].jira_get_link_types",
+      "v2Path": "atlassian-product.jira_get_link_types",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_proforma_form_details",
+      "v2": "tools[\"atlassian-product\"].jira_get_proforma_form_details",
+      "v2Path": "atlassian-product.jira_get_proforma_form_details",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_project_components",
+      "v2": "tools[\"atlassian-product\"].jira_get_project_components",
+      "v2Path": "atlassian-product.jira_get_project_components",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_project_epic_hierarchy",
+      "v2": "tools[\"atlassian-product\"].jira_get_project_epic_hierarchy",
+      "v2Path": "atlassian-product.jira_get_project_epic_hierarchy",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_project_fields",
+      "v2": "tools[\"atlassian-product\"].jira_get_project_fields",
+      "v2Path": "atlassian-product.jira_get_project_fields",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_project_issue_types",
+      "v2": "tools[\"atlassian-product\"].jira_get_project_issue_types",
+      "v2Path": "atlassian-product.jira_get_project_issue_types",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_project_issues",
+      "v2": "tools[\"atlassian-product\"].jira_get_project_issues",
+      "v2Path": "atlassian-product.jira_get_project_issues",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_project_versions",
+      "v2": "tools[\"atlassian-product\"].jira_get_project_versions",
+      "v2Path": "atlassian-product.jira_get_project_versions",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_queue_issues",
+      "v2": "tools[\"atlassian-product\"].jira_get_queue_issues",
+      "v2Path": "atlassian-product.jira_get_queue_issues",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_request_type_fields",
+      "v2": "tools[\"atlassian-product\"].jira_get_request_type_fields",
+      "v2Path": "atlassian-product.jira_get_request_type_fields",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_request_types",
+      "v2": "tools[\"atlassian-product\"].jira_get_request_types",
+      "v2Path": "atlassian-product.jira_get_request_types",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_service_desk_for_project",
+      "v2": "tools[\"atlassian-product\"].jira_get_service_desk_for_project",
+      "v2Path": "atlassian-product.jira_get_service_desk_for_project",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_service_desk_queues",
+      "v2": "tools[\"atlassian-product\"].jira_get_service_desk_queues",
+      "v2Path": "atlassian-product.jira_get_service_desk_queues",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_sprint_issues",
+      "v2": "tools[\"atlassian-product\"].jira_get_sprint_issues",
+      "v2Path": "atlassian-product.jira_get_sprint_issues",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_sprints_from_board",
+      "v2": "tools[\"atlassian-product\"].jira_get_sprints_from_board",
+      "v2Path": "atlassian-product.jira_get_sprints_from_board",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_transitions",
+      "v2": "tools[\"atlassian-product\"].jira_get_transitions",
+      "v2Path": "atlassian-product.jira_get_transitions",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_user_profile",
+      "v2": "tools[\"atlassian-product\"].jira_get_user_profile",
+      "v2Path": "atlassian-product.jira_get_user_profile",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_get_worklog",
+      "v2": "tools[\"atlassian-product\"].jira_get_worklog",
+      "v2Path": "atlassian-product.jira_get_worklog",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_link_to_epic",
+      "v2": "tools[\"atlassian-product\"].jira_link_to_epic",
+      "v2Path": "atlassian-product.jira_link_to_epic",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_move_issue",
+      "v2": "tools[\"atlassian-product\"].jira_move_issue",
+      "v2Path": "atlassian-product.jira_move_issue",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_move_issues_to_backlog",
+      "v2": "tools[\"atlassian-product\"].jira_move_issues_to_backlog",
+      "v2Path": "atlassian-product.jira_move_issues_to_backlog",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_remove_issue_link",
+      "v2": "tools[\"atlassian-product\"].jira_remove_issue_link",
+      "v2Path": "atlassian-product.jira_remove_issue_link",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_remove_watcher",
+      "v2": "tools[\"atlassian-product\"].jira_remove_watcher",
+      "v2Path": "atlassian-product.jira_remove_watcher",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_search",
+      "v2": "tools[\"atlassian-product\"].jira_search",
+      "v2Path": "atlassian-product.jira_search",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_search_assignable_users",
+      "v2": "tools[\"atlassian-product\"].jira_search_assignable_users",
+      "v2Path": "atlassian-product.jira_search_assignable_users",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_search_fields",
+      "v2": "tools[\"atlassian-product\"].jira_search_fields",
+      "v2Path": "atlassian-product.jira_search_fields",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_search_projects",
+      "v2": "tools[\"atlassian-product\"].jira_search_projects",
+      "v2Path": "atlassian-product.jira_search_projects",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_transition_issue",
+      "v2": "tools[\"atlassian-product\"].jira_transition_issue",
+      "v2Path": "atlassian-product.jira_transition_issue",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_update_issue",
+      "v2": "tools[\"atlassian-product\"].jira_update_issue",
+      "v2Path": "atlassian-product.jira_update_issue",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_update_proforma_form_answers",
+      "v2": "tools[\"atlassian-product\"].jira_update_proforma_form_answers",
+      "v2Path": "atlassian-product.jira_update_proforma_form_answers",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_update_sprint",
+      "v2": "tools[\"atlassian-product\"].jira_update_sprint",
+      "v2Path": "atlassian-product.jira_update_sprint",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.atlassian.org.product.jira_update_version",
+      "v2": "tools[\"atlassian-product\"].jira_update_version",
+      "v2Path": "atlassian-product.jira_update_version",
+      "app": "atlassian-product"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.await_human_takeover",
+      "v2": "tools[\"browser-session\"].await_human_takeover",
+      "v2Path": "browser-session.await_human_takeover",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.click",
+      "v2": "tools[\"browser-session\"].click",
+      "v2Path": "browser-session.click",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.close_browser_session",
+      "v2": "tools[\"browser-session\"].close_browser_session",
+      "v2Path": "browser-session.close_browser_session",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.close_tab",
+      "v2": "tools[\"browser-session\"].close_tab",
+      "v2Path": "browser-session.close_tab",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.delete_browser_state",
+      "v2": "tools[\"browser-session\"].delete_browser_state",
+      "v2Path": "browser-session.delete_browser_state",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.evaluate",
+      "v2": "tools[\"browser-session\"].evaluate",
+      "v2Path": "browser-session.evaluate",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.get_stealth",
+      "v2": "tools[\"browser-session\"].get_stealth",
+      "v2Path": "browser-session.get_stealth",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.list_browser_sessions",
+      "v2": "tools[\"browser-session\"].list_browser_sessions",
+      "v2Path": "browser-session.list_browser_sessions",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.list_browser_states",
+      "v2": "tools[\"browser-session\"].list_browser_states",
+      "v2Path": "browser-session.list_browser_states",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.list_console_messages",
+      "v2": "tools[\"browser-session\"].list_console_messages",
+      "v2Path": "browser-session.list_console_messages",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.list_network_requests",
+      "v2": "tools[\"browser-session\"].list_network_requests",
+      "v2Path": "browser-session.list_network_requests",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.list_pages",
+      "v2": "tools[\"browser-session\"].list_pages",
+      "v2Path": "browser-session.list_pages",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.list_visits",
+      "v2": "tools[\"browser-session\"].list_visits",
+      "v2Path": "browser-session.list_visits",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.load_browser_state",
+      "v2": "tools[\"browser-session\"].load_browser_state",
+      "v2Path": "browser-session.load_browser_state",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.move_mouse",
+      "v2": "tools[\"browser-session\"].move_mouse",
+      "v2Path": "browser-session.move_mouse",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.navigate",
+      "v2": "tools[\"browser-session\"].navigate",
+      "v2Path": "browser-session.navigate",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.new_page",
+      "v2": "tools[\"browser-session\"].new_page",
+      "v2Path": "browser-session.new_page",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.open_browser_session",
+      "v2": "tools[\"browser-session\"].open_browser_session",
+      "v2Path": "browser-session.open_browser_session",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.press_key",
+      "v2": "tools[\"browser-session\"].press_key",
+      "v2Path": "browser-session.press_key",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.request_human_takeover",
+      "v2": "tools[\"browser-session\"].request_human_takeover",
+      "v2Path": "browser-session.request_human_takeover",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.save_browser_state",
+      "v2": "tools[\"browser-session\"].save_browser_state",
+      "v2Path": "browser-session.save_browser_state",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.scroll",
+      "v2": "tools[\"browser-session\"].scroll",
+      "v2Path": "browser-session.scroll",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.set_stealth",
+      "v2": "tools[\"browser-session\"].set_stealth",
+      "v2Path": "browser-session.set_stealth",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.start_profiling",
+      "v2": "tools[\"browser-session\"].start_profiling",
+      "v2Path": "browser-session.start_profiling",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.stop_profiling",
+      "v2": "tools[\"browser-session\"].stop_profiling",
+      "v2Path": "browser-session.stop_profiling",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.switch_tab",
+      "v2": "tools[\"browser-session\"].switch_tab",
+      "v2Path": "browser-session.switch_tab",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.take_screenshot",
+      "v2": "tools[\"browser-session\"].take_screenshot",
+      "v2Path": "browser-session.take_screenshot",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.take_snapshot",
+      "v2": "tools[\"browser-session\"].take_snapshot",
+      "v2Path": "browser-session.take_snapshot",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.type",
+      "v2": "tools[\"browser-session\"].type",
+      "v2Path": "browser-session.type",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.browser_session.org.workspace.wait_for",
+      "v2": "tools[\"browser-session\"].wait_for",
+      "v2Path": "browser-session.wait_for",
+      "app": "browser-session"
+    },
+    {
+      "v1": "tools.discord.org.workspace.delete_message",
+      "v2": "tools.discord.delete_message",
+      "v2Path": "discord.delete_message",
+      "app": "discord"
+    },
+    {
+      "v1": "tools.discord.org.workspace.edit_message",
+      "v2": "tools.discord.edit_message",
+      "v2Path": "discord.edit_message",
+      "app": "discord"
+    },
+    {
+      "v1": "tools.discord.org.workspace.find_user",
+      "v2": "tools.discord.find_user",
+      "v2Path": "discord.find_user",
+      "app": "discord"
+    },
+    {
+      "v1": "tools.discord.org.workspace.list_all_unread_servers",
+      "v2": "tools.discord.list_all_unread_servers",
+      "v2Path": "discord.list_all_unread_servers",
+      "app": "discord"
+    },
+    {
+      "v1": "tools.discord.org.workspace.list_channels",
+      "v2": "tools.discord.list_channels",
+      "v2Path": "discord.list_channels",
+      "app": "discord"
+    },
+    {
+      "v1": "tools.discord.org.workspace.list_dms",
+      "v2": "tools.discord.list_dms",
+      "v2Path": "discord.list_dms",
+      "app": "discord"
+    },
+    {
+      "v1": "tools.discord.org.workspace.list_server_unread",
+      "v2": "tools.discord.list_server_unread",
+      "v2Path": "discord.list_server_unread",
+      "app": "discord"
+    },
+    {
+      "v1": "tools.discord.org.workspace.list_servers",
+      "v2": "tools.discord.list_servers",
+      "v2Path": "discord.list_servers",
+      "app": "discord"
+    },
+    {
+      "v1": "tools.discord.org.workspace.list_unread_messages",
+      "v2": "tools.discord.list_unread_messages",
+      "v2Path": "discord.list_unread_messages",
+      "app": "discord"
+    },
+    {
+      "v1": "tools.discord.org.workspace.mark_as_read",
+      "v2": "tools.discord.mark_as_read",
+      "v2Path": "discord.mark_as_read",
+      "app": "discord"
+    },
+    {
+      "v1": "tools.discord.org.workspace.mark_server_as_read",
+      "v2": "tools.discord.mark_server_as_read",
+      "v2Path": "discord.mark_server_as_read",
+      "app": "discord"
+    },
+    {
+      "v1": "tools.discord.org.workspace.open_dm",
+      "v2": "tools.discord.open_dm",
+      "v2Path": "discord.open_dm",
+      "app": "discord"
+    },
+    {
+      "v1": "tools.discord.org.workspace.read_messages",
+      "v2": "tools.discord.read_messages",
+      "v2Path": "discord.read_messages",
+      "app": "discord"
+    },
+    {
+      "v1": "tools.discord.org.workspace.send_message",
+      "v2": "tools.discord.send_message",
+      "v2Path": "discord.send_message",
+      "app": "discord"
+    },
+    {
+      "v1": "tools.divvy.org.divvy.add_expense",
+      "v2": "tools.divvy.add_expense",
+      "v2Path": "divvy.add_expense",
+      "app": "divvy"
+    },
+    {
+      "v1": "tools.divvy.org.divvy.add_placeholder",
+      "v2": "tools.divvy.add_placeholder",
+      "v2Path": "divvy.add_placeholder",
+      "app": "divvy"
+    },
+    {
+      "v1": "tools.divvy.org.divvy.add_recurring",
+      "v2": "tools.divvy.add_recurring",
+      "v2Path": "divvy.add_recurring",
+      "app": "divvy"
+    },
+    {
+      "v1": "tools.divvy.org.divvy.attach_document",
+      "v2": "tools.divvy.attach_document",
+      "v2Path": "divvy.attach_document",
+      "app": "divvy"
+    },
+    {
+      "v1": "tools.divvy.org.divvy.balances",
+      "v2": "tools.divvy.balances",
+      "v2Path": "divvy.balances",
+      "app": "divvy"
+    },
+    {
+      "v1": "tools.divvy.org.divvy.bill_recurring",
+      "v2": "tools.divvy.bill_recurring",
+      "v2Path": "divvy.bill_recurring",
+      "app": "divvy"
+    },
+    {
+      "v1": "tools.divvy.org.divvy.delete_expense",
+      "v2": "tools.divvy.delete_expense",
+      "v2Path": "divvy.delete_expense",
+      "app": "divvy"
+    },
+    {
+      "v1": "tools.divvy.org.divvy.get_expense",
+      "v2": "tools.divvy.get_expense",
+      "v2Path": "divvy.get_expense",
+      "app": "divvy"
+    },
+    {
+      "v1": "tools.divvy.org.divvy.list_attachments",
+      "v2": "tools.divvy.list_attachments",
+      "v2Path": "divvy.list_attachments",
+      "app": "divvy"
+    },
+    {
+      "v1": "tools.divvy.org.divvy.list_expenses",
+      "v2": "tools.divvy.list_expenses",
+      "v2Path": "divvy.list_expenses",
+      "app": "divvy"
+    },
+    {
+      "v1": "tools.divvy.org.divvy.list_groups",
+      "v2": "tools.divvy.list_groups",
+      "v2Path": "divvy.list_groups",
+      "app": "divvy"
+    },
+    {
+      "v1": "tools.divvy.org.divvy.list_members",
+      "v2": "tools.divvy.list_members",
+      "v2Path": "divvy.list_members",
+      "app": "divvy"
+    },
+    {
+      "v1": "tools.divvy.org.divvy.list_recurring",
+      "v2": "tools.divvy.list_recurring",
+      "v2Path": "divvy.list_recurring",
+      "app": "divvy"
+    },
+    {
+      "v1": "tools.divvy.org.divvy.record_payment",
+      "v2": "tools.divvy.record_payment",
+      "v2Path": "divvy.record_payment",
+      "app": "divvy"
+    },
+    {
+      "v1": "tools.divvy.org.divvy.remove_attachment",
+      "v2": "tools.divvy.remove_attachment",
+      "v2Path": "divvy.remove_attachment",
+      "app": "divvy"
+    },
+    {
+      "v1": "tools.divvy.org.divvy.rename_member",
+      "v2": "tools.divvy.rename_member",
+      "v2Path": "divvy.rename_member",
+      "app": "divvy"
+    },
+    {
+      "v1": "tools.divvy.org.divvy.restore_expense",
+      "v2": "tools.divvy.restore_expense",
+      "v2Path": "divvy.restore_expense",
+      "app": "divvy"
+    },
+    {
+      "v1": "tools.divvy.org.divvy.set_venmo_username",
+      "v2": "tools.divvy.set_venmo_username",
+      "v2Path": "divvy.set_venmo_username",
+      "app": "divvy"
+    },
+    {
+      "v1": "tools.github.org.github.add_comment_to_pending_review",
+      "v2": "tools.github.add_comment_to_pending_review",
+      "v2Path": "github.add_comment_to_pending_review",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.add_issue_comment",
+      "v2": "tools.github.add_issue_comment",
+      "v2Path": "github.add_issue_comment",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.add_reply_to_pull_request_comment",
+      "v2": "tools.github.add_reply_to_pull_request_comment",
+      "v2Path": "github.add_reply_to_pull_request_comment",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.create_branch",
+      "v2": "tools.github.create_branch",
+      "v2Path": "github.create_branch",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.create_or_update_file",
+      "v2": "tools.github.create_or_update_file",
+      "v2Path": "github.create_or_update_file",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.create_pull_request",
+      "v2": "tools.github.create_pull_request",
+      "v2Path": "github.create_pull_request",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.create_repository",
+      "v2": "tools.github.create_repository",
+      "v2Path": "github.create_repository",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.delete_file",
+      "v2": "tools.github.delete_file",
+      "v2Path": "github.delete_file",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.delete_repository",
+      "v2": null,
+      "v2Path": null,
+      "app": "github",
+      "note": "tool not present in current v2 catalog (upstream server drift, not a rename)"
+    },
+    {
+      "v1": "tools.github.org.github.fork_repository",
+      "v2": "tools.github.fork_repository",
+      "v2Path": "github.fork_repository",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.get_commit",
+      "v2": "tools.github.get_commit",
+      "v2Path": "github.get_commit",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.get_file_contents",
+      "v2": "tools.github.get_file_contents",
+      "v2Path": "github.get_file_contents",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.get_label",
+      "v2": "tools.github.get_label",
+      "v2Path": "github.get_label",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.get_latest_release",
+      "v2": "tools.github.get_latest_release",
+      "v2Path": "github.get_latest_release",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.get_me",
+      "v2": "tools.github.get_me",
+      "v2Path": "github.get_me",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.get_release_by_tag",
+      "v2": "tools.github.get_release_by_tag",
+      "v2Path": "github.get_release_by_tag",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.get_tag",
+      "v2": "tools.github.get_tag",
+      "v2Path": "github.get_tag",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.get_team_members",
+      "v2": "tools.github.get_team_members",
+      "v2Path": "github.get_team_members",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.get_teams",
+      "v2": "tools.github.get_teams",
+      "v2Path": "github.get_teams",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.issue_read",
+      "v2": "tools.github.issue_read",
+      "v2Path": "github.issue_read",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.issue_write",
+      "v2": "tools.github.issue_write",
+      "v2Path": "github.issue_write",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.list_branches",
+      "v2": "tools.github.list_branches",
+      "v2Path": "github.list_branches",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.list_commits",
+      "v2": "tools.github.list_commits",
+      "v2Path": "github.list_commits",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.list_issue_fields",
+      "v2": "tools.github.list_issue_fields",
+      "v2Path": "github.list_issue_fields",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.list_issue_types",
+      "v2": "tools.github.list_issue_types",
+      "v2Path": "github.list_issue_types",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.list_issues",
+      "v2": "tools.github.list_issues",
+      "v2Path": "github.list_issues",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.list_pull_requests",
+      "v2": "tools.github.list_pull_requests",
+      "v2Path": "github.list_pull_requests",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.list_releases",
+      "v2": "tools.github.list_releases",
+      "v2Path": "github.list_releases",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.list_repository_collaborators",
+      "v2": "tools.github.list_repository_collaborators",
+      "v2Path": "github.list_repository_collaborators",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.list_tags",
+      "v2": "tools.github.list_tags",
+      "v2Path": "github.list_tags",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.merge_pull_request",
+      "v2": "tools.github.merge_pull_request",
+      "v2Path": "github.merge_pull_request",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.pull_request_read",
+      "v2": "tools.github.pull_request_read",
+      "v2Path": "github.pull_request_read",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.pull_request_review_write",
+      "v2": "tools.github.pull_request_review_write",
+      "v2Path": "github.pull_request_review_write",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.push_files",
+      "v2": "tools.github.push_files",
+      "v2Path": "github.push_files",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.request_copilot_review",
+      "v2": "tools.github.request_copilot_review",
+      "v2Path": "github.request_copilot_review",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.run_secret_scanning",
+      "v2": "tools.github.run_secret_scanning",
+      "v2Path": "github.run_secret_scanning",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.search_code",
+      "v2": "tools.github.search_code",
+      "v2Path": "github.search_code",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.search_commits",
+      "v2": "tools.github.search_commits",
+      "v2Path": "github.search_commits",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.search_issues",
+      "v2": "tools.github.search_issues",
+      "v2Path": "github.search_issues",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.search_pull_requests",
+      "v2": "tools.github.search_pull_requests",
+      "v2Path": "github.search_pull_requests",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.search_repositories",
+      "v2": "tools.github.search_repositories",
+      "v2Path": "github.search_repositories",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.search_users",
+      "v2": "tools.github.search_users",
+      "v2Path": "github.search_users",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.sub_issue_write",
+      "v2": "tools.github.sub_issue_write",
+      "v2Path": "github.sub_issue_write",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.ui_get",
+      "v2": "tools.github.ui_get",
+      "v2Path": "github.ui_get",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.update_issue_comment",
+      "v2": "tools.github.update_issue_comment",
+      "v2Path": "github.update_issue_comment",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.update_pull_request",
+      "v2": "tools.github.update_pull_request",
+      "v2Path": "github.update_pull_request",
+      "app": "github"
+    },
+    {
+      "v1": "tools.github.org.github.update_pull_request_branch",
+      "v2": "tools.github.update_pull_request_branch",
+      "v2Path": "github.update_pull_request_branch",
+      "app": "github"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.auth_clear",
+      "v2": "tools[\"google-workspace-personal\"].auth_clear",
+      "v2Path": "google-workspace-personal.auth_clear",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.auth_refreshtoken",
+      "v2": "tools[\"google-workspace-personal\"].auth_refreshToken",
+      "v2Path": "google-workspace-personal.auth_refreshToken",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.calendar_createevent",
+      "v2": "tools[\"google-workspace-personal\"].calendar_createEvent",
+      "v2Path": "google-workspace-personal.calendar_createEvent",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.calendar_deleteevent",
+      "v2": "tools[\"google-workspace-personal\"].calendar_deleteEvent",
+      "v2Path": "google-workspace-personal.calendar_deleteEvent",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.calendar_findfreetime",
+      "v2": "tools[\"google-workspace-personal\"].calendar_findFreeTime",
+      "v2Path": "google-workspace-personal.calendar_findFreeTime",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.calendar_getevent",
+      "v2": "tools[\"google-workspace-personal\"].calendar_getEvent",
+      "v2Path": "google-workspace-personal.calendar_getEvent",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.calendar_list",
+      "v2": "tools[\"google-workspace-personal\"].calendar_list",
+      "v2Path": "google-workspace-personal.calendar_list",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.calendar_listevents",
+      "v2": "tools[\"google-workspace-personal\"].calendar_listEvents",
+      "v2Path": "google-workspace-personal.calendar_listEvents",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.calendar_respondtoevent",
+      "v2": "tools[\"google-workspace-personal\"].calendar_respondToEvent",
+      "v2Path": "google-workspace-personal.calendar_respondToEvent",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.calendar_updateevent",
+      "v2": "tools[\"google-workspace-personal\"].calendar_updateEvent",
+      "v2Path": "google-workspace-personal.calendar_updateEvent",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.chat_finddmbyemail",
+      "v2": "tools[\"google-workspace-personal\"].chat_findDmByEmail",
+      "v2Path": "google-workspace-personal.chat_findDmByEmail",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.chat_findspacebyname",
+      "v2": "tools[\"google-workspace-personal\"].chat_findSpaceByName",
+      "v2Path": "google-workspace-personal.chat_findSpaceByName",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.chat_getmessages",
+      "v2": "tools[\"google-workspace-personal\"].chat_getMessages",
+      "v2Path": "google-workspace-personal.chat_getMessages",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.chat_listspaces",
+      "v2": "tools[\"google-workspace-personal\"].chat_listSpaces",
+      "v2Path": "google-workspace-personal.chat_listSpaces",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.chat_listthreads",
+      "v2": "tools[\"google-workspace-personal\"].chat_listThreads",
+      "v2Path": "google-workspace-personal.chat_listThreads",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.chat_senddm",
+      "v2": "tools[\"google-workspace-personal\"].chat_sendDm",
+      "v2Path": "google-workspace-personal.chat_sendDm",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.chat_sendmessage",
+      "v2": "tools[\"google-workspace-personal\"].chat_sendMessage",
+      "v2Path": "google-workspace-personal.chat_sendMessage",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.chat_setupspace",
+      "v2": "tools[\"google-workspace-personal\"].chat_setUpSpace",
+      "v2Path": "google-workspace-personal.chat_setUpSpace",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.docs_create",
+      "v2": "tools[\"google-workspace-personal\"].docs_create",
+      "v2Path": "google-workspace-personal.docs_create",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.docs_formattext",
+      "v2": "tools[\"google-workspace-personal\"].docs_formatText",
+      "v2Path": "google-workspace-personal.docs_formatText",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.docs_getsuggestions",
+      "v2": "tools[\"google-workspace-personal\"].docs_getSuggestions",
+      "v2Path": "google-workspace-personal.docs_getSuggestions",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.docs_gettext",
+      "v2": "tools[\"google-workspace-personal\"].docs_getText",
+      "v2Path": "google-workspace-personal.docs_getText",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.docs_replacetext",
+      "v2": "tools[\"google-workspace-personal\"].docs_replaceText",
+      "v2Path": "google-workspace-personal.docs_replaceText",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.docs_writetext",
+      "v2": "tools[\"google-workspace-personal\"].docs_writeText",
+      "v2Path": "google-workspace-personal.docs_writeText",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.drive_createfolder",
+      "v2": "tools[\"google-workspace-personal\"].drive_createFolder",
+      "v2Path": "google-workspace-personal.drive_createFolder",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.drive_downloadfile",
+      "v2": "tools[\"google-workspace-personal\"].drive_downloadFile",
+      "v2Path": "google-workspace-personal.drive_downloadFile",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.drive_findfolder",
+      "v2": "tools[\"google-workspace-personal\"].drive_findFolder",
+      "v2Path": "google-workspace-personal.drive_findFolder",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.drive_getcomments",
+      "v2": "tools[\"google-workspace-personal\"].drive_getComments",
+      "v2Path": "google-workspace-personal.drive_getComments",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.drive_movefile",
+      "v2": "tools[\"google-workspace-personal\"].drive_moveFile",
+      "v2Path": "google-workspace-personal.drive_moveFile",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.drive_renamefile",
+      "v2": "tools[\"google-workspace-personal\"].drive_renameFile",
+      "v2Path": "google-workspace-personal.drive_renameFile",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.drive_search",
+      "v2": "tools[\"google-workspace-personal\"].drive_search",
+      "v2Path": "google-workspace-personal.drive_search",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.drive_trashfile",
+      "v2": "tools[\"google-workspace-personal\"].drive_trashFile",
+      "v2Path": "google-workspace-personal.drive_trashFile",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.gmail_batchmodify",
+      "v2": "tools[\"google-workspace-personal\"].gmail_batchModify",
+      "v2Path": "google-workspace-personal.gmail_batchModify",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.gmail_createdraft",
+      "v2": "tools[\"google-workspace-personal\"].gmail_createDraft",
+      "v2Path": "google-workspace-personal.gmail_createDraft",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.gmail_createlabel",
+      "v2": "tools[\"google-workspace-personal\"].gmail_createLabel",
+      "v2Path": "google-workspace-personal.gmail_createLabel",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.gmail_downloadattachment",
+      "v2": "tools[\"google-workspace-personal\"].gmail_downloadAttachment",
+      "v2Path": "google-workspace-personal.gmail_downloadAttachment",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.gmail_get",
+      "v2": "tools[\"google-workspace-personal\"].gmail_get",
+      "v2Path": "google-workspace-personal.gmail_get",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.gmail_listlabels",
+      "v2": "tools[\"google-workspace-personal\"].gmail_listLabels",
+      "v2Path": "google-workspace-personal.gmail_listLabels",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.gmail_modify",
+      "v2": "tools[\"google-workspace-personal\"].gmail_modify",
+      "v2Path": "google-workspace-personal.gmail_modify",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.gmail_modifythread",
+      "v2": "tools[\"google-workspace-personal\"].gmail_modifyThread",
+      "v2Path": "google-workspace-personal.gmail_modifyThread",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.gmail_search",
+      "v2": "tools[\"google-workspace-personal\"].gmail_search",
+      "v2Path": "google-workspace-personal.gmail_search",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.gmail_send",
+      "v2": "tools[\"google-workspace-personal\"].gmail_send",
+      "v2Path": "google-workspace-personal.gmail_send",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.gmail_senddraft",
+      "v2": "tools[\"google-workspace-personal\"].gmail_sendDraft",
+      "v2Path": "google-workspace-personal.gmail_sendDraft",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.people_getme",
+      "v2": "tools[\"google-workspace-personal\"].people_getMe",
+      "v2Path": "google-workspace-personal.people_getMe",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.people_getuserprofile",
+      "v2": "tools[\"google-workspace-personal\"].people_getUserProfile",
+      "v2Path": "google-workspace-personal.people_getUserProfile",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.people_getuserrelations",
+      "v2": "tools[\"google-workspace-personal\"].people_getUserRelations",
+      "v2Path": "google-workspace-personal.people_getUserRelations",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.sheets_getmetadata",
+      "v2": "tools[\"google-workspace-personal\"].sheets_getMetadata",
+      "v2Path": "google-workspace-personal.sheets_getMetadata",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.sheets_getrange",
+      "v2": "tools[\"google-workspace-personal\"].sheets_getRange",
+      "v2Path": "google-workspace-personal.sheets_getRange",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.sheets_gettext",
+      "v2": "tools[\"google-workspace-personal\"].sheets_getText",
+      "v2Path": "google-workspace-personal.sheets_getText",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.slides_getimages",
+      "v2": "tools[\"google-workspace-personal\"].slides_getImages",
+      "v2Path": "google-workspace-personal.slides_getImages",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.slides_getmetadata",
+      "v2": "tools[\"google-workspace-personal\"].slides_getMetadata",
+      "v2Path": "google-workspace-personal.slides_getMetadata",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.slides_getslidethumbnail",
+      "v2": "tools[\"google-workspace-personal\"].slides_getSlideThumbnail",
+      "v2Path": "google-workspace-personal.slides_getSlideThumbnail",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.slides_getspeakernotes",
+      "v2": "tools[\"google-workspace-personal\"].slides_getSpeakerNotes",
+      "v2Path": "google-workspace-personal.slides_getSpeakerNotes",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.slides_gettext",
+      "v2": "tools[\"google-workspace-personal\"].slides_getText",
+      "v2Path": "google-workspace-personal.slides_getText",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.time_getcurrentdate",
+      "v2": "tools[\"google-workspace-personal\"].time_getCurrentDate",
+      "v2Path": "google-workspace-personal.time_getCurrentDate",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.time_getcurrenttime",
+      "v2": "tools[\"google-workspace-personal\"].time_getCurrentTime",
+      "v2Path": "google-workspace-personal.time_getCurrentTime",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.personal.time_gettimezone",
+      "v2": "tools[\"google-workspace-personal\"].time_getTimeZone",
+      "v2Path": "google-workspace-personal.time_getTimeZone",
+      "app": "google-workspace-personal"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.auth_clear",
+      "v2": "tools[\"google-workspace-work\"].auth_clear",
+      "v2Path": "google-workspace-work.auth_clear",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.auth_refreshtoken",
+      "v2": "tools[\"google-workspace-work\"].auth_refreshToken",
+      "v2Path": "google-workspace-work.auth_refreshToken",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.calendar_createevent",
+      "v2": "tools[\"google-workspace-work\"].calendar_createEvent",
+      "v2Path": "google-workspace-work.calendar_createEvent",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.calendar_deleteevent",
+      "v2": "tools[\"google-workspace-work\"].calendar_deleteEvent",
+      "v2Path": "google-workspace-work.calendar_deleteEvent",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.calendar_findfreetime",
+      "v2": "tools[\"google-workspace-work\"].calendar_findFreeTime",
+      "v2Path": "google-workspace-work.calendar_findFreeTime",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.calendar_getevent",
+      "v2": "tools[\"google-workspace-work\"].calendar_getEvent",
+      "v2Path": "google-workspace-work.calendar_getEvent",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.calendar_list",
+      "v2": "tools[\"google-workspace-work\"].calendar_list",
+      "v2Path": "google-workspace-work.calendar_list",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.calendar_listevents",
+      "v2": "tools[\"google-workspace-work\"].calendar_listEvents",
+      "v2Path": "google-workspace-work.calendar_listEvents",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.calendar_respondtoevent",
+      "v2": "tools[\"google-workspace-work\"].calendar_respondToEvent",
+      "v2Path": "google-workspace-work.calendar_respondToEvent",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.calendar_updateevent",
+      "v2": "tools[\"google-workspace-work\"].calendar_updateEvent",
+      "v2Path": "google-workspace-work.calendar_updateEvent",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.chat_finddmbyemail",
+      "v2": "tools[\"google-workspace-work\"].chat_findDmByEmail",
+      "v2Path": "google-workspace-work.chat_findDmByEmail",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.chat_findspacebyname",
+      "v2": "tools[\"google-workspace-work\"].chat_findSpaceByName",
+      "v2Path": "google-workspace-work.chat_findSpaceByName",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.chat_getmessages",
+      "v2": "tools[\"google-workspace-work\"].chat_getMessages",
+      "v2Path": "google-workspace-work.chat_getMessages",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.chat_listspaces",
+      "v2": "tools[\"google-workspace-work\"].chat_listSpaces",
+      "v2Path": "google-workspace-work.chat_listSpaces",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.chat_listthreads",
+      "v2": "tools[\"google-workspace-work\"].chat_listThreads",
+      "v2Path": "google-workspace-work.chat_listThreads",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.chat_senddm",
+      "v2": "tools[\"google-workspace-work\"].chat_sendDm",
+      "v2Path": "google-workspace-work.chat_sendDm",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.chat_sendmessage",
+      "v2": "tools[\"google-workspace-work\"].chat_sendMessage",
+      "v2Path": "google-workspace-work.chat_sendMessage",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.chat_setupspace",
+      "v2": "tools[\"google-workspace-work\"].chat_setUpSpace",
+      "v2Path": "google-workspace-work.chat_setUpSpace",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.docs_create",
+      "v2": "tools[\"google-workspace-work\"].docs_create",
+      "v2Path": "google-workspace-work.docs_create",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.docs_formattext",
+      "v2": "tools[\"google-workspace-work\"].docs_formatText",
+      "v2Path": "google-workspace-work.docs_formatText",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.docs_getsuggestions",
+      "v2": "tools[\"google-workspace-work\"].docs_getSuggestions",
+      "v2Path": "google-workspace-work.docs_getSuggestions",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.docs_gettext",
+      "v2": "tools[\"google-workspace-work\"].docs_getText",
+      "v2Path": "google-workspace-work.docs_getText",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.docs_replacetext",
+      "v2": "tools[\"google-workspace-work\"].docs_replaceText",
+      "v2Path": "google-workspace-work.docs_replaceText",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.docs_writetext",
+      "v2": "tools[\"google-workspace-work\"].docs_writeText",
+      "v2Path": "google-workspace-work.docs_writeText",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.drive_createfolder",
+      "v2": "tools[\"google-workspace-work\"].drive_createFolder",
+      "v2Path": "google-workspace-work.drive_createFolder",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.drive_downloadfile",
+      "v2": "tools[\"google-workspace-work\"].drive_downloadFile",
+      "v2Path": "google-workspace-work.drive_downloadFile",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.drive_findfolder",
+      "v2": "tools[\"google-workspace-work\"].drive_findFolder",
+      "v2Path": "google-workspace-work.drive_findFolder",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.drive_getcomments",
+      "v2": "tools[\"google-workspace-work\"].drive_getComments",
+      "v2Path": "google-workspace-work.drive_getComments",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.drive_movefile",
+      "v2": "tools[\"google-workspace-work\"].drive_moveFile",
+      "v2Path": "google-workspace-work.drive_moveFile",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.drive_renamefile",
+      "v2": "tools[\"google-workspace-work\"].drive_renameFile",
+      "v2Path": "google-workspace-work.drive_renameFile",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.drive_search",
+      "v2": "tools[\"google-workspace-work\"].drive_search",
+      "v2Path": "google-workspace-work.drive_search",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.drive_trashfile",
+      "v2": "tools[\"google-workspace-work\"].drive_trashFile",
+      "v2Path": "google-workspace-work.drive_trashFile",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.gmail_batchmodify",
+      "v2": "tools[\"google-workspace-work\"].gmail_batchModify",
+      "v2Path": "google-workspace-work.gmail_batchModify",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.gmail_createdraft",
+      "v2": "tools[\"google-workspace-work\"].gmail_createDraft",
+      "v2Path": "google-workspace-work.gmail_createDraft",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.gmail_createlabel",
+      "v2": "tools[\"google-workspace-work\"].gmail_createLabel",
+      "v2Path": "google-workspace-work.gmail_createLabel",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.gmail_downloadattachment",
+      "v2": "tools[\"google-workspace-work\"].gmail_downloadAttachment",
+      "v2Path": "google-workspace-work.gmail_downloadAttachment",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.gmail_get",
+      "v2": "tools[\"google-workspace-work\"].gmail_get",
+      "v2Path": "google-workspace-work.gmail_get",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.gmail_listlabels",
+      "v2": "tools[\"google-workspace-work\"].gmail_listLabels",
+      "v2Path": "google-workspace-work.gmail_listLabels",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.gmail_modify",
+      "v2": "tools[\"google-workspace-work\"].gmail_modify",
+      "v2Path": "google-workspace-work.gmail_modify",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.gmail_modifythread",
+      "v2": "tools[\"google-workspace-work\"].gmail_modifyThread",
+      "v2Path": "google-workspace-work.gmail_modifyThread",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.gmail_search",
+      "v2": "tools[\"google-workspace-work\"].gmail_search",
+      "v2Path": "google-workspace-work.gmail_search",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.gmail_send",
+      "v2": "tools[\"google-workspace-work\"].gmail_send",
+      "v2Path": "google-workspace-work.gmail_send",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.gmail_senddraft",
+      "v2": "tools[\"google-workspace-work\"].gmail_sendDraft",
+      "v2Path": "google-workspace-work.gmail_sendDraft",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.people_getme",
+      "v2": "tools[\"google-workspace-work\"].people_getMe",
+      "v2Path": "google-workspace-work.people_getMe",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.people_getuserprofile",
+      "v2": "tools[\"google-workspace-work\"].people_getUserProfile",
+      "v2Path": "google-workspace-work.people_getUserProfile",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.people_getuserrelations",
+      "v2": "tools[\"google-workspace-work\"].people_getUserRelations",
+      "v2Path": "google-workspace-work.people_getUserRelations",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.sheets_getmetadata",
+      "v2": "tools[\"google-workspace-work\"].sheets_getMetadata",
+      "v2Path": "google-workspace-work.sheets_getMetadata",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.sheets_getrange",
+      "v2": "tools[\"google-workspace-work\"].sheets_getRange",
+      "v2Path": "google-workspace-work.sheets_getRange",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.sheets_gettext",
+      "v2": "tools[\"google-workspace-work\"].sheets_getText",
+      "v2Path": "google-workspace-work.sheets_getText",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.slides_getimages",
+      "v2": "tools[\"google-workspace-work\"].slides_getImages",
+      "v2Path": "google-workspace-work.slides_getImages",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.slides_getmetadata",
+      "v2": "tools[\"google-workspace-work\"].slides_getMetadata",
+      "v2Path": "google-workspace-work.slides_getMetadata",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.slides_getslidethumbnail",
+      "v2": "tools[\"google-workspace-work\"].slides_getSlideThumbnail",
+      "v2Path": "google-workspace-work.slides_getSlideThumbnail",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.slides_getspeakernotes",
+      "v2": "tools[\"google-workspace-work\"].slides_getSpeakerNotes",
+      "v2Path": "google-workspace-work.slides_getSpeakerNotes",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.slides_gettext",
+      "v2": "tools[\"google-workspace-work\"].slides_getText",
+      "v2Path": "google-workspace-work.slides_getText",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.time_getcurrentdate",
+      "v2": "tools[\"google-workspace-work\"].time_getCurrentDate",
+      "v2Path": "google-workspace-work.time_getCurrentDate",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.time_getcurrenttime",
+      "v2": "tools[\"google-workspace-work\"].time_getCurrentTime",
+      "v2Path": "google-workspace-work.time_getCurrentTime",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.google_workspace.org.work.time_gettimezone",
+      "v2": "tools[\"google-workspace-work\"].time_getTimeZone",
+      "v2Path": "google-workspace-work.time_getTimeZone",
+      "app": "google-workspace-work"
+    },
+    {
+      "v1": "tools.gtm.org.workspace.gtm_account",
+      "v2": "tools.gtm.gtm_account",
+      "v2Path": "gtm.gtm_account",
+      "app": "gtm"
+    },
+    {
+      "v1": "tools.gtm.org.workspace.gtm_built_in_variable",
+      "v2": "tools.gtm.gtm_built_in_variable",
+      "v2Path": "gtm.gtm_built_in_variable",
+      "app": "gtm"
+    },
+    {
+      "v1": "tools.gtm.org.workspace.gtm_client",
+      "v2": "tools.gtm.gtm_client",
+      "v2Path": "gtm.gtm_client",
+      "app": "gtm"
+    },
+    {
+      "v1": "tools.gtm.org.workspace.gtm_container",
+      "v2": "tools.gtm.gtm_container",
+      "v2Path": "gtm.gtm_container",
+      "app": "gtm"
+    },
+    {
+      "v1": "tools.gtm.org.workspace.gtm_destination",
+      "v2": "tools.gtm.gtm_destination",
+      "v2Path": "gtm.gtm_destination",
+      "app": "gtm"
+    },
+    {
+      "v1": "tools.gtm.org.workspace.gtm_environment",
+      "v2": "tools.gtm.gtm_environment",
+      "v2Path": "gtm.gtm_environment",
+      "app": "gtm"
+    },
+    {
+      "v1": "tools.gtm.org.workspace.gtm_folder",
+      "v2": "tools.gtm.gtm_folder",
+      "v2Path": "gtm.gtm_folder",
+      "app": "gtm"
+    },
+    {
+      "v1": "tools.gtm.org.workspace.gtm_gtag_config",
+      "v2": "tools.gtm.gtm_gtag_config",
+      "v2Path": "gtm.gtm_gtag_config",
+      "app": "gtm"
+    },
+    {
+      "v1": "tools.gtm.org.workspace.gtm_tag",
+      "v2": "tools.gtm.gtm_tag",
+      "v2Path": "gtm.gtm_tag",
+      "app": "gtm"
+    },
+    {
+      "v1": "tools.gtm.org.workspace.gtm_template",
+      "v2": "tools.gtm.gtm_template",
+      "v2Path": "gtm.gtm_template",
+      "app": "gtm"
+    },
+    {
+      "v1": "tools.gtm.org.workspace.gtm_transformation",
+      "v2": "tools.gtm.gtm_transformation",
+      "v2Path": "gtm.gtm_transformation",
+      "app": "gtm"
+    },
+    {
+      "v1": "tools.gtm.org.workspace.gtm_trigger",
+      "v2": "tools.gtm.gtm_trigger",
+      "v2Path": "gtm.gtm_trigger",
+      "app": "gtm"
+    },
+    {
+      "v1": "tools.gtm.org.workspace.gtm_user_permission",
+      "v2": "tools.gtm.gtm_user_permission",
+      "v2Path": "gtm.gtm_user_permission",
+      "app": "gtm"
+    },
+    {
+      "v1": "tools.gtm.org.workspace.gtm_variable",
+      "v2": "tools.gtm.gtm_variable",
+      "v2Path": "gtm.gtm_variable",
+      "app": "gtm"
+    },
+    {
+      "v1": "tools.gtm.org.workspace.gtm_version",
+      "v2": "tools.gtm.gtm_version",
+      "v2Path": "gtm.gtm_version",
+      "app": "gtm"
+    },
+    {
+      "v1": "tools.gtm.org.workspace.gtm_version_header",
+      "v2": "tools.gtm.gtm_version_header",
+      "v2Path": "gtm.gtm_version_header",
+      "app": "gtm"
+    },
+    {
+      "v1": "tools.gtm.org.workspace.gtm_workspace",
+      "v2": "tools.gtm.gtm_workspace",
+      "v2Path": "gtm.gtm_workspace",
+      "app": "gtm"
+    },
+    {
+      "v1": "tools.gtm.org.workspace.gtm_zone",
+      "v2": "tools.gtm.gtm_zone",
+      "v2Path": "gtm.gtm_zone",
+      "app": "gtm"
+    },
+    {
+      "v1": "tools.herdr.org.workspace.call",
+      "v2": "tools.herdr.call",
+      "v2Path": "herdr.call",
+      "app": "herdr"
+    },
+    {
+      "v1": "tools.herdr.org.workspace.close",
+      "v2": "tools.herdr.close",
+      "v2Path": "herdr.close",
+      "app": "herdr"
+    },
+    {
+      "v1": "tools.herdr.org.workspace.list_panes",
+      "v2": "tools.herdr.list_panes",
+      "v2Path": "herdr.list_panes",
+      "app": "herdr"
+    },
+    {
+      "v1": "tools.herdr.org.workspace.move_tab",
+      "v2": "tools.herdr.move_tab",
+      "v2Path": "herdr.move_tab",
+      "app": "herdr"
+    },
+    {
+      "v1": "tools.herdr.org.workspace.prompt_agent",
+      "v2": "tools.herdr.prompt_agent",
+      "v2Path": "herdr.prompt_agent",
+      "app": "herdr"
+    },
+    {
+      "v1": "tools.herdr.org.workspace.read_pane",
+      "v2": "tools.herdr.read_pane",
+      "v2Path": "herdr.read_pane",
+      "app": "herdr"
+    },
+    {
+      "v1": "tools.herdr.org.workspace.rename_tab",
+      "v2": "tools.herdr.rename_tab",
+      "v2Path": "herdr.rename_tab",
+      "app": "herdr"
+    },
+    {
+      "v1": "tools.herdr.org.workspace.send_keys",
+      "v2": "tools.herdr.send_keys",
+      "v2Path": "herdr.send_keys",
+      "app": "herdr"
+    },
+    {
+      "v1": "tools.herdr.org.workspace.spawn_agent",
+      "v2": "tools.herdr.spawn_agent",
+      "v2Path": "herdr.spawn_agent",
+      "app": "herdr"
+    },
+    {
+      "v1": "tools.herdr.org.workspace.wait_agent",
+      "v2": "tools.herdr.wait_agent",
+      "v2Path": "herdr.wait_agent",
+      "app": "herdr"
+    },
+    {
+      "v1": "tools.nixos.org.workspace.nix",
+      "v2": "tools.nixos.nix",
+      "v2Path": "nixos.nix",
+      "app": "nixos"
+    },
+    {
+      "v1": "tools.nixos.org.workspace.nix_versions",
+      "v2": "tools.nixos.nix_versions",
+      "v2Path": "nixos.nix_versions",
+      "app": "nixos"
+    },
+    {
+      "v1": "tools.outsmartly.org.outsmartlyoauth.get_build_logs",
+      "v2": "tools.outsmartly.get_build_logs",
+      "v2Path": "outsmartly.get_build_logs",
+      "app": "outsmartly"
+    },
+    {
+      "v1": "tools.outsmartly.org.outsmartlyoauth.get_deployments",
+      "v2": "tools.outsmartly.get_deployments",
+      "v2Path": "outsmartly.get_deployments",
+      "app": "outsmartly"
+    },
+    {
+      "v1": "tools.outsmartly.org.outsmartlyoauth.list_branches",
+      "v2": "tools.outsmartly.list_branches",
+      "v2Path": "outsmartly.list_branches",
+      "app": "outsmartly"
+    },
+    {
+      "v1": "tools.outsmartly.org.outsmartlyoauth.list_builds",
+      "v2": "tools.outsmartly.list_builds",
+      "v2Path": "outsmartly.list_builds",
+      "app": "outsmartly"
+    },
+    {
+      "v1": "tools.outsmartly.org.outsmartlyoauth.list_features",
+      "v2": "tools.outsmartly.list_features",
+      "v2Path": "outsmartly.list_features",
+      "app": "outsmartly"
+    },
+    {
+      "v1": "tools.outsmartly.org.outsmartlyoauth.list_projects",
+      "v2": "tools.outsmartly.list_projects",
+      "v2Path": "outsmartly.list_projects",
+      "app": "outsmartly"
+    },
+    {
+      "v1": "tools.outsmartly.org.outsmartlyoauth.list_release_history",
+      "v2": "tools.outsmartly.list_release_history",
+      "v2Path": "outsmartly.list_release_history",
+      "app": "outsmartly"
+    },
+    {
+      "v1": "tools.outsmartly.org.outsmartlyoauth.start_build",
+      "v2": "tools.outsmartly.start_build",
+      "v2Path": "outsmartly.start_build",
+      "app": "outsmartly"
+    },
+    {
+      "v1": "tools.postiz.org.localpostiz.ask_postiz",
+      "v2": "tools.postiz.ask_postiz",
+      "v2Path": "postiz.ask_postiz",
+      "app": "postiz"
+    },
+    {
+      "v1": "tools.postiz.org.localpostiz.generateimagetool",
+      "v2": "tools.postiz.generateImageTool",
+      "v2Path": "postiz.generateImageTool",
+      "app": "postiz"
+    },
+    {
+      "v1": "tools.postiz.org.localpostiz.generatevideooptions",
+      "v2": "tools.postiz.generateVideoOptions",
+      "v2Path": "postiz.generateVideoOptions",
+      "app": "postiz"
+    },
+    {
+      "v1": "tools.postiz.org.localpostiz.generatevideotool",
+      "v2": "tools.postiz.generateVideoTool",
+      "v2Path": "postiz.generateVideoTool",
+      "app": "postiz"
+    },
+    {
+      "v1": "tools.postiz.org.localpostiz.grouplist",
+      "v2": "tools.postiz.groupList",
+      "v2Path": "postiz.groupList",
+      "app": "postiz"
+    },
+    {
+      "v1": "tools.postiz.org.localpostiz.integrationlist",
+      "v2": "tools.postiz.integrationList",
+      "v2Path": "postiz.integrationList",
+      "app": "postiz"
+    },
+    {
+      "v1": "tools.postiz.org.localpostiz.integrationscheduleposttool",
+      "v2": "tools.postiz.integrationSchedulePostTool",
+      "v2Path": "postiz.integrationSchedulePostTool",
+      "app": "postiz"
+    },
+    {
+      "v1": "tools.postiz.org.localpostiz.integrationschema",
+      "v2": "tools.postiz.integrationSchema",
+      "v2Path": "postiz.integrationSchema",
+      "app": "postiz"
+    },
+    {
+      "v1": "tools.postiz.org.localpostiz.triggertool",
+      "v2": "tools.postiz.triggerTool",
+      "v2Path": "postiz.triggerTool",
+      "app": "postiz"
+    },
+    {
+      "v1": "tools.postiz.org.localpostiz.uploadfromurltool",
+      "v2": "tools.postiz.uploadFromUrlTool",
+      "v2Path": "postiz.uploadFromUrlTool",
+      "app": "postiz"
+    },
+    {
+      "v1": "tools.postiz.org.localpostiz.videofunctiontool",
+      "v2": "tools.postiz.videoFunctionTool",
+      "v2Path": "postiz.videoFunctionTool",
+      "app": "postiz"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.add_label",
+      "v2": "tools[\"proton-mail\"].add_label",
+      "v2Path": "proton-mail.add_label",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.bulk_add_label",
+      "v2": "tools[\"proton-mail\"].bulk_add_label",
+      "v2Path": "proton-mail.bulk_add_label",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.bulk_delete_emails",
+      "v2": "tools[\"proton-mail\"].bulk_delete_emails",
+      "v2Path": "proton-mail.bulk_delete_emails",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.bulk_move_emails",
+      "v2": "tools[\"proton-mail\"].bulk_move_emails",
+      "v2Path": "proton-mail.bulk_move_emails",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.clear_cache",
+      "v2": "tools[\"proton-mail\"].clear_cache",
+      "v2Path": "proton-mail.clear_cache",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.create_folder",
+      "v2": "tools[\"proton-mail\"].create_folder",
+      "v2Path": "proton-mail.create_folder",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.delete_email",
+      "v2": "tools[\"proton-mail\"].delete_email",
+      "v2Path": "proton-mail.delete_email",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.delete_folder",
+      "v2": "tools[\"proton-mail\"].delete_folder",
+      "v2Path": "proton-mail.delete_folder",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.get_connection_status",
+      "v2": "tools[\"proton-mail\"].get_connection_status",
+      "v2Path": "proton-mail.get_connection_status",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.get_contacts",
+      "v2": "tools[\"proton-mail\"].get_contacts",
+      "v2Path": "proton-mail.get_contacts",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.get_email_analytics",
+      "v2": "tools[\"proton-mail\"].get_email_analytics",
+      "v2Path": "proton-mail.get_email_analytics",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.get_email_by_id",
+      "v2": "tools[\"proton-mail\"].get_email_by_id",
+      "v2Path": "proton-mail.get_email_by_id",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.get_email_stats",
+      "v2": "tools[\"proton-mail\"].get_email_stats",
+      "v2Path": "proton-mail.get_email_stats",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.get_emails",
+      "v2": "tools[\"proton-mail\"].get_emails",
+      "v2Path": "proton-mail.get_emails",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.get_folders",
+      "v2": "tools[\"proton-mail\"].get_folders",
+      "v2Path": "proton-mail.get_folders",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.get_logs",
+      "v2": "tools[\"proton-mail\"].get_logs",
+      "v2Path": "proton-mail.get_logs",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.get_volume_trends",
+      "v2": "tools[\"proton-mail\"].get_volume_trends",
+      "v2Path": "proton-mail.get_volume_trends",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.mark_email_read",
+      "v2": "tools[\"proton-mail\"].mark_email_read",
+      "v2Path": "proton-mail.mark_email_read",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.move_email",
+      "v2": "tools[\"proton-mail\"].move_email",
+      "v2Path": "proton-mail.move_email",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.rename_folder",
+      "v2": "tools[\"proton-mail\"].rename_folder",
+      "v2Path": "proton-mail.rename_folder",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.save_draft",
+      "v2": "tools[\"proton-mail\"].save_draft",
+      "v2Path": "proton-mail.save_draft",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.search_emails",
+      "v2": "tools[\"proton-mail\"].search_emails",
+      "v2Path": "proton-mail.search_emails",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.send_email",
+      "v2": "tools[\"proton-mail\"].send_email",
+      "v2Path": "proton-mail.send_email",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.send_test_email",
+      "v2": "tools[\"proton-mail\"].send_test_email",
+      "v2Path": "proton-mail.send_test_email",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.star_email",
+      "v2": "tools[\"proton-mail\"].star_email",
+      "v2Path": "proton-mail.star_email",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.sync_emails",
+      "v2": "tools[\"proton-mail\"].sync_emails",
+      "v2Path": "proton-mail.sync_emails",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.proton_mail.org.workspace.sync_folders",
+      "v2": "tools[\"proton-mail\"].sync_folders",
+      "v2Path": "proton-mail.sync_folders",
+      "app": "proton-mail"
+    },
+    {
+      "v1": "tools.scribe.org.workspace.add_vocab",
+      "v2": "tools.scribe.add_vocab",
+      "v2Path": "scribe.add_vocab",
+      "app": "scribe"
+    },
+    {
+      "v1": "tools.scribe.org.workspace.create_cleanup",
+      "v2": "tools.scribe.create_cleanup",
+      "v2Path": "scribe.create_cleanup",
+      "app": "scribe"
+    },
+    {
+      "v1": "tools.scribe.org.workspace.finish_cleanup",
+      "v2": "tools.scribe.finish_cleanup",
+      "v2Path": "scribe.finish_cleanup",
+      "app": "scribe"
+    },
+    {
+      "v1": "tools.scribe.org.workspace.get_cleanup",
+      "v2": "tools.scribe.get_cleanup",
+      "v2Path": "scribe.get_cleanup",
+      "app": "scribe"
+    },
+    {
+      "v1": "tools.scribe.org.workspace.get_transcript",
+      "v2": "tools.scribe.get_transcript",
+      "v2Path": "scribe.get_transcript",
+      "app": "scribe"
+    },
+    {
+      "v1": "tools.scribe.org.workspace.get_vocab",
+      "v2": "tools.scribe.get_vocab",
+      "v2Path": "scribe.get_vocab",
+      "app": "scribe"
+    },
+    {
+      "v1": "tools.scribe.org.workspace.list_cleanups",
+      "v2": "tools.scribe.list_cleanups",
+      "v2Path": "scribe.list_cleanups",
+      "app": "scribe"
+    },
+    {
+      "v1": "tools.scribe.org.workspace.list_meetings",
+      "v2": "tools.scribe.list_meetings",
+      "v2Path": "scribe.list_meetings",
+      "app": "scribe"
+    },
+    {
+      "v1": "tools.scribe.org.workspace.remove_vocab",
+      "v2": "tools.scribe.remove_vocab",
+      "v2Path": "scribe.remove_vocab",
+      "app": "scribe"
+    },
+    {
+      "v1": "tools.scribe.org.workspace.search_transcripts",
+      "v2": "tools.scribe.search_transcripts",
+      "v2Path": "scribe.search_transcripts",
+      "app": "scribe"
+    },
+    {
+      "v1": "tools.slack.org.workspace.channels_list",
+      "v2": "tools.slack.channels_list",
+      "v2Path": "slack.channels_list",
+      "app": "slack"
+    },
+    {
+      "v1": "tools.slack.org.workspace.channels_me",
+      "v2": "tools.slack.channels_me",
+      "v2Path": "slack.channels_me",
+      "app": "slack"
+    },
+    {
+      "v1": "tools.slack.org.workspace.conversations_add_message",
+      "v2": "tools.slack.conversations_add_message",
+      "v2Path": "slack.conversations_add_message",
+      "app": "slack"
+    },
+    {
+      "v1": "tools.slack.org.workspace.conversations_edit_message",
+      "v2": "tools.slack.conversations_edit_message",
+      "v2Path": "slack.conversations_edit_message",
+      "app": "slack"
+    },
+    {
+      "v1": "tools.slack.org.workspace.conversations_history",
+      "v2": "tools.slack.conversations_history",
+      "v2Path": "slack.conversations_history",
+      "app": "slack"
+    },
+    {
+      "v1": "tools.slack.org.workspace.conversations_join",
+      "v2": "tools.slack.conversations_join",
+      "v2Path": "slack.conversations_join",
+      "app": "slack"
+    },
+    {
+      "v1": "tools.slack.org.workspace.conversations_leave",
+      "v2": "tools.slack.conversations_leave",
+      "v2Path": "slack.conversations_leave",
+      "app": "slack"
+    },
+    {
+      "v1": "tools.slack.org.workspace.conversations_mark",
+      "v2": "tools.slack.conversations_mark",
+      "v2Path": "slack.conversations_mark",
+      "app": "slack"
+    },
+    {
+      "v1": "tools.slack.org.workspace.conversations_replies",
+      "v2": "tools.slack.conversations_replies",
+      "v2Path": "slack.conversations_replies",
+      "app": "slack"
+    },
+    {
+      "v1": "tools.slack.org.workspace.conversations_search_messages",
+      "v2": "tools.slack.conversations_search_messages",
+      "v2Path": "slack.conversations_search_messages",
+      "app": "slack"
+    },
+    {
+      "v1": "tools.slack.org.workspace.conversations_unreads",
+      "v2": "tools.slack.conversations_unreads",
+      "v2Path": "slack.conversations_unreads",
+      "app": "slack"
+    },
+    {
+      "v1": "tools.slack.org.workspace.reactions_add",
+      "v2": "tools.slack.reactions_add",
+      "v2Path": "slack.reactions_add",
+      "app": "slack"
+    },
+    {
+      "v1": "tools.slack.org.workspace.reactions_remove",
+      "v2": "tools.slack.reactions_remove",
+      "v2Path": "slack.reactions_remove",
+      "app": "slack"
+    },
+    {
+      "v1": "tools.slack.org.workspace.saved_clear_completed",
+      "v2": "tools.slack.saved_clear_completed",
+      "v2Path": "slack.saved_clear_completed",
+      "app": "slack"
+    },
+    {
+      "v1": "tools.slack.org.workspace.saved_list",
+      "v2": "tools.slack.saved_list",
+      "v2Path": "slack.saved_list",
+      "app": "slack"
+    },
+    {
+      "v1": "tools.slack.org.workspace.saved_update",
+      "v2": "tools.slack.saved_update",
+      "v2Path": "slack.saved_update",
+      "app": "slack"
+    },
+    {
+      "v1": "tools.slack.org.workspace.usergroups_create",
+      "v2": "tools.slack.usergroups_create",
+      "v2Path": "slack.usergroups_create",
+      "app": "slack"
+    },
+    {
+      "v1": "tools.slack.org.workspace.usergroups_list",
+      "v2": "tools.slack.usergroups_list",
+      "v2Path": "slack.usergroups_list",
+      "app": "slack"
+    },
+    {
+      "v1": "tools.slack.org.workspace.usergroups_me",
+      "v2": "tools.slack.usergroups_me",
+      "v2Path": "slack.usergroups_me",
+      "app": "slack"
+    },
+    {
+      "v1": "tools.slack.org.workspace.usergroups_update",
+      "v2": "tools.slack.usergroups_update",
+      "v2Path": "slack.usergroups_update",
+      "app": "slack"
+    },
+    {
+      "v1": "tools.slack.org.workspace.usergroups_users_update",
+      "v2": "tools.slack.usergroups_users_update",
+      "v2Path": "slack.usergroups_users_update",
+      "app": "slack"
+    },
+    {
+      "v1": "tools.slack.org.workspace.users_search",
+      "v2": "tools.slack.users_search",
+      "v2Path": "slack.users_search",
+      "app": "slack"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.browser_capture_analytics",
+      "v2": "tools.snippets.browser_capture_analytics",
+      "v2Path": "snippets.browser_capture_analytics",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.browser_human_login",
+      "v2": "tools.snippets.browser_human_login",
+      "v2Path": "snippets.browser_human_login",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.browser_verify_page",
+      "v2": "tools.snippets.browser_verify_page",
+      "v2Path": "snippets.browser_verify_page",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.calendar_day",
+      "v2": "tools.snippets.calendar_day",
+      "v2Path": "snippets.calendar_day",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.calendar_schedule",
+      "v2": "tools.snippets.calendar_schedule",
+      "v2Path": "snippets.calendar_schedule",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.delete",
+      "v2": "tools.snippets._delete",
+      "v2Path": "snippets._delete",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.divvy_bills_from_email",
+      "v2": "tools.snippets.divvy_bills_from_email",
+      "v2Path": "snippets.divvy_bills_from_email",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.email_triage",
+      "v2": "tools.snippets.email_triage",
+      "v2Path": "snippets.email_triage",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.executor_response_shapes",
+      "v2": "tools.snippets.executor_response_shapes",
+      "v2Path": "snippets.executor_response_shapes",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.get",
+      "v2": "tools.snippets._get",
+      "v2Path": "snippets._get",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.get_slack_dm",
+      "v2": "tools.snippets.get_slack_dm",
+      "v2Path": "snippets.get_slack_dm",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.gtm_ids",
+      "v2": "tools.snippets.gtm_ids",
+      "v2Path": "snippets.gtm_ids",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.gtm_publish_version",
+      "v2": "tools.snippets.gtm_publish_version",
+      "v2Path": "snippets.gtm_publish_version",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.gtm_upsert_custom_html_tag",
+      "v2": "tools.snippets.gtm_upsert_custom_html_tag",
+      "v2Path": "snippets.gtm_upsert_custom_html_tag",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.jira_comment",
+      "v2": "tools.snippets.jira_comment",
+      "v2Path": "snippets.jira_comment",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.jira_real_status",
+      "v2": "tools.snippets.jira_real_status",
+      "v2Path": "snippets.jira_real_status",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.jira_ticket_context",
+      "v2": "tools.snippets.jira_ticket_context",
+      "v2Path": "snippets.jira_ticket_context",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.jira_transition",
+      "v2": "tools.snippets.jira_transition",
+      "v2Path": "snippets.jira_transition",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.list",
+      "v2": "tools.snippets._list",
+      "v2Path": "snippets._list",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.list_open_cmfrt_tickets",
+      "v2": "tools.snippets.list_open_cmfrt_tickets",
+      "v2Path": "snippets.list_open_cmfrt_tickets",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.list_open_del_tickets",
+      "v2": "tools.snippets.list_open_del_tickets",
+      "v2Path": "snippets.list_open_del_tickets",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.mail_bulk_trash",
+      "v2": "tools.snippets.mail_bulk_trash",
+      "v2Path": "snippets.mail_bulk_trash",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.mail_save_draft",
+      "v2": "tools.snippets.mail_save_draft",
+      "v2Path": "snippets.mail_save_draft",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.mail_search_read",
+      "v2": "tools.snippets.mail_search_read",
+      "v2Path": "snippets.mail_search_read",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.outsmartly_build_logs_errors",
+      "v2": "tools.snippets.outsmartly_build_logs_errors",
+      "v2Path": "snippets.outsmartly_build_logs_errors",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.outsmartly_build_status",
+      "v2": "tools.snippets.outsmartly_build_status",
+      "v2Path": "snippets.outsmartly_build_status",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.outsmartly_preview_build",
+      "v2": "tools.snippets.outsmartly_preview_build",
+      "v2Path": "snippets.outsmartly_preview_build",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.outsmartly_project_ids",
+      "v2": "tools.snippets.outsmartly_project_ids",
+      "v2Path": "snippets.outsmartly_project_ids",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.outsmartly_release_history",
+      "v2": "tools.snippets.outsmartly_release_history",
+      "v2Path": "snippets.outsmartly_release_history",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.run_code_snippet",
+      "v2": "tools.snippets.run_code_snippet",
+      "v2Path": "snippets.run_code_snippet",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.save",
+      "v2": "tools.snippets._save",
+      "v2Path": "snippets._save",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.send_slack_dm",
+      "v2": "tools.snippets.send_slack_dm",
+      "v2Path": "snippets.send_slack_dm",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.slack_find_user",
+      "v2": "tools.snippets.slack_find_user",
+      "v2Path": "snippets.slack_find_user",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.slack_search_context",
+      "v2": "tools.snippets.slack_search_context",
+      "v2Path": "snippets.slack_search_context",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.slack_thread",
+      "v2": "tools.snippets.slack_thread",
+      "v2Path": "snippets.slack_thread",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.slack_unreads_digest",
+      "v2": "tools.snippets.slack_unreads_digest",
+      "v2Path": "snippets.slack_unreads_digest",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.snippets.org.workspace.update",
+      "v2": "tools.snippets._update",
+      "v2Path": "snippets._update",
+      "app": "snippets"
+    },
+    {
+      "v1": "tools.tasks.org.workspace.append_note",
+      "v2": "tools.tasks.append_note",
+      "v2Path": "tasks.append_note",
+      "app": "tasks"
+    },
+    {
+      "v1": "tools.tasks.org.workspace.create_task",
+      "v2": "tools.tasks.create_task",
+      "v2Path": "tasks.create_task",
+      "app": "tasks"
+    },
+    {
+      "v1": "tools.tasks.org.workspace.delete_task",
+      "v2": "tools.tasks.delete_task",
+      "v2Path": "tasks.delete_task",
+      "app": "tasks"
+    },
+    {
+      "v1": "tools.tasks.org.workspace.get_task",
+      "v2": "tools.tasks.get_task",
+      "v2Path": "tasks.get_task",
+      "app": "tasks"
+    },
+    {
+      "v1": "tools.tasks.org.workspace.list_tasks",
+      "v2": "tools.tasks.list_tasks",
+      "v2Path": "tasks.list_tasks",
+      "app": "tasks"
+    },
+    {
+      "v1": "tools.tasks.org.workspace.update_task",
+      "v2": "tools.tasks.update_task",
+      "v2Path": "tasks.update_task",
+      "app": "tasks"
+    }
+  ]
+}

@@ -16,7 +16,21 @@ export default function (pi: ExtensionAPI) {
       { capabilities: {} },
     );
 
-    const transport = new StreamableHTTPClientTransport(new URL(EXECUTOR_URL));
+    // Executor gates /mcp on a bearer token behind Cloudflare Access.
+    // pi runs in the user's own shell session, which already has these from
+    // the sops shell-env blob (same source the other MCP clients use —
+    // modules/claude/claude.nix, modules/opencode/home.nix).
+    const headers: Record<string, string> = {};
+    if (process.env.EXECUTOR_AUTH_TOKEN)
+      headers.Authorization = `Bearer ${process.env.EXECUTOR_AUTH_TOKEN}`;
+    if (process.env.CF_ACCESS_CLIENT_ID)
+      headers["CF-Access-Client-Id"] = process.env.CF_ACCESS_CLIENT_ID;
+    if (process.env.CF_ACCESS_CLIENT_SECRET)
+      headers["CF-Access-Client-Secret"] = process.env.CF_ACCESS_CLIENT_SECRET;
+
+    const transport = new StreamableHTTPClientTransport(new URL(EXECUTOR_URL), {
+      requestInit: { headers },
+    });
     await client.connect(transport);
 
     return client;
