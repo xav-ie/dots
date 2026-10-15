@@ -24,6 +24,9 @@ let default_props = [
   # (battery/wifi/clock/control_center/volume), so the mono Nerd icon font is no
   # longer needed. Labels still use the tabular font below.
   $"label.font=(get_label_font)"
+  # Size and align labels by advance width, not ink width, so right-aligned
+  # tabular figures ("25%" vs "31%") don't wobble between values.
+  "label.font.typographical_width=on"
   "icon.color=0xffffffff"
   "label.color=0xffffffff"
   "icon.padding_left=24"

@@ -1,43 +1,49 @@
+# prettier-plugin-toml from the npm registry. v3 wraps tombi's WASM formatter;
+# its three runtime deps have no dependencies of their own, so they are fetched
+# as plain tarballs and laid out by hand instead of carrying a lockfile. Bump the
+# deps alongside the plugin to whatever its package.json ranges resolve to.
 {
   lib,
-  stdenv,
-  fetchFromGitHub,
-  nodejs,
-  yarn-berry_3,
+  stdenvNoCC,
+  fetchurl,
 }:
 
 let
-  yarn-berry = yarn-berry_3;
   pname = "prettier-plugin-toml";
+  deps = {
+    "@dual-bundle/import-meta-resolve" = fetchurl {
+      url = "https://registry.npmjs.org/@dual-bundle/import-meta-resolve/-/import-meta-resolve-4.2.1.tgz";
+      hash = "sha256-SbQjed4mVsviH6MsbAVGhqfUiBO+M7mBsSVzH6bdkiY=";
+    };
+    "@tombi-toml/wasm-lib" = fetchurl {
+      url = "https://registry.npmjs.org/@tombi-toml/wasm-lib/-/wasm-lib-1.8.4.tgz";
+      hash = "sha256-nd/9MPDoYij1E37VKExRMBBAyZPn1Y/y2YW8QzKWcJU=";
+    };
+    smol-toml = fetchurl {
+      url = "https://registry.npmjs.org/smol-toml/-/smol-toml-1.9.1.tgz";
+      hash = "sha256-Ssg5LxkYwipDZr4ZBHz1OqQmRgd9THEbLvcyY77vsXI=";
+    };
+  };
 in
-stdenv.mkDerivation (finalAttrs: {
+stdenvNoCC.mkDerivation (finalAttrs: {
   inherit pname;
-  version = "1.0.1";
+  version = "3.0.2";
 
-  src = fetchFromGitHub {
-    owner = "un-ts";
-    repo = "toml-tools";
-    rev = "prettier-plugin-toml@${finalAttrs.version}";
-    hash = "sha256-jMfykz6DtJFTdJ/g54MhoPlS45JmcCvgs9UwAV0scck=";
+  src = fetchurl {
+    url = "https://registry.npmjs.org/prettier-plugin-toml/-/prettier-plugin-toml-${finalAttrs.version}.tgz";
+    hash = "sha256-iQ82rawcKd3C92IfupO7uZsD/cnplHj+yc7yN52jw6w=";
   };
-
-  nativeBuildInputs = [
-    nodejs
-    yarn-berry.yarnBerryConfigHook
-  ];
-
-  offlineCache = yarn-berry.fetchYarnBerryDeps {
-    inherit (finalAttrs) src;
-    hash = "sha256-WOOGoUQgd1YUau78vLvH44bD0G7GompKnDZPZ4x1ZJA=";
-  };
-
-  dontBuild = true;
 
   installPhase = ''
     runHook preInstall
 
-    mkdir -p $out/lib
-    cp -r ./* $out/lib
+    dir=$out/lib/node_modules/${pname}
+    mkdir -p $dir
+    cp -r . $dir
+    ${lib.concatMapAttrsStringSep "\n" (name: tarball: ''
+      mkdir -p $dir/node_modules/${name}
+      tar -xzf ${tarball} --strip-components=1 -C $dir/node_modules/${name}
+    '') deps}
 
     runHook postInstall
   '';
@@ -47,8 +53,8 @@ stdenv.mkDerivation (finalAttrs: {
   };
 
   meta = {
-    description = "Prettier TOML plugin - pure JavaScript implementation";
-    homepage = "https://github.com/un-ts/toml-tools";
+    description = "Prettier TOML plugin powered by tombi";
+    homepage = "https://github.com/un-ts/prettier/tree/master/packages/toml";
     license = lib.licenses.mit;
     maintainers = [ ];
   };

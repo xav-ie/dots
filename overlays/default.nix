@@ -168,7 +168,7 @@ in
       speechd = prev.speechd.override {
         espeak = final.espeak-ng.override { mbrolaSupport = false; };
       };
-      # nixpkgs pins nvidia-vaapi-driver 0.0.14; 0.0.17 has the per-plane block
+      # nixpkgs pins nvidia-vaapi-driver 0.0.14; 0.0.17+ has the per-plane block
       # height + decode-sync fixes needed for stable NVDEC decode under zink/
       # WebRender. Must be an overlay, not an extraPackages entry: the nixos
       # nvidia module appends `pkgs.nvidia-vaapi-driver` itself, so anything else
@@ -176,54 +176,24 @@ in
       # (system glibc) and just bump src — bleeding's own build links a newer
       # glibc and won't load on this system.
       nvidia-vaapi-driver = prev.nvidia-vaapi-driver.overrideAttrs (_: {
-        version = "0.0.17";
+        version = "0.0.18";
         src = final.fetchFromGitHub {
           owner = "elFarto";
           repo = "nvidia-vaapi-driver";
-          rev = "v0.0.17";
-          hash = "sha256-eJ523lEmB4s+R/QN4J8t6LZ4zw2rEQsaaRBJdjH8Amo=";
+          rev = "v0.0.18";
+          hash = "sha256-cEEPRKoWtNXk8LsDbkhNjnIY7UD1rfYbv2Q6ThG0YLg=";
         };
       });
       writeNuApplication = final.nuenv.writeShellApplication;
 
-      # sketchybar built from the clean upstream v2.23.0 tag (sketchybar-src) with
-      # my fixes fetched straight from the xav-ie fork as `fetchpatch` diffs, each
-      # droppable on its own the moment it lands upstream. Pinned by BRANCH (via
-      # the GitHub `compare` endpoint) on purpose: pushing to a branch changes the
-      # diff and so breaks the hash, forcing a deliberate re-pin here rather than
-      # silently drifting. fetchpatch re-normalizes GitHub's generated diff so the
-      # output hash is stable unless the content actually changes. v2.23.0 matches
-      # nixpkgs' base (no extra nixpkgs patches to preserve).
+      # sketchybar built from the upstream tag pinned by sketchybar-src.
       # `version` has to track the pin, not nixpkgs: versionCheckPhase greps the
       # attr's own version out of `sketchybar --version`, which reports the tag
-      # baked into the source. Letting nixpkgs' version ride broke the build the
-      # moment it moved to 2.24.0. Bumping the pin means re-cutting both patches
-      # against the new tag.
-      sketchybar = prev.sketchybar.overrideAttrs (old: {
-        version = "2.23.0";
+      # baked into the source.
+      sketchybar = prev.sketchybar.overrideAttrs {
+        version = "2.24.1";
         src = inputs.sketchybar-src;
-        patches = (old.patches or [ ]) ++ [
-          # Align right/center text by the typographic advance width instead of
-          # the glyph-path (ink) width, so right-aligned tabular-figure labels
-          # (e.g. the volume "25%"/"31%") stop wobbling ±1px between values.
-          # Diff of the branch against the v2.23.0 base it forks from.
-          (final.fetchpatch {
-            name = "sketchybar-text-align-advance-width.patch";
-            url = "https://github.com/xav-ie/SketchyBar/compare/v2.23.0...fix/tabular-align-advance-width.diff";
-            hash = "sha256-Hg2vW+aGZLkKTD0d4Pncv51QfYpFZg0d3rQvlXxUZWc=";
-          })
-          # The bar context is kCGInterpolationNone globally to keep pixel-exact
-          # PNG icons crisp; app icons come from NSImage at native rep size and get
-          # scaled down, so they need kCGInterpolationHigh for the draw or they
-          # look jagged/aliased. Tracked as upstream PR #832 (diff against master);
-          # the hash breaks if the PR is updated. Drop this once it merges.
-          (final.fetchpatch {
-            name = "sketchybar-image-hq-app-icon-sampling.patch";
-            url = "https://github.com/FelixKratz/SketchyBar/pull/832.diff";
-            hash = "sha256-pgY6xGTmNu9o7TXxvECFqSCfNNmLBsj1ZoxKOh+ytao=";
-          })
-        ];
-      });
+      };
 
       # Inter with tabular figures (`tnum`) baked in as the default, as a single
       # static Light instance. Used only by sketchybar's label font so the clock/

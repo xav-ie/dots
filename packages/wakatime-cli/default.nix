@@ -18,15 +18,15 @@
   unzip,
 }:
 let
-  version = "2.21.4";
+  version = "2.27.5";
   targets = {
     "x86_64-linux" = {
       suffix = "linux-amd64";
-      hash = "sha256-BZ7QyVLJJ0qP+Bbmw4hv4ENVP74QCESX2fCkAzyPWpM=";
+      hash = "sha256-gch5LydHsA4Op6x3WGkDe06FF7Ggj1TXhNRnubqT0so=";
     };
     "aarch64-darwin" = {
       suffix = "darwin-arm64";
-      hash = "sha256-qimZtrkV/UWQHalfaphaT/PKKCzM+tla/vP+9g6huik=";
+      hash = "sha256-RM/Wk7eiBYal0vI+4TpTIepayrmvTm3Yvw7XuI5GkhI=";
     };
   };
   target =

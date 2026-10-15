@@ -9,13 +9,13 @@
 
 stdenv.mkDerivation rec {
   pname = "obs-stoke-glow-shadow";
-  version = "1.0.2";
+  version = "1.5.3";
 
   src = fetchFromGitHub {
     owner = "FiniteSingularity";
     repo = "obs-stroke-glow-shadow";
     rev = "refs/tags/v${version}";
-    hash = "sha256-aYt3miY71aikIq0SqHXglC/c/tI8yGkIo1i1wXxiTek=";
+    hash = "sha256-PbN6Wdb6MzPe5918Y31UuYY49yuJp4W/2kfAOVJTMdo=";
   };
 
   buildInputs = [

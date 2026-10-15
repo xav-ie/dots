@@ -25,7 +25,7 @@
   libxrandr,
 }:
 let
-  version = "154.0.8037.92";
+  version = "155.0.8059.79";
 in
 stdenv.mkDerivation {
   pname = "chrome-headless-shell";
@@ -33,7 +33,7 @@ stdenv.mkDerivation {
 
   src = fetchurl {
     url = "https://storage.googleapis.com/chrome-for-testing-public/${version}/linux64/chrome-headless-shell-linux64.zip";
-    hash = "sha256-Y2qlx58mk2MumSG4u7BQA4uhFnLgI0bAbCD5ka7Qlvk=";
+    hash = "sha256-TOpMMrUBqkPMK4HrRXNK+ZGmqC/t7Ug4DW36+WZCocE=";
   };
 
   nativeBuildInputs = [

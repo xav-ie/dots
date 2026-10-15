@@ -5,16 +5,16 @@
 }:
 buildNpmPackage {
   pname = "pi-show-diffs";
-  version = "0.2.6";
+  version = "0.2.14";
 
   src = fetchFromGitHub {
     owner = "xRyul";
     repo = "pi-show-diffs";
-    rev = "b3927bd744ff";
-    hash = "sha256-gHwuAZyBCQQ2kYNwXLYjYSMwQgmc+kaNuvMc4mJu9yk=";
+    rev = "v0.2.14";
+    hash = "sha256-rmpPz2LI2CZH6Om+qXhbbXjhkjvZHvo3oG1KWqfCk0A=";
   };
 
-  npmDepsHash = "sha256-DwEvcuW+yW1S88ZuMZpMS40ZhtE0XqAU0cg5c77kyEM=";
+  npmDepsHash = "sha256-4XA1JKajwuGEk6vRmcNpXDjjwbp7Ogsrrsesi6hfteo=";
 
   dontNpmBuild = true;
 
