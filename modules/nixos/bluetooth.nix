@@ -23,7 +23,7 @@
             const IDLE_TIMEOUT = 3600  # 1 hour in seconds
 
             # Check if bluetooth is blocked
-            let blocked = (rfkill list bluetooth | lines | find "Soft blocked" | str trim | split column ": " | get column2.0 | ansi strip)
+            let blocked = (rfkill list bluetooth | lines | find "Soft blocked" | str trim | split column ": " key value | get value.0 | ansi strip)
 
             if $blocked == "yes" {
               # Bluetooth is blocked, clean up state file if it exists
