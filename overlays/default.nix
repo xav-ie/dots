@@ -135,6 +135,21 @@ in
           })
         ];
       });
+      # fzf's embedded nushell completers take the legacy positional `spans`,
+      # which nu 0.116 warns about on every shell start. Take `place` instead,
+      # derive spans from `$place.command`, and hand `place` on to the wrapped
+      # completer. Drop once fzf's shell/completion.nu does this itself.
+      fzf = prev.fzf.overrideAttrs (old: {
+        postPatch = (old.postPatch or "") + ''
+          substituteInPlace shell/completion.nu \
+            --replace-fail 'let fzf_external_completer = {|spans|' \
+              'let fzf_external_completer = {|place|
+            let spans = $place.command' \
+            --replace-fail 'let fzf_wrapper_completer = {|spans|' 'let fzf_wrapper_completer = {|place|' \
+            --replace-fail 'do $fzf_external_completer $spans' 'do $fzf_external_completer $place' \
+            --replace-fail 'do $previous_external_completer $spans' 'do $previous_external_completer $place'
+        '';
+      });
       orca = prev.orca.overrideAttrs (old: {
         propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [
           final.python3.pkgs.wrapPython

@@ -71,7 +71,8 @@ def claude-sessions [] {
   } | compact
 }
 
-let carapace_completer = {|spans|
+let carapace_completer = {|place|
+  let spans = $place.command
 
   # `claude --resume <id>` / `-r <id>`: serve our own session list. carapace
   # force-sorts alphabetically and can only show the inserted value (the uuid),
