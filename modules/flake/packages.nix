@@ -36,6 +36,8 @@
         ream-pkg = inputs.ream.packages.${system}.default or null;
         # browser-session-mcp (extracted to its own repo); linux-only.
         browser-session-mcp-pkg = inputs.browser-session-mcp.packages.${system}.default or null;
+        # scribe dictation client (extracted to its own repo); linux-only.
+        scribe-desktop-pkg = inputs.scribe-desktop.packages.${system}.default or null;
         sketchybar-icons-pkg = inputs.sketchybar-icons.packages.${system}.default or null;
         # mic-denoise virtual mic agent (extracted to its own repo); darwin-only.
         mic-denoise-pkg = inputs.mic-denoise.packages.${system}.default or null;
