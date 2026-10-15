@@ -64,6 +64,9 @@
                   custom-shader = shaders/watersubtle-darwin.glsl
                   custom-shader-animation = true''}
                 ${lib.optionalString pkgs.stdenv.hostPlatform.isLinux "background-opacity = 0.95"}
+                # io_uring waits count as iowait, so an idle ghostty read as ~40% I/O
+                # pressure; epoll performs the same without skewing system stats.
+                ${lib.optionalString pkgs.stdenv.hostPlatform.isLinux "async-backend = epoll"}
                 font-family = "${fonts.configs.ghostty.font-family-1}"
                 font-family = "${fonts.configs.ghostty.font-family-2}"
                 font-family = "${fonts.configs.ghostty.font-family-3}"
