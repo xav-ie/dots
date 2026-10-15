@@ -459,6 +459,17 @@
                     passes = 3;
                   };
                   shadow.enabled = false;
+                  # notification-center's screen filter records its live value
+                  # here; read it back so a config reload keeps the filter.
+                  screen_shader = mkLuaInline ''
+                    (function()
+                      local f = io.open("${config.xdg.cacheHome}/screen-filter/active")
+                      if not f then return "[[EMPTY]]" end
+                      local v = f:read("l")
+                      f:close()
+                      return v or "[[EMPTY]]"
+                    end)()
+                  '';
                 };
 
                 dwindle.preserve_split = true;

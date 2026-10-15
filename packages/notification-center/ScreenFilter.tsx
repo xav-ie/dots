@@ -20,13 +20,20 @@ const NEUTRAL_BRIGHT = 100;
 
 const CACHE_DIR = `${GLib.get_user_cache_dir()}/screen-filter`;
 const shaderPath = (slot: number) => `${CACHE_DIR}/filter-${slot}.glsl`;
+// The applied value, read back by the Hyprland config so a reload (e.g. a
+// system switch) keeps the filter instead of resetting it.
+const ACTIVE_PATH = `${CACHE_DIR}/active`;
 
 // Hyprland's Lua config has no `hyprctl keyword`; options go through hl.config.
-const setShader = (value: string) => [
-  "hyprctl",
-  "eval",
-  `hl.config({ decoration = { screen_shader = ${JSON.stringify(value)} } })`,
-];
+const setShader = (value: string) => {
+  GLib.mkdir_with_parents(CACHE_DIR, 0o755);
+  GLib.file_set_contents(ACTIVE_PATH, value);
+  return [
+    "hyprctl",
+    "eval",
+    `hl.config({ decoration = { screen_shader = ${JSON.stringify(value)} } })`,
+  ];
+};
 
 const shaderSource = (warmth: number, bright: number) => `precision highp float;
 varying vec2 v_texcoord;
