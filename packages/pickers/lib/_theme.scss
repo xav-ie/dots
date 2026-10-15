@@ -77,6 +77,7 @@ separator {
   background: transparent;
   border: $border-width solid transparent;
   border-radius: $radius;
+  color: $fg;
   outline: none;
 
   &:hover {
