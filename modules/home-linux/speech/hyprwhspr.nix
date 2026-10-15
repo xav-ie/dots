@@ -12,13 +12,6 @@
 
       hyprwhspr-rs = pkgs.pkgs-bleeding.hyprwhspr-rs.override {
         whisper-cpp = pkgs.pkgs-bleeding-cuda.whisper-cpp;
-        # onnxruntime only runs the Silero VAD here — transcription goes through
-        # whisper-cpp below (gpu_layers = 999), and a CPU VAD is real-time
-        # already. The CUDA onnxruntime instead drags tensorrt + libnvshmem +
-        # cudnn (~7 GiB) into the system closure for nothing.
-        # OpenVINO is Intel-only inference; unused here and it drags in a full
-        # opencv build. Disable it to drop both.
-        onnxruntime = pkgs.pkgs-bleeding.onnxruntime.override { openvinoSupport = false; };
       };
 
       configFile = pkgs.writeText "hyprwhspr-rs-config.jsonc" (
