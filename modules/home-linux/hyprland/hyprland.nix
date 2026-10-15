@@ -667,9 +667,6 @@
                     function()
                       hl.exec_cmd(${toLua "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type text --watch cliphist store"})
                       hl.exec_cmd(${toLua "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type image --watch cliphist store"})
-                      -- Pre-warm the spotlight launcher so the picker keybinds open
-                      -- instantly (it stays resident and just switches/toggles its mode).
-                      hl.exec_cmd(${toLua "${spotlight} --daemon"})
                       hl.exec_cmd(${toLua "${config.programs.firefox.package}/bin/firefox"}, { workspace = "2 silent" })
                       hl.exec_cmd(${toLua "${config.programs.ghostty.package}/bin/ghostty"}, { workspace = "1 silent" })
                     end'')
