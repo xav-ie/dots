@@ -3,28 +3,22 @@
     {
       config,
       lib,
-      pkgs,
       ...
     }:
     let
       cfg = config.services.embed-server;
       name = "embed-server";
       containerPort = 8080;
-      # harrier-oss-v1-0.6b (Qwen3, last-token pooling). The GGUF carries
-      # pooling_type=last and add_eos_token, matching the HF tokenizer's
+      # harrier-oss-v1-0.6b (Qwen3, last-token pooling) at q8_0, which halves
+      # the weights (~0.55 GB less VRAM) so scribe fits on the same GPU. The GGUF
+      # carries pooling_type=last and add_eos_token, matching the HF tokenizer's
       # trailing <|endoftext|>; validated against sentence-transformers with
       # ~/Projects/snippet-evals/validate_embed_server.py (cosine >= 0.998).
-      modelF16 = pkgs.fetchurl {
-        url = "https://huggingface.co/mradermacher/harrier-oss-v1-0.6b-GGUF/resolve/d79decec1ab9442e969e79804515b9c31683d30e/harrier-oss-v1-0.6b.f16.gguf";
-        sha256 = "0ykidqrhdcfyws7akrs40v5zv3kkmnk9jwnz5cl9zdaqiwyk3bzk";
-      };
-      # q8_0 halves the weights (~0.55 GB less VRAM) so scribe fits on the same
-      # GPU. validate_embed_server.py: cosine >= 0.998 vs reference, same
-      # retrieval scores as f16. Quantized with the CPU llama.cpp, which is
-      # cached; the CUDA build would compile from source.
-      model = pkgs.runCommand "harrier-oss-v1-0.6b.q8_0.gguf" { } ''
-        ${pkgs.llama-cpp.override { cudaSupport = false; }}/bin/llama-quantize ${modelF16} $out q8_0
-      '';
+      # llama-server downloads it on first start into stateDir, keeping the
+      # 610 MiB model out of the system closure.
+      modelFile = "harrier-oss-v1-0.6b.Q8_0.gguf";
+      modelUrl = "https://huggingface.co/mradermacher/harrier-oss-v1-0.6b-GGUF/resolve/d79decec1ab9442e969e79804515b9c31683d30e/${modelFile}";
+      stateDir = "/var/lib/${name}";
     in
     {
       options.services.embed-server = {
@@ -50,7 +44,7 @@
           autoStart = true;
           image = "ghcr.io/ggml-org/llama.cpp:server-cuda@sha256:7494bfc7b553ee14c5c21e1212b52aecbea76db5562168f39f8bdf66250976af";
           ports = [ "127.0.0.1:${cfg.port |> toString}:${containerPort |> toString}" ];
-          volumes = [ "${model}:/models/model.gguf:ro" ];
+          volumes = [ "${stateDir}:/models" ];
           extraOptions = [
             "--device=nvidia.com/gpu=all"
             "--security-opt=label=disable"
@@ -62,7 +56,9 @@
           ];
           cmd = [
             "-m"
-            "/models/model.gguf"
+            "/models/${modelFile}"
+            "--model-url"
+            modelUrl
             "--embedding"
             "--pooling"
             "last"
@@ -86,7 +82,9 @@
           ];
         };
 
-        # First start pulls the multi-GB CUDA image.
+        systemd.tmpfiles.rules = [ "d ${stateDir} 0755 root root -" ];
+
+        # First start pulls the multi-GB CUDA image and the model.
         systemd.services."podman-${name}".serviceConfig.TimeoutStartSec = lib.mkForce "30min";
       };
     };
