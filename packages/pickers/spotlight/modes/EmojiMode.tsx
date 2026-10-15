@@ -4,6 +4,7 @@ import GLib from "gi://GLib";
 import Gio from "gi://Gio";
 import { EMOJIS, EmojiRecord } from "./data";
 import { frecencyStore } from "../../lib/frecency";
+import { pasteIntoFocused } from "../../lib/paste";
 import { createSelection, scrollIntoView } from "../../lib/selection";
 import { ModeProps, PANEL_CONTENT_H } from "./types";
 
@@ -103,6 +104,7 @@ export default function EmojiMode({ register, close }: ModeProps) {
     fr.bump(r.e);
     try {
       await copyText(r.e);
+      pasteIntoFocused("text");
     } catch (err) {
       console.error("spotlight/emoji: copy failed", err);
     }

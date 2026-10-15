@@ -10,6 +10,7 @@ import { Gtk, Gdk } from "ags/gtk4";
 import GLib from "gi://GLib";
 import Gio from "gi://Gio";
 import { ClipEntry, copy, decodeToFile, list, remove } from "./cliphist";
+import { pasteIntoFocused } from "../../lib/paste";
 import { createSelection, scrollIntoView } from "../../lib/selection";
 import { ModeProps, PANEL_CONTENT_H } from "./types";
 
@@ -182,13 +183,14 @@ export default function ClipboardMode({ register, close }: ModeProps) {
     }
   });
 
-  // Copy an entry and close. Always close once the attempt settles: copy()
-  // re-resolves a stale id and never wipes the clipboard, so even an evicted
-  // entry is a harmless no-op.
+  // Copy an entry, close, and paste it. Always close once the attempt settles:
+  // copy() re-resolves a stale id and never wipes the clipboard, so even an
+  // evicted entry is a harmless no-op (and is not pasted).
   function pick(entry: ClipEntry) {
     copy(entry)
       .then((ok) => {
-        if (!ok)
+        if (ok) pasteIntoFocused(entry.isImage ? "image" : "text");
+        else
           console.warn(
             "spotlight/clipboard: entry gone from history; not copied",
           );
