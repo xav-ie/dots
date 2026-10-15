@@ -109,15 +109,17 @@
                 ];
               };
 
+              # Baked by hyprlock-potd (picture of the day + blurred cards, graphs and agenda bars
+              # behind the labels below); reloaded while locked so an hourly re-bake shows up.
               background = {
                 monitor = "";
-                path = "screenshot";
-                blur_passes = 3;
+                path = "${config.xdg.cacheHome}/hyprlock/potd-lock.jpg";
+                reload_time = 300;
+                color = "rgb(26, 23, 38)";
               };
 
               input-field = {
                 # monitor =
-                size = "20%, 5%";
                 outline_thickness = 3;
                 inner_color = "rgba(26, 23, 38, 0.55)"; # purple-tinted fill (#1a1726)
 
@@ -144,59 +146,108 @@
                 # uncomment to use an input indicator that does not show the password length (similar to swaylock's input indicator)
                 # hide_input = true
 
-                position = "0, -20";
-                halign = "center";
-                valign = "center";
+                # size and position must match the blur patch hyprlock-potd bakes behind it
+                size = "512, 72";
+                position = "-50, 110";
+                halign = "right";
+                valign = "bottom";
               };
 
-              label = [
-                # TIME
-                {
-                  monitor = "";
-                  # 12-hour clock, e.g. "9:41 PM". Thin weight via a static
-                  # font_family: hyprlock parses it once with
-                  # pango_font_description_from_string, where "Inter Thin" selects the
-                  # Thin face (the bar's CSS font-weight is a separate mechanism).
-                  text = ''cmd[update:1000] date +"%-I:%M %p"'';
-                  color = "rgb(242, 238, 251)"; # fg (#f2eefb)
-                  font_size = 180;
-                  font_family = "${fonts.name "sans"} Thin";
-
-                  position = "30, 0";
-                  halign = "left";
-                  valign = "top";
-                }
-
-                # DATE
-                {
-                  monitor = "";
-                  text = ''cmd[update:60000] date +"%A, %d %B %Y"''; # update every 60 seconds
-                  color = "rgb(242, 238, 251)"; # fg (#f2eefb)
-                  font_size = 50;
-                  font_family = "$font";
-
-                  position = "30, -300";
-                  halign = "left";
-                  valign = "top";
-                }
-
-                # WEATHER (top right) — mirrors the notification-center card.
-                {
-                  monitor = "";
-                  text = "cmd[update:900000] ${lib.getExe hyprlock-weather}"; # refresh every 15 min
-                  color = "rgb(242, 238, 251)"; # fg (#f2eefb)
-                  font_size = 38;
-                  # Mono Nerd Font: single-cell glyphs keep the columns aligned and
-                  # carry the nf-weather icons; ExtraLight for a feather-light look.
-                  # Headers override to Inter Thin via inline pango markup.
-                  font_family = "CaskaydiaCove Nerd Font Mono ExtraLight";
-                  text_align = "right";
-
-                  position = "-20, -22";
-                  halign = "right";
-                  valign = "top";
-                }
-              ];
+              # Two cards (Today | Tomorrow) top left; hyprlock-potd bakes their backgrounds at these
+              # positions (700px text columns at x=80 and x=890, y=80), so keep the two in step.
+              label =
+                let
+                  fg = "rgb(242, 238, 251)"; # fg (#f2eefb)
+                  mono = "CaskaydiaCove Nerd Font Mono";
+                  # tight, dark shadow: a small size spread over 4 passes (hyprlock's blur doubles
+                  # per pass; big sizes with few passes break into a grid)
+                  shadow = {
+                    shadow_passes = 4;
+                    shadow_size = 6;
+                    shadow_color = "rgb(0, 0, 0)";
+                    shadow_boost = 4.2;
+                  };
+                  card =
+                    day:
+                    {
+                      monitor = "";
+                      text = "cmd[update:900000] ${lib.getExe hyprlock-weather} ${toString day}";
+                      color = fg;
+                      font_size = 38;
+                      font_family = mono;
+                      text_align = "left";
+                      position = "${toString (80 + day * 810)}, -80";
+                      halign = "left";
+                      valign = "top";
+                    }
+                    // shadow
+                    // {
+                      shadow_boost = 5.2;
+                    };
+                  # high/low flush right on the weather row (the script pads it to that baseline)
+                  hilo =
+                    day:
+                    card day
+                    // {
+                      text = "cmd[update:900000] ${lib.getExe hyprlock-weather} ${toString day} --hilo";
+                      text_align = "right";
+                      position = "-${toString (1780 - day * 810)}, -80";
+                      halign = "right";
+                    };
+                  date =
+                    day: fmt:
+                    {
+                      monitor = "";
+                      text = ''cmd[update:60000] date ${fmt}+"%a, %-d %b"'';
+                      color = fg;
+                      font_size = 30;
+                      font_family = "$font";
+                      position = "-${toString (1780 - day * 810)}, -115";
+                      halign = "right";
+                      valign = "top";
+                    }
+                    // shadow;
+                in
+                [
+                  # TIME, in the Today card's header slot
+                  (
+                    {
+                      monitor = "";
+                      text = ''cmd[update:1000] date +"%-I:%M %p"'';
+                      color = fg;
+                      font_size = 57;
+                      font_family = "$font";
+                      position = "80, -80";
+                      halign = "left";
+                      valign = "top";
+                    }
+                    // shadow
+                    // {
+                      shadow_boost = 5.3;
+                    }
+                  )
+                  (date 0 "")
+                  (date 1 "-d tomorrow ")
+                  (card 0)
+                  (card 1)
+                  (hilo 0)
+                  (hilo 1)
+                  # picture-of-the-day caption
+                  (
+                    {
+                      monitor = "";
+                      text = "cmd[update:3600000] cat ${config.xdg.cacheHome}/hyprlock/potd.txt";
+                      color = fg;
+                      font_size = 14;
+                      font_family = "$font";
+                      text_align = "right";
+                      position = "-50, 40";
+                      halign = "right";
+                      valign = "bottom";
+                    }
+                    // shadow
+                  )
+                ];
 
             };
           };
