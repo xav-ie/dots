@@ -15,6 +15,10 @@
           # # Required for containers under podman-compose to be able to talk to each other.
           # defaultNetwork.settings.dns_enabled = true;
         };
+        # The journald events backend writes events it can't read back (even
+        # `podman events` sees nothing), so traefik's docker provider never
+        # hears a container restart and keeps routing to its old IP (502s).
+        containers.containersConf.settings.engine.events_logger = "file";
       };
       # The default --log-level=info logs one line per REST call, and traefik's
       # event-driven docker provider re-inspects on every healthcheck event —
