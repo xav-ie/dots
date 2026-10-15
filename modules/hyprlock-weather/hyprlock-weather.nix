@@ -29,24 +29,78 @@
     {
       config,
       fonts,
+      lib,
       osConfig,
       pkgs,
       ...
     }:
+    let
+      weather = pkgs.writeNuApplication {
+        name = "hyprlock-weather";
+        text =
+          ./hyprlock-weather.nu
+          |> builtins.readFile
+          |>
+            builtins.replaceStrings
+              [ "\${sansFont}" "\${agenda}" ]
+              [
+                (fonts.name "sans")
+                (lib.getExe (
+                  pkgs.writeShellApplication {
+                    name = "hyprlock-agenda";
+                    runtimeInputs = [
+                      pkgs.coreutils
+                      pkgs.curl
+                      pkgs.jq
+                    ];
+                    text = builtins.readFile ./hyprlock-agenda.sh;
+                  }
+                ))
+              ];
+      };
+      potd = pkgs.writeShellApplication {
+        name = "hyprlock-potd";
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.curl
+          pkgs.fontconfig
+          pkgs.gnugrep
+          pkgs.gnused
+          pkgs.imagemagick
+          pkgs.jq
+        ];
+        text =
+          builtins.readFile ./hyprlock-potd.sh
+          |> builtins.replaceStrings [ "\${weather}" ] [ (lib.getExe weather) ];
+      };
+    in
     {
       xdg.configFile."hyprlock-weather/config.toml".source =
         config.lib.file.mkOutOfStoreSymlink
           osConfig.sops.templates."hyprlock-weather.toml".path;
 
-      # Each day is a header plus a "rain% icon hi/lo desc" row. Same source and
-      # weatherCode→glyph mapping as the notification-center Weather card, so
-      # the two stay visually consistent.
-      _module.args.hyprlock-weather = pkgs.writeNuApplication {
-        name = "hyprlock-weather";
-        text =
-          ./hyprlock-weather.nu
-          |> builtins.readFile
-          |> builtins.replaceStrings [ "\${sansFont}" ] [ (fonts.name "sans") ];
+      # `hyprlock-weather 0|1 [--hilo]` renders the Today/Tomorrow card label: weather row, a gap
+      # the baked graph fills, then the agenda. Same source and weatherCode→glyph mapping as the
+      # notification-center Weather card, so the two stay visually consistent.
+      _module.args.hyprlock-weather = weather;
+
+      # Re-bake the lock background hourly (and soon after login): the cards follow the agenda's
+      # length and the graphs the forecast; hyprlock reloads the image while locked.
+      systemd.user.services.hyprlock-potd = {
+        Unit.Description = "Bake the hyprlock picture-of-the-day background";
+        Service = {
+          Type = "oneshot";
+          ExecStart = lib.getExe potd;
+        };
+      };
+      systemd.user.timers.hyprlock-potd = {
+        Unit.Description = "Re-bake the hyprlock background hourly";
+        Timer = {
+          OnStartupSec = "1min";
+          OnCalendar = "hourly";
+          Persistent = true;
+        };
+        Install.WantedBy = [ "timers.target" ];
       };
     };
 }
