@@ -2,6 +2,12 @@
 {
   flake.modules.homeManager.linux =
     { pkgs, ... }:
+    let
+      # One Electron for all three apps instead of three (~700 MiB): signal's,
+      # the newest. bitwarden and ente then build locally (ente ~20s, bitwarden
+      # ~8 min). Bump in step with signal-desktop's electron_NN.
+      electron = pkgs.pkgs-bleeding.electron_44;
+    in
     {
       config = {
         home = {
@@ -40,8 +46,18 @@
               ################################
               # user programs
               ################################
-              bitwarden-desktop
-              ente-desktop # Ente Photos desktop client (broken on Darwin upstream)
+              # bitwarden's preBuild refuses an Electron major other than
+              # package.json's devDependency, so point that at the real one.
+              # Its native module is N-API, stable across Electron majors.
+              ((bitwarden-desktop.override { electron_43 = electron; }).overrideAttrs (old: {
+                preBuild = ''
+                  jq '.devDependencies.electron = "${electron.version}"' package.json > package.json.tmp
+                  mv package.json.tmp package.json
+                ''
+                + old.preBuild;
+              }))
+              # Ente Photos desktop client (broken on Darwin upstream)
+              (ente-desktop.override { electron_42 = electron; })
               # chromium - configured via programs.chromium below
               # discord
               pavucontrol # audio mixer
