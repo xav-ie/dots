@@ -36,7 +36,7 @@
           # closure for this one filter. If CPU inference proves too slow on
           # the 3060 Ti's parallel workloads, revisit with a runtime-loaded
           # provider instead of a closure-wide CUDA runtime.
-          onnxruntime = pkgs.onnxruntime;
+          inherit (pkgs) onnxruntime;
         }).overrideAttrs
           (oldAttrs: {
             src = inputs.obs-backgroundremoval;
@@ -71,12 +71,16 @@
           # Prevent OpenMP threads (from ONNX Runtime / OpenCV) from busy-spinning
           # at barriers. Without this, OBS burns ~90% CPU on gomp_barrier_wait_end
           # even though the actual inference runs on GPU via CUDA.
-          package = pkgs.obs-studio.overrideAttrs (old: {
-            postFixup = (old.postFixup or "") + ''
-              wrapProgram $out/bin/obs \
-                --set OMP_WAIT_POLICY passive
+          # A thin wrapper, not overrideAttrs: the plugins build against stock
+          # obs-studio, so rebuilding it would ship a second copy.
+          package = pkgs.symlinkJoin {
+            inherit (pkgs.obs-studio) name meta passthru;
+            paths = [ pkgs.obs-studio ];
+            nativeBuildInputs = [ pkgs.makeWrapper ];
+            postBuild = ''
+              wrapProgram $out/bin/obs --set OMP_WAIT_POLICY passive
             '';
-          });
+          };
           plugins = map relaxWerror (
             with pkgs.obs-studio-plugins;
             [
