@@ -1,6 +1,6 @@
 {
   flake.modules.nixos.linux =
-    { pkgs, ... }:
+    { config, pkgs, ... }:
     {
       config.programs.nix-ld = {
         enable = true;
@@ -67,7 +67,8 @@
           libxkbcommon
           libxml2
           libxslt
-          mesa
+          # The session's own mesa, not a second stock one.
+          config.hardware.graphics.package
           nghttp2.lib
           nspr
           nss
@@ -82,8 +83,6 @@
           })
           pciutils
           pipewire
-          # TODO: find more "official" distribution of libwebp.so.6
-          rigsofrods-bin
           sqlite
           stdenv.cc.cc
           systemd
@@ -106,12 +105,11 @@
           libxshmfence
           libxtst
           zlib
-          (rigsofrods-bin.overrideAttrs {
-            # nix-ld only looks at top level lib and share
-            postInstall = ''
-              mv $out/share/rigsofrods/lib $out/lib
-            '';
-          })
+          # libwebp.so.6 (the pre-1.0 ABI) for old prebuilt binaries; nixpkgs only
+          # ships .so.7. Rigs of Rods bundles it, so copy out just that library.
+          (runCommand "libwebp6" { } ''
+            install -Dm555 -t $out/lib ${rigsofrods-bin}/share/rigsofrods/lib/libwebp.so.6*
+          '')
         ];
       };
     };
