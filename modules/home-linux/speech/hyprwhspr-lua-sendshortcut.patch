@@ -1,0 +1,27 @@
+--- a/src/input/hyprland.rs	2026-10-14 22:48:04.440172573 -0400
++++ b/src/input/hyprland.rs	2026-10-14 22:48:04.455848495 -0400
+@@ -46,17 +46,13 @@
+         key: &str,
+         target: Option<&str>,
+     ) -> Result<()> {
+-        let mods_segment = if modifiers.is_empty() {
+-            String::new()
+-        } else {
+-            modifiers.join(" ")
+-        };
+-        let target_segment = target.map(|t| format!(", {t}")).unwrap_or_default();
+-        let command = if mods_segment.is_empty() {
+-            format!("dispatch sendshortcut {key}{target_segment}")
+-        } else {
+-            format!("dispatch sendshortcut {mods_segment}, {key}{target_segment}")
+-        };
++        let mods = modifiers.join(" ");
++        let window = target
++            .map(|t| format!(", window = \"{t}\""))
++            .unwrap_or_default();
++        let command = format!(
++            "dispatch hl.dsp.send_shortcut({{ mods = \"{mods}\", key = \"{key}\"{window} }})"
++        );
+         let response = self.send_command(&command).await?;
+         if response.is_empty() || response.eq_ignore_ascii_case("ok") {
+             Ok(())
