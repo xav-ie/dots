@@ -10,23 +10,11 @@
       cfg = config.speech;
       enabled = cfg.app == "hyprwhspr";
 
-      hyprwhspr-rs = pkgs.pkgs-bleeding.hyprwhspr-rs.override {
-        whisper-cpp = pkgs.pkgs-bleeding-cuda.whisper-cpp;
-      };
-
-      model = "large-v3-turbo-q8_0";
-      # hyprwhspr-rs only looks in this hardcoded dir and never downloads, so
-      # fetch the model on first start instead of carrying it in the closure.
-      fetchModel = pkgs.writeShellScript "hyprwhspr-rs-fetch-model" ''
-        set -e
-        dir="$HOME/.local/share/hyprwhspr-rs/models"
-        file="$dir/ggml-${model}.bin"
-        [ -s "$file" ] && exit 0
-        mkdir -p "$dir"
-        ${pkgs.curl}/bin/curl -fL --retry 3 -o "$file.part" \
-          "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-${model}.bin"
-        mv "$file.part" "$file"
-      '';
+      hyprwhspr-rs = pkgs.pkgs-bleeding.hyprwhspr-rs.overrideAttrs (old: {
+        # Upstream sends the hyprlang `dispatch sendshortcut` form, which the
+        # Lua config rejects, so the paste keypress never reaches the window.
+        patches = (old.patches or [ ]) ++ [ ./hyprwhspr-lua-sendshortcut.patch ];
+      });
 
       configFile = pkgs.writeText "hyprwhspr-rs-config.jsonc" (
         {
@@ -42,13 +30,13 @@
             enabled = true;
             profile = "aggressive";
           };
+          # scribe (praesidium's always-loaded parakeet ASR) via its OpenAI-style
+          # endpoint, boosted with the meeting vocabulary.
           transcription = {
-            provider = "whisper_cpp";
-            whisper_cpp = {
-              inherit model;
-              threads = 4;
-              gpu_layers = 999;
-              prompt = "Transcribe as technical documentation with proper capitalization, acronyms, and technical terminology. Do not add punctuation.";
+            provider = "custom.scribe";
+            custom.scribe = {
+              endpoint = "https://scribe.lalala.casa/v1/audio/transcriptions";
+              model = "parakeet-unified-en-0.6b";
             };
           };
         }
@@ -90,9 +78,6 @@
                 PartOf = [ "graphical-session.target" ];
               };
               Service = {
-                ExecStartPre = fetchModel;
-                # The first start downloads ~870 MB.
-                TimeoutStartSec = "15min";
                 ExecStart = "${hyprwhspr-rs}/bin/hyprwhspr-rs";
                 Restart = "on-failure";
                 RestartSec = 3;
