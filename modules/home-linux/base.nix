@@ -25,7 +25,6 @@
               # nodePackages."webtorrent-cli"
               xidel # like jq but for html and much more advanced.
               # prusa-slicer                # does not launch currently
-              python312Packages."adblock"
               subliminal-custom # for mpv autosub script (custom 2.4.0 with knowit)
               xdg-utils # xdg-open, xdg-mime, xdg-email, etc.
               wf-recorder
