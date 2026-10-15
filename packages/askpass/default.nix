@@ -23,6 +23,11 @@ let
   #     ours (this repo's devshell exports a bleeding GTK/glibc set) and gjs
   #     loads typelibs from a different glibc than the binary, which segfaults.
   #     Clearing it leaves the wrapper's own prefix, which is the whole value.
+  #   - gtk4-layer-shell needs a Wayland display, but the caller's env often says
+  #     otherwise: ghostty exports GDK_BACKEND=x11, and a tmux pane predating a
+  #     re-attach carries a stale WAYLAND_DISPLAY. GDK would then open XWayland
+  #     and the prompt maps as a tiled toplevel. This has to happen before gjs
+  #     starts; the bundle's imports open the display before app code runs.
   dispatch = writeShellScript "askpass-dispatch" ''
     if [ "$(${is-sshed}/bin/is-sshed)" = true ]; then
       printf '%s' "$1" > /dev/tty
@@ -32,6 +37,12 @@ let
       exit 0
     fi
     unset GI_TYPELIB_PATH
+    if [ ! -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]; then
+      for sock in "$XDG_RUNTIME_DIR"/wayland-[0-9]*; do
+        [ -S "$sock" ] && export WAYLAND_DISPLAY="''${sock##*/}" && break
+      done
+    fi
+    export GDK_BACKEND=wayland
     exec "$(dirname "$0")/askpass-gui" "$@"
   '';
 in
