@@ -14,6 +14,20 @@
         whisper-cpp = pkgs.pkgs-bleeding-cuda.whisper-cpp;
       };
 
+      model = "large-v3-turbo-q8_0";
+      # hyprwhspr-rs only looks in this hardcoded dir and never downloads, so
+      # fetch the model on first start instead of carrying it in the closure.
+      fetchModel = pkgs.writeShellScript "hyprwhspr-rs-fetch-model" ''
+        set -e
+        dir="$HOME/.local/share/hyprwhspr-rs/models"
+        file="$dir/ggml-${model}.bin"
+        [ -s "$file" ] && exit 0
+        mkdir -p "$dir"
+        ${pkgs.curl}/bin/curl -fL --retry 3 -o "$file.part" \
+          "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-${model}.bin"
+        mv "$file.part" "$file"
+      '';
+
       configFile = pkgs.writeText "hyprwhspr-rs-config.jsonc" (
         {
           shortcuts = {
@@ -31,7 +45,7 @@
           transcription = {
             provider = "whisper_cpp";
             whisper_cpp = {
-              model = "large-v3-turbo-q8_0";
+              inherit model;
               threads = 4;
               gpu_layers = 999;
               prompt = "Transcribe as technical documentation with proper capitalization, acronyms, and technical terminology. Do not add punctuation.";
@@ -76,6 +90,9 @@
                 PartOf = [ "graphical-session.target" ];
               };
               Service = {
+                ExecStartPre = fetchModel;
+                # The first start downloads ~870 MB.
+                TimeoutStartSec = "15min";
                 ExecStart = "${hyprwhspr-rs}/bin/hyprwhspr-rs";
                 Restart = "on-failure";
                 RestartSec = 3;
