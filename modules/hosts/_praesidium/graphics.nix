@@ -47,10 +47,9 @@ let
 in
 {
   enable = true;
-  # Nothing on this host needs 32-bit GL, and package32 is deliberately left as
-  # stock mesa — a 32-bit client would pick up zink (MESA_LOADER_DRIVER_OVERRIDE
-  # is session-wide) without the fixes above. Flatpak is the only plausible one.
-  enable32Bit = true;
+  # Nothing on this host runs 32-bit GL (Flatpak apps bring their own GL
+  # runtime), and the 32-bit nvidia/mesa/llvm stack is ~1.4 GiB of closure.
+  enable32Bit = false;
   # zink glyph fix: pin the primary GL driver to mesa main.
   package = mesaMain;
   # VA-API (NVDEC) belongs in extraPackages, NOT `package`: `package` is the
