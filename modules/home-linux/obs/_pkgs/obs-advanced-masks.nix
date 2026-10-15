@@ -4,38 +4,45 @@
   fetchFromGitHub,
   obs-studio,
   cmake,
+  curl,
+  nlohmann_json,
+  qt6,
   ...
 }:
 
 stdenv.mkDerivation rec {
   pname = "obs-advanced-masks";
-  version = "1.1.0";
+  version = "1.6.0";
 
   src = fetchFromGitHub {
     owner = "FiniteSingularity";
     repo = "obs-advanced-masks";
     rev = "refs/tags/v${version}";
-    hash = "sha256-NtmOWKk3eZeRa3TvclZpg4sj8lbOoY8hUhxs1z6kEW4=";
+    hash = "sha256-Vnlq9OQc8mfuhn0O9oI+Y3+Yh2tP0DvrPFfLw1fypz8=";
   };
 
   buildInputs = [
+    curl
     obs-studio
+    qt6.qtbase
+    qt6.qtsvg
   ];
 
   nativeBuildInputs = [
     cmake
   ];
 
-  # 1.1.0 drops a `const` qualifier in obs-utils.c and builds with -Werror.
-  # gcc 14 only warned; gcc 16 promoted discarded-qualifiers to an error.
-  env.NIX_CFLAGS_COMPILE = "-Wno-error=discarded-qualifiers";
+  # CMakeLists FetchContent-downloads nlohmann/json at configure time; hand it
+  # the source tree instead.
+  # The font-awesome mask picker is a Qt dialog, so the release presets build
+  # with ENABLE_FRONTEND_API + ENABLE_QT; the plain CMake defaults leave them off.
+  cmakeFlags = [
+    "-DENABLE_FRONTEND_API=ON"
+    "-DENABLE_QT=ON"
+    "-DFETCHCONTENT_SOURCE_DIR_JSON=${nlohmann_json.src}"
+  ];
 
-  postInstall = ''
-    rm -rf "$out/share"
-    mkdir -p "$out/share/obs"
-    mv "$out/data/obs-plugins" "$out/share/obs"
-    rm -rf "$out/obs-plugins" "$out/data"
-  '';
+  dontWrapQtApps = true;
 
   meta = with lib; {
     description = "Advanced Masking Plugin for OBS";

@@ -13,7 +13,7 @@
   rustPlatform,
 }:
 let
-  version = "0.1.5";
+  version = "0.1.6";
 in
 rustPlatform.buildRustPackage {
   pname = "herdr-fwd";
@@ -23,7 +23,7 @@ rustPlatform.buildRustPackage {
     owner = "go-min";
     repo = "herdr-fwd";
     tag = "v${version}";
-    hash = "sha256-OJRo6s+HlZApWqlrhDckSXWaNOIhgfDs1bWbVL9Qzrg=";
+    hash = "sha256-swC/0GErDERrjorfR1fRwbdlJHNyQ1eoJwHMftzEIKI=";
   };
 
   # Not cargoHash/fetchCargoVendor: that fetcher sends python-requests' default
@@ -32,13 +32,14 @@ rustPlatform.buildRustPackage {
   # tracking Cargo.lock here — re-copy it from the tag when bumping version.
   cargoDeps = rustPlatform.importCargoLock { lockFile = ./Cargo.lock; };
 
-  # Both modules need things the build sandbox denies: dashboard_actions shells
-  # out to the system URL opener, companion binds loopback TCP. They fail with
-  # EPERM / "no available local port", not on logic. Everything else still runs
-  # (90 of 97 tests), so a real regression elsewhere still fails the build.
+  # These modules need things the build sandbox denies: dashboard_actions shells
+  # out to the system URL opener, companion and http bind loopback TCP. They fail
+  # with EPERM / "no available local port", not on logic. Everything else still
+  # runs, so a real regression elsewhere still fails the build.
   checkFlags = [
+    "--skip=local::companion::tests"
+    "--skip=local::http::tests"
     "--skip=plugin::dashboard_actions::dashboard_actions_tests"
-    "--skip=local::companion::companion_tests"
   ];
 
   # The plugin root herdr points `plugin_root` at. The manifest invokes the

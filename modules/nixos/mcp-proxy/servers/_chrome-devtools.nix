@@ -7,10 +7,10 @@
       # chrome-devtools-mcp: zero-dependency Node.js MCP server for Chrome DevTools
       chrome-devtools-mcp = pkgs.stdenvNoCC.mkDerivation {
         pname = "chrome-devtools-mcp";
-        version = "0.16.0";
+        version = "1.10.1";
         src = pkgs.fetchurl {
-          url = "https://registry.npmjs.org/chrome-devtools-mcp/-/chrome-devtools-mcp-0.16.0.tgz";
-          hash = "sha256-k+qL5F29a5ex+5nLtL0v/LLyDXplAnvOb9ukVIRDLBw=";
+          url = "https://registry.npmjs.org/chrome-devtools-mcp/-/chrome-devtools-mcp-1.10.1.tgz";
+          hash = "sha256-ASy89ugy1PZwna0MIde+8XCJ6Ure6c8zF50V6gqa3ys=";
         };
         dontBuild = true;
         installPhase = ''

@@ -13,12 +13,12 @@ let
 
   discord-protos = python3Packages.buildPythonPackage rec {
     pname = "discord-protos";
-    version = "1.2.136";
+    version = "1.2.377";
     format = "wheel";
 
     src = pkgs.fetchurl {
-      url = "https://files.pythonhosted.org/packages/9a/01/307fdaec5eba75b96307fc056c63e3be5af8c50a8456d740cd4b2708ea28/discord_protos-${version}-py3-none-any.whl";
-      hash = "sha256-xPmJkiKp4H0iwmemnpzuH9+MhPkWsN6/IGSgvORDu5Y=";
+      url = "https://files.pythonhosted.org/packages/8b/ce/ae825c2a70ef0bdd07c49d7b2171d77204aa76592b6deb8d2bf10c3681da/discord_protos-${version}-py3-none-any.whl";
+      hash = "sha256-jhmPWJuI142tFct6OV0swzGivorgYGDzvqAX7Fuzx5A=";
     };
 
     # mypy-protobuf is only used to generate the stubs, but the published wheel

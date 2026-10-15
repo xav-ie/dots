@@ -81,7 +81,7 @@
     sketchybar-icons.inputs.flake-parts.follows = "flake-parts";
     sketchybar-icons.inputs.nufmt.follows = "nufmt";
     sketchybar-icons.inputs.treefmt-nix.follows = "treefmt-nix";
-    sketchybar-src.url = "github:FelixKratz/SketchyBar/v2.23.0";
+    sketchybar-src.url = "github:FelixKratz/SketchyBar/v2.24.1";
     sketchybar-src.flake = false;
     sops-nix.url = "github:Mic92/sops-nix";
     tetherbug.url = "git+ssh://git@github.com/xav-ie/Tetherbug";
@@ -157,7 +157,7 @@
     glsl_analyzer.flake = false;
     glsl_analyzer.url = "github:xav-ie/glsl_analyzer/format";
     brew-src.flake = false;
-    brew-src.url = "github:Homebrew/brew/7.0.4";
+    brew-src.url = "github:Homebrew/brew/7.0.9";
     homebrew-bundle.flake = false;
     homebrew-bundle.url = "github:homebrew/homebrew-bundle";
     homebrew-cask.flake = false;
@@ -166,8 +166,6 @@
     homebrew-core.url = "github:homebrew/homebrew-core";
     obs-backgroundremoval.flake = false;
     obs-backgroundremoval.url = "github:royshil/obs-backgroundremoval";
-    ollama-src.flake = false;
-    ollama-src.url = "github:ollama/ollama/v0.13.5";
     ralph-src.url = "github:snarktank/ralph";
     ralph-src.flake = false;
     simulstreaming-src.url = "github:ufal/SimulStreaming";

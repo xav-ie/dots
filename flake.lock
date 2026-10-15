@@ -190,16 +190,16 @@
     "brew-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1789661079,
-        "narHash": "sha256-geVTQ51PGZ1mLULM5k7wO7qt/6xenOR/YG8X7Q3eCaI=",
+        "lastModified": 1791455121,
+        "narHash": "sha256-+7waf1/I5YZPPZOwGDGqhrw9k3lDdXhdk4nglsQcqyA=",
         "owner": "Homebrew",
         "repo": "brew",
-        "rev": "edb70f031e4170c780799633a1226ff73e1077f4",
+        "rev": "cdc1ca503231b9a96da64526774915d913c3ec9f",
         "type": "github"
       },
       "original": {
         "owner": "Homebrew",
-        "ref": "7.0.4",
+        "ref": "7.0.9",
         "repo": "brew",
         "type": "github"
       }
@@ -760,11 +760,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791986786,
-        "narHash": "sha256-+2drZWHZI1gxXNC51h3xoovsAGxj/IcGXqApi1xWm7k=",
+        "lastModified": 1792009278,
+        "narHash": "sha256-lI9zIBj9ishHdgfVN6XXH2o8Qr/R5dbDeIa7GxMBbn4=",
         "owner": "xav-ie",
         "repo": "herdr",
-        "rev": "5e2e85016eee9c294dc7bcd43d9737dcadee6aa9",
+        "rev": "756aacf2692078c59904ad406beebdf19a89f82a",
         "type": "github"
       },
       "original": {
@@ -1670,23 +1670,6 @@
         "type": "github"
       }
     },
-    "ollama-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1766073337,
-        "narHash": "sha256-4K1+GE96Uu5w1otSiP69vNDJ03tFvr78VluIEHMzFGQ=",
-        "owner": "ollama",
-        "repo": "ollama",
-        "rev": "7325791599409de52534429897481918717a9e85",
-        "type": "github"
-      },
-      "original": {
-        "owner": "ollama",
-        "ref": "v0.13.5",
-        "repo": "ollama",
-        "type": "github"
-      }
-    },
     "openspec": {
       "inputs": {
         "nixpkgs": [
@@ -1899,7 +1882,6 @@
         "nuenv": "nuenv",
         "nufmt": "nufmt",
         "obs-backgroundremoval": "obs-backgroundremoval",
-        "ollama-src": "ollama-src",
         "openspec": "openspec",
         "postiz-src": "postiz-src",
         "protonmail-mcp-src": "protonmail-mcp-src",
@@ -2009,16 +1991,16 @@
     "sketchybar-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1762104086,
-        "narHash": "sha256-PvKvevsSyRb6OfPWc2+1Bcfj2ngmgeP1URBoBiVeEdk=",
+        "lastModified": 1791580379,
+        "narHash": "sha256-fEbVzafjFTigR7TjQ41gOnDpk6S4B8qCwpz890ZNgwE=",
         "owner": "FelixKratz",
         "repo": "SketchyBar",
-        "rev": "031cdff653ff80b7d253e1de659088de827d68d1",
+        "rev": "515046e8a150d6b8767a8a6dd624824eaafa2c8b",
         "type": "github"
       },
       "original": {
         "owner": "FelixKratz",
-        "ref": "v2.23.0",
+        "ref": "v2.24.1",
         "repo": "SketchyBar",
         "type": "github"
       }

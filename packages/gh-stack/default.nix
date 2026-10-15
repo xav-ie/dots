@@ -13,19 +13,25 @@
 }:
 buildGoModule rec {
   pname = "gh-stack";
-  version = "0.1.1";
+  version = "0.2.1";
 
   src = fetchFromGitHub {
     owner = "github";
     repo = "gh-stack";
     tag = "v${version}";
-    hash = "sha256-jwfqiCnCOOW0AKA52hbgvCCoLzfFX+QfM+vXABkzZgw=";
+    hash = "sha256-Mq4jAqeSHDuCiDYSa40okrq06UhC3dZGjgCXJKMbgzU=";
   };
 
-  vendorHash = "sha256-0Xtr/MOpX4u5GnbRdNxKPA0GpSzi8PIbVc9MmP05De4=";
+  vendorHash = "sha256-TC1mSXYjOQo00fb2yuGdk1rl6z6rp0WT3AmzXomPzis=";
 
   # the integration tests drive a real git against throwaway repos
   nativeCheckInputs = [ git ];
+
+  # the modifyview tests look branches up in the cwd's repo, which the
+  # unpacked tarball isn't
+  preCheck = ''
+    git init -q
+  '';
 
   # same override upstream's release workflow uses, so `gh stack --version`
   # reports the release instead of "dev"

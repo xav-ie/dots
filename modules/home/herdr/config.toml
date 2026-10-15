@@ -40,12 +40,12 @@ type = "plugin_action"
 command = "herdr.fwd.open-dashboard-popup"
 description = "Open port-forward dashboard"
 
-[ui.toast]
-delivery = "herdr"
-
 [ui]
 show_agent_labels_on_pane_borders = true
 agent_panel_sort = "spaces"
+
+[ui.toast]
+delivery = "herdr"
 
 [ui.sidebar]
 

@@ -18,15 +18,15 @@
   patchelf,
 }:
 let
-  version = "0.7.0";
+  version = "0.9.0";
   targets = {
     "x86_64-linux" = {
       suffix = "linux-x64";
-      hash = "sha256-Tjx0p6JdoA16DKnuIjqbewsjjaNXq2/P7gSlwxPd9NE=";
+      hash = "sha256-T2b5hLY2EITUZWe49P1IUfQnHrn3fl0YHh7/PIozJQE=";
     };
     "aarch64-darwin" = {
       suffix = "darwin-arm64";
-      hash = "sha256-uTHY1ePqcrjcoUM/b+uQ/6ACQw1p+1gZZH5JpbmdyBQ=";
+      hash = "sha256-/jKdnSpVdT9RXIo3BGdnzfD7tKV6iUYzph//n1Npbjg=";
     };
   };
   target =

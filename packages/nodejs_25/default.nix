@@ -8,15 +8,15 @@
   autoPatchelfHook,
 }:
 let
-  version = "25.2.1";
+  version = "25.9.0";
   platformMap = {
     aarch64-darwin = {
       platform = "darwin-arm64";
-      hash = "sha256-ABtvDj8+20t60SoCWgUwFgiGkiAteqU0AEyZ5ltcY1g=";
+      hash = "sha256-Fe7rA8YGkaR2Tv+mzukgIX9yBYpwvP/l9MEgm75K1aM=";
     };
     x86_64-linux = {
       platform = "linux-x64";
-      hash = "sha256-ufapfoHImp30VSa0+G2v3MrxK4IpX3vzW9srD15odE8=";
+      hash = "sha256-HY231uKR0WfoxGeuQJS+F14aCzlpx64fiVW594JPey4=";
     };
   };
   info =

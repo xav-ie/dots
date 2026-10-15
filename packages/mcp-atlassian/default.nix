@@ -13,12 +13,12 @@ let
   # ("cachetools-stubs") that newer setuptools rejects.
   types-cachetools = python3Packages.buildPythonPackage {
     pname = "types-cachetools";
-    version = "6.2.0.20260317";
+    version = "7.0.0.20260713";
     format = "wheel";
 
     src = pkgs.fetchurl {
-      url = "https://files.pythonhosted.org/packages/17/9a/b00b23054934c4d569c19f7278c4fb32746cd36a64a175a216d3073a4713/types_cachetools-6.2.0.20260317-py3-none-any.whl";
-      hash = "sha256-kvqbxQ5GKeMfymfOs/sd5xeR4xT6FsCg0nKHJNwiLIs=";
+      url = "https://files.pythonhosted.org/packages/0e/c7/d3525c9dbdc1be7786bad46655ef051b6e7993f656d304719ec40079c91c/types_cachetools-7.0.0.20260713-py3-none-any.whl";
+      hash = "sha256-bbm8x6OEDTnpHAQRfYWp0JN+rMnRTRKoc+KwGi0kpx0=";
     };
   };
 
