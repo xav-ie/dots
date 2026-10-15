@@ -11,6 +11,14 @@
       cfg = config.services.executor;
       userHome = "/home/${defaultUser}";
       executorWorkspace = "/var/lib/executor-web";
+      # v2's own default (apps/docs/content/run/cli.mdx); kept explicit so a
+      # reinstall or a HOME change never silently moves the data directory.
+      dataDir = "${userHome}/.executor/v2/cli";
+      # /home itself is the btrfs subvolume (modules/nixos/hardware-configuration.nix's
+      # @home), not userHome — a snapshot's source must be a subvolume root,
+      # not an arbitrary directory inside one. Path within the snapshot is
+      # relative to /home, e.g. "x/.executor/v2/cli".
+      dataDirRelativeToHome = lib.removePrefix "/home/" dataDir;
 
       # Boot readiness gate. `after = podman-mcp.service` only waits for the
       # container to launch — mcp-proxy still needs a few seconds to set up its
@@ -31,102 +39,107 @@
         exit 0
       '';
 
-      # State lives in three places: sources/connections/OAuth clients in the db,
-      # the secret values they reference in auth.json, and the source list in
-      # executor.jsonc. secrets/executor.json is a sops-encrypted tar of all three.
-      refreshMarker = "${executorWorkspace}/.refresh-after-restore";
-      stateAuth = "${userHome}/.local/share/executor/auth.json";
-      stateDb = "${userHome}/.executor/data.db";
-      stateJsonc = "${executorWorkspace}/executor.jsonc";
-
-      # A fresh machine (no db) is restored from the backup. Restoring only into
-      # an empty state keeps a reset or a newer local state from being clobbered.
-      # The backup carries no tool caches, so the marker has refreshState
-      # rebuild them once the daemon is up.
-      restoreState = pkgs.writeShellScript "executor-restore" ''
-        set -eu
-        [ -e ${stateDb} ] && exit 0
-        tmp=$(${pkgs.coreutils}/bin/mktemp -d)
-        trap '${pkgs.coreutils}/bin/rm -rf "$tmp"' EXIT
-        ${pkgs.gnutar}/bin/tar -C "$tmp" -I ${pkgs.zstd}/bin/zstd -xf ${config.sops.secrets.executor-backup.path}
-        ${pkgs.coreutils}/bin/install -Dm600 "$tmp/data.db" ${stateDb}
-        ${pkgs.coreutils}/bin/install -Dm600 "$tmp/auth.json" ${stateAuth}
-        ${pkgs.coreutils}/bin/install -Dm644 "$tmp/executor.jsonc" ${stateJsonc}
-        ${pkgs.coreutils}/bin/touch ${refreshMarker}
-        echo "restored executor state from backup"
-      '';
-
-      # Executor only syncs a connection's tools when asked, so after a restore
-      # every connection is refreshed through the daemon's API.
-      refreshState = pkgs.writeShellApplication {
-        name = "executor-refresh";
-        runtimeInputs = [
-          pkgs.coreutils
-          pkgs.curl
-          pkgs.jq
-          pkgs.sqlite
-        ];
-        text = # sh
-          ''
-            url=http://localhost:${cfg.port |> toString}
-            for _ in $(seq 1 60); do
-              curl -s -o /dev/null -m 2 "$url" && break
-              sleep 1
-            done
-            token=$(jq -r .token ${userHome}/.executor/server-control/auth.json)
-            sqlite3 -readonly ${stateDb} "select owner || '/' || integration || '/' || name from connection" |
-              while read -r c; do
-                curl -s -m 120 -o /dev/null -w "$c %{http_code}\n" -X POST \
-                  -H "Authorization: Bearer $token" "$url/api/connections/$c/refresh" || echo "$c failed"
-              done
-            rm -f ${refreshMarker}
-          '';
-      };
-
-      # Rewrites secrets/executor.json in the dots checkout when the fingerprint
-      # changes. OAuth access tokens and health/sync timestamps churn constantly,
-      # so they are left out of the fingerprint; the file is left uncommitted.
-      # Tool caches are re-derivable and dropped from the snapshot.
+      # v2 persists state as PGlite directories plus installation.json under
+      # EXECUTOR_DATA_DIR (apps/local/server/README.md). builds/ and
+      # diagnostics/ are re-derivable caches, left out of the snapshot. The
+      # API key and encryption key are NOT backed up here: they live in
+      # secrets/executor-v2.yaml already, supplied at start instead of a
+      # keys.json/OS-keyring record (see the docs' "Back up and update").
+      #
+      # modules/nixos/hardware-configuration.nix mounts /home as its own
+      # btrfs subvolume (@home), with @snapshots reserved at /.snapshots for
+      # exactly this: a read-only `btrfs subvolume snapshot` is atomic and
+      # crash-consistent (equivalent to a power-cut view of the filesystem),
+      # which PGlite (like any WAL-based Postgres) tolerates — unlike a plain
+      # live `cp`/`tar`, which can catch a file mid-write. Tar the data dir
+      # out of the snapshot, then drop the snapshot immediately.
+      #
+      # This needs root (btrfs subvolume administration is not grantable to
+      # a normal user without a setuid helper), so the unit runs as root and
+      # chowns the file it writes back to the user before exiting. If /home
+      # is ever not a btrfs subvolume (a different host, a reinstall that
+      # changes the layout), this falls back to tarring the live directory
+      # directly — a best-effort snapshot, not a guaranteed-consistent one.
       backupState = pkgs.writeShellApplication {
         name = "executor-backup";
         runtimeInputs = [
+          pkgs.btrfs-progs
           pkgs.coreutils
           pkgs.gnutar
-          pkgs.jq
           pkgs.sops
-          pkgs.sqlite
           pkgs.zstd
         ];
         text = # sh
           ''
             repo=${userHome}/Projects/dots
-            stamp=${userHome}/.local/state/executor-backup.sha256
+            stamp=${userHome}/.local/state/executor-v2-backup.sha256
             [ -d "$repo/secrets" ] || exit 0
-            sum=$( {
-              cat ${stateJsonc}
-              jq -S 'with_entries(select((.key | startswith("oauth:")) and (.key | endswith(":refresh") | not) | not))' ${stateAuth}
-              sqlite3 -readonly ${stateDb} ${lib.escapeShellArg ''
-                select slug, plugin_id, name, description, config from integration order by slug;
-                select integration, name, template, provider, item_ids, identity_label, oauth_client, oauth_scope from connection order by integration, name;
-                select slug, authorization_url, token_url, grant, client_id, client_secret_item_id, resource from oauth_client order by slug;
-                select id, pattern, action, position from tool_policy order by id;
-                select id, title, description, code, bindings from artifact order by id;
-              ''}
-            } | sha256sum | cut -d' ' -f1)
-            [ "$sum" = "$(cat "$stamp" 2>/dev/null || true)" ] && exit 0
+            [ -e ${dataDir}/executor.pglite ] || exit 0
+
+            snapshot=/.snapshots/executor-backup
+            tmp=""
+            # A snapshot is a subvolume: rm -rf can't remove it (read-only) and
+            # walks all of /home trying. Always delete it as a subvolume.
+            drop_snapshot() {
+              if [ -e "$snapshot" ]; then btrfs subvolume delete "$snapshot" >/dev/null; fi
+            }
+            drop_snapshot
+            tarsrc=${dataDir}
+            cleanup() { drop_snapshot || true; if [ -n "$tmp" ]; then rm -rf "$tmp"; fi; }
+            if btrfs subvolume snapshot -r /home "$snapshot" >/dev/null 2>&1; then
+              tarsrc="$snapshot/${dataDirRelativeToHome}"
+            else
+              echo "warning: /home is not a btrfs subvolume; backing up the live data dir without a snapshot" >&2
+            fi
+            trap cleanup EXIT
+
             tmp=$(mktemp -d)
-            trap 'rm -rf "$tmp"' EXIT
-            sqlite3 -readonly ${stateDb} ".backup $tmp/data.db"
-            sqlite3 "$tmp/data.db" "delete from tool; delete from definition; delete from plugin_storage; VACUUM;"
-            cp ${stateAuth} ${stateJsonc} "$tmp"
-            tar -C "$tmp" --zstd -cf "$tmp/state.tar.zst" data.db auth.json executor.jsonc
+            tar -C "$tarsrc" --zstd -cf "$tmp/state.tar.zst" \
+              --ignore-failed-read \
+              executor.pglite browser-auth.pglite installation.json
+            drop_snapshot
+
+            sum=$(sha256sum "$tmp/state.tar.zst" | cut -d' ' -f1)
+            [ "$sum" = "$(cat "$stamp" 2>/dev/null || true)" ] && exit 0
             cd "$repo"
             sops -e --input-type binary --output-type json --filename-override secrets/executor.json "$tmp/state.tar.zst" > "$tmp/executor.json"
             mv "$tmp/executor.json" secrets/executor.json
+            chown ${defaultUser}:users secrets/executor.json
             mkdir -p "$(dirname "$stamp")"
             echo "$sum" > "$stamp"
+            chown ${defaultUser}:users "$stamp"
             echo "wrote $repo/secrets/executor.json"
           '';
+      };
+
+      # The daemon wants EXECUTOR_API_KEY as an env var, not a file, and the
+      # value clients already send (EXECUTOR_AUTH_TOKEN) lives in the sops
+      # shell-env blob, decrypted by sops-nix to /run/secrets/shell-env at
+      # runtime (modules/_lib/sops-common.nix) — not addressable per key at
+      # build time (secrets/executor-v2.yaml held its own freshly generated
+      # api_key before this; dropped now that nothing needs rotating).
+      # Parse the one line we need instead of sourcing the whole file, so
+      # arbitrary content in it never runs as shell.
+      executorStart = pkgs.writeShellApplication {
+        name = "executor-web-start";
+        runtimeInputs = [ pkgs.gnused ];
+        text = ''
+          if [ ! -r /run/secrets/shell-env ]; then
+            echo "executor-web: /run/secrets/shell-env is missing or unreadable" >&2
+            exit 1
+          fi
+          token=$(sed -n 's/^EXECUTOR_AUTH_TOKEN=//p' /run/secrets/shell-env)
+          if [ -z "$token" ]; then
+            echo "executor-web: EXECUTOR_AUTH_TOKEN missing from /run/secrets/shell-env" >&2
+            exit 1
+          fi
+          if [ "''${#token}" -lt 32 ]; then
+            echo "executor-web: EXECUTOR_AUTH_TOKEN is shorter than 32 characters" >&2
+            exit 1
+          fi
+          export EXECUTOR_API_KEY="$token"
+          exec ${pkgs.pkgs-mine.executor}/bin/executor serve
+        '';
       };
     in
     {
@@ -157,12 +170,39 @@
           "d ${executorWorkspace} 0755 ${defaultUser} users - -"
         ];
 
+        # secrets/executor-v2.yaml is its own sops file (not nested in
+        # secrets/main.yaml), so the secret names are flat, matching that
+        # file's top-level keys.
+        sops.secrets = {
+          "executor-v2-encryption-key" = {
+            sopsFile = ../../secrets/executor-v2.yaml;
+            key = "encryption_key";
+          };
+        };
+
+        # EXECUTOR_ENCRYPTION_KEY, supplied from sops instead of letting the
+        # daemon write keys.json or an OS-keyring record. Must be kept for
+        # every start (cli.mdx, "Configure it"). EXECUTOR_API_KEY is NOT
+        # templated here: executorStart below derives it at start from the
+        # same EXECUTOR_AUTH_TOKEN the MCP clients already send, so nothing
+        # needs rotating in the clients.
+        sops.templates."executor-v2.env" = {
+          owner = defaultUser;
+          content = ''
+            EXECUTOR_ENCRYPTION_KEY=${config.sops.placeholder."executor-v2-encryption-key"}
+          '';
+          restartUnits = [ "executor-web.service" ];
+        };
+
+
         # Main executor web service
         systemd.services.executor-web = {
           description = "Executor web server";
           after = [
             "network.target"
             "podman-mcp.service"
+            # executorStart reads /run/secrets/shell-env at start.
+            "sops-install-secrets.service"
           ];
           wantedBy = [ "multi-user.target" ];
           # Intentionally no `partOf`/`bindsTo` on podman-mcp: with stateless
@@ -172,24 +212,33 @@
 
           environment = {
             HOME = userHome;
-            # Lets the daemon reclaim a stale server.json from a previous boot
-            # instead of refusing to start and crash-looping under Restart.
-            EXECUTOR_SUPERVISED = "1";
+            EXECUTOR_DATA_DIR = dataDir;
+            EXECUTOR_PORT = toString cfg.port;
+            # v2 binds only 127.0.0.1 and has no --allowed-host; this is what
+            # it bakes into generated dashboard/pairing links instead.
+            EXECUTOR_BROWSER_ORIGIN = "https://${cfg.subdomain}.${config.services.local-networking.baseDomain}";
+            # Startup fails at "composition" without a CA bundle; systemd units
+            # don't inherit the login shell's SSL_CERT_FILE.
+            SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+            EXECUTOR_NO_UPDATE_CHECK = "1";
+            EXECUTOR_DISABLE_ANALYTICS = "1";
             # Search -> tool-call events for search evals (~/Projects/snippet-evals/usage.py).
+            # Implemented by the v2-search patches (packages/executor/default.nix, patches = []).
             EXECUTOR_USAGE_LOG = "${executorWorkspace}/usage.jsonl";
             # Local embedding server for hybrid tools.search; keyword-only when down.
             EXECUTOR_EMBED_URL = "http://127.0.0.1:38978/v1/embeddings";
+            # Dashboards re-mount other apps' tools, and the built-in executor app is
+            # management only; both stay reachable with an explicit namespace.
+            EXECUTOR_SEARCH_EXCLUDE_APPS = "executor,tickets,delivery,agenda,inbox,slack-triage,scribe-meetings";
           };
 
           serviceConfig = {
             User = defaultUser;
             WorkingDirectory = executorWorkspace;
-            # Gate config-sync on the proxy being reachable (see waitForMcpProxy).
-            ExecStartPre = [
-              restoreState
-              waitForMcpProxy
-            ];
-            ExecStart = "${pkgs.pkgs-mine.executor}/bin/executor daemon run --foreground --port ${cfg.port |> toString} --allowed-host ${cfg.subdomain}.${config.services.local-networking.baseDomain}";
+            EnvironmentFile = config.sops.templates."executor-v2.env".path;
+            # Gate the daemon on the proxy being reachable (see waitForMcpProxy).
+            ExecStartPre = [ waitForMcpProxy ];
+            ExecStart = lib.getExe executorStart;
             Restart = "on-failure";
             RestartSec = 5;
             StandardOutput = "journal";
@@ -198,31 +247,16 @@
           };
         };
 
-        sops.secrets.executor-backup = {
-          sopsFile = ../../secrets/executor.json;
-          format = "binary";
-          owner = defaultUser;
-        };
-
         systemd.services.executor-backup = {
-          description = "Back up executor state into the dots repo";
+          description = "Back up executor v2 state into the dots repo";
           after = [ "executor-web.service" ];
           serviceConfig = {
             Type = "oneshot";
-            User = defaultUser;
+            # Root: btrfs subvolume snapshot/delete has no normal-user grant
+            # short of a setuid helper. backupState chowns what it writes in
+            # the user's repo back to defaultUser before exiting.
+            User = "root";
             ExecStart = lib.getExe backupState;
-          };
-        };
-
-        systemd.services.executor-refresh = {
-          description = "Rebuild executor tool caches after a restore";
-          after = [ "executor-web.service" ];
-          wantedBy = [ "executor-web.service" ];
-          unitConfig.ConditionPathExists = refreshMarker;
-          serviceConfig = {
-            Type = "oneshot";
-            User = defaultUser;
-            ExecStart = lib.getExe refreshState;
           };
         };
 

@@ -1,0 +1,162 @@
+From 2ffaed679e5e8446731663404124dcaaafc7b803 Mon Sep 17 00:00:00 2001
+From: Xavier Ruiz <github@xav.ie>
+Date: Thu, 15 Oct 2026 19:28:35 -0400
+Subject: [PATCH 3/3] Keep apps named in EXECUTOR_SEARCH_EXCLUDE_APPS out of
+ searches without a namespace
+
+The local server reads EXECUTOR_SEARCH_EXCLUDE_APPS, a comma separated list of
+app slugs, and passes it to makeMcp as the searchExcludedApps option. Searches
+without a namespace (the search tool, tools.search and CodeMode's global
+search()) leave those apps out, so apps that only re-export other apps' tools do
+not crowd results. A search in one of their namespaces still finds their tools.
+The MCP package reads no environment; without the option nothing is excluded.
+---
+ apps/local/server/README.md                 |  1 +
+ apps/local/server/src/implementation/mcp.ts |  9 +++++-
+ packages/mcp/src/contracts/tools.ts         |  5 ++++
+ packages/mcp/src/implementation/execute.ts  | 31 +++++++++++++++++----
+ packages/mcp/src/implementation/server.ts   |  9 +++++-
+ 5 files changed, 47 insertions(+), 8 deletions(-)
+
+diff --git a/apps/local/server/README.md b/apps/local/server/README.md
+index 1b9b4d889..00dce5cfc 100644
+--- a/apps/local/server/README.md
++++ b/apps/local/server/README.md
+@@ -70,6 +70,7 @@ directory. `bun run with:local …` loads 1Password values instead; see
+ | `EXECUTOR_EMBED_URL`                    | Optional OpenAI-compatible `/v1/embeddings` URL. Tool search then also ranks by similarity, with tool vectors kept in the database and filled in the background.                            |
+ | `EXECUTOR_EMBED_TIMEOUT_MS`             | A search whose query embedding takes longer ranks by words alone; defaults to `1500`.                                                                                                       |
+ | `EXECUTOR_EMBED_KEYWORD_WEIGHT`         | Share of the word ranking in the fused tool search ranking, `0` to `1`; defaults to `0`.                                                                                                    |
++| `EXECUTOR_SEARCH_EXCLUDE_APPS`          | Comma-separated app slugs that tool searches without a namespace leave out.                                                                                                                 |
+ 
+ ### Key storage
+ 
+diff --git a/apps/local/server/src/implementation/mcp.ts b/apps/local/server/src/implementation/mcp.ts
+index 8485589cb..b7266fc28 100644
+--- a/apps/local/server/src/implementation/mcp.ts
++++ b/apps/local/server/src/implementation/mcp.ts
+@@ -32,7 +32,7 @@ import {
+ } from "@executor-js/sdk/core";
+ import { appVersion, versionRequirementAccounts } from "./app-accounts.ts";
+ import type { SqlClient } from "effect/sql";
+-import { Context, Effect, Redacted } from "effect";
++import { Config, Context, Effect, Redacted } from "effect";
+ 
+ /**
+  * Operations as the grant checked them: they run with exactly the accounts their input names.
+@@ -203,6 +203,13 @@ export const localMcp = (
+       instructions: executorIntro,
+       limits,
+       annotateSkillRead,
++      // Comma-separated app slugs that searches without a namespace leave out.
++      searchExcludedApps: (yield* Config.String("EXECUTOR_SEARCH_EXCLUDE_APPS").pipe(
++        Config.withDefault(""),
++      ))
++        .split(",")
++        .map((slug) => slug.trim())
++        .filter((slug) => slug !== ""),
+     });
+     const usage = yield* localUsageLog;
+     const http = Effect.gen(function* () {
+diff --git a/packages/mcp/src/contracts/tools.ts b/packages/mcp/src/contracts/tools.ts
+index 1d89a29be..2ab09e238 100644
+--- a/packages/mcp/src/contracts/tools.ts
++++ b/packages/mcp/src/contracts/tools.ts
+@@ -72,4 +72,9 @@ export interface McpOptions {
+    * one, a restart forgets every session and clients initialize again.
+    */
+   readonly sessions?: (mode: ElicitationMode) => McpServer.SessionStore;
++  /**
++   * Slugs of apps that searches without a namespace leave out, such as apps that only re-export
++   * other apps' tools. A search in one of their namespaces still finds their tools.
++   */
++  readonly searchExcludedApps?: ReadonlyArray<string>;
+ }
+diff --git a/packages/mcp/src/implementation/execute.ts b/packages/mcp/src/implementation/execute.ts
+index bcee6849b..2d0b93099 100644
+--- a/packages/mcp/src/implementation/execute.ts
++++ b/packages/mcp/src/implementation/execute.ts
+@@ -25,7 +25,17 @@ import {
+   type ToolSearchScope,
+   type ToolSearchTarget,
+ } from "@executor-js/sdk/core";
+-import { Clock, Deferred, Duration, Effect, Exit, Option, Schema, Semaphore } from "effect";
++import {
++  Clock,
++  Context,
++  Deferred,
++  Duration,
++  Effect,
++  Exit,
++  Option,
++  Schema,
++  Semaphore,
++} from "effect";
+ import {
+   diagnostic,
+   diagnosticSummary,
+@@ -470,6 +480,12 @@ type Found = { readonly target: SearchTarget; readonly path: string };
+  * so no listing is loaded to search. A query that is a tool's exact path, or its tool expression,
+  * returns only that tool; a query without words lists every tool in target and name order.
+  */
++/** The slugs of apps that searches without a namespace leave out; see `McpOptions`. */
++export const SearchExcludedApps = Context.Reference<ReadonlyArray<string>>(
++  "@executor-js/mcp/SearchExcludedApps",
++  { defaultValue: () => [] },
++);
++
+ const rank = <E extends Error>(
+   searchable: Searchable<E>,
+   lost: Lost,
+@@ -484,14 +500,17 @@ const rank = <E extends Error>(
+   Effect.gen(function* () {
+     const namespace = input.namespace === undefined ? "" : canonical(input.namespace);
+     const { offset, limit } = input;
++    const excluded = namespace === "" ? yield* SearchExcludedApps : [];
+     // A target inside the namespace is searched whole; one the namespace lies in, below it.
+     const targets = (yield* searchable(namespace === "" ? "all" : [namespace])).flatMap(
+       (target): ReadonlyArray<{ target: SearchTarget; below: string | undefined }> =>
+-        namespace === "" || within(target.path, namespace)
+-          ? [{ target, below: undefined }]
+-          : within(namespace, target.path)
+-            ? [{ target, below: toolName(namespace.slice(target.path.length + 1)) }]
+-            : [],
++        excluded.includes(target.slug)
++          ? []
++          : namespace === "" || within(target.path, namespace)
++            ? [{ target, below: undefined }]
++            : within(namespace, target.path)
++              ? [{ target, below: toolName(namespace.slice(target.path.length + 1)) }]
++              : [],
+     );
+     const searched = (
+       scope: (target: SearchTarget) => ReadonlyArray<ToolSearchScope>,
+diff --git a/packages/mcp/src/implementation/server.ts b/packages/mcp/src/implementation/server.ts
+index fdc494a1c..4f403e216 100644
+--- a/packages/mcp/src/implementation/server.ts
++++ b/packages/mcp/src/implementation/server.ts
+@@ -26,7 +26,13 @@ import type { BrowserApprovals, BrowserDelivery } from "../contracts/browser.ts"
+ import type { McpExecutionResult } from "../contracts/execute.ts";
+ import { makeExecutions } from "./executions.ts";
+ import { executeNative } from "./native-elicitation.ts";
+-import { callTools, describeCatalog, executeProgram, searchCatalog } from "./execute.ts";
++import {
++  callTools,
++  describeCatalog,
++  executeProgram,
++  SearchExcludedApps,
++  searchCatalog,
++} from "./execute.ts";
+ import { skills } from "./skills.ts";
+ import { eventsHandler } from "./events.ts";
+ 
+@@ -371,6 +377,7 @@ export const makeMcp = (options: McpOptions) =>
+                   HttpServerRequest.HttpServerRequest,
+                   request.modify({ url: `/mcp${url.search}` }),
+                 ),
++                Effect.provideService(SearchExcludedApps, options.searchExcludedApps ?? []),
+               ),
+         }),
+       );
+-- 
+2.55.0
+

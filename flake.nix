@@ -178,7 +178,9 @@
     protonmail-mcp-src.flake = false;
     gtm-mcp-src.url = "github:stape-io/google-tag-manager-mcp-server/994b962e00bd935f79f331c431f6f67e60354835";
     gtm-mcp-src.flake = false;
-    executor-src.url = "github:RhysSullivan/executor/v1.6.10";
+    # v2: 2.0.0-beta.23, tag executor@2.0.0-beta.23. Pinned by commit; the tag
+    # name's "@" is awkward to encode in a flake ref.
+    executor-src.url = "github:RhysSullivan/executor/26d03a48953c948c794c5cd9d22eb3f6253c1482";
     executor-src.flake = false;
     bun-demincer-src.url = "github:xav-ie/bun-demincer/fix/linux-dataStart-byte-count";
     bun-demincer-src.flake = false;

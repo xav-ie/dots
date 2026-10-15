@@ -127,6 +127,53 @@ export async function embed(
     .map((d) => normalize(d.embedding));
 }
 
+const mcpHeaders = () => ({
+  "content-type": "application/json",
+  accept: "application/json, text/event-stream",
+  authorization: `Bearer ${process.env.EXECUTOR_AUTH_TOKEN ?? ""}`,
+  "cf-access-client-id": process.env.CF_ACCESS_CLIENT_ID ?? "",
+  "cf-access-client-secret": process.env.CF_ACCESS_CLIENT_SECRET ?? "",
+});
+
+// v2's /mcp speaks JSON-RPC over streamable HTTP: a single response can come
+// back as plain JSON or as one `data: ` SSE frame, depending on the call.
+const mcpParse = async (res: Response): Promise<unknown> => {
+  const text = await res.text();
+  const line = text
+    .split("\n")
+    .find((l) => l.startsWith("data: "))
+    ?.slice("data: ".length);
+  return JSON.parse(line ?? text);
+};
+
+async function mcpSession(c: Config, timeoutMs: number): Promise<string> {
+  const res = await fetch(`${c.executor}/mcp`, {
+    method: "POST",
+    headers: mcpHeaders(),
+    signal: AbortSignal.timeout(timeoutMs),
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: {
+        protocolVersion: "2025-06-18",
+        capabilities: {},
+        clientInfo: { name: "tool-suggest", version: "1" },
+      },
+    }),
+  });
+  if (!res.ok) throw new Error(`mcp initialize http ${res.status}`);
+  await mcpParse(res);
+  const sessionId = res.headers.get("mcp-session-id");
+  if (!sessionId) throw new Error("mcp initialize: no session id");
+  return sessionId;
+}
+
+// Walks tools.search with no query across every reachable namespace (the
+// MCP equivalent of v1's `/api/tools` dump — see the SearchInput/SearchResult
+// contracts: omitting both `query` and `namespace` lists every app's tools in
+// name order, paginated via `next`). Replaces v1's plain-GET catalog route,
+// which v2 has no equivalent for.
 async function catalog(c: Config): Promise<Tool[]> {
   const file = join(CACHE, "catalog.json");
   try {
@@ -134,22 +181,43 @@ async function catalog(c: Config): Promise<Tool[]> {
       return JSON.parse(readFileSync(file, "utf8"));
   } catch {}
   try {
-    const res = await fetch(`${c.executor}/api/tools`, {
-      headers: {
-        Authorization: `Bearer ${process.env.EXECUTOR_AUTH_TOKEN ?? ""}`,
-        "CF-Access-Client-Id": process.env.CF_ACCESS_CLIENT_ID ?? "",
-        "CF-Access-Client-Secret": process.env.CF_ACCESS_CLIENT_SECRET ?? "",
-      },
-      signal: AbortSignal.timeout(2000),
-    });
-    if (!res.ok) throw new Error(`catalog http ${res.status}`);
-    const fetched: Tool[] = (await res.json()).map(
-      (t: { address: string; name: string; description?: string }) => ({
-        path: t.address.replace(/^tools\./, ""),
-        name: t.name,
-        description: t.description ?? "",
-      }),
-    );
+    const sessionId = await mcpSession(c, 2000);
+    const fetched: Tool[] = [];
+    let params: Record<string, unknown> = {};
+    // A hard page cap keeps a pathological catalogue from hanging a hook.
+    for (let page = 0; page < 50; page++) {
+      const res = await fetch(`${c.executor}/mcp`, {
+        method: "POST",
+        headers: { ...mcpHeaders(), "mcp-session-id": sessionId },
+        signal: AbortSignal.timeout(3000),
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: page + 2,
+          method: "tools/call",
+          params: { name: "search", arguments: { limit: 200, ...params } },
+        }),
+      });
+      if (!res.ok) throw new Error(`catalog http ${res.status}`);
+      const body = (await mcpParse(res)) as {
+        result?: { structuredContent?: { items: Array<{ path: string; description: string }>; next: Record<string, unknown> | null } };
+        error?: { message: string };
+      };
+      if (body.error) throw new Error(`catalog mcp error: ${body.error.message}`);
+      const page_ = body.result?.structuredContent;
+      if (!page_) throw new Error("catalog: no structuredContent");
+      for (const item of page_.items) {
+        // search returns paths already prefixed with "tools." (confirmed
+        // against a live v2 instance); render() adds that prefix itself.
+        const path = item.path.replace(/^tools\./, "");
+        fetched.push({
+          path,
+          name: path.split(".").at(-1) ?? path,
+          description: item.description,
+        });
+      }
+      if (!page_.next) break;
+      params = page_.next;
+    }
     mkdirSync(CACHE, { recursive: true });
     writeFileSync(file, JSON.stringify(fetched));
     return fetched;

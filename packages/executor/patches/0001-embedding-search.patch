@@ -1,0 +1,735 @@
+From 3907b42398e689611fefb15454a33b8f440c9bf0 Mon Sep 17 00:00:00 2001
+From: Xavier Ruiz <github@xav.ie>
+Date: Thu, 15 Oct 2026 19:27:47 -0400
+Subject: [PATCH 1/3] Rank tool search by similarity vectors kept in the
+ database when EXECUTOR_EMBED_URL is set
+
+The local server passes an OpenAI compatible /v1/embeddings endpoint to the SDK.
+Tool search then keeps two tables of its own, created when they are first needed
+and outside the versioned schema, so the storage version and the tool search
+rows are unchanged and a server that does not know the tables ignores them:
+executor_tool_search_texts holds each row's embedding text with the digest of
+the tool it was made from, and executor_tool_search_vectors holds real[] unit
+vectors keyed by model and text digest. real[] needs no extension on Postgres or
+PGlite. An executor without embeddings never creates them.
+
+Writing a listing stays independent of the endpoint. A background fill makes the
+text of each current row whose tool changed (purpose first: title, description,
+name and input names, then app and router), embeds texts without a vector of the
+current model in batches, and drops texts and vectors no row uses. Vectors are
+shared by every row with the same text and survive restarts and listing
+rewrites; a failed fill is retried by the next write or search.
+
+A search with words embeds only its query (cached, EXECUTOR_EMBED_TIMEOUT_MS,
+1500 by default). The page statement then ranks items by weighted reciprocal
+rank fusion of their BM25 rank and cosine rank, keeping scopes, merging across
+targets, namespaces, exact paths, totals and the page budget. Items without a
+vector rank by BM25; items matching no word rank only among the 50 most similar.
+EXECUTOR_EMBED_KEYWORD_WEIGHT sets the word share and defaults to 0, which
+ranked recorded searches best. Without the endpoint, or when the query embedding
+fails, search runs the BM25 statement unchanged.
+---
+ apps/local/server/README.md                   |   3 +
+ .../local/server/src/implementation/server.ts |  26 ++-
+ packages/sdk/src/contracts/executor.ts        |  12 ++
+ packages/sdk/src/implementation/create.ts     |  11 +-
+ .../implementation/tool-search-embeddings.ts  | 204 ++++++++++++++++++
+ .../src/implementation/tool-search-store.ts   | 155 ++++++++++++-
+ .../sdk/src/implementation/tool-search.ts     |  94 +++++++-
+ 7 files changed, 493 insertions(+), 12 deletions(-)
+ create mode 100644 packages/sdk/src/implementation/tool-search-embeddings.ts
+
+diff --git a/apps/local/server/README.md b/apps/local/server/README.md
+index 3ecdfa297..1b9b4d889 100644
+--- a/apps/local/server/README.md
++++ b/apps/local/server/README.md
+@@ -67,6 +67,9 @@ directory. `bun run with:local …` loads 1Password values instead; see
+ | `EXECUTOR_EVALUATION_MEMORY_MB`         | Memory for kept tool lists and app declarations; defaults to `256`.                                                                                                                         |
+ | `EXECUTOR_APP_WORKERS`                  | Most app and data Workers kept loaded; defaults to `64`. Idle ones above it unload and reload on their next call. An app with a database runs its calls in a data Worker, which counts too. |
+ | `EXECUTOR_APP_WORKER_IDLE_SECONDS`      | Unload an app or data Worker not called for this long, even below `EXECUTOR_APP_WORKERS`; `0` turns this off. Defaults to `300`.                                                            |
++| `EXECUTOR_EMBED_URL`                    | Optional OpenAI-compatible `/v1/embeddings` URL. Tool search then also ranks by similarity, with tool vectors kept in the database and filled in the background.                            |
++| `EXECUTOR_EMBED_TIMEOUT_MS`             | A search whose query embedding takes longer ranks by words alone; defaults to `1500`.                                                                                                       |
++| `EXECUTOR_EMBED_KEYWORD_WEIGHT`         | Share of the word ranking in the fused tool search ranking, `0` to `1`; defaults to `0`.                                                                                                    |
+ 
+ ### Key storage
+ 
+diff --git a/apps/local/server/src/implementation/server.ts b/apps/local/server/src/implementation/server.ts
+index 95874a3de..038540de3 100644
+--- a/apps/local/server/src/implementation/server.ts
++++ b/apps/local/server/src/implementation/server.ts
+@@ -60,7 +60,13 @@ import {
+   Scope,
+   Stream,
+ } from "effect";
+-import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
++import {
++  FetchHttpClient,
++  HttpClient,
++  HttpRouter,
++  HttpServerRequest,
++  HttpServerResponse,
++} from "effect/http";
+ import { recordRequestRejections, requestTiming } from "@executor-js/telemetry/http";
+ import { safeHttpClient } from "@executor-js/utils/safe-fetch";
+ import type { HostEgress } from "@executor-js/utils/url-policy";
+@@ -154,6 +160,12 @@ export const localApi = (
+       const evaluation = yield* declarationConfig;
+       // MCP grants are checked again before each event delivery; OAuth starts after the executor.
+       const grants = yield* Deferred.make<LocalMcpOAuth>();
++      const embedUrl = yield* Config.String("EXECUTOR_EMBED_URL").pipe(Config.option);
++      const embedTimeout = yield* Config.Number("EXECUTOR_EMBED_TIMEOUT_MS").pipe(Config.option);
++      const embedWeight = yield* Config.Number("EXECUTOR_EMBED_KEYWORD_WEIGHT").pipe(Config.option);
++      // The operator names the embeddings endpoint, often on this machine, so the URL policy
++      // that guards app egress does not apply to it.
++      const embedClient = yield* HttpClient.HttpClient.pipe(Effect.provide(FetchHttpClient.layer));
+       const executor = yield* createExecutor({
+         database: storage,
+         secret: config.encryptionKey,
+@@ -172,6 +184,18 @@ export const localApi = (
+         },
+         // Stale declarations refresh on the server's own lifetime.
+         background: (work) => Effect.forkIn(work, server).pipe(Effect.as(true)),
++        // Opt-in similarity ranking for tool search, fused with its word ranking.
++        ...Option.match(embedUrl, {
++          onNone: () => ({}),
++          onSome: (url) => ({
++            toolSearchEmbeddings: {
++              url,
++              timeoutMs: Option.getOrUndefined(embedTimeout),
++              keywordWeight: Option.getOrUndefined(embedWeight),
++              httpClient: embedClient,
++            },
++          }),
++        }),
+         events: {
+           sender: httpEventSender(egress),
+           authorize: localEventAuthority(Deferred.await(grants)),
+diff --git a/packages/sdk/src/contracts/executor.ts b/packages/sdk/src/contracts/executor.ts
+index ed5aabc0e..7edb75b0e 100644
+--- a/packages/sdk/src/contracts/executor.ts
++++ b/packages/sdk/src/contracts/executor.ts
+@@ -261,6 +261,18 @@ export interface ExecutorInputs {
+    * Without it, stale declarations revalidate first and revocation runs inline.
+    */
+   readonly background?: import("./declarations.ts").BackgroundWork;
++  /**
++   * An OpenAI-compatible embeddings endpoint that tool search also ranks by similarity with,
++   * fused with its word ranking; `keywordWeight` (0 to 1, 0 by default) is the word ranking's
++   * share. Tool vectors are kept in the database and filled on `background`. A query embedding
++   * that fails or takes longer than `timeoutMs` (1500 by default) ranks by words alone.
++   */
++  readonly toolSearchEmbeddings?: {
++    readonly url: string;
++    readonly timeoutMs?: number | undefined;
++    readonly keywordWeight?: number | undefined;
++    readonly httpClient: import("effect/http").HttpClient.HttpClient;
++  };
+ }
+ 
+ /** A hex-encoded 256-bit key encrypts saved credentials with AES-GCM; a custom store replaces that. */
+diff --git a/packages/sdk/src/implementation/create.ts b/packages/sdk/src/implementation/create.ts
+index ccd376218..1f64a9787 100644
+--- a/packages/sdk/src/implementation/create.ts
++++ b/packages/sdk/src/implementation/create.ts
+@@ -38,6 +38,7 @@ import { makeOAuth } from "./oauth.ts";
+ import { makeDeclarationCache, makeDeclarations } from "./declarations.ts";
+ import { makeListings } from "./listings.ts";
+ import { makeToolSearch } from "./tool-search.ts";
++import { makeToolSearchEmbeddings } from "./tool-search-embeddings.ts";
+ import { makeEvents } from "./events.ts";
+ import { AppEventSink, RuntimeProtocolFailed, type Runtime } from "../contracts/runtime.ts";
+ 
+@@ -139,7 +140,15 @@ export const createExecutor = (
+       workflows: { list: workflows.definitions },
+       workflowRuns: workflows.runs,
+     };
+-    const search = makeToolSearch({ store: options.database.toolSearch, crypto });
++    const search = makeToolSearch({
++      store: options.database.toolSearch,
++      crypto,
++      embeddings:
++        options.toolSearchEmbeddings === undefined
++          ? undefined
++          : makeToolSearchEmbeddings(options.toolSearchEmbeddings),
++      background: options.background,
++    });
+     const tools = makeTools(
+       options.database,
+       oauth,
+diff --git a/packages/sdk/src/implementation/tool-search-embeddings.ts b/packages/sdk/src/implementation/tool-search-embeddings.ts
+new file mode 100644
+index 000000000..6359d53a6
+--- /dev/null
++++ b/packages/sdk/src/implementation/tool-search-embeddings.ts
+@@ -0,0 +1,204 @@
++/**
++ * Optional similarity ranking for tool search through an OpenAI-compatible embeddings endpoint
++ * (`{ input: string[] }` to `{ model, data: [{ index, embedding }] }`). Tool vectors are kept in
++ * the database and filled in the background, so writing a listing never waits for the endpoint;
++ * a search embeds only its query, and ranks by BM25 alone when that fails or is too slow.
++ */
++import { Clock, Effect, Option, Schema } from "effect";
++import { type HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http";
++import type { BackgroundWork } from "../contracts/declarations.ts";
++import type { ToolSearchStore } from "./tool-search-store.ts";
++
++/** Queries carry the retrieval task; tool texts are embedded as they are. */
++const instruction =
++  "Instruct: Given a user request, retrieve the tool that can fulfill it\nQuery: ";
++const batchSize = 32;
++/** Texts read per fill round; each round's vectors are saved before the next. */
++const fillRound = 256;
++const defaultTimeoutMillis = 1_500;
++/** Similarity alone ranked recorded searches best; words still rank tools without a vector yet. */
++const defaultKeywordWeight = 0;
++const cachedQueries = 256;
++
++/** The endpoint failed; `refused` when it answered that it will not embed this input. */
++class EmbeddingsFailed extends Schema.TaggedError<EmbeddingsFailed>()("EmbeddingsFailed", {
++  refused: Schema.Boolean,
++}) {}
++
++const Embeddings = Schema.Struct({
++  model: Schema.optional(Schema.String),
++  data: Schema.Array(Schema.Struct({ index: Schema.Int, embedding: Schema.Array(Schema.Number) })),
++});
++
++/** A unit vector; components too small for `real` become zero instead of failing to store. */
++const unit = (values: ReadonlyArray<number>) => {
++  const norm = Math.sqrt(values.reduce((sum, value) => sum + value * value, 0)) || 1;
++  return values.map((value) => (Math.abs(value / norm) < 1e-30 ? 0 : value / norm));
++};
++
++export interface QueryVector {
++  readonly model: string;
++  readonly vector: ReadonlyArray<number>;
++}
++
++export const makeToolSearchEmbeddings = (options: {
++  readonly url: string;
++  readonly timeoutMs?: number | undefined;
++  readonly keywordWeight?: number | undefined;
++  readonly httpClient: HttpClient.HttpClient;
++}) => {
++  const queries = new Map<string, QueryVector>();
++  /** When each warning was last logged; each is logged at most once a minute. */
++  const warned = new Map<string, number>();
++  const warn = (message: string) =>
++    Effect.gen(function* () {
++      const now = yield* Clock.currentTimeMillis;
++      if (now - (warned.get(message) ?? Number.NEGATIVE_INFINITY) < 60_000) return;
++      warned.set(message, now);
++      yield* Effect.logWarning(message);
++    });
++  const embed = (input: ReadonlyArray<string>) =>
++    Effect.gen(function* () {
++      const response = yield* options.httpClient
++        .execute(
++          HttpClientRequest.post(options.url).pipe(HttpClientRequest.bodyJsonUnsafe({ input })),
++        )
++        .pipe(Effect.mapError(() => new EmbeddingsFailed({ refused: false })));
++      if (response.status >= 400 && response.status < 500)
++        return yield* new EmbeddingsFailed({ refused: true });
++      const body = yield* HttpClientResponse.filterStatusOk(response).pipe(
++        Effect.flatMap(HttpClientResponse.schemaBodyJson(Embeddings)),
++        Effect.mapError(() => new EmbeddingsFailed({ refused: false })),
++      );
++      const vectors: Array<ReadonlyArray<number> | undefined> = Array.from(input, () => undefined);
++      for (const { index, embedding } of body.data) vectors[index] = unit(embedding);
++      if (body.data.length !== input.length || vectors.includes(undefined))
++        return yield* new EmbeddingsFailed({ refused: false });
++      return {
++        // The model names the vectors, so another model behind the same URL embeds again.
++        model: body.model ?? options.url,
++        vectors: vectors.flatMap((vector) => (vector === undefined ? [] : [vector])),
++      };
++    });
++  let model: string | undefined;
++  /**
++   * Embed the texts of rows without a vector of the current model, a round at a time. When that
++   * or the caller (`changed`) changed which texts rows have, drop vectors no row reads. A batch the endpoint refuses, such as one with a text longer than its
++   * context, is embedded one text at a time, and a text it refuses alone waits for the next fill.
++   * Any other failure ends the fill.
++   */
++  const embedPending = (store: ToolSearchStore, changed: boolean) =>
++    Effect.gen(function* () {
++      model ??= (yield* embed(["model"])).model;
++      let saved = 0;
++      const refused = new Set<string>();
++      const save = (texts: ReadonlyArray<string>) =>
++        Effect.flatMap(embed(texts), (embedded) => {
++          model = embedded.model;
++          return store
++            .saveVectors(
++              embedded.model,
++              texts.map((text, at) => ({ text, embedding: embedded.vectors[at] ?? [] })),
++            )
++            .pipe(Effect.as(texts.length));
++        });
++      for (;;) {
++        const texts = (yield* store.pendingTexts(model, fillRound)).filter(
++          (text) => !refused.has(text),
++        );
++        const batches: Array<ReadonlyArray<string>> = [];
++        for (let start = 0; start < texts.length; start += batchSize)
++          batches.push(texts.slice(start, start + batchSize));
++        const counts = yield* Effect.forEach(
++          batches,
++          (batch) =>
++            save(batch).pipe(
++              Effect.catchIf(
++                (error) => error._tag === "EmbeddingsFailed" && error.refused,
++                () =>
++                  Effect.forEach(batch, (text) =>
++                    save([text]).pipe(
++                      Effect.catchIf(
++                        (error) => error._tag === "EmbeddingsFailed" && error.refused,
++                        () => Effect.sync(() => (refused.add(text), 0)),
++                      ),
++                    ),
++                  ),
++              ),
++            ),
++          { concurrency: 2 },
++        );
++        const round = counts.flat().reduce((sum, count) => sum + count, 0);
++        if (round === 0) break;
++        saved += round;
++      }
++      if (changed || saved > 0) yield* store.pruneVectors(model);
++    });
++  let filling = false;
++  let again = false;
++  let requestedAt = Number.NEGATIVE_INFINITY;
++  return {
++    /** The share of a fused score that comes from BM25 rather than similarity. */
++    keywordWeight: Math.min(1, Math.max(0, options.keywordWeight ?? defaultKeywordWeight)),
++    /** The query's vector, from a small cache or the endpoint within the time budget. */
++    query: (query: string): Effect.Effect<Option.Option<QueryVector>> =>
++      Effect.gen(function* () {
++        const cached = queries.get(query);
++        if (cached !== undefined) {
++          queries.delete(query);
++          queries.set(query, cached);
++          return Option.some(cached);
++        }
++        const embedded = yield* embed([`${instruction}${query}`]).pipe(
++          Effect.timeoutOption(options.timeoutMs ?? defaultTimeoutMillis),
++        );
++        if (Option.isNone(embedded)) {
++          yield* warn("Tool search ranked by words alone: the query embedding timed out");
++          return Option.none();
++        }
++        const vector = embedded.value.vectors[0];
++        if (vector === undefined) return Option.none();
++        const found = { model: embedded.value.model, vector };
++        // A model the fill has not embedded with yet means its vectors are missing.
++        if (model !== undefined && model !== found.model) model = undefined;
++        queries.set(query, found);
++        for (const oldest of queries.keys()) {
++          if (queries.size <= cachedQueries) break;
++          queries.delete(oldest);
++        }
++        return Option.some(found);
++      }).pipe(
++        Effect.catch(() =>
++          warn("Tool search ranked by words alone: the query embedding failed").pipe(
++            Effect.as(Option.none()),
++          ),
++        ),
++      ),
++    embedPending,
++    /**
++     * Run `work` in the background unless a fill is running, which then runs again after it.
++     * `throttled` requests, made by searches, start at most one fill a minute.
++     */
++    fill: <E>(background: BackgroundWork, throttled: boolean, work: Effect.Effect<void, E>) =>
++      Effect.gen(function* () {
++        const now = yield* Clock.currentTimeMillis;
++        if (throttled && now - requestedAt < 60_000) return;
++        requestedAt = now;
++        if (filling) {
++          again = true;
++          return;
++        }
++        filling = true;
++        const run = Effect.gen(function* () {
++          do {
++            again = false;
++            yield* work.pipe(
++              Effect.catch(() => warn("Tool search vectors were not filled; a later fill retries")),
++            );
++          } while (again);
++        }).pipe(Effect.ensuring(Effect.sync(() => (filling = false))));
++        if (!(yield* background(run))) filling = false;
++      }),
++  };
++};
++export type ToolSearchEmbeddings = ReturnType<typeof makeToolSearchEmbeddings>;
+diff --git a/packages/sdk/src/implementation/tool-search-store.ts b/packages/sdk/src/implementation/tool-search-store.ts
+index 5cc5b3138..59989571e 100644
+--- a/packages/sdk/src/implementation/tool-search-store.ts
++++ b/packages/sdk/src/implementation/tool-search-store.ts
+@@ -60,6 +60,16 @@ const Kept = Schema.Struct({
+   superseded: Schema.NullOr(Schema.Number),
+ });
+ const Listed = Schema.Struct({ listing: Schema.String });
++const Pending = Schema.Struct({ text: Schema.String });
++/** A tool row without an embedding text, with what its text is made of. */
++const Untexted = Schema.Struct({
++  id: Schema.String,
++  app: Schema.String,
++  routers: Schema.Array(ToolRouter),
++  tool: StoredTool,
++  definitions: Schema.Array(Schema.Tuple([Schema.Int, Json])),
++});
++export type UntextedRow = typeof Untexted.Type;
+ /** A ranked page as one row: every part of it read in the same statement. */
+ const Ranked = Schema.Struct({
+   total: Schema.Int,
+@@ -96,6 +106,8 @@ const batchChars = 1_000_000;
+ export const supersededRetentionMillis = 60 * 60_000;
+ 
+ const BM25 = { k1: 1.2, b: 0.75 } as const;
++/** Reciprocal rank fusion's constant, and how many tools rank by similarity alone. */
++const RRF = { k: 60, similar: 50 } as const;
+ 
+ export const makeToolSearchStore = (sql: SqlClient.SqlClient) => {
+   const failed = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
+@@ -315,6 +327,90 @@ export const makeToolSearchStore = (sql: SqlClient.SqlClient) => {
+         );
+         yield* supersede(row, now);
+       }).pipe(sql.withTransaction, failed),
++    /**
++     * Tool rows of current listings that have no embedding text, at most `limit` of them, with
++     * their app's name, their listing's routers and the definitions their schemas name.
++     */
++    untexted: (limit: number) =>
++      sql`select s.id, a.name as app, l.routers, s.tool,
++          coalesce((select json_agg(json_build_array(d.position, d.definition))
++            from executor_tool_search_definitions d
++            where d.id in (
++              select s.listing || ':' || p.position
++              from json_array_elements_text(s.definitions) as p(position))), '[]'::json)
++            as definitions
++        from executor_tool_search s
++        join executor_tool_search_listings l on l.listing = s.listing
++        join executor_apps a on a.id = l.app
++        where l.superseded is null and l.target is not null and not exists (
++          select 1 from executor_tool_search_texts x
++          where x.id = s.id and x.source = sha256(convert_to(s.tool::text, 'UTF8')))
++        limit ${limit}`.pipe(
++        Effect.flatMap(Schema.decodeUnknownEffect(Schema.Array(Untexted))),
++        failed,
++      ),
++    /**
++     * Keep the embedding texts of tool rows, each with the digest of the tool it was made from, so
++     * a row rewritten with another tool has none until it is made again. Rows removed meanwhile
++     * are skipped.
++     */
++    saveTexts: (texts: ReadonlyArray<{ readonly id: string; readonly text: string }>) =>
++      sql`insert into executor_tool_search_texts (id, source, digest, text)
++        select s.id, sha256(convert_to(s.tool::text, 'UTF8')),
++          sha256(convert_to(v.text, 'UTF8')), v.text
++        from json_to_recordset(${JSON.stringify(texts)}::json) as v(id text, text text)
++        join executor_tool_search s on s.id = v.id
++        on conflict (id) do update
++          set source = excluded.source, digest = excluded.digest, text = excluded.text`.pipe(
++        Effect.asVoid,
++        failed,
++      ),
++    /** Texts of tool rows that have no vector of the model yet, at most `limit` of them. */
++    pendingTexts: (model: string, limit: number) =>
++      sql`select distinct x.text from executor_tool_search_texts x
++        where not exists (
++          select 1 from executor_tool_search_vectors v
++          where v.model = ${model} and v.digest = x.digest)
++        limit ${limit}`.pipe(
++        Effect.flatMap(Schema.decodeUnknownEffect(Schema.Array(Pending))),
++        Effect.map((rows) => rows.map((row) => row.text)),
++        failed,
++      ),
++    /** Keep the unit vectors of these texts; a vector kept meanwhile stays. */
++    saveVectors: (
++      model: string,
++      vectors: ReadonlyArray<{ readonly text: string; readonly embedding: ReadonlyArray<number> }>,
++    ) =>
++      sql`insert into executor_tool_search_vectors (model, digest, embedding)
++        select ${model}, sha256(convert_to(v.text, 'UTF8')), v.embedding
++        from json_to_recordset(${JSON.stringify(vectors)}::json) as v(text text, embedding real[])
++        on conflict do nothing`.pipe(Effect.asVoid, failed),
++    /**
++     * Delete texts of rows that are gone or hold another tool, then vectors of other models and
++     * those no text has any more.
++     */
++    pruneVectors: (model: string) =>
++      Effect.gen(function* () {
++        yield* sql`delete from executor_tool_search_texts x where not exists (
++          select 1 from executor_tool_search s
++          where s.id = x.id and sha256(convert_to(s.tool::text, 'UTF8')) = x.source)`;
++        yield* sql`delete from executor_tool_search_vectors v
++          where v.model <> ${model} or not exists (
++            select 1 from executor_tool_search_texts x where x.digest = v.digest)`;
++      }).pipe(failed),
++    /**
++     * Create the tables tool search keeps its texts and vectors in, unless they exist. They are
++     * derived data outside the versioned schema: an executor without embeddings never creates
++     * them, and a server that does not know them leaves them alone. `real[]` needs no extension.
++     */
++    prepareVectors: Effect.gen(function* () {
++      yield* sql`create table if not exists executor_tool_search_texts (
++        id varchar(80) primary key, source bytea not null, digest bytea not null,
++        text text not null)`;
++      yield* sql`create table if not exists executor_tool_search_vectors (
++        model text not null, digest bytea not null, embedding real[] not null,
++        primary key (model, digest))`;
++    }).pipe(failed),
+     /**
+      * One page of the targets' tools that match any term, ranked by BM25, or of every tool in
+      * target and name order when there are no terms, with everything the page shows. Statistics
+@@ -326,12 +422,24 @@ export const makeToolSearchStore = (sql: SqlClient.SqlClient) => {
+      * Ranking and reading the page's tools, definitions and routers are one statement, so they
+      * read one snapshot: a page never holds a row the scopes did not rank, even while another
+      * evaluation replaces the listing's rows. `missing` names targets whose listing has no rows.
++     *
++     * With a query vector, items rank by weighted reciprocal rank fusion of their BM25 rank and
++     * their rank by cosine similarity, each the best of their rows. An item without a vector yet
++     * takes its BM25 rank for both, and items that match no term rank only among the 50 most
++     * similar.
+      */
+     page: (input: {
+       readonly targets: ReadonlyArray<RankedTarget>;
+       readonly terms: ReadonlyArray<string>;
+       readonly offset: number;
+       readonly limit: number;
++      readonly similar?:
++        | {
++            readonly model: string;
++            readonly vector: ReadonlyArray<number>;
++            readonly keywordWeight: number;
++          }
++        | undefined;
+     }) =>
+       Effect.gen(function* () {
+         if (input.targets.length === 0)
+@@ -363,6 +471,48 @@ export const makeToolSearchStore = (sql: SqlClient.SqlClient) => {
+                       + ${BM25.b}::float8 * hits.length / stats.avgdl)))::float8 as score
+                 from hits join df using (term) cross join stats
+                 group by hits.ordinal, hits.id, hits.name, hits.signature)`;
++        const { similar } = input;
++        const best =
++          similar === undefined || input.terms.length === 0
++            ? sql`best as (
++              select scope.app, scored.name, scored.signature, max(scored.score) as score
++              from scored join scope using (ordinal, id)
++              group by scope.app, scored.name, scored.signature)`
++            : // Each distinct vector's cosine is computed once, however many rows share it.
++              sql`digests as materialized (
++              select distinct scope.id, x.digest
++              from scope
++              join executor_tool_search s on s.id = scope.id
++              join executor_tool_search_texts x
++                on x.id = s.id and x.source = sha256(convert_to(s.tool::text, 'UTF8'))),
++            cosines as materialized (
++              select v.digest,
++                (select sum(a * b) from unnest(v.embedding, q.vector) as x(a, b))::float8 as score
++              from executor_tool_search_vectors v
++              cross join (select ${`{${similar.vector.join(",")}}`}::real[] as vector) q
++              where v.model = ${similar.model} and cardinality(v.embedding) = cardinality(q.vector)
++                and v.digest in (select digest from digests)),
++            nearest as (select digests.id, cosines.score from digests join cosines using (digest)),
++            items as (
++              select scope.app, scope.name, scope.signature, max(scored.score) as bm25,
++                max(nearest.score) as cosine
++              from scope
++              left join scored using (ordinal, id)
++              left join nearest using (id)
++              group by scope.app, scope.name, scope.signature),
++            ranks as (
++              select *, rank() over (order by bm25 desc nulls last) as bm25_rank,
++                rank() over (order by cosine desc nulls last) as cosine_rank
++              from items),
++            best as (
++              select app, name, signature,
++                (case when bm25 is null then 0
++                  else ${similar.keywordWeight}::float8 / (${RRF.k} + bm25_rank) end
++                + ${1 - similar.keywordWeight}::float8
++                  / (${RRF.k} + case when cosine is null then bm25_rank else cosine_rank end)
++                )::float8 as score
++              from ranks
++              where bm25 is not null or (cosine is not null and cosine_rank <= ${RRF.similar}))`;
+         const [page] =
+           yield* sql`with t(ordinal, listing, app, target, labels, length) as (values ${values}),
+           present as (
+@@ -377,10 +527,7 @@ export const makeToolSearchStore = (sql: SqlClient.SqlClient) => {
+             join executor_tool_search s on s.listing = t.listing
+             where ${permitted}),
+           ${scored},
+-          best as (
+-            select scope.app, scored.name, scored.signature, max(scored.score) as score
+-            from scored join scope using (ordinal, id)
+-            group by scope.app, scored.name, scored.signature),
++          ${best},
+           merged as (
+             select (array_agg(scope.id order by scope.ordinal, scope.id))[1] as id,
+               min(scope.ordinal) as target, best.name, best.score,
+diff --git a/packages/sdk/src/implementation/tool-search.ts b/packages/sdk/src/implementation/tool-search.ts
+index 30ecdfde7..d706943cf 100644
+--- a/packages/sdk/src/implementation/tool-search.ts
++++ b/packages/sdk/src/implementation/tool-search.ts
+@@ -3,7 +3,7 @@
+  * its target's labels. A listing's rows keep each shared `$defs` entry once, as the durable
+  * listing text does; only a page's tools are put back together with their definitions.
+  */
+-import { Crypto, Effect, JsonPointer, Schema } from "effect";
++import { Crypto, Effect, JsonPointer, Option, Schema } from "effect";
+ import { Hex } from "effect/encoding";
+ import { type Json, JsonObject, StorageError } from "../contracts/shared.ts";
+ import { invocationEntries, type AppAccounts } from "../contracts/apps.ts";
+@@ -18,7 +18,9 @@ import type { ToolListing } from "./listings.ts";
+ import { restoreTool, shareListing, type StoredTool } from "./listing-json.ts";
+ import type { InvocationSnapshot } from "./tools.ts";
+ import { scopedSelection } from "./selection.ts";
+-import type { SearchToolRow, ToolSearchStore } from "./tool-search-store.ts";
++import type { SearchToolRow, ToolSearchStore, UntextedRow } from "./tool-search-store.ts";
++import type { ToolSearchEmbeddings } from "./tool-search-embeddings.ts";
++import type { BackgroundWork } from "../contracts/declarations.ts";
+ 
+ /** Lowercase words, with camelCase and snake_case split and a plural `s` removed. */
+ export const words = (text: string): Array<string> =>
+@@ -41,7 +43,12 @@ const stem = (word: string) =>
+  * The names and descriptions of a tool's top-level input properties, after a top-level reference,
+  * read from its listed schema.
+  */
+-const inputText = (tool: Tool): ReadonlyArray<string> => {
++const inputText = (tool: Tool): ReadonlyArray<string> =>
++  inputProperties(tool).flatMap(([name, description]) =>
++    description === undefined ? [name] : [name, description],
++  );
++/** A tool's top-level input properties with their descriptions. */
++const inputProperties = (tool: Tool): ReadonlyArray<readonly [string, string | undefined]> => {
+   const input: JsonObject = Schema.is(JsonObject)(tool.inputSchema) ? tool.inputSchema : {};
+   const ref = typeof input.$ref === "string" ? input.$ref : undefined;
+   const reference = ref?.match(/^#\/(?:\$defs|definitions)\/([^/]+)$/)?.[1];
+@@ -53,9 +60,9 @@ const inputText = (tool: Tool): ReadonlyArray<string> => {
+         ? undefined
+         : objectOf(definitions[JsonPointer.unescapeToken(reference)]).properties,
+   );
+-  return Object.entries(properties).flatMap(([name, property]) => {
++  return Object.entries(properties).map(([name, property]) => {
+     const description = objectOf(property).description;
+-    return typeof description === "string" ? [name, description] : [name];
++    return [name, typeof description === "string" ? description : undefined] as const;
+   });
+ };
+ const objectOf = (value: unknown): JsonObject => (Schema.is(JsonObject)(value) ? value : {});
+@@ -81,11 +88,73 @@ const toolTerms = (listing: ToolListing, tool: Tool) => {
+   ].flatMap(words);
+ };
+ 
++/**
++ * What an embeddings model reads for a tool row: its purpose first, as its title, description,
++ * name and input names, then where it is listed. A thousand characters stay well inside the
++ * context of small embedding models.
++ */
++const embeddingText = (row: UntextedRow) => {
++  const definitions = new Map(row.definitions);
++  const tool = restoreTool(row.tool, (position) => definitions.get(position)) ?? row.tool;
++  const root = row.routers.find((router) => router.path === "");
++  const router =
++    tool.router === undefined
++      ? undefined
++      : row.routers.find((candidate) => candidate.path === tool.router);
++  return [
++    tool.title ?? "",
++    tool.description.slice(0, 600),
++    tool.name.replace(/[^\p{L}\p{N}]+/gu, " "),
++    inputProperties(tool)
++      .map(([name]) => name)
++      .join(" ")
++      .slice(0, 200),
++    [row.app, root?.title ?? "", router?.title ?? ""].filter((part) => part !== "").join(" "),
++  ]
++    .filter((part) => part.trim() !== "")
++    .join("\n")
++    .slice(0, 1_000);
++};
++
+ export const makeToolSearch = (options: {
+   readonly store: ToolSearchStore;
+   readonly crypto: Crypto.Crypto;
++  /** Ranks by similarity too, for queries with words; vectors fill on `background`. */
++  readonly embeddings?: ToolSearchEmbeddings | undefined;
++  readonly background?: BackgroundWork | undefined;
+ }) => {
+-  const { store } = options;
++  const { store, embeddings, background } = options;
++  /** Create the texts and vectors tables once per executor, before similarity first reads them. */
++  let prepared = false;
++  const prepare = Effect.suspend(() =>
++    prepared
++      ? Effect.void
++      : store.prepareVectors.pipe(Effect.tap(Effect.sync(() => void (prepared = true)))),
++  ); /**
++   * Give tool rows their embedding texts, then embed the texts without a vector, on the
++   * executor's lifetime. Writes never make texts, so a listing kept from before the model was
++   * configured, or written by a server without one, gets them here too.
++   */
++  const fill = (throttled: boolean) =>
++    embeddings === undefined || background === undefined
++      ? Effect.void
++      : embeddings.fill(
++          background,
++          throttled,
++          Effect.gen(function* () {
++            yield* prepare;
++            let texted = 0;
++            for (;;) {
++              const untexted = yield* store.untexted(256);
++              if (untexted.length === 0) break;
++              yield* store.saveTexts(
++                untexted.map((row) => ({ id: row.id, text: embeddingText(row) })),
++              );
++              texted += untexted.length;
++            }
++            yield* embeddings.embedPending(store, texted > 0);
++          }),
++        );
+   const digest = (text: string) =>
+     options.crypto.digest("SHA-256", encoder.encode(text)).pipe(
+       Effect.map(Hex.encode),
+@@ -210,6 +279,7 @@ export const makeToolSearch = (options: {
+           },
+           content,
+         );
++        yield* fill(false);
+       }).pipe(
+         Effect.withSpan("sdk.tools.search.write", {
+           attributes: { "executor.app.id": state.app.id, "executor.tools": listing.items.length },
+@@ -231,11 +301,23 @@ export const makeToolSearch = (options: {
+             labels: rest.labels.flatMap(words),
+           })),
+         );
++        const query =
++          embeddings === undefined || terms.length === 0 || embeddings.keywordWeight === 1
++            ? Option.none()
++            : yield* prepare.pipe(
++                Effect.andThen(embeddings.query(input.query)),
++                Effect.orElseSucceed(() => Option.none()),
++              );
++        if (Option.isSome(query)) yield* fill(true);
+         const ranked = yield* store.page({
+           terms,
+           targets,
+           offset: input.offset,
+           limit: input.limit,
++          similar: Option.match(query, {
++            onNone: () => undefined,
++            onSome: (found) => ({ ...found, keywordWeight: embeddings?.keywordWeight ?? 1 }),
++          }),
+         });
+         const definitions = new Map(
+           ranked.definitions.map(([listing, position, definition]) => [
+-- 
+2.55.0
+
