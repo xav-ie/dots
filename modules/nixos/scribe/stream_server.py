@@ -33,6 +33,8 @@ Tunables (set by the Nix module via env):
 
 A stream's first text message is {"sampleRate", "sessionId", "channel", "save",
 "boost"}; "boost" (participant names) is boosted along with the vocabulary.
+{"type": "end"} flushes the last partial step and is answered with the final
+words and {"type": "done"}; the stream should send no audio after it.
 
 GET / serves ui.html, a browser for those sessions over the /api routes, and
 /mcp is an MCP server (streamable HTTP) for listing, reading and searching
@@ -44,6 +46,7 @@ and editing the vocabulary.
 import asyncio
 import ctypes
 import gc
+import io
 import json
 import logging
 import math
@@ -57,7 +60,14 @@ import nemo.collections.asr as nemo_asr
 import numpy as np
 import soundfile as sf
 import torch
-from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    Request,
+    UploadFile,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.responses import FileResponse, HTMLResponse
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
@@ -289,6 +299,40 @@ async def health():
         "right_s": RIGHT_S,
         "ts_offset_s": TS_OFFSET_S,
     }
+
+
+def _transcribe_clip(audio_16k, phrases):
+    """A whole clip through the same chunked decoding as /ws. Blocking — via to_thread."""
+    state = StreamState()
+    try:
+        state.set_boost(phrases)
+        while audio_16k.shape[0] > (size := state.step_size()):
+            state.step(audio_16k[:size])
+            audio_16k = audio_16k[size:]
+        state.step(audio_16k, last=True)
+    finally:
+        state.close()
+    return " ".join(w["word"] for w in state.words)
+
+
+@app.post("/v1/audio/transcriptions")
+async def transcriptions(file: UploadFile):
+    """OpenAI-style batch transcription (desktop dictation), boosted with the
+    vocabulary. Only `file` is read; model/prompt/response_format are ignored
+    and the reply is always {"text"}."""
+    try:
+        audio, rate = sf.read(io.BytesIO(await file.read()), dtype="float32")
+    except RuntimeError as e:
+        raise HTTPException(400, f"unreadable audio: {e}") from None
+    if audio.ndim > 1:
+        audio = audio.mean(axis=1)
+    if audio.size == 0:
+        return {"text": ""}
+    audio = _to_16k(audio, rate)
+    phrases = _boost_phrases(None)
+    async with _gpu_lock:
+        text = await asyncio.to_thread(_transcribe_clip, audio, phrases)
+    return {"text": text}
 
 
 class Recording:
@@ -584,6 +628,20 @@ async def ws(websocket: WebSocket):
                 break
             if msg.get("text"):
                 config = json.loads(msg["text"])
+                # The client is done talking: decode the audio still short of a
+                # step (and the right context held back), then say so.
+                if config.get("type") == "end":
+                    tail = _to_16k(state.pending, src_rate)
+                    state.pending = np.empty(0, dtype=np.float32)
+                    if recording is not None:
+                        recording.audio.write(tail)
+                    if tail.size == 0:
+                        tail = np.zeros(1, dtype=np.float32)
+                    async with _gpu_lock:
+                        await asyncio.to_thread(state.step, tail, True)
+                    await send()
+                    await websocket.send_text(json.dumps({"type": "done"}))
+                    continue
                 if "sampleRate" in config:
                     src_rate = int(config["sampleRate"])
                     if recording is None:
