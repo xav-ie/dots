@@ -10,7 +10,7 @@ import GLib from "gi://GLib";
 // neutral 0-warmth/100-brightness case (and the off switch) restores the
 // compositor default via the special `[[EMPTY]]` value (what `hyprshade off`
 // set under the hood). Two alternating files make Hyprland recompile when only
-// the contents changed: re-applying the keyword with an unchanged path is
+// the contents changed: re-applying the option with an unchanged path is
 // early-returned, so each apply flips to the other slot.
 
 // Black at 0; keep a usable floor on the brightness slider.
@@ -20,6 +20,13 @@ const NEUTRAL_BRIGHT = 100;
 
 const CACHE_DIR = `${GLib.get_user_cache_dir()}/screen-filter`;
 const shaderPath = (slot: number) => `${CACHE_DIR}/filter-${slot}.glsl`;
+
+// Hyprland's Lua config has no `hyprctl keyword`; options go through hl.config.
+const setShader = (value: string) => [
+  "hyprctl",
+  "eval",
+  `hl.config({ decoration = { screen_shader = ${JSON.stringify(value)} } })`,
+];
 
 const shaderSource = (warmth: number, bright: number) => `precision highp float;
 varying vec2 v_texcoord;
@@ -60,7 +67,10 @@ export default function ScreenFilter() {
       // still false, so it doesn't re-apply the already-live shader), then
       // flip on.
       warmthSlider.value = Math.round(parseFloat(w[1]) * 100);
-      brightSlider.value = Math.max(MIN_BRIGHT, Math.round(parseFloat(b[1]) * 100));
+      brightSlider.value = Math.max(
+        MIN_BRIGHT,
+        Math.round(parseFloat(b[1]) * 100),
+      );
       setOn(true);
     })
     .catch(() => {});
@@ -74,15 +84,16 @@ export default function ScreenFilter() {
     pending = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 120, () => {
       pending = 0;
       const neutral = w === NEUTRAL_WARMTH && b === NEUTRAL_BRIGHT;
-      const argv = !enabled || neutral
-        ? ["hyprctl", "keyword", "decoration:screen_shader", "[[EMPTY]]"]
-        : (() => {
-            slot = 1 - slot;
-            const path = shaderPath(slot);
-            GLib.mkdir_with_parents(CACHE_DIR, 0o755);
-            GLib.file_set_contents(path, shaderSource(w, b));
-            return ["hyprctl", "keyword", "decoration:screen_shader", path];
-          })();
+      const argv =
+        !enabled || neutral
+          ? setShader("[[EMPTY]]")
+          : (() => {
+              slot = 1 - slot;
+              const path = shaderPath(slot);
+              GLib.mkdir_with_parents(CACHE_DIR, 0o755);
+              GLib.file_set_contents(path, shaderSource(w, b));
+              return setShader(path);
+            })();
       execAsync(argv).catch((err) =>
         console.error("notification-center: hyprctl screen_shader failed", err),
       );
