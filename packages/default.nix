@@ -183,6 +183,10 @@ rec {
   chrome-headless-shell = pkgs.callPackage ./chrome-headless-shell { };
   claude-overlay = pkgs.callPackage ./claude-overlay { };
   claude-yolo = pkgs.callPackage ./claude-yolo { };
+  dictate = pkgs.callPackage ./dictate {
+    inherit agsPackages;
+    fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
+  };
   executor = pkgs.callPackage ./executor { inherit executor-src; };
   move-active = pkgs.callPackage ./move-active { inherit writeNuApplication; };
   # Built upstream in the morrow flake; override only the fonts so it tracks the

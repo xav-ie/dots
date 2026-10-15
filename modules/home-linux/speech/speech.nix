@@ -9,11 +9,12 @@
       options.speech = {
         app = lib.mkOption {
           type = lib.types.enum [
+            "dictate"
             "hyprwhspr"
             "voxtype"
             "voquill"
           ];
-          default = "hyprwhspr";
+          default = "dictate";
           description = "Which speech-to-text application to use.";
         };
 
