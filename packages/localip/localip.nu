@@ -9,14 +9,14 @@ def main [] {
     "Darwin" => (route -n get 192.0.2.1
                 | lines
                 | where ($it | str contains "interface:")
-                | split column -c ' '
-                | get column2
+                | split column -c ' ' key value
+                | get value
                 | first
                 | each {|it| ifconfig $it}
                 | lines
                 | where ($it | str contains "inet ")
-                | split column -c ' '
-                | get column2
+                | split column -c ' ' key value
+                | get value
                 | first)
   }
 }
