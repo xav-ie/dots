@@ -16,8 +16,8 @@
                                {
                                  unit: $unit,
                                  bad_setting: (
-                                   systemctl --user status $unit
-                                   | str contains 'bad-setting'
+                                   (systemctl --user show --property=LoadState --value $unit
+                                   | str trim) == 'bad-setting'
                                  )
                                }
                              }
