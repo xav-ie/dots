@@ -129,11 +129,12 @@ export default function BluetoothMode({ register }: ModeProps) {
   });
   onCleanup(unsubscribe);
 
-  // Connected first, then by frecency, then alphabetically.
+  // Connected first, then paired, then by frecency, then alphabetically.
   const sorted = createComputed(() => {
     const fre = frecency();
     return [...devices()].sort((a, b) => {
       if (a.connected !== b.connected) return a.connected ? -1 : 1;
+      if (a.paired !== b.paired) return a.paired ? -1 : 1;
       const diff = fr.score(fre, b.address) - fr.score(fre, a.address);
       if (diff !== 0) return diff;
       const an = a.alias || a.name || a.address;
