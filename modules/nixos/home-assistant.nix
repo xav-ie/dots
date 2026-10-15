@@ -71,6 +71,9 @@
                 in
                 {
                   temperature_unit = "C";
+                  # Any core key (time_zone, latitude, ...) in YAML locks the
+                  # home location and zone in the UI, so leave them to the UI.
+                  time_zone = null;
                   media_dirs = lib.attrsets.optionalAttrs (isDefined mediaDir) { media = mediaDir; };
                   allowlist_external_dirs = lib.lists.optional (isDefined mediaDir) mediaDir;
                 };
