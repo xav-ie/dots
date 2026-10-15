@@ -71,7 +71,6 @@
     # in flake-edit.toml's ignore list so `just dedupe` stops re-adding it.
     openspec.url = "github:Fission-AI/OpenSpec";
     openspec.inputs.nixpkgs.follows = "nixpkgs";
-    plover-flake.url = "github:openstenoproject/plover-flake";
     quadlet-nix.url = "github:SEIAROTg/quadlet-nix";
     ream.url = "git+ssh://git@github.com/xav-ie/ream";
     ream.inputs.nixpkgs.follows = "nixpkgs";
@@ -217,8 +216,6 @@
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
     nuenv.inputs.nixpkgs.follows = "nixpkgs";
     nuenv.inputs.systems.follows = "systems";
-    plover-flake.inputs.nixpkgs.follows = "nixpkgs";
-    plover-flake.inputs.treefmt-nix.follows = "treefmt-nix";
     rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";

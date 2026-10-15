@@ -221,6 +221,7 @@ in
         description = config.defaultUser;
         hashedPasswordFile = config.sops.secrets."${config.defaultUser}/hashed_password".path;
         extraGroups = [
+          "dialout"
           "docker"
           "input"
           "networkmanager"
@@ -304,7 +305,6 @@ in
       orca.enable = true;
       flatpak.enable = true;
       geoclue2.enable = true;
-      plover.enable = true;
       virtual-headset = {
         enable = true;
         user = config.defaultUser;
