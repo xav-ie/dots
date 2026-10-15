@@ -124,6 +124,13 @@
       # the module path). Merges with nushell.nix's extraConfig.
       programs.nushell.extraConfig = "use ${herdrCompletions}/herdr.nu *";
 
+      # herdr detects agents by its pane pty's foreground process, which atuin
+      # hex's pty-proxy would hide behind `atuin`. Hex skips itself when this
+      # (unexported) marker is already set.
+      programs.nushell.extraEnv = ''
+        if 'HERDR_ENV' in $env { $env.__atuin_pty_proxy = { owns_tty: false } }
+      '';
+
       # Out-of-store symlink so `herdr server reload-config` picks up edits to
       # the live repo checkout without a rebuild.
       xdg.configFile."herdr/config.toml".source =
