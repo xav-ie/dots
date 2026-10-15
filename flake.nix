@@ -76,6 +76,11 @@
     ream.inputs.nixpkgs.follows = "nixpkgs";
     ream.inputs.flake-parts.follows = "flake-parts";
     ream.inputs.treefmt-nix.follows = "treefmt-nix";
+    scribe.url = "git+ssh://git@github.com/xav-ie/scribe";
+    scribe.inputs.nixpkgs.follows = "nixpkgs";
+    scribe-desktop.url = "git+ssh://git@github.com/xav-ie/scribe-desktop";
+    scribe-desktop.inputs.nixpkgs.follows = "nixpkgs";
+    scribe-desktop.inputs.ags.follows = "ags";
     sketchybar-icons.url = "github:xav-ie/sketchybar-icons";
     sketchybar-icons.inputs.nixpkgs.follows = "nixpkgs";
     sketchybar-icons.inputs.flake-parts.follows = "flake-parts";

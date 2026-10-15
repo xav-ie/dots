@@ -25,6 +25,10 @@
   # browser-session-mcp, extracted to its own repo
   # (inputs.browser-session-mcp.packages.<system>.default); linux-only.
   browser-session-mcp-pkg ? null,
+  # scribe-desktop, from the scribe repo
+  # (inputs.scribe.packages.<system>.scribe-desktop);
+  # linux-only.
+  scribe-desktop-pkg ? null,
   # sketchybar-icons, extracted to its own repo
   # (inputs.sketchybar-icons.packages.<system>.default); darwin-only.
   sketchybar-icons-pkg ? null,
@@ -183,10 +187,6 @@ rec {
   chrome-headless-shell = pkgs.callPackage ./chrome-headless-shell { };
   claude-overlay = pkgs.callPackage ./claude-overlay { };
   claude-yolo = pkgs.callPackage ./claude-yolo { };
-  dictate = pkgs.callPackage ./dictate {
-    inherit agsPackages;
-    fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
-  };
   executor = pkgs.callPackage ./executor { inherit executor-src; };
   move-active = pkgs.callPackage ./move-active { inherit writeNuApplication; };
   # Built upstream in the morrow flake; override only the fonts so it tracks the
@@ -214,6 +214,10 @@ rec {
   record-section = pkgs.callPackage ./record-section { };
   screencast-border = pkgs.callPackage ./screencast-border {
     inherit agsPackages;
+    fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
+  };
+  # Built upstream in the scribe flake; override only the font.
+  scribe-desktop = scribe-desktop-pkg.override {
     fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
   };
   snippet-mcp = pkgs.callPackage ./snippet-mcp { };

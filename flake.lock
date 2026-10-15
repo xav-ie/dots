@@ -1890,6 +1890,8 @@
         "ream": "ream",
         "rust-analyzer-src": "rust-analyzer-src",
         "rust-overlay": "rust-overlay",
+        "scribe": "scribe",
+        "scribe-desktop": "scribe-desktop",
         "simulstreaming-src": "simulstreaming-src",
         "sketchybar-icons": "sketchybar-icons",
         "sketchybar-src": "sketchybar-src",
@@ -1941,6 +1943,49 @@
         "owner": "oxalica",
         "repo": "rust-overlay",
         "type": "github"
+      }
+    },
+    "scribe": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792116136,
+        "narHash": "sha256-sGGk+jWXHigMj/YYVFkKf8yHPxN/M/GRtDUAG2vPBp4=",
+        "ref": "refs/heads/main",
+        "rev": "3ec25b0855f5347bbb22828918dd30d9e590bbda",
+        "revCount": 114,
+        "type": "git",
+        "url": "ssh://git@github.com/xav-ie/scribe"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/xav-ie/scribe"
+      }
+    },
+    "scribe-desktop": {
+      "inputs": {
+        "ags": [
+          "ags"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792114157,
+        "narHash": "sha256-y2ZeFKaogwErQqoQb5lvfCAkN9OvHBpKcfPjOZLvvk0=",
+        "ref": "refs/heads/main",
+        "rev": "0229fd16db7cc1666870c16c127abd07377d6abd",
+        "revCount": 19,
+        "type": "git",
+        "url": "ssh://git@github.com/xav-ie/scribe-desktop"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/xav-ie/scribe-desktop"
       }
     },
     "simulstreaming-src": {

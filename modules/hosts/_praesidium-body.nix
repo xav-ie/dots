@@ -379,7 +379,7 @@ in
       # done client-side by joining word timestamps against the meeting's
       # active-speaker timeline (no audio diarization here). parakeet-unified
       # buffered streaming on the GPU, chosen by ~/Projects/asr-evals. See
-      # nixos/scribe/.
+      # nixos/scribe.nix.
       scribe.enable = true;
     };
 
