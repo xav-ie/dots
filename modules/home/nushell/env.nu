@@ -2,6 +2,18 @@
 
 $env.SHELL = "nu"
 
+# Multiplexer servers (herdr, tmux) hand panes the env of whoever started them:
+# one launched over ssh has no WAYLAND_DISPLAY, one that outlived a compositor
+# restart points at a dead socket. Either way wl-copy/wl-paste (and image paste
+# in Claude) break, so repoint at the live socket.
+if ($env.XDG_RUNTIME_DIR? | is-not-empty) {
+  let current = $env.WAYLAND_DISPLAY? | default ""
+  if $current == "" or not ($env.XDG_RUNTIME_DIR | path join $current | path exists) {
+    let live = glob $"($env.XDG_RUNTIME_DIR)/wayland-*" | where $it !~ '\.lock$' | first 1
+    if ($live | is-not-empty) { $env.WAYLAND_DISPLAY = $live.0 | path basename }
+  }
+}
+
 def get_time []: nothing -> string {
   date now | format date '%m/%d %H:%M'
 }
