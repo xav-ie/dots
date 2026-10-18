@@ -47,7 +47,7 @@ gtop=$((80 + $(pango_h "$(${weather} 0 | sed -n 1,2p)") + 10))
 # across both days (the high/low numbers sit in the weather row above).
 graphs=()
 if [[ -f $dir/wttr.json ]]; then
-  mapfile -t graphs < <(jq -r --argjson top "$gtop" '
+  mapfile -t graphs < <(jq -r --argjson top "$gtop" --argjson now "$(($(date +%-H) * 60 + $(date +%-M)))" '
     def S: . * 1.5 | floor;
     [.weather[0,1].hourly | map({h: ((.time | tonumber) / 100), t: (.tempF | tonumber), r: (.chanceofrain | tonumber)})]
     # 3-hourly samples stop at 9pm: run each day to the next midnight (today via the first sample of tomorrow)
@@ -66,6 +66,7 @@ if [[ -f $dir/wttr.json ]]; then
       "-fill", "rgba(122,162,247,0.30)", "-stroke", "#7aa2f7", "-strokewidth", "3",
       "-draw", "polygon \(X(0)),\(Y(0)) \($rain) \(X(24)),\(Y(0))",
       "-fill", "none", "-stroke", "#e0af68", "-strokewidth", "4.5", "-draw", "polyline \($temp)",
+      (if $i == 0 then "-stroke", "#bb9af7", "-strokewidth", "7", "-draw", "stroke-dasharray 14 10 line \(X($now / 60)),\(Y(1) - 6) \(X($now / 60)),\(Y(0))" else empty end),
       "-stroke", "none", "-fill", "rgba(242,238,251,0.75)", "-pointsize", "30",
       (["6:6a", "12:12p", "18:6p", "24:12a"][] | split(":") | "-annotate", "+\(X(.[0] | tonumber) - (if .[0] == "24" then 44 else 18 end))+\(Y(0) + 36)", .[1])
   ' "$dir/wttr.json")
