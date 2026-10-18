@@ -116,7 +116,7 @@ final class Job: ObservableObject {
     progress = 0
     error = nil
     let encode = { (audio: [String], cleanup: URL?) in
-      self.spawn(inputArgs + audio + args + [out.path], duration: duration, range: (0.1, 0.9)) {
+      self.spawn(inputArgs + audio + args + [out.path], duration: duration, range: (0.1, 1)) {
         if let cleanup { try? FileManager.default.removeItem(at: cleanup) }
         if $0 { onDone(out) } else { try? FileManager.default.removeItem(at: out) }
       }
