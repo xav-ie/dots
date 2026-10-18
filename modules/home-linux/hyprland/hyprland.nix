@@ -114,7 +114,9 @@
               background = {
                 monitor = "";
                 path = "${config.xdg.cacheHome}/hyprlock/potd-lock.jpg";
-                reload_time = 300;
+                # hyprlock only reloads when reload_cmd is set; it re-reads the path's mtime each tick
+                reload_cmd = "echo ${config.xdg.cacheHome}/hyprlock/potd-lock.jpg";
+                reload_time = 60;
                 color = "rgb(26, 23, 38)";
               };
 

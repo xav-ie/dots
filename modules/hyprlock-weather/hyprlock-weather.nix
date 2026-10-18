@@ -84,7 +84,7 @@
       # notification-center Weather card, so the two stay visually consistent.
       _module.args.hyprlock-weather = weather;
 
-      # Re-bake the lock background hourly (and soon after login): the cards follow the agenda's
+      # Re-bake the lock background every 15 minutes (and soon after login): the cards follow the agenda's
       # length and the graphs the forecast; hyprlock reloads the image while locked.
       systemd.user.services.hyprlock-potd = {
         Unit.Description = "Bake the hyprlock picture-of-the-day background";
@@ -94,10 +94,10 @@
         };
       };
       systemd.user.timers.hyprlock-potd = {
-        Unit.Description = "Re-bake the hyprlock background hourly";
+        Unit.Description = "Re-bake the hyprlock background every 15 minutes";
         Timer = {
           OnStartupSec = "1min";
-          OnCalendar = "hourly";
+          OnCalendar = "*:0/15";
           Persistent = true;
         };
         Install.WantedBy = [ "timers.target" ];
