@@ -570,9 +570,11 @@ in
               stored_hash=""
               [ -f "$hash_file" ] && stored_hash=$(cat "$hash_file")
               if [ "$current_hash" != "$stored_hash" ]; then
-                for plist in /Users/${config.defaultUser}/Library/LaunchAgents/org.nixos.*.plist; do
-                  [ -e "$plist" ] || continue
-                  label=$(basename "$plist" .plist)
+                for label in ${
+                  lib.concatMapStringsSep " " (a: a.serviceConfig.Label) (
+                    builtins.attrValues config.launchd.user.agents
+                  )
+                }; do
                   echo "🍃 Relaunching $label"
                   sudo -u ${config.defaultUser} launchctl kickstart -k "gui/$(id -u ${config.defaultUser})/$label" || true
                 done
