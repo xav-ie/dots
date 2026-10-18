@@ -14,8 +14,6 @@
     atuin.inputs.flake-parts.follows = "flake-parts";
     atuin.inputs.nixpkgs.follows = "nixpkgs";
     beads.url = "github:steveyegge/beads";
-    divvy.url = "git+ssh://git@github.com/xav-ie/divvy";
-    divvy.inputs.nixpkgs.follows = "nixpkgs";
     browser-session-mcp.url = "github:xav-ie/browser-session-mcp";
     browser-session-mcp.inputs.nixpkgs.follows = "nixpkgs";
     browser-session-mcp.inputs.crane.follows = "crane";
