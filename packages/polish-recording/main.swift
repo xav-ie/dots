@@ -215,8 +215,7 @@ struct ContentView: View {
       }
       .padding(20)
     }
-    .frame(width: 640)
-    .fixedSize(horizontal: false, vertical: true)
+    .frame(minWidth: 560, idealWidth: 640)
     .navigationTitle(input?.lastPathComponent ?? "Polish Recording")
     .navigationSubtitle(
       input.map {
@@ -268,7 +267,9 @@ struct ContentView: View {
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
       }
     }
-    .aspectRatio(aspect, contentMode: .fit)
+    // Flexible so the window can shrink; AVPlayerView letterboxes inside. The
+    // ideal height fits a 640pt-wide video, capped so tall recordings still fit.
+    .frame(minHeight: 180, idealHeight: min(640 / aspect, 420), maxHeight: .infinity)
   }
 
   var transport: some View {
@@ -447,7 +448,7 @@ struct ContentView: View {
 struct PolishRecording: App {
   var body: some Scene {
     Window("Polish Recording", id: "main") { ContentView() }
-      .windowResizability(.contentSize)
+      .windowResizability(.contentMinSize)
       .windowToolbarStyle(.unifiedCompact)
   }
 }
