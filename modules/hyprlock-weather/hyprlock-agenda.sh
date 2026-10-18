@@ -15,15 +15,14 @@ fetch() {
     cat <<EOF
 const days = ["$today", "$tomorrow"];
 const accounts = {
-  work: (a) => tools.google_workspace.org.work.calendar_listevents(a),
-  personal: (a) => tools.google_workspace.org.personal.calendar_listevents(a),
+  work: (a) => tools["google-workspace-work"].calendar_listEvents(a),
+  personal: (a) => tools["google-workspace-personal"].calendar_listEvents(a),
 };
 const seen = new Set(), events = [];
 for (const [acct, list] of Object.entries(accounts)) {
   const r = await list({ calendarId: "primary", timeMin: "${today}T00:00:00$tz", timeMax: "${after}T00:00:00$tz" });
-  if (!r.ok) throw new Error(acct + ": " + r.error.message);
-  const raw = r.data.structuredContent ?? r.data.content?.[0]?.text;
-  for (const e of typeof raw === "string" ? JSON.parse(raw) : raw) {
+  if (r.isError) throw new Error(acct + ": " + r.content[0].text);
+  for (const e of JSON.parse(r.content[0].text)) {
     if (e.status === "cancelled" || seen.has(e.iCalUID ?? e.id)) continue;
     if ((e.attendees ?? []).some((a) => a.self && a.responseStatus === "declined")) continue;
     seen.add(e.iCalUID ?? e.id);
@@ -51,11 +50,12 @@ EOF
     -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"hyprlock-agenda","version":"0"}}}' |
     tr -d '\r' | awk -F': ' 'tolower($1)=="mcp-session-id"{print $2}')
   body=$(jq -n --arg c "$code" '{jsonrpc:"2.0",id:2,method:"tools/call",params:{name:"execute",arguments:{code:$c}}}')
-  res=$(curl -sS -m 20 "${hdr[@]}" -H "Mcp-Session-Id: $sid" "$url" -d "$body" | sed -n 's/^data: //p' |
-    jq -r 'select(.id == 2) | .result.structuredContent | select(.status == "completed") | .result')
+  res=$(curl -sS -m 20 "${hdr[@]}" -H "Mcp-Session-Id: $sid" "$url" -d "$body" | sed -n 's/^data: //; /^{/p' |
+    jq -r 'select(.id == 2) | .result.content[0].text | fromjson | select(.status == "completed" and .execution.ok) | .execution.value')
   [[ -n $res ]] && printf '%s\n' "$res" >"$cache"
 }
 # a failed fetch (offline after wake, executor down) falls back to the stale cache
 if [[ ! -f $cache || $(($(date +%s) - $(stat -c %Y "$cache"))) -gt 600 ]]; then fetch || true; fi
 
-cat "$cache"
+# positional [today, tomorrow], so a cache from another day would mislabel its events
+if [[ -f $cache && $(date -r "$cache" +%F) == $(date +%F) ]]; then cat "$cache"; fi
