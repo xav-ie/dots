@@ -222,7 +222,13 @@ in
         extraConfig = # nginx
           ''
             limit_req zone=cachereq burst=2000 nodelay;
-            limit_conn cacheconn 100;
+            # Under HTTP/2 every in-flight stream counts as a connection, and a
+            # cold eval asks every substituter cache about every path at once,
+            # so 100 rejected our own pulls. limit_req is the real abuse bound.
+            limit_conn cacheconn 1000;
+            # 429, not nginx's default 503, so throttling never reads as an outage.
+            limit_req_status 429;
+            limit_conn_status 429;
             # Real NAR pushes are large but not unbounded; a finite cap bounds
             # upload abuse while allowing legit pushes. Streamed unbuffered, so
             # nginx never spools the body to its own disk.
