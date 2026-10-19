@@ -18,6 +18,7 @@
         };
         envVars = {
           SLACK_MCP_ADD_MESSAGE_TOOL = "true";
+          SLACK_MCP_ATTACHMENT_TOOL = "true";
           SLACK_MCP_EDIT_MESSAGE_TOOL = "true";
           SLACK_MCP_MARK_TOOL = "true";
           SLACK_MCP_REACTION_TOOL = "true";
