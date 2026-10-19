@@ -1,0 +1,80 @@
+--- a/start.mjs
++++ b/start.mjs
+@@ -238,20 +238,14 @@
+ // truth) so users who fix themselves via `npm install -g context-mode`
+ // follow the exact same code path. Best-effort, never blocks MCP boot.
+ try {
+-  const { healInstalledPlugins, healSettingsEnabledPlugins, healPluginJsonMcpServers, sweepStaleMcpJson } =
++  const { healInstalledPlugins, healPluginJsonMcpServers, sweepStaleMcpJson } =
+     await import("./scripts/heal-installed-plugins.mjs");
+   const pluginKey = "context-mode@context-mode";
+   const claudeConfigDir = resolveClaudeConfigDir();
+   const registryPath = resolve(claudeConfigDir, "plugins", "installed_plugins.json");
+   const pluginCacheRoot = resolve(claudeConfigDir, "plugins", "cache");
+-  const settingsPath = resolve(claudeConfigDir, "settings.json");
+   try { healInstalledPlugins({ registryPath, pluginCacheRoot, pluginKey }); }
+   catch { /* best effort */ }
+-  // v1.0.116: Claude Code's plugin loader reads settings.json.enabledPlugins
+-  // (NOT installed_plugins.json) — heal that one too so /ctx-upgrade-induced
+-  // disable state is repaired before next /reload-plugins.
+-  try { healSettingsEnabledPlugins({ settingsPath, pluginKey }); }
+-  catch { /* best effort */ }
+   // v1.0.119 — Layer 5b (Issue #523): heal .claude-plugin/plugin.json's
+   // mcpServers["context-mode"].args[0] when /ctx-upgrade left a tmpdir-prefixed
+   // path baked in. Iterates EVERY installed cache entry's installPath so
+@@ -302,7 +296,7 @@
+ //   - On every boot we self-heal stale "/opt/homebrew/Cellar/node/<ver>/..." paths
+ //     left behind by older versions of this code.
+ try {
+-  const { buildHookCommand, selfHealCacheHealHook, ensureShebangAndExecBit } =
++  const { ensureShebangAndExecBit } =
+     await import("./hooks/cache-heal-utils.mjs");
+ 
+   // #577: honor $CLAUDE_CONFIG_DIR — without this, Claude Code spawns hooks
+@@ -341,46 +335,6 @@
+   if (process.platform !== "win32") {
+     try { ensureShebangAndExecBit(healHookPath); } catch { /* best effort */ }
+   }
+-
+-  // Register the hook in $CLAUDE_CONFIG_DIR/settings.json (Claude Code doesn't auto-discover hook files).
+-  // #577: must follow the same dir resolution as globalHooksDir above.
+-  const settingsPath = resolve(claudeConfigDir, "settings.json");
+-  if (existsSync(settingsPath)) {
+-    const settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
+-    const hooks = settings.hooks ?? {};
+-    const sessionStart = hooks.SessionStart ?? [];
+-    const alreadyRegistered = sessionStart.some((h) =>
+-      h.hooks?.some((hh) => hh.command?.includes("context-mode-cache-heal")),
+-    );
+-    if (!alreadyRegistered) {
+-      sessionStart.push({
+-        hooks: [
+-          {
+-            type: "command",
+-            command: buildHookCommand({
+-              scriptPath: healHookPath,
+-              platform: process.platform,
+-              nodePath: process.execPath,
+-            }),
+-          },
+-        ],
+-      });
+-      hooks.SessionStart = sessionStart;
+-      settings.hooks = hooks;
+-      writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + "\n", "utf-8");
+-    }
+-
+-    // Self-heal: rewrite an existing cache-heal hook command if it points at
+-    // a node binary that no longer exists (Brew node upgrade scenario).
+-    try {
+-      selfHealCacheHealHook({
+-        settingsPath,
+-        scriptPath: healHookPath,
+-        platform: process.platform,
+-        nodePath: process.execPath,
+-      });
+-    } catch { /* best effort */ }
+-  }
+ } catch { /* best effort */ }
+ 
+ // ── Self-heal Layer 5: Windows hooks.json + plugin.json normalization (#378) ──
