@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "allowManagedHooksOnly": true,
+  "allowManagedMcpServersOnly": true,
+  "allowedMcpServers": [
+    {
+      "serverUrl": "https://executor.lalala.casa/mcp"
+    }
+  ],
+  "disableSideloadFlags": true,
+  "enabledPlugins": {
+    "claude-code-wakatime@wakatime": true,
+    "context-mode@context-mode": true,
+    "dts@outsmartly-plugins": false,
+    "hookify@claude-plugins-official": false,
+    "osgrep@osgrep": true,
+    "plugin-dev@claude-plugins-official": false,
+    "ponytail@ponytail": true,
+    "pts@outsmartly-plugins": false,
+    "superpowers@claude-plugins-official": false,
+    "typescript-lsp@claude-plugins-official": false,
+    "vscode-langservers@claude-code-lsps": false,
+    "vtsls@claude-code-lsps": false,
+    "runpod@runpod": false
+  },
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "idle_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/notify-if-question"
+          }
+        ]
+      },
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/notify"
+          }
+        ]
+      }
+    ],
+    "PostToolBatch": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/tool-suggest",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/format-and-lint"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/record-pending-tool"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/record-pending-tool"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/context-mode-cache-heal.mjs"
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/herdr-agent-state.sh session",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/tool-suggest",
+            "timeout": 3
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline",
+    "padding": 0
+  }
+}
