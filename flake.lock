@@ -350,6 +350,22 @@
         "type": "github"
       }
     },
+    "claude-marketplace-runpod": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1792111344,
+        "narHash": "sha256-BVTt6H3+WvxOH222Yjpoi/jEryNzSdHV/287QmT8SM0=",
+        "owner": "runpod",
+        "repo": "runpod-plugins-official",
+        "rev": "ef53bfd056ba183d46dc31dfa54bf784cad5bc3d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "runpod",
+        "repo": "runpod-plugins-official",
+        "type": "github"
+      }
+    },
     "claude-marketplace-wakatime": {
       "flake": false,
       "locked": {
@@ -1817,6 +1833,7 @@
         "claude-marketplace-osgrep": "claude-marketplace-osgrep",
         "claude-marketplace-outsmartly": "claude-marketplace-outsmartly",
         "claude-marketplace-ponytail": "claude-marketplace-ponytail",
+        "claude-marketplace-runpod": "claude-marketplace-runpod",
         "claude-marketplace-wakatime": "claude-marketplace-wakatime",
         "collie": "collie",
         "crane": "crane",

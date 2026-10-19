@@ -154,6 +154,8 @@
     claude-marketplace-osgrep.url = "github:Ryandonofrio3/osgrep";
     claude-marketplace-ponytail.flake = false;
     claude-marketplace-ponytail.url = "github:DietrichGebert/ponytail";
+    claude-marketplace-runpod.flake = false;
+    claude-marketplace-runpod.url = "github:runpod/runpod-plugins-official";
     claude-marketplace-wakatime.flake = false;
     claude-marketplace-wakatime.url = "github:wakatime/claude-code-wakatime";
 

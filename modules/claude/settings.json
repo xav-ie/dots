@@ -1,22 +1,116 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "alwaysThinkingEnabled": true,
+  "cleanupPeriodDays": 365,
   "attribution": {
     "commit": "",
     "pr": ""
   },
-  "autoDream": {
-    "enabled": true,
-    "intervalHours": 24
+  "permissions": {
+    "defaultMode": "bypassPermissions"
   },
-  "autoMemory": {
-    "enabled": true,
-    "scope": "user"
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "idle_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/notify-if-question"
+          }
+        ]
+      },
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/notify"
+          }
+        ]
+      }
+    ],
+    "PostToolBatch": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/tool-suggest",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/format-and-lint"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/record-pending-tool"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/record-pending-tool"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/context-mode-cache-heal.mjs"
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/herdr-agent-state.sh session",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/tool-suggest",
+            "timeout": 3
+          }
+        ]
+      }
+    ]
   },
   "bashEditDiffEnabled": true,
-  "cleanupPeriodDays": 365,
-  "editorMode": "vim",
-  "effortLevel": "medium",
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline",
+    "padding": 0
+  },
   "enabledPlugins": {
     "claude-code-wakatime@wakatime": true,
     "context-mode@context-mode": true,
@@ -29,120 +123,35 @@
     "superpowers@claude-plugins-official": false,
     "typescript-lsp@claude-plugins-official": false,
     "vscode-langservers@claude-code-lsps": false,
-    "vtsls@claude-code-lsps": false
+    "vtsls@claude-code-lsps": false,
+    "runpod@runpod": false
   },
-  "hooks": {
-    "Notification": [
-      {
-        "hooks": [
-          {
-            "command": "~/.claude/notify-if-question",
-            "type": "command"
-          }
-        ],
-        "matcher": "idle_prompt"
-      },
-      {
-        "hooks": [
-          {
-            "command": "~/.claude/notify",
-            "type": "command"
-          }
-        ],
-        "matcher": "permission_prompt"
+  "extraKnownMarketplaces": {
+    "runpod": {
+      "source": {
+        "source": "github",
+        "repo": "runpod/runpod-plugins-official"
       }
-    ],
-    "PostToolBatch": [
-      {
-        "hooks": [
-          {
-            "command": "~/.claude/tool-suggest",
-            "timeout": 3,
-            "type": "command"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "hooks": [
-          {
-            "command": "~/.claude/format-and-lint",
-            "type": "command"
-          }
-        ],
-        "matcher": "Edit|Write"
-      }
-    ],
-    "PreToolUse": [
-      {
-        "hooks": [
-          {
-            "command": "~/.claude/record-pending-tool",
-            "type": "command"
-          }
-        ],
-        "matcher": ""
-      }
-    ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "command": "~/.claude/record-pending-tool",
-            "type": "command"
-          }
-        ],
-        "matcher": ""
-      }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "command": "~/.claude/hooks/context-mode-cache-heal.mjs",
-            "type": "command"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "command": "~/.claude/hooks/herdr-agent-state.sh session",
-            "timeout": 10,
-            "type": "command"
-          }
-        ],
-        "matcher": "*"
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "command": "~/.claude/tool-suggest",
-            "timeout": 3,
-            "type": "command"
-          }
-        ]
-      }
-    ]
+    }
   },
-  "permissions": {
-    "defaultMode": "bypassPermissions"
-  },
-  "preferredNotifChannel": "notifications_disabled",
-  "prefersReducedMotion": true,
-  "skipDangerousModePermissionPrompt": true,
-  "statusLine": {
-    "command": "~/.claude/statusline",
-    "padding": 0,
-    "type": "command"
-  },
+  "alwaysThinkingEnabled": true,
+  "effortLevel": "medium",
   "tui": "fullscreen",
   "voice": {
     "enabled": true,
     "mode": "hold"
   },
-  "voiceEnabled": true
+  "prefersReducedMotion": true,
+  "skipDangerousModePermissionPrompt": true,
+  "editorMode": "vim",
+  "preferredNotifChannel": "notifications_disabled",
+  "voiceEnabled": true,
+  "autoDream": {
+    "enabled": true,
+    "intervalHours": 24
+  },
+  "autoMemory": {
+    "enabled": true,
+    "scope": "user"
+  }
 }
