@@ -289,8 +289,13 @@
                 bin = "claude-npm";
               };
 
+          # Only user settings (managed policy always loads): a repo's own
+          # .claude/settings{,.local}.json and .mcp.json never apply, so it
+          # can't set env, apiKeyHelper, hooks or permission rules. That leaves
+          # workspace trust guarding nothing but our own status line, so skip it.
           claude-package = pkgs.writeShellScriptBin "claude" ''
-            exec ${selectedClaude.pkg}/bin/${selectedClaude.bin} "$@"
+            export CLAUDE_CODE_SANDBOXED=1
+            exec ${selectedClaude.pkg}/bin/${selectedClaude.bin} --setting-sources user "$@"
           '';
 
           claudeCarapaceSpec =
