@@ -39,6 +39,45 @@
         exit 0
       '';
 
+      # tools.search reuses its stored rows of an app's tools for up to 24 h
+      # unless the app's cache changes, and nothing evaluates an app when an
+      # mcp-proxy backend adds or drops tools. Reading an app's tools evaluates
+      # it, so do that for every app after the proxy starts. mcpRouter serves a
+      # catalog fetched in the last 5 min as is (then 5 min stale while it
+      # refetches), so a second pass after that window catches an app used just
+      # before the restart.
+      refreshToolIndex = pkgs.writeNuApplication {
+        name = "executor-refresh-tools";
+        text = # nu
+          ''
+            let api = "http://127.0.0.1:${toString cfg.port}"
+            let token = open /run/secrets/shell-env | lines | where $it starts-with "EXECUTOR_AUTH_TOKEN=" | first | str replace "EXECUTOR_AUTH_TOKEN=" ""
+            let headers = {Authorization: $"Bearer ($token)"}
+
+            def list-apps [api: string, headers: record] {
+              for _ in 1..90 {
+                try { return (http get --max-time 10sec --headers $headers $"($api)/v1/apps") }
+                sleep 2sec
+              }
+              error make {msg: "executor-refresh-tools: executor did not list its apps"}
+            }
+
+            def refresh [api: string, headers: record] {
+              for app in (list-apps $api $headers) {
+                let status = try {
+                  http get --full --allow-errors --max-time 60sec --headers $headers $"($api)/v1/tools?app=($app.id)&limit=1" | get status
+                } catch { "no answer" }
+                if $status != 200 { print -e $"executor-refresh-tools: ($app.slug) answered ($status)" }
+              }
+            }
+
+            ^${waitForMcpProxy}
+            refresh $api $headers
+            sleep 11min
+            refresh $api $headers
+          '';
+      };
+
       # v2 persists state as PGlite directories plus installation.json under
       # EXECUTOR_DATA_DIR (apps/local/server/README.md). builds/ and
       # diagnostics/ are re-derivable caches, left out of the snapshot. The
@@ -244,6 +283,23 @@
             StandardOutput = "journal";
             StandardError = "journal";
             SyslogIdentifier = "executor-web";
+          };
+        };
+
+        # wantedBy starts it with podman-mcp; partOf restarts it when podman-mcp
+        # restarts mid-run, so every proxy start gets both passes.
+        systemd.services.executor-refresh-tools = {
+          description = "Refresh Executor's tool search after mcp-proxy starts";
+          after = [
+            "executor-web.service"
+            "podman-mcp.service"
+          ];
+          partOf = [ "podman-mcp.service" ];
+          wantedBy = [ "podman-mcp.service" ];
+          serviceConfig = {
+            Type = "simple";
+            User = defaultUser;
+            ExecStart = lib.getExe refreshToolIndex;
           };
         };
 
