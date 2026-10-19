@@ -353,6 +353,10 @@
               repo = "DietrichGebert/ponytail";
               src = inputs.claude-marketplace-ponytail;
             };
+            "runpod" = {
+              repo = "runpod/runpod-plugins-official";
+              src = inputs.claude-marketplace-runpod;
+            };
           };
 
           # MCP SSE client for connecting to the containerized proxy
