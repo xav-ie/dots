@@ -93,6 +93,7 @@
               glab # GitLab CLI
               gnumake
               go-jira
+              python3Packages.huggingface-hub # hf: Hugging Face Hub CLI
               hyperfine # performance tester
               imagemagick
               (jira-cli-go.overrideAttrs {
