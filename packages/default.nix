@@ -137,6 +137,7 @@ rec {
   whisper-transcribe = pkgs.callPackage ./whisper-transcribe {
     inherit writeNuApplication;
   };
+  wrangler-work = pkgs.callPackage ./wrangler-work { };
   workspace-mcp = pkgs.callPackage ./workspace-mcp { src = workspace-mcp-src; };
   pi-executor = pkgs.callPackage ./pi-executor { };
   pi-readcache = pkgs.callPackage ./pi-readcache { };
