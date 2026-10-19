@@ -145,9 +145,10 @@
               echo '{ "hooks": {} }' > "$out/plugins/${name}/hooks.json"
             '';
 
-          # Apply not-yet-merged upstream PRs on top of the pinned context-mode
-          # input. Kept off marketplace.src (like stripPluginHooks) so
-          # findInputName still resolves the raw input for claude-update-marketplaces.
+          # Apply not-yet-merged fixes (fork branches; upstream has PRs disabled)
+          # on top of the pinned context-mode input. Kept off marketplace.src
+          # (like stripPluginHooks) so findInputName still resolves the raw
+          # input for claude-update-marketplaces.
           patchedContextMode = pkgs.applyPatches {
             name = "context-mode-patched";
             src = inputs.claude-marketplace-context-mode;
@@ -156,28 +157,34 @@
                 (
                   p:
                   pkgs.fetchpatch {
-                    name = "context-mode-pr-${p.pr}.patch";
-                    url = "https://github.com/mksglu/context-mode/pull/${p.pr}.diff";
+                    name = "context-mode-${p.branch}.patch";
+                    url = "https://github.com/xav-ie/context-mode/compare/589d8214d56740a28b5f7bf63167743d586b0b40...${p.head}.diff";
                     inherit (p) hash;
                   }
                 )
                 [
                   # remove chdir
                   {
-                    pr = "974";
+                    branch = "no-server-chdir";
+                    head = "ed5f1aa856f24ea4c8a9e503ca8dc985add38b1e";
                     hash = "sha256-O+RemxMk02/rzv/BSorzhSsEphkS6TbhaK6Aij5Heec=";
                   }
                   # resolve bun from $PATH
                   {
-                    pr = "973";
+                    branch = "bun-path-detection";
+                    head = "cc86d59d611167a3049e7279e43c33053e6ce875";
                     hash = "sha256-0x5SDMgEXkZk/cjK5utzwi9qJITiHau8dUMGhNT5HuY=";
                   }
                   # bash test portability
                   {
-                    pr = "972";
+                    branch = "nix-test-bash";
+                    head = "48c0ec20d5d77927b22842f7566ddde5f64ec429";
                     hash = "sha256-aHaAdQI9eTw4X59ROFT+ApcrlmkTWLkWP/3bXH5q4lw=";
                   }
-                ];
+                ]
+              # Boot never writes settings.json: managed-settings.json enables
+              # the plugin and owns its cache-heal hook.
+              ++ [ ./context-mode-no-settings-writes.patch ];
           };
 
           # Generate home.file entries for marketplace directories
