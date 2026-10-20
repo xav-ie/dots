@@ -51,6 +51,27 @@ def paint [code: int] {
   $"(ansi -e $'38;5;($code)m')($s)(ansi reset)"
 }
 
+# "⌕ osgrep" when the repo at $dir has an osgrep index. A worktree of a bare
+# repo searches its <default branch> worktree's index (see the osgrep wrapper),
+# shown as "⌕ osgrep@<branch>". File checks only, no git subprocess.
+def osgrep-status [dir: string] {
+  let top = $dir
+  | path split
+  | reduce --fold [] {|part, acc| $acc | append ($acc | last | default '' | path join $part) }
+  | reverse
+  | where {|d| ($d | path join .git | path exists) }
+  | get -o 0
+  if $top == null { return null }
+  if ($top | path join .osgrep | path exists) { return ("⌕ osgrep" | paint 114) }
+  let container = $top | path dirname
+  let head_file = $container | path join .git refs remotes origin HEAD
+  if not ($head_file | path exists) { return null }
+  let branch = open $head_file | str trim | str replace 'ref: refs/remotes/origin/' ''
+  if ($container | path join $branch .osgrep | path exists) {
+    $"⌕ osgrep@($branch)" | paint 114
+  }
+}
+
 def main [] {
   let input = $in | from json
   # Both optional: context_window is absent until the first turn lands, and
@@ -87,6 +108,9 @@ def main [] {
     }
   } catch { null }
 
+  let cwd = $input | get -o workspace.current_dir | default ($input | get -o cwd)
+  let osgrep = if $cwd != null { osgrep-status $cwd }
+
   let rest = [
     $model_display
     (
@@ -95,6 +119,7 @@ def main [] {
       }
     )
     $pending
+    $osgrep
   ]
   | compact
   | str join ' '
