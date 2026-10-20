@@ -90,6 +90,8 @@
     tetherbug.url = "git+ssh://git@github.com/xav-ie/Tetherbug";
     tetherbug.inputs.nixpkgs.follows = "nixpkgs";
     virtual-headset.url = "github:xav-ie/virtual-headset";
+    wyoming-kitten.url = "github:xav-ie/wyoming-kitten";
+    wyoming-kitten.inputs.nixpkgs.follows = "nixpkgs";
     nix-vscode-extensions.url = "github:nix-community/nix-vscode-extensions";
     nix-vscode-extensions.inputs.nixpkgs.follows = "nixpkgs";
     nixpkgs-vscode.url = "github:nixos/nixpkgs/nixos-unstable";

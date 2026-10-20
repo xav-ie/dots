@@ -1899,6 +1899,7 @@
         "treefmt-nix": "treefmt-nix",
         "virtual-headset": "virtual-headset",
         "workspace-mcp-src": "workspace-mcp-src",
+        "wyoming-kitten": "wyoming-kitten",
         "xdusk": "xdusk",
         "zerobrew-src": "zerobrew-src",
         "zjstatus": "zjstatus"
@@ -2223,6 +2224,26 @@
         "owner": "gemini-cli-extensions",
         "ref": "preview-2026-08-03",
         "repo": "workspace",
+        "type": "github"
+      }
+    },
+    "wyoming-kitten": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792501393,
+        "narHash": "sha256-XvuM+r4UtBzGfbxO6Hp9Aa0BCevUds1hUvdnWrl0dzc=",
+        "owner": "xav-ie",
+        "repo": "wyoming-kitten",
+        "rev": "d727e90306a1833da3d8e19f391bc4f5d691da32",
+        "type": "github"
+      },
+      "original": {
+        "owner": "xav-ie",
+        "repo": "wyoming-kitten",
         "type": "github"
       }
     },
