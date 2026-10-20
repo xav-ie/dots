@@ -381,6 +381,14 @@ in
       # buffered streaming on the GPU, chosen by ~/Projects/asr-evals. See
       # nixos/scribe.nix.
       scribe.enable = true;
+      # The scribe cleanup model (llama.cpp with prompt lookup) on the GPU, about 1.7 GB beside
+      # scribe and embed-server (its embedding tables stay in RAM); scribe cleans each meeting
+      # with it when the recording ends, about 1.5 s per 250 words.
+      scribe.cleanup.server = {
+        enable = true;
+        package = pkgs.llama-cpp.override { cudaSupport = true; };
+        gpuLayers = 99;
+      };
     };
 
     location = {
