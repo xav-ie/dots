@@ -119,6 +119,7 @@
                 "isal"
                 "matter"
                 "met"
+                "music_assistant"
                 "thread"
                 "xiaomi_aqara"
                 "zha"
