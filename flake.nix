@@ -74,7 +74,7 @@
     ream.inputs.nixpkgs.follows = "nixpkgs";
     ream.inputs.flake-parts.follows = "flake-parts";
     ream.inputs.treefmt-nix.follows = "treefmt-nix";
-    scribe.url = "git+ssh://git@github.com/xav-ie/scribe?ref=wyoming-stt";
+    scribe.url = "git+ssh://git@github.com/xav-ie/scribe";
     scribe.inputs.nixpkgs.follows = "nixpkgs";
     scribe-desktop.url = "git+ssh://git@github.com/xav-ie/scribe-desktop";
     scribe-desktop.inputs.nixpkgs.follows = "nixpkgs";
