@@ -1790,32 +1790,6 @@
         "type": "github"
       }
     },
-    "ream": {
-      "inputs": {
-        "flake-parts": [
-          "flake-parts"
-        ],
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "treefmt-nix": [
-          "treefmt-nix"
-        ]
-      },
-      "locked": {
-        "lastModified": 1781319833,
-        "narHash": "sha256-r4SFnYc1F8kuxHgX+YZnrFzO+6iryWoX9m414D6YK24=",
-        "ref": "refs/heads/main",
-        "rev": "779dcdf1fc703aba97c899f0e11580a3592b8c98",
-        "revCount": 3,
-        "type": "git",
-        "url": "ssh://git@github.com/xav-ie/ream"
-      },
-      "original": {
-        "type": "git",
-        "url": "ssh://git@github.com/xav-ie/ream"
-      }
-    },
     "root": {
       "inputs": {
         "ags": "ags",
@@ -1883,7 +1857,6 @@
         "protonmail-mcp-src": "protonmail-mcp-src",
         "quadlet-nix": "quadlet-nix",
         "ralph-src": "ralph-src",
-        "ream": "ream",
         "rust-analyzer-src": "rust-analyzer-src",
         "rust-overlay": "rust-overlay",
         "scribe": "scribe",

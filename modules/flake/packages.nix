@@ -32,8 +32,6 @@
         virtual-headset-panel = inputs.virtual-headset.packages.${system}.virtual-headset-panel or null;
         # morrow calendar app; linux-only, null on darwin (no output there).
         morrow-pkg = inputs.morrow.packages.${system}.default or null;
-        # ream PDF-tools app; linux-only, null on darwin (no output there).
-        ream-pkg = inputs.ream.packages.${system}.default or null;
         # browser-session-mcp (extracted to its own repo); linux-only.
         browser-session-mcp-pkg = inputs.browser-session-mcp.packages.${system}.default or null;
         # scribe dictation client (extracted to its own repo); linux-only.
