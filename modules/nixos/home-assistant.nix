@@ -118,6 +118,7 @@
                 # https://www.home-assistant.io/integrations/isal
                 "isal"
                 "matter"
+                "mcp_server"
                 "met"
                 "music_assistant"
                 "thread"
