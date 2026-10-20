@@ -182,9 +182,14 @@
                     hash = "sha256-aHaAdQI9eTw4X59ROFT+ApcrlmkTWLkWP/3bXH5q4lw=";
                   }
                 ]
-              # Boot never writes settings.json: managed-settings.json enables
-              # the plugin and owns its cache-heal hook.
-              ++ [ ./context-mode-no-settings-writes.patch ];
+              ++ [
+                # Session start text cut to the tool routing (about 0.8k tokens
+                # less per session and per subagent prompt).
+                ./context-mode-compact-routing-block.patch
+                # Boot never writes settings.json: managed-settings.json enables
+                # the plugin and owns its cache-heal hook.
+                ./context-mode-no-settings-writes.patch
+              ];
           };
 
           # Generate home.file entries for marketplace directories
@@ -445,6 +450,7 @@
                 if [ -d "$cdir" ]; then
                   install -m644 "$mp/start.mjs" "$cdir/start.mjs"
                   install -m644 "$mp/hooks/find-bun.mjs" "$cdir/hooks/find-bun.mjs"
+                  install -m644 "$mp/hooks/routing-block.mjs" "$cdir/hooks/routing-block.mjs"
                 fi
               '';
 
