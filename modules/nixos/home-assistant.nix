@@ -121,6 +121,7 @@
                 "met"
                 "music_assistant"
                 "thread"
+                "wyoming"
                 "xiaomi_aqara"
                 "zha"
               ];

@@ -1948,15 +1948,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1792116136,
-        "narHash": "sha256-sGGk+jWXHigMj/YYVFkKf8yHPxN/M/GRtDUAG2vPBp4=",
-        "ref": "refs/heads/main",
-        "rev": "3ec25b0855f5347bbb22828918dd30d9e590bbda",
-        "revCount": 114,
+        "lastModified": 1792501364,
+        "narHash": "sha256-YAB4K0BwngM98WRekCMdYhvbboeM0fhwHD+2q7b7FMg=",
+        "ref": "wyoming-stt",
+        "rev": "323a1c76ed7a9767a4eac1cfcc776c7d14dee88c",
+        "revCount": 127,
         "type": "git",
         "url": "ssh://git@github.com/xav-ie/scribe"
       },
       "original": {
+        "ref": "wyoming-stt",
         "type": "git",
         "url": "ssh://git@github.com/xav-ie/scribe"
       }
