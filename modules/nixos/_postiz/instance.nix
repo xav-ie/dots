@@ -10,11 +10,12 @@
   # Public hostname. When null, falls back to `${name}.${baseDomain}`,
   # preserving the original lalala.casa behaviour for local instances.
   hostName ? null,
-  # Local instances get a traefik route + a *.lalala.casa subdomain and
-  # advertise themselves at the LAN IP — in this mode `hostName` must be
-  # null (the route is always `${name}.${baseDomain}`; see the assertion
-  # below). Tunnel instances skip traefik, publish their app port for a
-  # Cloudflare Tunnel to target, and use `hostName` as the public URL.
+  # Every instance is reached only through traefik (docker labels on the app
+  # container); nothing is published on the host. Local instances also get a
+  # *.lalala.casa subdomain and advertise themselves at the LAN IP — in this
+  # mode `hostName` must be null (see the assertion below). Tunnel instances
+  # use `hostName` as the public URL; the Cloudflare Tunnel targets traefik
+  # (https://localhost:443, Origin Server Name = hostName).
   local ? true,
   # CPU set handed to the app container; see the cpuset rationale on the
   # container below. No default — distinct sets per instance keep them
@@ -26,9 +27,6 @@
   # value — including "" — runs only the listed providers plus 'main', trimming
   # ~2 idle threads per dropped provider.
   workerProviders ? null,
-  # When non-null, publish the app port on the host (e.g.
-  # "127.0.0.1:18800:5000") so a Cloudflare Tunnel can target it.
-  publishPort ? null,
   # Whether to wire up the social-provider OAuth secrets + env. Only the
   # original instance has these configured today.
   enableSocialProviders ? false,
@@ -323,7 +321,6 @@ in
             # traefik. In tunnel mode there's no in-pod :443 listener,
             # so no useful target — leave DNS to resolve normally.
             addHosts = lib.optionals local [ "${fullHostName}:192.168.1.158" ];
-            publishPorts = lib.optionals (publishPort != null) [ publishPort ];
           };
         };
 
@@ -447,7 +444,7 @@ in
               # Traefik returns 502 to clients while the backend isn't
               # listening — that's the loud signal that something's broken,
               # which is sufficient.
-              labels = lib.optionalAttrs local {
+              labels = {
                 "traefik.enable" = "true";
                 "traefik.http.routers.${subdomain}-secure.entrypoints" = "websecure";
                 "traefik.http.routers.${subdomain}-secure.rule" = "Host(`${fullHostName}`)";
