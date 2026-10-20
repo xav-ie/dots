@@ -32,6 +32,10 @@
         services.scribe.tokenFile = config.sops.secrets."scribe/token".path;
         services.local-networking.subdomains = [ subdomain ];
 
+        # Wyoming speech to text for Home Assistant. It has no auth, so loopback only.
+        virtualisation.oci-containers.containers.scribe.environment.SCRIBE_WYOMING = "0.0.0.0:10300";
+        virtualisation.oci-containers.containers.scribe.ports = [ "127.0.0.1:10300:10300" ];
+
         virtualisation.oci-containers.containers.scribe.labels = {
           "traefik.enable" = "true";
           "traefik.http.routers.${subdomain}-secure.entrypoints" = "websecure";
