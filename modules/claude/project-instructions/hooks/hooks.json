@@ -1,0 +1,45 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|NotebookEdit|Read|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/plugins/marketplaces/project-instructions/hooks/point.sh"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/plugins/marketplaces/project-instructions/hooks/point.sh"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/plugins/marketplaces/project-instructions/hooks/point.sh"
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/plugins/marketplaces/project-instructions/hooks/point.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
