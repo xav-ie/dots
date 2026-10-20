@@ -1,0 +1,63 @@
+--- a/skills/ctx-doctor/SKILL.md
++++ b/skills/ctx-doctor/SKILL.md
+@@ -1,5 +1,6 @@
+ ---
+ name: ctx-doctor
++disable-model-invocation: true
+ description: |
+   Run context-mode diagnostics. Checks runtimes, hooks, FTS5,
+   plugin registration, npm and marketplace versions.
+--- a/skills/ctx-index/SKILL.md
++++ b/skills/ctx-index/SKILL.md
+@@ -1,5 +1,6 @@
+ ---
+ name: ctx-index
++disable-model-invocation: true
+ description: |
+   Index a local file or directory into context-mode's persistent FTS5 knowledge base
+   so future ctx_search calls can retrieve focused snippets without rereading raw files.
+--- a/skills/ctx-insight/SKILL.md
++++ b/skills/ctx-insight/SKILL.md
+@@ -1,5 +1,6 @@
+ ---
+ name: ctx-insight
++disable-model-invocation: true
+ description: |
+   Open the context-mode Insight dashboard in your default browser.
+   Insight is the hosted analytics layer for AI-assisted engineering teams —
+--- a/skills/ctx-purge/SKILL.md
++++ b/skills/ctx-purge/SKILL.md
+@@ -1,5 +1,6 @@
+ ---
+ name: ctx-purge
++disable-model-invocation: true
+ description: |
+   Purge the context-mode knowledge base. Permanently deletes all indexed content
+   and resets session stats. This is destructive and cannot be undone.
+--- a/skills/ctx-search/SKILL.md
++++ b/skills/ctx-search/SKILL.md
+@@ -1,5 +1,6 @@
+ ---
+ name: ctx-search
++disable-model-invocation: true
+ description: |
+   Search context-mode's persistent FTS5 knowledge base for previously indexed
+   local project content, documentation, or session memory.
+--- a/skills/ctx-stats/SKILL.md
++++ b/skills/ctx-stats/SKILL.md
+@@ -1,5 +1,6 @@
+ ---
+ name: ctx-stats
++disable-model-invocation: true
+ description: |
+   Show how much context window context-mode saved this session.
+   Displays token consumption, context savings ratio, and per-tool breakdown.
+--- a/skills/ctx-upgrade/SKILL.md
++++ b/skills/ctx-upgrade/SKILL.md
+@@ -1,5 +1,6 @@
+ ---
+ name: ctx-upgrade
++disable-model-invocation: true
+ description: |
+   Update context-mode from GitHub and fix hooks/settings.
+   Pulls latest, builds, installs, updates npm global, configures hooks.

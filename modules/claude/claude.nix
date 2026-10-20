@@ -186,6 +186,9 @@
                 # Session start text cut to the tool routing (about 0.8k tokens
                 # less per session and per subagent prompt).
                 ./context-mode-compact-routing-block.patch
+                # ctx-* skills are slash commands only; hidden from the model's
+                # skill listing.
+                ./context-mode-hide-ctx-skills.patch
                 # Boot never writes settings.json: managed-settings.json enables
                 # the plugin and owns its cache-heal hook.
                 ./context-mode-no-settings-writes.patch
@@ -451,6 +454,9 @@
                   install -m644 "$mp/start.mjs" "$cdir/start.mjs"
                   install -m644 "$mp/hooks/find-bun.mjs" "$cdir/hooks/find-bun.mjs"
                   install -m644 "$mp/hooks/routing-block.mjs" "$cdir/hooks/routing-block.mjs"
+                  for s in "$mp"/skills/ctx-*; do
+                    install -m644 "$s/SKILL.md" "$cdir/skills/$(basename "$s")/SKILL.md"
+                  done
                 fi
               '';
 
