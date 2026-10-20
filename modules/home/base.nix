@@ -53,8 +53,6 @@
           mergiraf.enable = true;
           mergiraf.enableGitIntegration = true;
           mergiraf.enableJujutsuIntegration = true;
-          # autonomous AI agent loop
-          ralph.enable = true;
           # fast grep
           ripgrep.enable = true;
           # a more featureful fzf

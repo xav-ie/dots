@@ -169,8 +169,6 @@
     homebrew-core.url = "github:homebrew/homebrew-core";
     obs-backgroundremoval.flake = false;
     obs-backgroundremoval.url = "github:royshil/obs-backgroundremoval";
-    ralph-src.url = "github:snarktank/ralph";
-    ralph-src.flake = false;
     simulstreaming-src.url = "github:ufal/SimulStreaming";
     simulstreaming-src.flake = false;
     mcp-atlassian-src.url = "github:sooperset/mcp-atlassian/v0.23.1";
