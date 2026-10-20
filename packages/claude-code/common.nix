@@ -41,7 +41,6 @@ let
   envVars = {
     CLAUBBIT = "1"; # skip TrustDialog render/unmount cycles on startup
     CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD = "1";
-    CLAUDE_CODE_DISABLE_BACKGROUND_TASKS = "1"; # hide run_in_background docs/UI
     CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY = "1"; # never offer the in-session survey
     CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = "1"; # skip connectivity polling, changelog, auto-updater
     CLAUDE_CODE_DISABLE_OFFICIAL_MARKETPLACE_AUTOINSTALL = "1"; # skip marketplace plugin auto-install
