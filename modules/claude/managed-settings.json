@@ -10,6 +10,7 @@
   "disableSideloadFlags": true,
   "enableWorkflows": false,
   "enabledPlugins": {
+    "agents-md@builtin": false,
     "claude-code-wakatime@wakatime": true,
     "context-mode@context-mode": true,
     "dts@outsmartly-plugins": false,
@@ -17,6 +18,7 @@
     "osgrep@osgrep": true,
     "plugin-dev@claude-plugins-official": false,
     "ponytail@ponytail": false,
+    "project-instructions@project-instructions": true,
     "pts@outsmartly-plugins": false,
     "superpowers@claude-plugins-official": false,
     "typescript-lsp@claude-plugins-official": false,

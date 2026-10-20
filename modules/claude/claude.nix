@@ -14,8 +14,9 @@
       marketplaceOpts = _: {
         options = {
           repo = lib.mkOption {
-            type = lib.types.str;
-            description = "GitHub repository in owner/repo format";
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+            description = "GitHub repository in owner/repo format; null for a marketplace kept in dots";
             example = "anthropics/claude-plugins-official";
           };
 
@@ -122,10 +123,17 @@
             cfg.marketplaces
             |> lib.mapAttrs (
               name: marketplace: {
-                source = {
-                  source = "github";
-                  inherit (marketplace) repo;
-                };
+                source =
+                  if marketplace.repo == null then
+                    {
+                      source = "directory";
+                      path = "${config.home.homeDirectory}/.claude/plugins/marketplaces/${name}";
+                    }
+                  else
+                    {
+                      source = "github";
+                      inherit (marketplace) repo;
+                    };
                 installLocation = "${config.home.homeDirectory}/.claude/plugins/marketplaces/${name}";
                 lastUpdated = "1970-01-01T00:00:00.000Z"; # Managed by Nix, not runtime updates
               }
@@ -373,6 +381,11 @@
               repo = "DietrichGebert/ponytail";
               src = inputs.claude-marketplace-ponytail;
             };
+            # Points sessions at project CLAUDE.md/AGENTS.md files, which the
+            # wrapper's --setting-sources user keeps the engine from loading.
+            # Its hooks call the script through this marketplace symlink, not
+            # the plugin cache, which stays at version 1.0.0 across edits.
+            "project-instructions".src = ./project-instructions;
             "runpod" = {
               repo = "runpod/runpod-plugins-official";
               src = inputs.claude-marketplace-runpod;

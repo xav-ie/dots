@@ -1,0 +1,8 @@
+{
+  "name": "project-instructions",
+  "description": "Points the agent at project CLAUDE.md and AGENTS.md files, which --setting-sources user keeps from loading",
+  "version": "1.0.0",
+  "author": {
+    "name": "dots"
+  }
+}
