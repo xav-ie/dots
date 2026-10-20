@@ -6,24 +6,18 @@
 # the coding stats stay on our own hardware instead of wakatime.com.
 #
 # Runs as a hardened OCI container (like modules/nixos/llama-server.nix) rather
-# than a host service: wakapi's /api path is exposed to the public internet
-# through a Cloudflare Access *bypass* (the CLI authenticates with an API key and
-# can't complete interactive SSO), so an /api exploit should be contained to a
-# throwaway namespace, not the host. The container drops all capabilities, runs
-# read-only as a non-root uid, and only its /data volume is writable.
+# than a host service, so an /api exploit stays in a throwaway namespace, not
+# the host. The container drops all capabilities, runs read-only as a non-root
+# uid, and only its /data volume is writable.
 #
 # Traefik fronts it: praesidium's traefik (a host service with `group = podman`)
 # discovers the container over the podman socket via the `traefik.enable` labels
 # below and reaches its internal port on the podman bridge — so nothing is
 # published to a host port; the only ingress is traefik.
 #
-# The Cloudflare Tunnel ingress and the Access application themselves are
-# dashboard-managed (same as muscat/postiz), so they live outside this repo:
-#   1. Tunnel ingress: route wakapi.lalala.casa -> https://<praesidium LAN>:443
-#      (traefik), Origin Server Name `wakapi.lalala.casa`.
-#   2. Access: SSO-protect the hostname for the dashboard UI, but add a *bypass*
-#      (or Service Auth) policy on path /api/** — the WakaTime CLI authenticates
-#      with wakapi's own API key and cannot complete interactive Access SSO.
+# Tailnet-only: there is no Cloudflare Tunnel route. The public *.lalala.casa
+# wildcard resolves to praesidium's Tailscale IP, so clients reach traefik over
+# Tailscale. wakatime-cli queues heartbeats while offline and syncs them later.
 #
 # Declarative account (why the seed unit below exists): wakapi ships no
 # user-management CLI or env bootstrap — the only built-in way to make a user is
