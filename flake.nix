@@ -20,8 +20,7 @@
     browser-session-mcp.inputs.flake-parts.follows = "flake-parts";
     browser-session-mcp.inputs.rust-overlay.follows = "rust-overlay";
     browser-session-mcp.inputs.treefmt-nix.follows = "treefmt-nix";
-    # 1.21.2 packaging PR (AltanS/collie#440); back to main once it merges.
-    collie.url = "github:AltanS/collie?ref=packaging/1.21.2";
+    collie.url = "github:AltanS/collie";
     collie.inputs.nixpkgs.follows = "nixpkgs";
     ctpv.url = "github:xav-ie/ctpv-nix";
     flake-parts.url = "github:hercules-ci/flake-parts";
