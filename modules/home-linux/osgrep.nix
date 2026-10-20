@@ -70,17 +70,61 @@
         } catch (_e) {}
       '';
 
-      # Front osgrep with the preload so EVERY entry point is covered — the
-      # plugin spawns `osgrep` via PATH, and ~/.local/bin sorts before
-      # ~/.npm/bin, so this wrapper wins.
+      # osgrep indexes only a hard-coded extension set, which lacks Nix and
+      # Nushell. Files without a tree-sitter grammar get line-window chunks
+      # (like .sh), so adding the extensions to the exported Set is enough.
+      extraExtensions = pkgs.writeText "osgrep-extra-extensions.cjs" ''
+        "use strict";
+        const Module = require("node:module");
+        const load = Module._load;
+        Module._load = function () {
+          const m = load.apply(this, arguments);
+          if (m && m.INDEXABLE_EXTENSIONS instanceof Set) {
+            m.INDEXABLE_EXTENSIONS.add(".nix");
+            m.INDEXABLE_EXTENSIONS.add(".nu");
+          }
+          return m;
+        };
+      '';
+
+      # Front osgrep with the preloads so EVERY entry point is covered —
+      # ~/.local/bin sorts before ~/.npm/bin, so this wrapper wins.
+      #
+      # Worktrees of a bare repo share one index: its <default branch>
+      # worktree, kept current by osgrep-index. `search` from any other
+      # worktree runs there from the same subdirectory, so result paths stay
+      # valid here (hits reflect the default branch, not this one's changes)
+      # instead of indexing every worktree separately. Repos without an index
+      # are refused rather than indexed on the spot.
       osgrep-wrapper = pkgs.writeShellApplication {
         name = "osgrep";
         # Required: ~/.npm/bin/osgrep has a `#!/usr/bin/env node` shebang and
         # writeShellApplication's PATH holds only runtimeInputs. nodejs_24
         # matches programs.npm.package, the runtime it was installed with.
-        runtimeInputs = [ pkgs.nodejs_24 ];
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.git
+          pkgs.nodejs_24
+        ];
         text = ''
-          export NODE_OPTIONS="--require ${gitignoreGuard}''${NODE_OPTIONS:+ ''${NODE_OPTIONS}}"
+          export NODE_OPTIONS="--require ${gitignoreGuard} --require ${extraExtensions}''${NODE_OPTIONS:+ ''${NODE_OPTIONS}}"
+          if [ "''${1:-}" = search ] && top="$(git rev-parse --show-toplevel 2>/dev/null)"; then
+            common="$(git rev-parse --path-format=absolute --git-common-dir)"
+            if [ "$(git --git-dir="$common" rev-parse --is-bare-repository)" = true ] &&
+              head="$(git --git-dir="$common" symbolic-ref --quiet --short refs/remotes/origin/HEAD)"; then
+              index="$(dirname "$common")/''${head#origin/}"
+              if [ "$top" != "$index" ] && [ -d "$index/.osgrep" ]; then
+                echo "osgrep: searching the ''${head#origin/} index" >&2
+                cd "$index''${PWD#"$top"}" 2>/dev/null || cd "$index"
+              fi
+            fi
+            # Only the indexer creates indexes; a search elsewhere would
+            # silently index the whole repo.
+            if [ ! -d "$(git rev-parse --show-toplevel)/.osgrep" ]; then
+              echo "osgrep: no index for this repo (not in the allowlist); use grep" >&2
+              exit 2
+            fi
+          fi
           exec ${realOsgrep} "$@"
         '';
       };
@@ -105,9 +149,9 @@
       '';
       baseIgnoreFile = pkgs.writeText "osgrep-baseignore" baseIgnore;
 
-      # Periodic background index of the allowlist. The per-session `osgrep
-      # serve` daemon (started by the Claude Code plugin) live-watches repos
-      # you're actively in; this covers the rest. `index` takes a writer lock
+      # Periodic background index of the allowlist. An allowlisted bare repo's
+      # directory holds all its worktrees, so only its <default branch>
+      # worktree is indexed. `index` takes a writer lock
       # (serializes safely against a running `serve`) and prunes files now gone
       # or ignored on every run, so no separate reconcile is needed. We cd into
       # each repo and run the WRAPPER so the .gitignore guard is in effect.
@@ -116,9 +160,13 @@
         name = "osgrep-index";
         runtimeInputs = [
           pkgs.coreutils
+          pkgs.findutils
+          pkgs.gawk
+          pkgs.git
+          pkgs.gnugrep
           pkgs.gnused
           pkgs.jq
-          pkgs.gnugrep
+          pkgs.openssh
         ];
         text = # sh
           ''
@@ -127,8 +175,44 @@
               echo "osgrep config not readable: $config" >&2
               exit 1
             fi
+            # Fail instead of prompting when the SSH key is locked.
+            export GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=15"
+            export GIT_TERMINAL_PROMPT=0
 
-            mapfile -t folders < <(jq -r '.folders[]' "$config")
+            is_bare() {
+              [ "$(git -C "$1" rev-parse --is-bare-repository 2>/dev/null)" = true ]
+            }
+            # An allowlisted bare repo's directory holds all its worktrees, so
+            # it is indexed through one <default branch> worktree instead:
+            # fetched at most daily (refreshing origin/HEAD, which git only
+            # sets at clone time), then created or moved to origin's tip on
+            # every run. Dirty or diverged worktrees are left as they are.
+            upstream() {
+              local d="$1" common head def wt
+              common="$(git -C "$d" rev-parse --path-format=absolute --git-common-dir)"
+              if [ -z "$(find "$common/FETCH_HEAD" -mmin -1440 2>/dev/null)" ]; then
+                timeout 180 git -C "$d" fetch --quiet --prune origin || echo "fetch failed: $d" >&2
+                timeout 60 git -C "$d" remote set-head origin --auto >/dev/null 2>&1 || true
+              fi
+              head="$(git -C "$d" symbolic-ref --quiet --short refs/remotes/origin/HEAD)" || return 0
+              def="''${head#origin/}"
+              wt="$d/$def"
+              if [ ! -e "$wt" ]; then
+                git -C "$d" -c core.hooksPath=/dev/null worktree add --quiet --detach "$wt" "$head" >&2 || return 0
+              elif [ -z "$(git -C "$wt" status --porcelain --untracked-files=no)" ]; then
+                case "$(git -C "$wt" branch --show-current)" in
+                  "") git -C "$wt" -c core.hooksPath=/dev/null checkout --quiet --detach "$head" >&2 || true ;;
+                  "$def") git -C "$wt" merge --quiet --ff-only "$head" >&2 || true ;;
+                esac
+              fi
+              echo "$wt"
+            }
+            resolve() {
+              if is_bare "$1"; then upstream "$1"; else echo "$1"; fi
+            }
+            mapfile -t folders < <(
+              jq -r '.folders[]' "$config" | while read -r d; do resolve "$d"; done | awk '!seen[$0]++'
+            )
             n=0
             total=''${#folders[@]}
             for d in "''${folders[@]}"; do
@@ -149,7 +233,9 @@
               # comfrt/ Shopify theme — without it osgrep walks 1700+ files into
               # a 275MB index and a 20min hang). .osgrepignore is globally
               # git-ignored, so it's invisible.
-              extra="$(jq -r --arg k "$(basename "$d")" '.extraIgnore[$k] // ""' "$config")"
+              key="$(basename "$d")"
+              if is_bare "$(dirname "$d")"; then key="$(basename "$(dirname "$d")")"; fi
+              extra="$(jq -r --arg k "$key" '.extraIgnore[$k] // ""' "$config")"
               {
                 cat ${baseIgnoreFile}
                 printf '%s\n' "$extra"
