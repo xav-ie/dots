@@ -30,6 +30,8 @@
         wantedBy = [ "default.target" ];
         after = [ "pipewire-pulse.service" ];
         wants = [ "pipewire-pulse.service" ];
+        # Its mic stream dies with PipeWire and never recovers, so restart along with it.
+        partOf = [ "pipewire.service" ];
         unitConfig.ConditionUser = config.defaultUser;
         environment.PYTHONUNBUFFERED = "1";
         serviceConfig = {
