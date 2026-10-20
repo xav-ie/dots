@@ -106,6 +106,7 @@ rec {
   herdr-fwd = pkgs.callPackage ./herdr-fwd { };
   herdr-space-headers = pkgs.callPackage ./herdr-space-headers { inherit writeNuApplication; };
   lint-staged = pkgs.callPackage ./lint-staged { inherit writeNuApplication; };
+  linux-voice-assistant = pkgs.callPackage ./linux-voice-assistant { };
   localip = pkgs.callPackage ./localip { inherit writeNuApplication; };
   mcp-atlassian = pkgs.callPackage ./mcp-atlassian { inherit mcp-atlassian-src; };
   mcp-sse-client = pkgs.callPackage ./mcp-sse-client { };
