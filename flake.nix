@@ -70,10 +70,6 @@
     openspec.url = "github:Fission-AI/OpenSpec";
     openspec.inputs.nixpkgs.follows = "nixpkgs";
     quadlet-nix.url = "github:SEIAROTg/quadlet-nix";
-    ream.url = "git+ssh://git@github.com/xav-ie/ream";
-    ream.inputs.nixpkgs.follows = "nixpkgs";
-    ream.inputs.flake-parts.follows = "flake-parts";
-    ream.inputs.treefmt-nix.follows = "treefmt-nix";
     scribe.url = "git+ssh://git@github.com/xav-ie/scribe";
     scribe.inputs.nixpkgs.follows = "nixpkgs";
     scribe-desktop.url = "git+ssh://git@github.com/xav-ie/scribe-desktop";

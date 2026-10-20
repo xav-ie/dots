@@ -87,7 +87,6 @@
           default = [
             "postiz.lalala.casa"
             "social.aztecahome.com"
-            "pdf.lalala.casa"
             "executor.lalala.casa"
             "fusion.lalala.casa"
             "chrome.lalala.casa"

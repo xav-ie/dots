@@ -19,9 +19,6 @@
   # with default fonts, re-overridden below to track lib/fonts.nix. null on
   # darwin, where morrow has no output and morrow.nix is not imported.
   morrow-pkg ? null,
-  # The ream PDF-tools app (inputs.ream.packages.<system>.default); null on
-  # darwin, where ream has no output and the consuming module isn't imported.
-  ream-pkg ? null,
   # browser-session-mcp, extracted to its own repo
   # (inputs.browser-session-mcp.packages.<system>.default); linux-only.
   browser-session-mcp-pkg ? null,
@@ -209,8 +206,6 @@ rec {
   };
   pinentry-auto = pkgs.callPackage ./pinentry-auto { };
   power-arbiter = pkgs.callPackage ./power-arbiter { };
-  # Built upstream in the ream flake (extracted repo); consumed as-is.
-  ream = ream-pkg;
   simulstreaming = pkgs.callPackage ./simulstreaming { src = simulstreaming-src; };
   record = pkgs.callPackage ./record { };
   record-section = pkgs.callPackage ./record-section { };
