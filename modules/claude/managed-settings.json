@@ -8,6 +8,7 @@
     }
   ],
   "disableSideloadFlags": true,
+  "enableWorkflows": false,
   "enabledPlugins": {
     "claude-code-wakatime@wakatime": true,
     "context-mode@context-mode": true,
@@ -119,6 +120,9 @@
         ]
       }
     ]
+  },
+  "permissions": {
+    "deny": ["ReportFindings", "ScheduleWakeup"]
   },
   "statusLine": {
     "type": "command",
