@@ -149,6 +149,23 @@
       '';
       baseIgnoreFile = pkgs.writeText "osgrep-baseignore" baseIgnore;
 
+      # osgrep rebuilds the FTS index on every `index` and never compacts, so
+      # each run leaves a full copy of the old index and versions behind
+      # (one index held 1.3 GB on disk for 115 MB of data). Compact and drop all
+      # old versions with the LanceDB that osgrep itself ships.
+      compact = pkgs.writeText "osgrep-compact.cjs" ''
+        "use strict";
+        const lancedb = require("${homeDir}/.npm/lib/node_modules/osgrep/node_modules/@lancedb/lancedb");
+        (async () => {
+          const db = await lancedb.connect(process.argv[2]);
+          const table = await db.openTable("chunks");
+          await table.optimize({ cleanupOlderThan: new Date() });
+        })().catch((e) => {
+          console.error(e);
+          process.exit(1);
+        });
+      '';
+
       # Periodic background index of the allowlist. An allowlisted bare repo's
       # directory holds all its worktrees, so only its <default branch>
       # worktree is indexed. `index` takes a writer lock
@@ -166,6 +183,7 @@
           pkgs.gnugrep
           pkgs.gnused
           pkgs.jq
+          pkgs.nodejs_24
           pkgs.openssh
         ];
         text = # sh
@@ -257,6 +275,7 @@
                 files=$(printf '%s' "$complete" | sed -nE 's/.*complete\([0-9]+[^0-9]+([0-9]+)\).*/\1/p')
                 embedded=$(printf '%s' "$complete" | sed -nE 's/.*indexed ([0-9]+).*/\1/p')
                 echo "[$n/$total] ok: $d (''${files:-?} files, ''${embedded:-0} embedded, ''${elapsed}s)"
+                node ${compact} "$d/.osgrep/lancedb" || echo "[$n/$total] compact FAILED: $d"
               else
                 echo "[$n/$total] FAILED ($rc): $d (''${elapsed}s)"
               fi
