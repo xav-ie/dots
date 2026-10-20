@@ -16,7 +16,7 @@
     "hookify@claude-plugins-official": false,
     "osgrep@osgrep": true,
     "plugin-dev@claude-plugins-official": false,
-    "ponytail@ponytail": true,
+    "ponytail@ponytail": false,
     "pts@outsmartly-plugins": false,
     "superpowers@claude-plugins-official": false,
     "typescript-lsp@claude-plugins-official": false,
