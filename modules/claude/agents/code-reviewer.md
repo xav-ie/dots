@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: Use this agent when you need expert code review and improvement suggestions. This includes after writing new functions, completing feature implementations, refactoring existing code, debugging issues, or when you want a second opinion on code quality and best practices. Examples: <example>Context: User has just written a new authentication function and wants it reviewed. user: 'I just implemented user authentication with JWT tokens. Can you review this code?' assistant: 'I'll use the code-reviewer agent to analyze your authentication implementation and provide improvement suggestions.' <commentary>Since the user is requesting code review, use the code-reviewer agent to examine the authentication code for security, performance, and best practices.</commentary></example> <example>Context: User completed a data processing module and wants feedback. user: 'Here's my data processing pipeline - does this look good?' assistant: 'Let me have the code-reviewer agent examine your data processing pipeline for potential optimizations and issues.' <commentary>The user wants code feedback, so use the code-reviewer agent to analyze the pipeline implementation.</commentary></example>
+description: Expert code review with improvement suggestions. Use after writing new functions, finishing a feature, refactoring or debugging, or whenever the user asks for a review or a second opinion on code quality (e.g. "review my JWT auth", "does this pipeline look good?").
 model: inherit
 color: purple
 ---
