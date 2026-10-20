@@ -24,6 +24,14 @@
       };
     };
 
+  flake.modules.nixos.praesidium =
+    { config, ... }:
+    {
+      services.local-networking.proxies.collie = {
+        inherit (config.home-manager.users.${config.defaultUser}.services.collie) port;
+      };
+    };
+
   flake.modules.homeManager.linux =
     {
       config,
