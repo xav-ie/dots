@@ -1774,22 +1774,6 @@
         "type": "github"
       }
     },
-    "ralph-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1769996781,
-        "narHash": "sha256-HuNtf9X/YuQVBQ4+EK0DP1lQe3RCUbj2OuwYzBqX7m0=",
-        "owner": "snarktank",
-        "repo": "ralph",
-        "rev": "6c53cb0b831ebe8739c6a003e22af14902d8b0b5",
-        "type": "github"
-      },
-      "original": {
-        "owner": "snarktank",
-        "repo": "ralph",
-        "type": "github"
-      }
-    },
     "root": {
       "inputs": {
         "ags": "ags",
@@ -1856,7 +1840,6 @@
         "postiz-src": "postiz-src",
         "protonmail-mcp-src": "protonmail-mcp-src",
         "quadlet-nix": "quadlet-nix",
-        "ralph-src": "ralph-src",
         "rust-analyzer-src": "rust-analyzer-src",
         "rust-overlay": "rust-overlay",
         "scribe": "scribe",
