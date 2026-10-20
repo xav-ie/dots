@@ -61,8 +61,8 @@ in
     inputs.quadlet-nix.nixosModules.quadlet
 
     # Instance A. Fronted by a Cloudflare Tunnel + Access at the hostname
-    # below; the app port is published to loopback for the tunnel to
-    # reach. Holds the social-provider OAuth secrets.
+    # below; the tunnel reaches it through traefik. Holds the
+    # social-provider OAuth secrets.
     (import ./instance.nix {
       name = "postiz-a";
       hostName = "postiz.lalala.casa";
@@ -71,7 +71,6 @@ in
       # Providers with a connected integration (from the DB). postiz-b is left
       # at the default (all workers) until its accounts are set up.
       workerProviders = "bluesky,discord,linkedin,mastodon,slack,x";
-      publishPort = "127.0.0.1:18801:5000";
       enableSocialProviders = true;
       nginxConf = patchedNginxConf;
     })
@@ -86,7 +85,6 @@ in
       # Enabling a provider here later is part of the same change that adds its
       # sops OAuth secrets + enableSocialProviders.
       workerProviders = "";
-      publishPort = "127.0.0.1:18800:5000";
       nginxConf = patchedNginxConf;
     })
   ];
