@@ -151,7 +151,6 @@
               tsc-filter
               uair-toggle-and-notify
               update-pr
-              wrangler-work
             ])
             ++ [
               # whisper.cpp backend: on Linux use the same pkgs-bleeding-cuda
