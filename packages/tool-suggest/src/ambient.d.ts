@@ -19,6 +19,8 @@ declare const process: {
 declare const Bun: {
   /** Full argv: [bun, script, ...args] interpreted; [binary, ...args] compiled. */
   readonly argv: string[];
+  /** Absolute path of the entry script. */
+  readonly main: string;
   readonly stdin: ReadableStream<Uint8Array>;
   file(path: string): {
     json<T = unknown>(): Promise<T>;
@@ -61,6 +63,7 @@ declare module "node:fs" {
   export function statSync(path: string): { mtimeMs: number };
   export function renameSync(oldPath: string, newPath: string): void;
   export function unlinkSync(path: string): void;
+  export function readdirSync(path: string): string[];
 }
 
 declare module "node:crypto" {
