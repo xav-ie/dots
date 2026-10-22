@@ -175,7 +175,6 @@
               ".git-blame-ignore-revs"
               ".gitignore"
               "flake.lock"
-              "modules/home-darwin/claude-desktop/claude_desktop_config.json"
               "secrets/*.json" # sops managed
               "secrets/*.yaml" # sops has its own formatter
             ]
