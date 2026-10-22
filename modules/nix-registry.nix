@@ -9,8 +9,7 @@ let
     "nixpkgs"
     "nixpkgs-bleeding"
   ];
-in
-let
+
   registryModule =
     {
       config,

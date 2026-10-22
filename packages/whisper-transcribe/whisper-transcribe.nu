@@ -19,8 +19,8 @@ def main [] {
 # works: tiny, base, small, medium, large-v3, large-v3-turbo, and quantized
 # suffixes like large-v3-turbo-q8_0.
 def ensure_model [model: string]: nothing -> string {
-  let dir = ($env.HOME | path join ".cache" "whisper-models")
-  let path = ($dir | path join $"ggml-($model).bin")
+  let dir = $env.HOME | path join ".cache" "whisper-models"
+  let path = $dir | path join $"ggml-($model).bin"
   if not ($path | path exists) {
     mkdir $dir
     let url = $"https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-($model).bin"
@@ -34,8 +34,8 @@ def ensure_model [model: string]: nothing -> string {
 
 # The Silero VAD model whisper.cpp needs for --vad.
 def ensure_vad_model []: nothing -> string {
-  let dir = ($env.HOME | path join ".cache" "whisper-models")
-  let path = ($dir | path join "ggml-silero-v5.1.2.bin")
+  let dir = $env.HOME | path join ".cache" "whisper-models"
+  let path = $dir | path join "ggml-silero-v5.1.2.bin"
   if not ($path | path exists) {
     mkdir $dir
     let url = "https://huggingface.co/ggml-org/whisper-vad/resolve/main/ggml-silero-v5.1.2.bin"
@@ -227,10 +227,10 @@ def "main file" [
   # whisper-cli's -of takes a path WITHOUT extension and appends the format's
   # own extension (.txt, .srt, ...). Point it at the desired output base.
   let outbase = if ($output | is-not-empty) {
-    let p = ($output | path parse)
+    let p = $output | path parse
     $p.parent | path join $p.stem
   } else {
-    let p = ($file_path | path parse)
+    let p = $file_path | path parse
     $p.parent | path join $p.stem
   }
 
@@ -247,7 +247,11 @@ def "main file" [
   ]
 
   if $vad {
-    $args = ($args | append [--vad --vad-model (ensure_vad_model)])
+    $args = ($args | append [
+      --vad
+      --vad-model
+      (ensure_vad_model)
+    ])
   }
 
   if $no_timestamps {

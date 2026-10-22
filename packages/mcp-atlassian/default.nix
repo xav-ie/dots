@@ -6,7 +6,7 @@ let
   # mcp-atlassian caps fastmcp <4.0.0. Main nixpkgs python3Packages (= 3.14)
   # still carries 3.4.7, so we can share the system's default Python set
   # instead of maintaining a second one (nixpkgs-bleeding python313 island).
-  python3Packages = pkgs.python3Packages;
+  inherit (pkgs) python3Packages;
 
   # Type stubs for cachetools — not in nixpkgs.
   # Must use wheel because the sdist has a hyphenated package-data key

@@ -159,10 +159,7 @@
               # build on darwin.
               (pkgs.pkgs-mine.whisper-transcribe.override {
                 whisper-cpp =
-                  if pkgs.stdenv.hostPlatform.isLinux then
-                    pkgs.pkgs-bleeding-cuda.whisper-cpp
-                  else
-                    pkgs.whisper-cpp;
+                  if pkgs.stdenv.hostPlatform.isLinux then pkgs.pkgs-bleeding-cuda.whisper-cpp else pkgs.whisper-cpp;
               })
               inputs.nix-auto-follow.packages.${pkgs.stdenv.hostPlatform.system}.default
               inputs.openspec.packages.${pkgs.stdenv.hostPlatform.system}.default

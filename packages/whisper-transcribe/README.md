@@ -23,17 +23,17 @@ whisper-transcribe file lecture.wav --vad                # skip non-speech segme
 whisper-transcribe file meeting.mp3 --device cpu         # force CPU
 ```
 
-| Flag | Default | Notes |
-| --- | --- | --- |
-| `--model` | `large-v3` | Any ggml model name (see below) |
-| `--language` | `en` | Language code, or `auto` to detect |
-| `--output` | input path | Output file (extension sets the format unless `--format` given) |
-| `--format` | `txt` | `txt`, `srt`, `vtt`, `json`, `csv` (`tsv` accepted as alias) |
-| `--extract-audio` | off | Keep the extracted audio for video inputs |
-| `--audio-track` | `-1` | Track number; `-1` prompts when a video has multiple tracks |
-| `--vad` | off | Silero voice-activity filter (model auto-downloaded) |
-| `--device` | `auto` | `auto` (GPU if available) or `cpu` |
-| `--no-timestamps` | off | Plain text without `[start -> end]` markers |
+| Flag              | Default    | Notes                                                           |
+| ----------------- | ---------- | --------------------------------------------------------------- |
+| `--model`         | `large-v3` | Any ggml model name (see below)                                 |
+| `--language`      | `en`       | Language code, or `auto` to detect                              |
+| `--output`        | input path | Output file (extension sets the format unless `--format` given) |
+| `--format`        | `txt`      | `txt`, `srt`, `vtt`, `json`, `csv` (`tsv` accepted as alias)    |
+| `--extract-audio` | off        | Keep the extracted audio for video inputs                       |
+| `--audio-track`   | `-1`       | Track number; `-1` prompts when a video has multiple tracks     |
+| `--vad`           | off        | Silero voice-activity filter (model auto-downloaded)            |
+| `--device`        | `auto`     | `auto` (GPU if available) or `cpu`                              |
+| `--no-timestamps` | off        | Plain text without `[start -> end]` markers                     |
 
 ## `stream`
 
@@ -45,31 +45,31 @@ whisper-transcribe stream --step 0 --length 30000        # sliding window; only 
 whisper-transcribe stream --output live.txt --save-audio # transcript + recording
 ```
 
-| Flag | Default | Notes |
-| --- | --- | --- |
-| `--model` | `large-v3` | |
-| `--language` | `en` | |
-| `--capture` | `-1` | Capture device ID, `-1` = system default |
-| `--step` | `3000` | Audio step size in ms |
-| `--length` | `10000` | Audio window length in ms |
-| `--vad-threshold` | `0.6` | Speech detection threshold (0–1) |
-| `--output` | — | Live transcript output file |
-| `--save-audio` | off | Save the recorded audio |
-| `--device` | `auto` | `auto` or `cpu` |
+| Flag              | Default    | Notes                                    |
+| ----------------- | ---------- | ---------------------------------------- |
+| `--model`         | `large-v3` |                                          |
+| `--language`      | `en`       |                                          |
+| `--capture`       | `-1`       | Capture device ID, `-1` = system default |
+| `--step`          | `3000`     | Audio step size in ms                    |
+| `--length`        | `10000`    | Audio window length in ms                |
+| `--vad-threshold` | `0.6`      | Speech detection threshold (0–1)         |
+| `--output`        | —          | Live transcript output file              |
+| `--save-audio`    | off        | Save the recorded audio                  |
+| `--device`        | `auto`     | `auto` or `cpu`                          |
 
 ## Models
 
 Models are downloaded once from [huggingface.co/ggerganov/whisper.cpp](https://huggingface.co/ggerganov/whisper.cpp) into `~/.cache/whisper-models/` (as `ggml-<name>.bin`). Any name from that repo works, including quantized variants:
 
-| Model | Parameters | VRAM | Speed | Accuracy |
-| --- | --- | --- | --- | --- |
-| `tiny` / `tiny.en` | 39M | ~1 GB | ~32x | Lower |
-| `base` / `base.en` | 74M | ~1 GB | ~16x | Good |
-| `small` | 244M | ~2 GB | ~6x | Better |
-| `medium` | 769M | ~5 GB | ~2x | Great |
-| `large-v3` (default) | 1550M | ~10 GB | 1x | Best |
-| `large-v3-turbo` | 809M | ~6 GB | ~8x | Near `large-v3` |
-| `large-v3-turbo-q8_0` | 809M | ~3 GB | ~8x | Near `large-v3`, quantized |
+| Model                 | Parameters | VRAM   | Speed | Accuracy                   |
+| --------------------- | ---------- | ------ | ----- | -------------------------- |
+| `tiny` / `tiny.en`    | 39M        | ~1 GB  | ~32x  | Lower                      |
+| `base` / `base.en`    | 74M        | ~1 GB  | ~16x  | Good                       |
+| `small`               | 244M       | ~2 GB  | ~6x   | Better                     |
+| `medium`              | 769M       | ~5 GB  | ~2x   | Great                      |
+| `large-v3` (default)  | 1550M      | ~10 GB | 1x    | Best                       |
+| `large-v3-turbo`      | 809M       | ~6 GB  | ~8x   | Near `large-v3`            |
+| `large-v3-turbo-q8_0` | 809M       | ~3 GB  | ~8x   | Near `large-v3`, quantized |
 
 `--vad` additionally downloads the Silero VAD model (`ggml-silero-v5.1.2.bin`, from `ggml-org/whisper-vad`) into the same cache.
 

@@ -108,9 +108,7 @@ export const shortPath = (p: string): string => {
 // `tools["atlassian-delivery"].jira_search`); the catalog keeps the canonical
 // `slug.tool` form, and render() turns it back into an expression.
 export const canonical = (p: string): string =>
-  p
-    .replace(/\["([^"]+)"\]/g, ".$1")
-    .replace(/^tools\./, "");
+  p.replace(/\["([^"]+)"\]/g, ".$1").replace(/^tools\./, "");
 
 export const expression = (p: string): string =>
   `tools${p
@@ -219,7 +217,8 @@ const mcpCall = async (
     error?: { message: string };
   };
   if (body.error) throw new Error(`${name} mcp error: ${body.error.message}`);
-  if (!body.result?.structuredContent) throw new Error(`${name}: no structuredContent`);
+  if (!body.result?.structuredContent)
+    throw new Error(`${name}: no structuredContent`);
   return body.result.structuredContent;
 };
 
@@ -233,7 +232,10 @@ export async function fetchCatalog(c: Config): Promise<Tool[]> {
   let params: Record<string, unknown> = {};
   // A hard page cap keeps a pathological catalogue from hanging the build.
   for (let page = 0; page < 50; page++) {
-    const result = (await mcpCall(c, sessionId, id++, "search", { limit: 200, ...params })) as {
+    const result = (await mcpCall(c, sessionId, id++, "search", {
+      limit: 200,
+      ...params,
+    })) as {
       items: Array<{ path: string }>;
       next: Record<string, unknown> | null;
     };
@@ -288,7 +290,8 @@ export const selfCommand = (): string[] =>
 // one at a time: describing and embedding every tool outlasts a hook.
 const startBuild = (): void => {
   const lock = join(CACHE, "build.lock");
-  if (existsSync(lock) && Date.now() - statSync(lock).mtimeMs < 2 * 60_000) return;
+  if (existsSync(lock) && Date.now() - statSync(lock).mtimeMs < 2 * 60_000)
+    return;
   mkdirSync(CACHE, { recursive: true });
   writeFileSync(lock, "");
   const self = selfCommand();
@@ -347,7 +350,8 @@ export async function suggest(input: SuggestInput): Promise<string | null> {
   // A stale catalogue keeps serving while a build refreshes it in the
   // background, so a hook never waits on describe calls.
   const tools = cachedCatalog();
-  if (!tools || Date.now() - statSync(CATALOG_FILE).mtimeMs > CATALOG_TTL) startBuild();
+  if (!tools || Date.now() - statSync(CATALOG_FILE).mtimeMs > CATALOG_TTL)
+    startBuild();
   if (!tools) return null;
   const vectors = docVectors(c, tools);
   if (!vectors) return null;
@@ -429,7 +433,9 @@ export async function build(): Promise<void> {
       const vectors: number[][] = [];
       for (let i = 0; i < texts.length; i += 32)
         vectors.push(...(await embed(c, texts.slice(i, i + 32), 60_000)));
-      const rounded = vectors.map((v) => v.map((x) => Math.round(x * 1e5) / 1e5));
+      const rounded = vectors.map((v) =>
+        v.map((x) => Math.round(x * 1e5) / 1e5),
+      );
       mkdirSync(dirname(file), { recursive: true });
       writeFileSync(`${file}.tmp`, JSON.stringify(rounded));
       renameSync(`${file}.tmp`, file);
@@ -439,7 +445,8 @@ export async function build(): Promise<void> {
     writeFileSync(`${CATALOG_FILE}.tmp`, JSON.stringify(tools));
     renameSync(`${CATALOG_FILE}.tmp`, CATALOG_FILE);
     for (const name of readdirSync(CACHE))
-      if (name.startsWith("vectors-") && join(CACHE, name) !== file) unlinkSync(join(CACHE, name));
+      if (name.startsWith("vectors-") && join(CACHE, name) !== file)
+        unlinkSync(join(CACHE, name));
   } finally {
     try {
       unlinkSync(lock);
