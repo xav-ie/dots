@@ -233,7 +233,6 @@
           restartUnits = [ "executor-web.service" ];
         };
 
-
         # Main executor web service
         systemd.services.executor-web = {
           description = "Executor web server";
