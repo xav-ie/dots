@@ -370,6 +370,8 @@ export async function suggest(input: SuggestInput): Promise<string | null> {
     .filter(
       (r) =>
         r.score >= c.threshold &&
+        // Snippet management (snippets._save, _delete, ...) is never the task.
+        !r.tool.path.startsWith("snippets._") &&
         !skip.has(shortPath(r.tool.path)) &&
         !isUsed(r.tool.path, input.usedTools ?? []),
     )
