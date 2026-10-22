@@ -21,12 +21,12 @@ fallback_to_clipboard = true
 driver_order = ["wtype", "clipboard"]
 type_delay_ms = 0
 
-[vad]
-enabled = true
-threshold = 0.5
-min_speech_duration_ms = 100
-
 [output.notification]
 on_recording_start = false
 on_recording_stop = false
 on_transcription = true
+
+[vad]
+enabled = true
+threshold = 0.5
+min_speech_duration_ms = 100

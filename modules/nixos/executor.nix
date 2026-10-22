@@ -162,23 +162,24 @@
       executorStart = pkgs.writeShellApplication {
         name = "executor-web-start";
         runtimeInputs = [ pkgs.gnused ];
-        text = ''
-          if [ ! -r /run/secrets/shell-env ]; then
-            echo "executor-web: /run/secrets/shell-env is missing or unreadable" >&2
-            exit 1
-          fi
-          token=$(sed -n 's/^EXECUTOR_AUTH_TOKEN=//p' /run/secrets/shell-env)
-          if [ -z "$token" ]; then
-            echo "executor-web: EXECUTOR_AUTH_TOKEN missing from /run/secrets/shell-env" >&2
-            exit 1
-          fi
-          if [ "''${#token}" -lt 32 ]; then
-            echo "executor-web: EXECUTOR_AUTH_TOKEN is shorter than 32 characters" >&2
-            exit 1
-          fi
-          export EXECUTOR_API_KEY="$token"
-          exec ${pkgs.pkgs-mine.executor}/bin/executor serve
-        '';
+        text = # sh
+          ''
+            if [ ! -r /run/secrets/shell-env ]; then
+              echo "executor-web: /run/secrets/shell-env is missing or unreadable" >&2
+              exit 1
+            fi
+            token=$(sed -n 's/^EXECUTOR_AUTH_TOKEN=//p' /run/secrets/shell-env)
+            if [ -z "$token" ]; then
+              echo "executor-web: EXECUTOR_AUTH_TOKEN missing from /run/secrets/shell-env" >&2
+              exit 1
+            fi
+            if [ "''${#token}" -lt 32 ]; then
+              echo "executor-web: EXECUTOR_AUTH_TOKEN is shorter than 32 characters" >&2
+              exit 1
+            fi
+            export EXECUTOR_API_KEY="$token"
+            exec ${pkgs.pkgs-mine.executor}/bin/executor serve
+          '';
       };
     in
     {

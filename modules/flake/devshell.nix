@@ -34,10 +34,14 @@
             nix-output-monitor
           ])
           ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux (
-            (with pkgs-bleeding; [
-              nh
-              nixos-rebuild
-            ])
+            [
+              pkgs-bleeding.nh
+              # nixos-rebuild puts its nix on PATH ahead of the system's; build
+              # it with the daemon's nix so `nix` in the shell speaks its protocol.
+              (pkgs-bleeding.nixos-rebuild.override {
+                nix = inputs.nix-src.packages.${system}.nix-cli;
+              })
+            ]
             ++ [ config.packages.cachectl ]
           )
           ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin [

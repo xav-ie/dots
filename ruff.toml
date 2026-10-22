@@ -13,17 +13,16 @@ target-version = "py312"
 
 [lint]
 extend-select = [
-  "A", # builtin shadowing
-  "ARG", # unused arguments
-  "B", # bugbear — real bug patterns, the highest value per fix here
-  "C4", # comprehensions
-  "DTZ", # naive datetimes
-  "LOG", # logging misuse
-  "N", # pep8 naming
-  "PERF", # performance antipatterns
-  "RET", # returns
-  "RUF", # ruff's own
-
+  "A",  # builtin shadowing
+  "ARG",  # unused arguments
+  "B",  # bugbear — real bug patterns, the highest value per fix here
+  "C4",  # comprehensions
+  "DTZ",  # naive datetimes
+  "LOG",  # logging misuse
+  "N",  # pep8 naming
+  "PERF",  # performance antipatterns
+  "RET",  # returns
+  "RUF",  # ruff's own
 ]
 # Candidates deliberately left off, with the violation count each would add
 # today, so the trade is visible rather than rediscovered:

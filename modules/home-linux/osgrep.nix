@@ -106,27 +106,28 @@
           pkgs.git
           pkgs.nodejs_24
         ];
-        text = ''
-          export NODE_OPTIONS="--require ${gitignoreGuard} --require ${extraExtensions}''${NODE_OPTIONS:+ ''${NODE_OPTIONS}}"
-          if [ "''${1:-}" = search ] && top="$(git rev-parse --show-toplevel 2>/dev/null)"; then
-            common="$(git rev-parse --path-format=absolute --git-common-dir)"
-            if [ "$(git --git-dir="$common" rev-parse --is-bare-repository)" = true ] &&
-              head="$(git --git-dir="$common" symbolic-ref --quiet --short refs/remotes/origin/HEAD)"; then
-              index="$(dirname "$common")/''${head#origin/}"
-              if [ "$top" != "$index" ] && [ -d "$index/.osgrep" ]; then
-                echo "osgrep: searching the ''${head#origin/} index" >&2
-                cd "$index''${PWD#"$top"}" 2>/dev/null || cd "$index"
+        text = # sh
+          ''
+            export NODE_OPTIONS="--require ${gitignoreGuard} --require ${extraExtensions}''${NODE_OPTIONS:+ ''${NODE_OPTIONS}}"
+            if [ "''${1:-}" = search ] && top="$(git rev-parse --show-toplevel 2>/dev/null)"; then
+              common="$(git rev-parse --path-format=absolute --git-common-dir)"
+              if [ "$(git --git-dir="$common" rev-parse --is-bare-repository)" = true ] &&
+                head="$(git --git-dir="$common" symbolic-ref --quiet --short refs/remotes/origin/HEAD)"; then
+                index="$(dirname "$common")/''${head#origin/}"
+                if [ "$top" != "$index" ] && [ -d "$index/.osgrep" ]; then
+                  echo "osgrep: searching the ''${head#origin/} index" >&2
+                  cd "$index''${PWD#"$top"}" 2>/dev/null || cd "$index"
+                fi
+              fi
+              # Only the indexer creates indexes; a search elsewhere would
+              # silently index the whole repo.
+              if [ ! -d "$(git rev-parse --show-toplevel)/.osgrep" ]; then
+                echo "osgrep: no index for this repo (not in the allowlist); use grep" >&2
+                exit 2
               fi
             fi
-            # Only the indexer creates indexes; a search elsewhere would
-            # silently index the whole repo.
-            if [ ! -d "$(git rev-parse --show-toplevel)/.osgrep" ]; then
-              echo "osgrep: no index for this repo (not in the allowlist); use grep" >&2
-              exit 2
-            fi
-          fi
-          exec ${realOsgrep} "$@"
-        '';
+            exec ${realOsgrep} "$@"
+          '';
       };
 
       # The indexing allowlist is PRIVATE (it names work projects), so it is read
