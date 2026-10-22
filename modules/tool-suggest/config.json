@@ -1,4 +1,5 @@
 {
   "mode": "inject",
-  "threshold": 0.68
+  "threshold": 0.68,
+  "abInject": 0.5
 }
