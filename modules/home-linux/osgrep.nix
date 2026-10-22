@@ -303,15 +303,19 @@
           Unit.Description = "Index allowlisted repos into their local osgrep store";
           Service = {
             Type = "oneshot";
-            # Background pass: stay out of the way of interactive work. osgrep's
-            # defaults are greedy (4 worker threads, per-worker memory cap = 50%
-            # of system RAM — a partial pass already peaked at 4.6 GB), so cap
-            # both and run at low CPU/IO priority. These apply ONLY to the timer
-            # service; interactive `osgrep` via the wrapper keeps full speed.
-            Environment = [
-              "OSGREP_WORKER_THREADS=4"
-              "OSGREP_MAX_WORKER_MEMORY_MB=2048"
-            ];
+            # Background pass: stay out of the way of interactive work. osgrep
+            # defaults to 4 workers (min(cores, 4)), each loading its own copy of
+            # the embedding models (~1.3-1.6 GB), so a pass peaked near 5.5 GB.
+            # 2 workers halves that and still finishes a repo well inside the
+            # 20 min per-repo timeout; most runs only re-embed changed files.
+            # osgrep has no working memory cap (OSGREP_MAX_WORKER_MEMORY_MB is
+            # defined but never read), so MemoryHigh is the cap: past it the
+            # kernel throttles and reclaims the pass instead of letting it
+            # crowd out interactive work (a soft limit, never a kill). These
+            # apply ONLY to the timer service; interactive `osgrep` via the
+            # wrapper keeps full speed.
+            Environment = [ "OSGREP_WORKER_THREADS=2" ];
+            MemoryHigh = "3G";
             Nice = 15;
             IOSchedulingClass = "idle";
             ExecStart = "${homeDir}/.local/bin/osgrep-index";
