@@ -22,6 +22,7 @@ fn client() -> &'static reqwest::Client {
 }
 
 pub struct Endpoint {
+    base: String,
     url: String,
     token: String,
 }
@@ -45,8 +46,10 @@ pub fn endpoint() -> anyhow::Result<Option<Endpoint>> {
                 .ok_or_else(|| anyhow::anyhow!("no EXECUTOR_AUTH_TOKEN line in {path}"))?
         }
     };
+    let base = base.trim_end_matches('/').to_string();
     Ok(Some(Endpoint {
-        url: format!("{}/mcp", base.trim_end_matches('/')),
+        url: format!("{base}/mcp"),
+        base,
         token,
     }))
 }
@@ -64,6 +67,21 @@ fn parse_rpc(text: &str) -> anyhow::Result<Value> {
 }
 
 impl Endpoint {
+    /// GET an executor HTTP API path (e.g. `/v1/apps`) and decode its JSON.
+    pub async fn get_json<T: serde::de::DeserializeOwned>(&self, path: &str) -> anyhow::Result<T> {
+        let res = client()
+            .get(format!("{}{path}", self.base))
+            .bearer_auth(&self.token)
+            .timeout(Duration::from_secs(60))
+            .send()
+            .await?;
+        let status = res.status();
+        if !status.is_success() {
+            anyhow::bail!("executor returned {status} for {path}");
+        }
+        Ok(res.json().await?)
+    }
+
     async fn post(&self, session: Option<&str>, body: Value) -> anyhow::Result<(Option<String>, Value)> {
         let mut req = client()
             .post(&self.url)

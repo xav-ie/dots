@@ -52,11 +52,9 @@
             "sops-install-secrets.service"
           ];
 
-          # EXECUTOR_BASE_URL/EXECUTOR_AUTH_TOKEN_FILE/EXECUTOR_REFRESH_NAMESPACE
-          # drove a POST to v1's /api/connections/.../refresh after
-          # save/update/delete; v2 has no such endpoint, and its tool listings
-          # refresh on their own within EXECUTOR_TOOL_LISTING_FRESH_SECONDS
-          # (default 30s), so snippet-mcp just degrades to that instead.
+          # After save/update/delete, snippet-mcp re-reads the snippets app's
+          # tool list through executor so tool search sees the change at once
+          # (v2 otherwise only re-reads an app when something asks for it).
           environment = {
             SNIPPET_DIR = snippetsDir;
             # Code snippets run through executor's execute and return results
