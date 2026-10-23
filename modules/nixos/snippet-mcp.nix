@@ -47,7 +47,10 @@
         systemd.services.snippet-mcp = {
           description = "snippet-mcp HTTP MCP server";
           wantedBy = [ "multi-user.target" ];
-          after = [ "network.target" ];
+          after = [
+            "network.target"
+            "sops-install-secrets.service"
+          ];
 
           # EXECUTOR_BASE_URL/EXECUTOR_AUTH_TOKEN_FILE/EXECUTOR_REFRESH_NAMESPACE
           # drove a POST to v1's /api/connections/.../refresh after
@@ -56,6 +59,11 @@
           # (default 30s), so snippet-mcp just degrades to that instead.
           environment = {
             SNIPPET_DIR = snippetsDir;
+            # Code snippets run through executor's execute and return results
+            # (v2's sandbox can't run returned code). The bearer is the
+            # EXECUTOR_AUTH_TOKEN line of the runtime-decrypted shell-env.
+            EXECUTOR_URL = "http://127.0.0.1:${toString config.services.executor.port}";
+            EXECUTOR_ENV_FILE = "/run/secrets/shell-env";
             SNIPPET_AGE_KEY_FILE = "%d/age-key";
             RUST_LOG = "snippet_mcp=info,rmcp=warn";
           };

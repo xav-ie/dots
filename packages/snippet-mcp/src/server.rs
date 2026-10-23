@@ -1,7 +1,8 @@
+use crate::executor;
 use crate::refresh::refresh_executor;
 use crate::render::render;
 use crate::snippets::Registry;
-use crate::types::{ArgSpec, SaveInput, Snippet, UpdateInput};
+use crate::types::{ArgSpec, SaveInput, Snippet, SnippetKind, UpdateInput};
 use regex::Regex;
 use rmcp::model::{
     CallToolRequestParams, CallToolResult, Content, ErrorData as McpError, Implementation,
@@ -115,7 +116,16 @@ impl SnippetServer {
             }
             _ => {
                 let snippet = self.registry.load(name)?;
-                render(&snippet, &args)
+                let rendered = render(&snippet, &args)?;
+                // A code snippet runs through executor's execute when one is
+                // configured; instructions, and an unconfigured host, return text.
+                if snippet.frontmatter.kind.unwrap_or_default() != SnippetKind::Code {
+                    return Ok(rendered);
+                }
+                match executor::endpoint()? {
+                    Some(endpoint) => endpoint.execute(&rendered).await,
+                    None => Ok(rendered),
+                }
             }
         }
     }
@@ -127,6 +137,10 @@ async fn wrap_write(s: Snippet) -> anyhow::Result<String> {
         "saved": { "name": s.name },
         "executor_refresh": if r.ok { "ok".to_string() } else { r.detail },
     }))?)
+}
+
+fn executor_configured() -> bool {
+    std::env::var("EXECUTOR_URL").is_ok_and(|v| !v.is_empty())
 }
 
 fn required_str<'a>(args: &'a JsonObject, field: &str) -> anyhow::Result<&'a str> {
@@ -144,10 +158,11 @@ fn snippet_tool(s: &Snippet) -> Tool {
         }
     }
     let kind = s.frontmatter.kind.unwrap_or_default();
-    description.push_str(&format!(
-        " (kind: {}) — returns the rendered snippet body for use inside executor.execute.",
-        kind.as_str()
-    ));
+    description.push_str(match kind {
+        SnippetKind::Code if executor_configured() => " (kind: code) — runs the snippet and returns its result.",
+        SnippetKind::Code => " (kind: code) — returns the rendered snippet body for use inside executor.execute.",
+        SnippetKind::Instructions => " (kind: instructions) — returns the rendered instructions.",
+    });
     let tool = build_tool(
         s.name.clone(),
         description,
