@@ -48,6 +48,8 @@ export type Tool = {
   path: string;
   name: string;
   description: string;
+  /** Compact input signature from describe, e.g. `({ issue_key: string })`. */
+  signature?: string;
 };
 
 export type Config = {
@@ -248,13 +250,14 @@ export async function fetchCatalog(c: Config): Promise<Tool[]> {
   for (let i = 0; i < paths.length; i += 20) {
     const result = (await mcpCall(c, sessionId, id++, "describe", {
       paths: paths.slice(i, i + 20),
-    })) as { items: Array<{ path: string; description?: string }> };
+    })) as { items: Array<{ path: string; description?: string; signature?: string }> };
     for (const item of result.items) {
       const path = canonical(item.path);
       tools.push({
         path,
         name: path.split(".").at(-1) ?? path,
         description: item.description ?? "",
+        signature: compactSignature(item.signature ?? ""),
       });
     }
   }
@@ -323,12 +326,26 @@ export const isUsed = (path: string, used: readonly string[]): boolean => {
   );
 };
 
+// describe's signature with doc comments and the return type dropped: just the
+// parameter names and types an agent needs to call the tool without a lookup.
+export const compactSignature = (sig: string): string => {
+  const input = sig
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .split(/\)\s*:\s*Promise</)[0]!
+    .replace(/^\s*\(\s*(input:\s*)?/, "")
+    .replace(/\s+/g, " ")
+    .replace(/,\s*}/g, " }")
+    .trim();
+  const body = input === "" ? "" : input;
+  return `(${body.length > 200 ? `${body.slice(0, 197)}...` : body})`;
+};
+
 export const render = (picks: Tool[]): string =>
   [
-    `${MARKER} (optional, use only if they fit the task):`,
+    `${MARKER} (if one fits the task, call it directly with these inputs; no need to search first):`,
     ...picks.map(
       (p) =>
-        `- ${expression(p.path)}: ${(p.description.split("\n")[0] ?? "").slice(0, 140)}`,
+        `- ${expression(p.path)}${p.signature ?? ""}: ${(p.description.split("\n")[0] ?? "").slice(0, 140)}`,
     ),
   ].join("\n");
 
@@ -492,6 +509,12 @@ export function selftest(): void {
     expression("atlassian-delivery.jira_search"),
     'tools["atlassian-delivery"].jira_search',
   );
+  check(
+    "compact signature",
+    compactSignature("(input: {\n  /** Key. */\n  issue_key: string,\n  /** Fields. */\n  fields?: string,\n}): Promise<{ content: unknown }>"),
+    "({ issue_key: string, fields?: string })",
+  );
+  check("compact signature empty", compactSignature("(): Promise<{}>"), "()");
   check("expression plain", expression("github.get_me"), "tools.github.get_me");
   check("normalize", normalize([3, 4]), [0.6, 0.8]);
   check(
@@ -519,7 +542,7 @@ export function selftest(): void {
     "render",
     render([{ path: "x.y", name: "y", description: "first line\nsecond" }]),
     [
-      "Possibly relevant executor tools (optional, use only if they fit the task):",
+      "Possibly relevant executor tools (if one fits the task, call it directly with these inputs; no need to search first):",
       "- tools.x.y: first line",
     ].join("\n"),
   );
