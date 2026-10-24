@@ -1,0 +1,301 @@
+diff --git a/workspace-server/src/index.ts b/workspace-server/src/index.ts
+index 8d476d5..75fd3d8 100644
+--- a/workspace-server/src/index.ts
++++ b/workspace-server/src/index.ts
+@@ -247,7 +247,8 @@ async function main() {
+   registerTool(
+     'auth.refreshToken',
+     {
+-      description: 'Manually triggers the token refresh process.',
++      description:
++        'Manually refresh the Google OAuth access token for this account before it expires.',
+       inputSchema: {},
+     },
+     async () => {
+@@ -266,7 +267,8 @@ async function main() {
+   registerTool(
+     'docs.getSuggestions',
+     {
+-      description: 'Retrieves suggested edits from a Google Doc.',
++      description:
++        'List pending suggested edits (tracked changes) in a Google Doc.',
+       inputSchema: {
+         documentId: z
+           .string()
+@@ -309,7 +311,8 @@ async function main() {
+   registerTool(
+     'docs.writeText',
+     {
+-      description: 'Writes text to a Google Doc at a specified position.',
++      description:
++        'Insert or append text into a Google Doc at a given character position.',
+       inputSchema: {
+         documentId: z.string().describe('The ID of the document to modify.'),
+         text: z.string().describe('The text to write to the document.'),
+@@ -333,7 +336,7 @@ async function main() {
+   registerTool(
+     'drive.findFolder',
+     {
+-      description: 'Finds a folder by name in Google Drive.',
++      description: 'Find a Google Drive folder by name.',
+       inputSchema: {
+         folderName: z.string().describe('The name of the folder to find.'),
+       },
+@@ -345,7 +348,7 @@ async function main() {
+   registerTool(
+     'drive.createFolder',
+     {
+-      description: 'Creates a new folder in Google Drive.',
++      description: 'Create a new folder in Google Drive.',
+       inputSchema: {
+         name: z.string().trim().min(1).describe('The name of the new folder.'),
+         parentId: z
+@@ -364,7 +367,7 @@ async function main() {
+   registerTool(
+     'docs.getText',
+     {
+-      description: 'Retrieves the text content of a Google Doc.',
++      description: 'Read the plain-text content of a Google Doc.',
+       inputSchema: {
+         documentId: z.string().describe('The ID of the document to read.'),
+         tabId: z
+@@ -449,7 +452,7 @@ async function main() {
+     'slides.getText',
+     {
+       description:
+-        'Retrieves the text content of a Google Slides presentation.',
++        'Read the text content of a Google Slides presentation, including slide body text and speaker notes.',
+       inputSchema: {
+         presentationId: z
+           .string()
+@@ -463,7 +466,8 @@ async function main() {
+   registerTool(
+     'slides.getMetadata',
+     {
+-      description: 'Gets metadata about a Google Slides presentation.',
++      description:
++        "Get a Google Slides presentation's metadata: slide ids, titles, and layout (not slide content).",
+       inputSchema: {
+         presentationId: z
+           .string()
+@@ -897,7 +901,8 @@ async function main() {
+   registerTool(
+     'sheets.getText',
+     {
+-      description: 'Retrieves the content of a Google Sheets spreadsheet.',
++      description:
++        'Read all cell/table data from a Google Sheets spreadsheet (e.g. a budget or tracking sheet) as text.',
+       inputSchema: {
+         spreadsheetId: z
+           .string()
+@@ -916,7 +921,7 @@ async function main() {
+     'sheets.getRange',
+     {
+       description:
+-        'Gets values from a specific range in a Google Sheets spreadsheet.',
++        'Read cell values from a specific range (e.g. a sheet of a budget spreadsheet) in a Google Sheets spreadsheet.',
+       inputSchema: {
+         spreadsheetId: z.string().describe('The ID or URL of the spreadsheet.'),
+         range: z
+@@ -931,7 +936,8 @@ async function main() {
+   registerTool(
+     'sheets.getMetadata',
+     {
+-      description: 'Gets metadata about a Google Sheets spreadsheet.',
++      description:
++        "Get a Google Sheets spreadsheet's metadata: sheet/tab names, ids, and dimensions (not cell data).",
+       inputSchema: {
+         spreadsheetId: z.string().describe('The ID or URL of the spreadsheet.'),
+       },
+@@ -1034,7 +1040,7 @@ async function main() {
+   registerTool(
+     'drive.renameFile',
+     {
+-      description: 'Renames a file or folder in Google Drive.',
++      description: 'Rename a file or folder in Google Drive.',
+       inputSchema: {
+         fileId: z.string().describe('The ID or URL of the file to rename.'),
+         newName: z
+@@ -1050,7 +1056,8 @@ async function main() {
+   registerTool(
+     'calendar.list',
+     {
+-      description: "Lists all of the user's calendars.",
++      description:
++        'List all Google Calendars (work, personal, shared) the user has access to.',
+       inputSchema: {},
+       ...readOnlyToolProps,
+     },
+@@ -1193,7 +1200,8 @@ async function main() {
+   registerTool(
+     'calendar.listEvents',
+     {
+-      description: 'Lists events from a calendar. Defaults to upcoming events.',
++      description:
++        'List events on a Google Calendar within a date range; defaults to upcoming events.',
+       inputSchema: {
+         calendarId: z
+           .string()
+@@ -1242,7 +1250,8 @@ async function main() {
+   registerTool(
+     'calendar.getEvent',
+     {
+-      description: 'Gets the details of a specific calendar event.',
++      description:
++        'Get the full details (time, attendees, location, description) of a specific Google Calendar event.',
+       inputSchema: {
+         eventId: z.string().describe('The ID of the event to retrieve.'),
+         calendarId: z
+@@ -1260,7 +1269,8 @@ async function main() {
+   registerTool(
+     'calendar.findFreeTime',
+     {
+-      description: 'Finds a free time slot for multiple people to meet.',
++      description:
++        "Find a free meeting time slot shared by multiple people's Google Calendars (scheduling assistant).",
+       inputSchema: {
+         attendees: z
+           .array(z.string())
+@@ -1353,7 +1363,7 @@ async function main() {
+   registerTool(
+     'calendar.deleteEvent',
+     {
+-      description: 'Deletes an event from a calendar.',
++      description: 'Delete/cancel an event from a Google Calendar.',
+       inputSchema: {
+         eventId: z.string().describe('The ID of the event to delete.'),
+         calendarId: z
+@@ -1370,7 +1380,8 @@ async function main() {
+   registerTool(
+     'chat.listSpaces',
+     {
+-      description: 'Lists the spaces the user is a member of.',
++      description:
++        'List the Google Chat spaces (rooms/group conversations) the user belongs to.',
+       inputSchema: {},
+       ...readOnlyToolProps,
+     },
+@@ -1380,7 +1391,8 @@ async function main() {
+   registerTool(
+     'chat.findSpaceByName',
+     {
+-      description: 'Finds a Google Chat space by its display name.',
++      description:
++        'Find a Google Chat space (group conversation/room) by its display name.',
+       inputSchema: {
+         displayName: z
+           .string()
+@@ -1394,7 +1406,7 @@ async function main() {
+   registerTool(
+     'chat.sendMessage',
+     {
+-      description: 'Sends a message to a Google Chat space.',
++      description: 'Send a message to a Google Chat space (room).',
+       inputSchema: {
+         spaceName: z
+           .string()
+@@ -1416,7 +1428,7 @@ async function main() {
+   registerTool(
+     'chat.getMessages',
+     {
+-      description: 'Gets messages from a Google Chat space.',
++      description: 'Read recent messages from a Google Chat space or DM.',
+       inputSchema: {
+         spaceName: z
+           .string()
+@@ -1454,7 +1466,7 @@ async function main() {
+   registerTool(
+     'chat.sendDm',
+     {
+-      description: 'Sends a direct message to a user.',
++      description: 'Send a Google Chat direct message to a person by email.',
+       inputSchema: {
+         email: z
+           .string()
+@@ -1475,7 +1487,8 @@ async function main() {
+   registerTool(
+     'chat.findDmByEmail',
+     {
+-      description: "Finds a Google Chat DM space by a user's email address.",
++      description:
++        'Find an existing Google Chat direct-message (DM) conversation with a person by their email address.',
+       inputSchema: {
+         email: z
+           .string()
+@@ -1533,7 +1546,8 @@ async function main() {
+   registerTool(
+     'gmail.search',
+     {
+-      description: 'Search for emails in Gmail using query parameters.',
++      description:
++        'Search Gmail for emails/messages using Gmail search operators (from, subject, has:attachment, etc.).',
+       inputSchema: {
+         query: z
+           .string()
+@@ -1568,7 +1582,8 @@ async function main() {
+   registerTool(
+     'gmail.get',
+     {
+-      description: 'Get the full content of a specific email message.',
++      description:
++        'Get the full content (headers, body, attachments) of a specific Gmail message.',
+       inputSchema: {
+         messageId: z.string().describe('The ID of the message to retrieve.'),
+         format: z
+@@ -1716,7 +1731,7 @@ System labels that can be modified:
+   registerTool(
+     'gmail.send',
+     {
+-      description: 'Send an email message.',
++      description: 'Send an email through Gmail.',
+       inputSchema: emailComposeSchema,
+     },
+     gmailService.send,
+@@ -1725,7 +1740,7 @@ System labels that can be modified:
+   registerTool(
+     'gmail.createDraft',
+     {
+-      description: 'Create a draft email message.',
++      description: 'Create a draft email in Gmail without sending it.',
+       inputSchema: {
+         ...emailComposeSchema,
+         threadId: z
+@@ -1748,7 +1763,7 @@ System labels that can be modified:
+   registerTool(
+     'gmail.sendDraft',
+     {
+-      description: 'Send a previously created draft email.',
++      description: 'Send a previously created Gmail draft.',
+       inputSchema: {
+         draftId: z.string().describe('The ID of the draft to send.'),
+       },
+@@ -1759,7 +1774,8 @@ System labels that can be modified:
+   registerTool(
+     'gmail.listLabels',
+     {
+-      description: "List all Gmail labels in the user's mailbox.",
++      description:
++        'List all Gmail labels/folders in the mailbox (inbox, sent, custom labels).',
+       inputSchema: {},
+       ...readOnlyToolProps,
+     },
+@@ -1828,7 +1844,8 @@ System labels that can be modified:
+   registerTool(
+     'people.getUserProfile',
+     {
+-      description: "Gets a user's profile information.",
++      description:
++        "Look up another person's Google profile (name, email, photo) by email or resource name.",
+       inputSchema: {
+         userId: z
+           .string()
+@@ -1853,7 +1870,8 @@ System labels that can be modified:
+   registerTool(
+     'people.getMe',
+     {
+-      description: 'Gets the profile information of the authenticated user.',
++      description:
++        "Get the authenticated Google account's own profile (name, email, photo).",
+       inputSchema: {},
+       ...readOnlyToolProps,
+     },

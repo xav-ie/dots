@@ -30,7 +30,12 @@ buildNpmPackage {
 
   inherit src;
 
-  patches = [ ./event-location.patch ];
+  # tool-descriptions.patch rewords each tool's MCP description to match the
+  # terms people actually search with; applied after event-location.patch.
+  patches = [
+    ./event-location.patch
+    ./tool-descriptions.patch
+  ];
 
   npmDepsHash = "sha256-7PbXyCrT6ICKhZyFugnYxY9hMd0NAmWNfY0BkpAxQtk=";
 
