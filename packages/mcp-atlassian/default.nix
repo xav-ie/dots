@@ -108,8 +108,18 @@ python3Packages.buildPythonApplication rec {
     uvicorn
   ];
 
-  # No tests in the source tree without fixtures
-  doCheck = false;
+  # No tests in the source tree without fixtures; instead, fail the build if
+  # any tool-descriptions.patch target goes missing or reverts — see
+  # check_descriptions.py. Needs no credentials: listing a FastMCP server's
+  # tools never calls Jira/Confluence.
+  doCheck = true;
+  checkPhase = ''
+    runHook preCheck
+    cp ${./check_descriptions.py} check_descriptions.py
+    cp ${./expected-descriptions.json} expected-descriptions.json
+    python check_descriptions.py
+    runHook postCheck
+  '';
 
   # fakeredis only backs fastmcp's docket task queue, which stays unstarted
   # because mcp-atlassian registers no task=True components; nixpkgs-bleeding's
