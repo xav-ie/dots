@@ -1,0 +1,15 @@
+{
+  "clear_cache": "Clear the local email and analytics cache for this Proton Mail account.",
+  "delete_email": "Permanently delete an email from Proton Mail.",
+  "get_connection_status": "Check whether the Proton Mail SMTP and IMAP (Proton Bridge) connections are currently working.",
+  "get_contacts": "List Proton Mail contacts, with how often you've emailed each one.",
+  "get_email_analytics": "Get advanced analytics on Proton Mail email activity: senders, patterns, trends over time.",
+  "get_email_stats": "Get summary statistics about the Proton Mail mailbox: counts of emails, unread, by folder.",
+  "get_logs": "Get recent Proton Mail MCP server logs for troubleshooting sync or connection issues.",
+  "get_volume_trends": "Get email volume over time (sent/received counts per day/week) for Proton Mail.",
+  "mark_email_read": "Mark a Proton Mail email as read or unread.",
+  "send_test_email": "Send a test email through Proton Mail to verify the SMTP connection works.",
+  "star_email": "Star or unstar (flag) an email in Proton Mail.",
+  "sync_emails": "Manually trigger a sync of emails from the Proton Mail server into the local cache.",
+  "sync_folders": "Manually sync the Proton Mail folder/label structure from the server."
+}

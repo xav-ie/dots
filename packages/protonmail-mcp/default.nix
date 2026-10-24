@@ -28,6 +28,19 @@ buildNpmPackage {
 
   npmDepsHash = "sha256-D6UTvXuM5EVA3AYn3IsNpO4OCJsP5KqlBQUC3xvUuJo=";
 
+  # Fail the build if a tool's reworded MCP description regresses. Listing
+  # tools never requires a live Proton Bridge: SMTP/IMAP connect failures to
+  # the dummy loopback address are logged and swallowed, not fatal. A server
+  # bump that renames/rewords a tool makes the patch fail to apply first;
+  # this catches the case where it still applies but no longer lands on the
+  # right text.
+  doCheck = true;
+  checkPhase = ''
+    runHook preCheck
+    node ${./check-descriptions.js} dist/index.js ${./expected-descriptions.json}
+    runHook postCheck
+  '';
+
   meta = {
     description = "ProtonMail MCP server over Proton Bridge SMTP+IMAP";
     homepage = "https://github.com/barhatch/protonmail-mcp-server";
