@@ -64,6 +64,11 @@ python3Packages.buildPythonApplication rec {
 
   src = mcp-atlassian-src;
 
+  # Replace each tool's one-line docstring summary (the MCP description
+  # fastmcp sends) with text matching the terms people actually search with;
+  # the Args/Returns/Raises sections it also sends are untouched.
+  patches = [ ./tool-descriptions.patch ];
+
   # hatchling + uv-dynamic-versioning needs a git repo for version;
   # bypass it since we know the version from the flake input tag
   env.UV_DYNAMIC_VERSIONING_BYPASS = version;

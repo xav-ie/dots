@@ -1,0 +1,413 @@
+diff --git a/src/mcp_atlassian/servers/confluence.py b/src/mcp_atlassian/servers/confluence.py
+index b92d9fe..3dcd264 100644
+--- a/src/mcp_atlassian/servers/confluence.py
++++ b/src/mcp_atlassian/servers/confluence.py
+@@ -237,7 +237,7 @@ async def search(
+         ),
+     ] = None,
+ ) -> str:
+-    """Search Confluence content using simple terms or CQL.
++    """Search Confluence wiki pages and spaces by keywords or CQL: documentation, handbooks, onboarding guides, runbooks, meeting notes, internal docs, and other knowledge-base content.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -460,7 +460,7 @@ async def get_page_children(
+         ),
+     ] = True,
+ ) -> str:
+-    """Get child pages and folders of a specific Confluence page.
++    """List the child pages and folders nested under a Confluence wiki page.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -575,7 +575,7 @@ async def get_comments(
+         ),
+     ],
+ ) -> str:
+-    """Get comments for a specific Confluence page.
++    """Get the comments left on a Confluence wiki page.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -789,7 +789,7 @@ async def create_page(
+         ),
+     ] = None,
+ ) -> str:
+-    """Create a new Confluence page.
++    """Create a new Confluence wiki page (docs, handbook, onboarding, meeting notes, runbooks) under a space.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -964,7 +964,7 @@ async def update_page(
+         ),
+     ] = None,
+ ) -> str:
+-    """Update an existing Confluence page.
++    """Edit/update the content of an existing Confluence wiki page.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -1152,7 +1152,7 @@ async def delete_page(
+     ctx: Context,
+     page_id: Annotated[str, Field(description="The ID of the page to delete")],
+ ) -> str:
+-    """Delete an existing Confluence page.
++    """Permanently delete a Confluence wiki page.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -1225,7 +1225,7 @@ async def move_page(
+         ),
+     ] = "append",
+ ) -> str:
+-    """Move a Confluence page to a new parent or space.
++    """Move a Confluence wiki page to a different parent page or space.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -1279,7 +1279,7 @@ async def add_comment(
+     ],
+     body: Annotated[str, Field(description="The comment content in Markdown format")],
+ ) -> str:
+-    """Add a comment to a Confluence page.
++    """Add a comment to a Confluence wiki page.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -1330,7 +1330,7 @@ async def reply_to_comment(
+     ],
+     body: Annotated[str, Field(description="The reply content in Markdown format")],
+ ) -> str:
+-    """Reply to an existing comment thread on a Confluence page.
++    """Reply to an existing comment thread on a Confluence wiki page.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -1381,7 +1381,7 @@ async def get_inline_comments(
+         str, Field(description="The ID of the page to get inline comments from")
+     ],
+ ) -> str:
+-    """Get all inline comments for a Confluence page.
++    """Get the inline (text-selection) comments on a Confluence wiki page.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -1632,7 +1632,7 @@ async def get_page_history(
+         ),
+     ] = True,
+ ) -> str:
+-    """Get a historical version of a specific Confluence page.
++    """Get a past version/revision of a Confluence wiki page.
+ 
+     Args:
+         ctx: The FastMCP context.
+diff --git a/src/mcp_atlassian/servers/jira.py b/src/mcp_atlassian/servers/jira.py
+index 46d907a..2e6058b 100644
+--- a/src/mcp_atlassian/servers/jira.py
++++ b/src/mcp_atlassian/servers/jira.py
+@@ -261,7 +261,7 @@ async def get_user_profile(
+     ],
+ ) -> str:
+     """
+-    Retrieve profile information for a specific Jira user.
++    Look up a Jira user's profile (display name, email, account id) by name or account id.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -442,7 +442,7 @@ async def get_issue_watchers(
+         ),
+     ],
+ ) -> str:
+-    """Get the list of watchers for a Jira issue.
++    """List the users watching (subscribed to notifications for) a Jira issue.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -486,7 +486,7 @@ async def add_watcher(
+         ),
+     ],
+ ) -> str:
+-    """Add a user as a watcher to a Jira issue.
++    """Add a user as a watcher to a Jira issue so they get notified of updates/comments on that ticket.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -536,7 +536,7 @@ async def remove_watcher(
+         ),
+     ] = None,
+ ) -> str:
+-    """Remove a user from watching a Jira issue.
++    """Stop a user from watching (receiving notifications for) a Jira issue.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -816,7 +816,7 @@ async def search(
+         ),
+     ] = False,
+ ) -> str:
+-    """Search Jira issues using JQL (Jira Query Language).
++    """Search Jira issues/tickets with JQL (Jira Query Language), e.g. by project, status, assignee, or free text.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -878,7 +878,7 @@ async def search_fields(
+         Field(description="Whether to force refresh the field list", default=False),
+     ] = False,
+ ) -> str:
+-    """Search Jira fields by keyword with fuzzy match.
++    """Find Jira field ids/names by keyword (fuzzy match), for building JQL or specifying which fields to return.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -1097,7 +1097,7 @@ async def get_project_issues(
+         Field(description="Starting index for pagination (0-based)", default=0, ge=0),
+     ] = 0,
+ ) -> str:
+-    """Get all issues for a specific Jira project.
++    """List all issues/tickets belonging to a specific Jira project.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -1130,7 +1130,7 @@ async def get_transitions(
+         ),
+     ],
+ ) -> str:
+-    """Get available status transitions for a Jira issue.
++    """List the workflow transitions (status changes, e.g. To Do -> In Progress -> Done) available for a Jira issue right now.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -1159,7 +1159,7 @@ async def get_worklog(
+         ),
+     ],
+ ) -> str:
+-    """Get worklog entries for a Jira issue.
++    """Get the logged work/time-tracking entries recorded against a Jira issue.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -1472,7 +1472,7 @@ async def get_agile_boards(
+         Field(description="Maximum number of results (1-50)", default=10, ge=1, le=50),
+     ] = 10,
+ ) -> str:
+-    """Get jira agile boards by name, project key, or type.
++    """Find Jira agile/Scrum/Kanban boards by name, project key, or board type.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -1546,7 +1546,7 @@ async def get_board_issues(
+         ),
+     ] = "version",
+ ) -> str:
+-    """Get all issues linked to a specific board filtered by JQL.
++    """Get the issues/tickets on a Jira agile board, optionally filtered by JQL.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -1597,7 +1597,7 @@ async def get_sprints_from_board(
+         Field(description="Maximum number of results (1-50)", default=10, ge=1, le=50),
+     ] = 10,
+ ) -> str:
+-    """Get jira sprints from board by state.
++    """List the sprints (active, future, or closed) on a Jira agile board.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -1644,7 +1644,7 @@ async def get_sprint_issues(
+         Field(description="Maximum number of results (1-50)", default=10, ge=1, le=50),
+     ] = 10,
+ ) -> str:
+-    """Get jira issues from sprint.
++    """Get the issues/tickets assigned to a specific Jira sprint.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -1681,7 +1681,7 @@ async def get_link_types(
+         ),
+     ] = None,
+ ) -> str:
+-    """Get all available issue link types.
++    """List the kinds of issue links Jira supports (e.g. blocks, relates to, duplicates, is caused by).
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -1850,7 +1850,7 @@ async def batch_create_issues(
+         ),
+     ] = False,
+ ) -> str:
+-    """Create multiple Jira issues in a batch.
++    """Create multiple Jira issues/tickets at once in a single batch call.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -1921,7 +1921,7 @@ async def batch_get_changelogs(
+         ),
+     ] = -1,
+ ) -> str:
+-    """Get changelogs for multiple Jira issues (Cloud only).
++    """Get the field-change history (changelog: status, assignee, etc. changes) for multiple Jira issues at once (Cloud only).
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -2208,7 +2208,7 @@ async def delete_issue(
+         ),
+     ],
+ ) -> str:
+-    """Delete an existing Jira issue.
++    """Permanently delete a Jira issue/ticket.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -2350,7 +2350,7 @@ async def add_comment(
+         ),
+     ] = None,
+ ) -> str:
+-    """Add a comment to a Jira issue.
++    """Add a comment to a Jira issue or ticket, visible on the issue's activity/comment feed.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -2408,7 +2408,7 @@ async def edit_comment(
+         ),
+     ] = None,
+ ) -> str:
+-    """Edit an existing comment on a Jira issue.
++    """Edit the text of an existing comment on a Jira issue.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -2476,7 +2476,7 @@ async def add_worklog(
+         str | None, Field(description="(Optional) New value for the remaining estimate")
+     ] = None,
+ ) -> str:
+-    """Add a worklog entry to a Jira issue.
++    """Log time spent (a worklog entry) against a Jira issue, e.g. hours worked on a ticket.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -2530,7 +2530,7 @@ async def link_to_epic(
+         ),
+     ],
+ ) -> str:
+-    """Link an existing issue to an epic.
++    """Attach an existing Jira issue to an epic as its parent.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -2603,7 +2603,7 @@ async def create_issue_link(
+         ),
+     ] = None,
+ ) -> str:
+-    """Create a link between two Jira issues.
++    """Link two Jira issues together (e.g. 'blocks', 'relates to', 'duplicates').
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -2745,7 +2745,7 @@ async def remove_issue_link(
+     ctx: Context,
+     link_id: Annotated[str, Field(description="The ID of the link to remove")],
+ ) -> str:
+-    """Remove a link between two Jira issues.
++    """Remove an existing link between two Jira issues.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -2813,7 +2813,7 @@ async def transition_issue(
+         ),
+     ] = None,
+ ) -> str:
+-    """Transition a Jira issue to a new status.
++    """Move a Jira issue through its workflow to a new status, e.g. resolve, close, or reopen a ticket.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -2870,7 +2870,7 @@ async def create_sprint(
+         str | None, Field(description="(Optional) Goal of the sprint")
+     ] = None,
+ ) -> str:
+-    """Create Jira sprint for a board.
++    """Create a new sprint (agile iteration) on a Jira Scrum board.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -2922,7 +2922,7 @@ async def update_sprint(
+         str | None, Field(description="(Optional) New goal for the sprint")
+     ] = None,
+ ) -> str:
+-    """Update jira sprint.
++    """Update a Jira sprint's name, goal, or start/end dates.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -2971,7 +2971,7 @@ async def add_issues_to_sprint(
+         Field(description="Comma-separated issue keys (e.g., 'PROJ-1,PROJ-2')"),
+     ],
+ ) -> str:
+-    """Add issues to a Jira sprint.
++    """Add one or more existing Jira issues/tickets to a sprint (agile board iteration).
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -3007,7 +3007,7 @@ async def move_issues_to_backlog(
+         Field(description="Comma-separated issue keys (e.g., 'PROJ-1,PROJ-2')"),
+     ],
+ ) -> str:
+-    """Move issues to the backlog, removing them from any sprint.
++    """Move Jira issues out of their current sprint and back into the backlog.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -3140,7 +3140,7 @@ async def get_project_versions(
+         ),
+     ],
+ ) -> str:
+-    """Get all fix versions for a specific Jira project."""
++    """List the fix versions/releases defined for a Jira project."""
+     jira = await get_jira_fetcher(ctx)
+     versions = jira.get_project_versions(project_key)
+     return json.dumps(versions, indent=2, ensure_ascii=False)
+@@ -3160,7 +3160,7 @@ async def get_project_components(
+         ),
+     ],
+ ) -> str:
+-    """Get all components for a specific Jira project."""
++    """List the components (feature areas/subsystems) configured for a Jira project."""
+     jira = await get_jira_fetcher(ctx)
+     components = jira.get_project_components(project_key)
+     return json.dumps(components, indent=2, ensure_ascii=False)
+@@ -3180,7 +3180,7 @@ async def get_all_projects(
+         ),
+     ] = False,
+ ) -> str:
+-    """Get all Jira projects accessible to the current user.
++    """List all Jira projects the current user can access, with their keys.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -3645,7 +3645,7 @@ async def create_customer_request(
+         ),
+     ] = False,
+ ) -> str:
+-    """Create a Jira Service Management customer request.
++    """Create a Jira Service Management (JSM) customer/support request, e.g. a help desk ticket.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -3702,7 +3702,7 @@ async def create_version(
+         str | None, Field(description="Description of the version", default=None)
+     ] = None,
+ ) -> str:
+-    """Create a new fix version in a Jira project.
++    """Create a new fix version/release in a Jira project, used to tag which release an issue ships in.
+ 
+     Args:
+         ctx: The FastMCP context.
+@@ -3766,7 +3766,7 @@ async def batch_create_versions(
+         ),
+     ],
+ ) -> str:
+-    """Batch create multiple versions in a Jira project.
++    """Create multiple fix versions/releases at once in a Jira project.
+ 
+     Args:
+         ctx: The FastMCP context.
