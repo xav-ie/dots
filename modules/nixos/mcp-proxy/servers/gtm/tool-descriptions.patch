@@ -12,7 +12,7 @@ index f109273..268c769 100644
        action: z
          .enum(["get", "list", "update"])
 diff --git a/src/tools/builtInVariableActions.ts b/src/tools/builtInVariableActions.ts
-index 1ce8323..a37a15e 100644
+index 1ce8323..ed68fcd 100644
 --- a/src/tools/builtInVariableActions.ts
 +++ b/src/tools/builtInVariableActions.ts
 @@ -18,7 +18,7 @@ export const builtInVariableActions = (
@@ -20,12 +20,12 @@ index 1ce8323..a37a15e 100644
    server.tool(
      "gtm_built_in_variable",
 -    `Performs all built-in variable operations: create, list, remove, revert. The 'list' action returns up to itemsPerPage items per page.`,
-+    `Google Tag Manager built-in variable operations (create, list, remove, revert): GTM's predefined variables like Page URL, Click Element, or Event. The 'list' action returns up to ${ITEMS_PER_PAGE} items per page.`,
++    `Google Tag Manager built-in variable operations (create, list, remove, revert): GTM's predefined variables like Page URL, Click Element, or Event. The 'list' action returns up to itemsPerPage items per page.`,
      {
        action: z
          .enum(["create", "list", "remove", "revert"])
 diff --git a/src/tools/clientActions.ts b/src/tools/clientActions.ts
-index 9ca81ce..a9fbcf7 100644
+index 9ca81ce..34beb4a 100644
 --- a/src/tools/clientActions.ts
 +++ b/src/tools/clientActions.ts
 @@ -27,7 +27,7 @@ export const clientActions = (
@@ -33,12 +33,12 @@ index 9ca81ce..a9fbcf7 100644
    server.tool(
      "gtm_client",
 -    `Performs all client operations: create, get, list, update, remove, revert. The 'list' action returns up to itemsPerPage items per page.`,
-+    `Google Tag Manager server-side client operations (create, get, list, update, remove, revert): the component in a Server GTM container that parses incoming requests (e.g. GA4, GTAG) into events. The 'list' action returns up to ${ITEMS_PER_PAGE} items per page.`,
++    `Google Tag Manager server-side client operations (create, get, list, update, remove, revert): the component in a Server GTM container that parses incoming requests (e.g. GA4, GTAG) into events. The 'list' action returns up to itemsPerPage items per page.`,
      {
        action: z
          .enum(["create", "get", "list", "update", "remove", "revert"])
 diff --git a/src/tools/containerActions.ts b/src/tools/containerActions.ts
-index 1656634..228c108 100644
+index 1656634..003b8e2 100644
 --- a/src/tools/containerActions.ts
 +++ b/src/tools/containerActions.ts
 @@ -36,7 +36,7 @@ export const containerActions = (
@@ -46,12 +46,12 @@ index 1656634..228c108 100644
    server.tool(
      "gtm_container",
 -    `Performs all container-related operations: create, get, update, remove, list, combine, lookup, moveTagId, snippet. The 'list' action returns up to itemsPerPage items per page.`,
-+    `Google Tag Manager container operations (create, get, update, remove, list, combine, lookup, moveTagId, snippet): a container holds a site's or app's tags, triggers, and variables, and is identified by a GTM-XXXXXXX id. The 'list' action returns up to ${ITEMS_PER_PAGE} items per page.`,
++    `Google Tag Manager container operations (create, get, update, remove, list, combine, lookup, moveTagId, snippet): a container holds a site's or app's tags, triggers, and variables, and is identified by a GTM-XXXXXXX id. The 'list' action returns up to itemsPerPage items per page.`,
      {
        action: z
          .enum([
 diff --git a/src/tools/destinationActions.ts b/src/tools/destinationActions.ts
-index a4a8716..5fdf493 100644
+index a4a8716..b921d52 100644
 --- a/src/tools/destinationActions.ts
 +++ b/src/tools/destinationActions.ts
 @@ -18,7 +18,7 @@ export const destinationActions = (
@@ -59,12 +59,12 @@ index a4a8716..5fdf493 100644
    server.tool(
      "gtm_destination",
 -    `Performs all destination operations: get, list, link, unlink.  The 'list' action returns up to ${ITEMS_PER_PAGE} items per page.`,
-+    `Google Tag Manager destination operations (get, list, link, unlink): linking a container to a Google Ads or other destination account. The 'list' action returns up to ${ITEMS_PER_PAGE} items per page.`,
++    `Google Tag Manager destination operations (get, list, link, unlink): linking a container to a Google Ads or other destination account.  The 'list' action returns up to ${ITEMS_PER_PAGE} items per page.`,
      {
        action: z
          .enum(["get", "list", "link", "unlink"])
 diff --git a/src/tools/environmentActions.ts b/src/tools/environmentActions.ts
-index 2d907a6..63a21e6 100644
+index 2d907a6..2b82ffc 100644
 --- a/src/tools/environmentActions.ts
 +++ b/src/tools/environmentActions.ts
 @@ -26,7 +26,7 @@ export const environmentActions = (
@@ -72,7 +72,7 @@ index 2d907a6..63a21e6 100644
    server.tool(
      "gtm_environment",
 -    `Performs all environment operations: create, get, list, update, remove, reauthorize.  The 'list' action returns up to ${ITEMS_PER_PAGE} items per page.`,
-+    `Google Tag Manager environment operations (create, get, list, update, remove, reauthorize): named deploy targets (e.g. Live, Staging, Latest) for a container, each with its own snippet. The 'list' action returns up to ${ITEMS_PER_PAGE} items per page.`,
++    `Google Tag Manager environment operations (create, get, list, update, remove, reauthorize): named deploy targets (e.g. Live, Staging, Latest) for a container, each with its own snippet.  The 'list' action returns up to ${ITEMS_PER_PAGE} items per page.`,
      {
        action: z
          .enum(["create", "get", "list", "update", "remove", "reauthorize"])
@@ -90,7 +90,7 @@ index ec2c662..de5e819 100644
        action: z
          .enum([
 diff --git a/src/tools/gtagConfigActions.ts b/src/tools/gtagConfigActions.ts
-index 7955999..be37507 100644
+index 7955999..846d2f2 100644
 --- a/src/tools/gtagConfigActions.ts
 +++ b/src/tools/gtagConfigActions.ts
 @@ -27,7 +27,7 @@ export const gtagConfigActions = (
@@ -98,7 +98,7 @@ index 7955999..be37507 100644
    server.tool(
      "gtm_gtag_config",
 -    `Performs all Google tag config operations: create, get, list, update, remove. The 'list' action returns up to itemsPerPage items per page.`,
-+    `Google Tag Manager Google tag (gtag.js) config operations (create, get, list, update, remove): configuration for the direct Google tag, separate from GTM tags created with gtm_tag. The 'list' action returns up to ${ITEMS_PER_PAGE} items per page.`,
++    `Google Tag Manager Google tag (gtag.js) config operations (create, get, list, update, remove): configuration for the direct Google tag, separate from GTM tags created with gtm_tag. The 'list' action returns up to itemsPerPage items per page.`,
      {
        action: z
          .enum(["create", "get", "list", "update", "remove"])
@@ -116,7 +116,7 @@ index 546b2ab..d1ff43a 100644
        action: z
          .enum(["create", "get", "list", "update", "remove", "revert"])
 diff --git a/src/tools/templateActions.ts b/src/tools/templateActions.ts
-index f323d0f..36063b4 100644
+index f323d0f..bcd2ed1 100644
 --- a/src/tools/templateActions.ts
 +++ b/src/tools/templateActions.ts
 @@ -27,7 +27,7 @@ export const templateActions = (
@@ -124,12 +124,12 @@ index f323d0f..36063b4 100644
    server.tool(
      "gtm_template",
 -    `Performs all GTM custom template operations: create, get, list, update, remove, revert. The 'list' action returns up to itemsPerPage items per page.`,
-+    `Google Tag Manager custom template operations (create, get, list, update, remove, revert): reusable custom tag or variable templates built in the GTM template gallery. The 'list' action returns up to ${ITEMS_PER_PAGE} items per page.`,
++    `Google Tag Manager custom template operations (create, get, list, update, remove, revert): reusable custom tag or variable templates built in the GTM template gallery. The 'list' action returns up to itemsPerPage items per page.`,
      {
        action: z
          .enum(["create", "get", "list", "update", "remove", "revert"])
 diff --git a/src/tools/transformationActions.ts b/src/tools/transformationActions.ts
-index d2aa284..ae65596 100644
+index d2aa284..baac5fd 100644
 --- a/src/tools/transformationActions.ts
 +++ b/src/tools/transformationActions.ts
 @@ -27,7 +27,7 @@ export const transformationActions = (
@@ -137,7 +137,7 @@ index d2aa284..ae65596 100644
    server.tool(
      "gtm_transformation",
 -    `Performs all GTM transformation operations: create, get, list, update, remove, revert. The 'list' action returns up to itemsPerPage items per page.`,
-+    `Google Tag Manager server-side transformation operations (create, get, list, update, remove, revert): a transformation modifies or enriches incoming event data in a Server GTM container before it reaches a tag or client. The 'list' action returns up to ${ITEMS_PER_PAGE} items per page.`,
++    `Google Tag Manager server-side transformation operations (create, get, list, update, remove, revert): a transformation modifies or enriches incoming event data in a Server GTM container before it reaches a tag or client. The 'list' action returns up to itemsPerPage items per page.`,
      {
        action: z
          .enum(["create", "get", "list", "update", "remove", "revert"])
