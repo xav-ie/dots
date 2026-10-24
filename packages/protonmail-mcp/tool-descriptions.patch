@@ -1,0 +1,109 @@
+diff --git a/src/index.ts b/src/index.ts
+index 6b2d741..b3ed2ec 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -133,7 +133,7 @@ const TOOLS: any[] = [
+       },
+       {
+         name: "send_test_email",
+-        description: "🧪 Send a test email to verify SMTP functionality",
++        description: "Send a test email through Proton Mail to verify the SMTP connection works.",
+         inputSchema: {
+           type: "object",
+           properties: {
+@@ -266,7 +266,7 @@ const TOOLS: any[] = [
+       },
+       {
+         name: "sync_folders",
+-        description: "🔄 Synchronize folder structure from server",
++        description: "Manually sync the Proton Mail folder/label structure from the server.",
+         inputSchema: { type: "object", properties: {} },
+       },
+       {
+@@ -326,7 +326,7 @@ const TOOLS: any[] = [
+       // ⚡ EMAIL ACTIONS
+       {
+         name: "mark_email_read",
+-        description: "✅ Mark email as read/unread",
++        description: "Mark a Proton Mail email as read or unread.",
+         inputSchema: {
+           type: "object",
+           properties: {
+@@ -342,7 +342,7 @@ const TOOLS: any[] = [
+       },
+       {
+         name: "star_email",
+-        description: "⭐ Star/unstar email",
++        description: "Star or unstar (flag) an email in Proton Mail.",
+         inputSchema: {
+           type: "object",
+           properties: {
+@@ -434,7 +434,7 @@ const TOOLS: any[] = [
+       },
+       {
+         name: "delete_email",
+-        description: "🗑️ Delete email permanently",
++        description: "Permanently delete an email from Proton Mail.",
+         inputSchema: {
+           type: "object",
+           properties: {
+@@ -463,17 +463,17 @@ const TOOLS: any[] = [
+       // 📊 ANALYTICS & STATISTICS TOOLS
+       {
+         name: "get_email_stats",
+-        description: "📊 Get comprehensive email statistics",
++        description: "Get summary statistics about the Proton Mail mailbox: counts of emails, unread, by folder.",
+         inputSchema: { type: "object", properties: {} },
+       },
+       {
+         name: "get_email_analytics",
+-        description: "📈 Get advanced email analytics and insights",
++        description: "Get advanced analytics on Proton Mail email activity: senders, patterns, trends over time.",
+         inputSchema: { type: "object", properties: {} },
+       },
+       {
+         name: "get_contacts",
+-        description: "👥 Get contact information with interaction statistics",
++        description: "List Proton Mail contacts, with how often you've emailed each one.",
+         inputSchema: {
+           type: "object",
+           properties: {
+@@ -487,7 +487,7 @@ const TOOLS: any[] = [
+       },
+       {
+         name: "get_volume_trends",
+-        description: "📉 Get email volume trends over time",
++        description: "Get email volume over time (sent/received counts per day/week) for Proton Mail.",
+         inputSchema: {
+           type: "object",
+           properties: {
+@@ -503,12 +503,12 @@ const TOOLS: any[] = [
+       // 🔧 SYSTEM & MAINTENANCE TOOLS
+       {
+         name: "get_connection_status",
+-        description: "🔌 Check SMTP and IMAP connection status",
++        description: "Check whether the Proton Mail SMTP and IMAP (Proton Bridge) connections are currently working.",
+         inputSchema: { type: "object", properties: {} },
+       },
+       {
+         name: "sync_emails",
+-        description: "🔄 Manually sync emails from server",
++        description: "Manually trigger a sync of emails from the Proton Mail server into the local cache.",
+         inputSchema: {
+           type: "object",
+           properties: {
+@@ -527,12 +527,12 @@ const TOOLS: any[] = [
+       },
+       {
+         name: "clear_cache",
+-        description: "🧹 Clear email cache and analytics cache",
++        description: "Clear the local email and analytics cache for this Proton Mail account.",
+         inputSchema: { type: "object", properties: {} },
+       },
+       {
+         name: "get_logs",
+-        description: "📋 Get recent system logs",
++        description: "Get recent Proton Mail MCP server logs for troubleshooting sync or connection issues.",
+         inputSchema: {
+           type: "object",
+           properties: {

@@ -21,6 +21,9 @@ buildNpmPackage {
       url = "https://github.com/xav-ie/protonmail-mcp-server/compare/653322c...1a296ae.patch";
       hash = "sha256-UStNSnbnEbov7RdINPuKmt7ZifY76QLZ3qyAhfYSDD4=";
     })
+    # Reword the maintenance/analytics tool descriptions to match the terms
+    # people search with, and drop their leading emoji.
+    ./tool-descriptions.patch
   ];
 
   npmDepsHash = "sha256-D6UTvXuM5EVA3AYn3IsNpO4OCJsP5KqlBQUC3xvUuJo=";
