@@ -19,6 +19,11 @@ buildNpmPackage {
 
   npmDepsHash = "sha256-3jKGq+Kkdg6h7zzrlb2t7XQbc7jDH1TMO627o57L2Hc=";
 
+  # Reword each tool's one-line MCP description to match the terms people
+  # search with (also drops the itemsPerPage pagination aside, which stays
+  # true but isn't part of the new wording).
+  patches = [ ./tool-descriptions.patch ];
+
   # Upstream's postinstall runs tsc for the worker build we don't use.
   npmFlags = [ "--ignore-scripts" ];
 
