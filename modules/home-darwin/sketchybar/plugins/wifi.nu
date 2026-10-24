@@ -9,9 +9,9 @@
 #
 # Driven by `wifi_change`, emitted by the sketchybar-wifi daemon straight off
 # CoreWLAN events (the same ones Control Center listens to) — that's what makes
-# this instant. `network_change` is kept only to catch hotspot tether on/off
-# (a route change CoreWLAN can't see). Both are push — nothing polls, so there
-# is deliberately no `update_freq` on the item.
+# this instant — and again once configd settles routes/flags after any network
+# change, which is what catches hotspot tether on/off. All push — nothing
+# polls, so there is deliberately no `update_freq` on the item.
 
 const CACHE_DIR = "~/.cache/sketchybar" | path expand
 # On-screen icon height in px (rendered at 2x, drawn at background.image.scale
@@ -44,10 +44,13 @@ def read-wifi [] {
 # would need Location permission): macOS marks Wi-Fi "expensive" when the
 # network's beacon carries Apple's personal-hotspot element (iPhones, and
 # Android hotspots running Tetherbug), and iPhone USB/Bluetooth
-# tethering hands out gateway 172.20.10.1. Full paths since the launchd agent's
-# PATH doesn't include /sbin or /usr/sbin.
-def is-hotspot [] {
-  let expensive = (do -i { /usr/sbin/ipconfig getsummary en0 } | complete | get stdout | default ""
+# tethering hands out gateway 172.20.10.1. en0's IsExpensive lingers in
+# ipconfig after leaving the hotspot, so it only counts while CoreWLAN says
+# Wi-Fi is associated. Full paths since the launchd agent's PATH doesn't include
+# /sbin or /usr/sbin.
+def is-hotspot [wifi: record] {
+  let expensive = ($wifi.associated? == "yes") and (
+    do -i { /usr/sbin/ipconfig getsummary en0 } | complete | get stdout | default ""
     | str contains "IsExpensive : TRUE")
   $expensive or (do -i { /sbin/route -n get default } | complete | get stdout | default ""
     | str contains "gateway: 172.20.10.1")
@@ -59,11 +62,11 @@ def is-hotspot [] {
 def render [] {
   let color = "0xffffffff"
 
+  let state = (read-wifi)
   # Hotspot takes priority (works even if Wi-Fi is off and it's USB/BT tethered).
-  let spec = if (is-hotspot) {
+  let spec = if (is-hotspot $state) {
     {sym: "personalhotspot", value: null, key: "hotspot"}
   } else {
-    let state = (read-wifi)
     if ($state.power? | default "on") != "on" {
       {sym: "wifi.slash", value: null, key: "off"}
     } else if ($state.associated? | default "no") != "yes" {
@@ -105,7 +108,7 @@ def main [] {
       let out = (render)
       sketchybar --set $"($env.NAME)" $"icon.background.image=($out)"
     }
-    "wifi_change" | "network_change" | "routine" => {
+    "wifi_change" | "routine" => {
       let out = (render)
       sketchybar --set $"($env.NAME)" $"icon.background.image=($out)"
     }

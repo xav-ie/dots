@@ -181,20 +181,17 @@ sb-cluster battery right 36 0 (
 # wifi — single icon (sb-icon-item). Native icon rendered by `sketchybar-icons`
 # (SF Symbol -> PNG via CoreWLAN signal). `wifi_change` is emitted by the
 # sketchybar-wifi daemon straight off CoreWLAN events — that's what makes
-# connect/disconnect/signal instant. `network_change` (the
-# com.apple.system.config.network_change distributed notification) is kept ONLY
-# for route changes, i.e. hotspot tether on/off, which CoreWLAN can't see; it is
-# posted by configd once the whole stack settles, so it is seconds late on its
-# own. NO `update_freq` — both sources are push, so nothing here polls.
+# connect/disconnect/signal instant — and again on configd's network_change
+# (a darwin notify key sketchybar can't subscribe to itself), which catches
+# hotspot tether on/off. NO `update_freq` — all push, so nothing here polls.
 # wifi is `bg_only`:
 # the hover highlight is the item's OWN full-footprint background, so --extra
 # re-enables it (the primitive turns background.drawing off by default). NO
 # background.padding — under the tiling primitives every item already abuts, so
 # the old -1px seam-closer now just overlaps its neighbour's highlight.
 # click_script opens Control Center > Wi-Fi.
-(sketchybar --add event network_change com.apple.system.config.network_change)
 (sketchybar --add event wifi_change)
-sb-icon-item wifi right 26 $"sketchybar-hover --plugin ($PLUGIN_DIR)/wifi.nu" [wifi_change network_change mouse.entered mouse.exited] --extra [
+sb-icon-item wifi right 26 $"sketchybar-hover --plugin ($PLUGIN_DIR)/wifi.nu" [wifi_change mouse.entered mouse.exited] --extra [
   "click_script=$HOME/.config/sketchybar/select_control_center.nu \"Wi-Fi\""
   "background.height=24"
   "background.corner_radius=6"

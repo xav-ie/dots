@@ -1972,11 +1972,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785083624,
-        "narHash": "sha256-ZY3ffR7hYHkBrOiB8m5KizrVqS+dSxER6xuK0CEXvcE=",
+        "lastModified": 1792814426,
+        "narHash": "sha256-cYJx3X+5LIPoC8Tnw1thVYt83F8gbQTgBVf8FKvfE4s=",
         "owner": "xav-ie",
         "repo": "sketchybar-icons",
-        "rev": "d3a6df5892d0950d3edb17e964c59d25237e440a",
+        "rev": "b490e1d0b625d3e217970b63c1571315a44afb9b",
         "type": "github"
       },
       "original": {

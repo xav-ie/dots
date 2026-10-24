@@ -139,10 +139,11 @@
         };
 
         # This agent listens through CoreWLAN events, so the Wi-Fi icon reacts
-        # as fast as Control Center does instead of waiting on configd's
-        # network_change notification (seconds late, and silent on signal
-        # changes). It blocks on a run loop — no polling — and only triggers
-        # when the *displayed* state changes, not on every RSSI wobble.
+        # as fast as Control Center does, plus configd's network_change darwin
+        # notification (which sketchybar can't receive itself) to catch hotspot
+        # tether changes. It blocks on a run loop — no polling — and CoreWLAN
+        # events only trigger when the *displayed* state changes, not on every
+        # RSSI wobble.
         launchd.agents.sketchybar-wifi = {
           inherit (config.launchd.agents.sketchybar) enable;
           config = {
