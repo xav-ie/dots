@@ -52,6 +52,24 @@ buildNpmPackage {
     export ESBUILD_BINARY_PATH=$PWD/$(echo node_modules/@esbuild/*/bin/esbuild)
   '';
 
+  # Fail the build if a tool's reworded MCP description regresses. Runs the
+  # just-built bundle in place (gemini-extension.json sits a few directories
+  # up, same as checked out) rather than the installed copy, which needs the
+  # launcher's writable-state-dir dance. Listing tools never touches the
+  # network or needs real Google credentials — OAuth only happens per-call —
+  # so dummy ones are enough. A server bump that renames/rewords a tool makes
+  # the patch fail to apply first; this catches the case where it still
+  # applies but no longer lands on the right text.
+  doCheck = true;
+  checkPhase = ''
+    runHook preCheck
+    WORKSPACE_MCP_STATE_DIR=$(mktemp -d) \
+      GOOGLE_OAUTH_CLIENT_ID=check-dummy \
+      GOOGLE_OAUTH_CLIENT_SECRET=check-dummy \
+      node ${./check-descriptions.js} workspace-server/dist/index.js ${./expected-descriptions.json}
+    runHook postCheck
+  '';
+
   installPhase = ''
     runHook preInstall
     mkdir -p $out/lib/workspace-mcp/dist $out/bin
