@@ -29,12 +29,23 @@ buildNpmPackage {
 
   postPatch = ''
     cp ${./stdio.ts} src/stdio.ts
+    cp ${./check-tools.ts} src/check-tools.ts
   '';
 
   buildPhase = ''
     runHook preBuild
     esbuild src/stdio.ts --bundle --platform=node --format=cjs --outfile=stdio.cjs
+    esbuild src/check-tools.ts --bundle --platform=node --format=cjs --outfile=check-tools.cjs
     runHook postBuild
+  '';
+
+  # Fail the build if a tool's reworded MCP description regresses — see
+  # check-tools.ts for why it can't just run the stdio.cjs binary directly.
+  doCheck = true;
+  checkPhase = ''
+    runHook preCheck
+    node check-tools.cjs ${./expected-descriptions.json}
+    runHook postCheck
   '';
 
   installPhase = ''
