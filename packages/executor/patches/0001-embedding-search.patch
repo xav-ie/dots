@@ -1,4 +1,4 @@
-From 3907b42398e689611fefb15454a33b8f440c9bf0 Mon Sep 17 00:00:00 2001
+From e773420a7fbb35cf6c5c7e231b1fc898bfb6706c Mon Sep 17 00:00:00 2001
 From: Xavier Ruiz <github@xav.ie>
 Date: Thu, 15 Oct 2026 19:27:47 -0400
 Subject: [PATCH 1/3] Rank tool search by similarity vectors kept in the
@@ -34,9 +34,9 @@ fails, search runs the BM25 statement unchanged.
  packages/sdk/src/contracts/executor.ts        |  12 ++
  packages/sdk/src/implementation/create.ts     |  11 +-
  .../implementation/tool-search-embeddings.ts  | 204 ++++++++++++++++++
- .../src/implementation/tool-search-store.ts   | 155 ++++++++++++-
- .../sdk/src/implementation/tool-search.ts     |  94 +++++++-
- 7 files changed, 493 insertions(+), 12 deletions(-)
+ .../src/implementation/tool-search-store.ts   | 163 +++++++++++++-
+ .../sdk/src/implementation/tool-search.ts     | 103 ++++++++-
+ 7 files changed, 510 insertions(+), 12 deletions(-)
  create mode 100644 packages/sdk/src/implementation/tool-search-embeddings.ts
 
 diff --git a/apps/local/server/README.md b/apps/local/server/README.md
@@ -158,7 +158,7 @@ index ccd376218..1f64a9787 100644
        oauth,
 diff --git a/packages/sdk/src/implementation/tool-search-embeddings.ts b/packages/sdk/src/implementation/tool-search-embeddings.ts
 new file mode 100644
-index 000000000..6359d53a6
+index 000000000..dc8535af1
 --- /dev/null
 +++ b/packages/sdk/src/implementation/tool-search-embeddings.ts
 @@ -0,0 +1,204 @@
@@ -251,7 +251,7 @@ index 000000000..6359d53a6
 +   * context, is embedded one text at a time, and a text it refuses alone waits for the next fill.
 +   * Any other failure ends the fill.
 +   */
-+  const embedPending = (store: ToolSearchStore, changed: boolean) =>
++  const embedPending = (store: ToolSearchStore, recipeVersion: string, changed: boolean) =>
 +    Effect.gen(function* () {
 +      model ??= (yield* embed(["model"])).model;
 +      let saved = 0;
@@ -296,7 +296,7 @@ index 000000000..6359d53a6
 +        if (round === 0) break;
 +        saved += round;
 +      }
-+      if (changed || saved > 0) yield* store.pruneVectors(model);
++      if (changed || saved > 0) yield* store.pruneVectors(recipeVersion, model);
 +    });
 +  let filling = false;
 +  let again = false;
@@ -367,10 +367,10 @@ index 000000000..6359d53a6
 +};
 +export type ToolSearchEmbeddings = ReturnType<typeof makeToolSearchEmbeddings>;
 diff --git a/packages/sdk/src/implementation/tool-search-store.ts b/packages/sdk/src/implementation/tool-search-store.ts
-index 5cc5b3138..59989571e 100644
+index 5cc5b3138..c497493f6 100644
 --- a/packages/sdk/src/implementation/tool-search-store.ts
 +++ b/packages/sdk/src/implementation/tool-search-store.ts
-@@ -60,6 +60,16 @@ const Kept = Schema.Struct({
+@@ -60,6 +60,17 @@ const Kept = Schema.Struct({
    superseded: Schema.NullOr(Schema.Number),
  });
  const Listed = Schema.Struct({ listing: Schema.String });
@@ -379,6 +379,7 @@ index 5cc5b3138..59989571e 100644
 +const Untexted = Schema.Struct({
 +  id: Schema.String,
 +  app: Schema.String,
++  slug: Schema.String,
 +  routers: Schema.Array(ToolRouter),
 +  tool: StoredTool,
 +  definitions: Schema.Array(Schema.Tuple([Schema.Int, Json])),
@@ -387,7 +388,7 @@ index 5cc5b3138..59989571e 100644
  /** A ranked page as one row: every part of it read in the same statement. */
  const Ranked = Schema.Struct({
    total: Schema.Int,
-@@ -96,6 +106,8 @@ const batchChars = 1_000_000;
+@@ -96,6 +107,8 @@ const batchChars = 1_000_000;
  export const supersededRetentionMillis = 60 * 60_000;
  
  const BM25 = { k1: 1.2, b: 0.75 } as const;
@@ -396,16 +397,18 @@ index 5cc5b3138..59989571e 100644
  
  export const makeToolSearchStore = (sql: SqlClient.SqlClient) => {
    const failed = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-@@ -315,6 +327,90 @@ export const makeToolSearchStore = (sql: SqlClient.SqlClient) => {
+@@ -315,6 +328,97 @@ export const makeToolSearchStore = (sql: SqlClient.SqlClient) => {
          );
          yield* supersede(row, now);
        }).pipe(sql.withTransaction, failed),
 +    /**
-+     * Tool rows of current listings that have no embedding text, at most `limit` of them, with
-+     * their app's name, their listing's routers and the definitions their schemas name.
++     * Tool rows of current listings that have no embedding text of this recipe, at most `limit`
++     * of them, with their app's name and slug, their listing's routers and the definitions their
++     * schemas name. `recipeVersion` is folded into the source a row's text is checked against, so
++     * bumping it makes every row untexted again without touching the tool rows themselves.
 +     */
-+    untexted: (limit: number) =>
-+      sql`select s.id, a.name as app, l.routers, s.tool,
++    untexted: (recipeVersion: string, limit: number) =>
++      sql`select s.id, a.name as app, a.slug as slug, l.routers, s.tool,
 +          coalesce((select json_agg(json_build_array(d.position, d.definition))
 +            from executor_tool_search_definitions d
 +            where d.id in (
@@ -417,19 +420,23 @@ index 5cc5b3138..59989571e 100644
 +        join executor_apps a on a.id = l.app
 +        where l.superseded is null and l.target is not null and not exists (
 +          select 1 from executor_tool_search_texts x
-+          where x.id = s.id and x.source = sha256(convert_to(s.tool::text, 'UTF8')))
++          where x.id = s.id
++            and x.source = sha256(convert_to(s.tool::text || ${recipeVersion}::text, 'UTF8')))
 +        limit ${limit}`.pipe(
 +        Effect.flatMap(Schema.decodeUnknownEffect(Schema.Array(Untexted))),
 +        failed,
 +      ),
 +    /**
-+     * Keep the embedding texts of tool rows, each with the digest of the tool it was made from, so
-+     * a row rewritten with another tool has none until it is made again. Rows removed meanwhile
-+     * are skipped.
++     * Keep the embedding texts of tool rows, each with the digest of the tool and recipe version
++     * it was made from, so a row rewritten with another tool, or made again under a new recipe
++     * version, has none until it is made again. Rows removed meanwhile are skipped.
 +     */
-+    saveTexts: (texts: ReadonlyArray<{ readonly id: string; readonly text: string }>) =>
++    saveTexts: (
++      recipeVersion: string,
++      texts: ReadonlyArray<{ readonly id: string; readonly text: string }>,
++    ) =>
 +      sql`insert into executor_tool_search_texts (id, source, digest, text)
-+        select s.id, sha256(convert_to(s.tool::text, 'UTF8')),
++        select s.id, sha256(convert_to(s.tool::text || ${recipeVersion}::text, 'UTF8')),
 +          sha256(convert_to(v.text, 'UTF8')), v.text
 +        from json_to_recordset(${JSON.stringify(texts)}::json) as v(id text, text text)
 +        join executor_tool_search s on s.id = v.id
@@ -459,14 +466,15 @@ index 5cc5b3138..59989571e 100644
 +        from json_to_recordset(${JSON.stringify(vectors)}::json) as v(text text, embedding real[])
 +        on conflict do nothing`.pipe(Effect.asVoid, failed),
 +    /**
-+     * Delete texts of rows that are gone or hold another tool, then vectors of other models and
-+     * those no text has any more.
++     * Delete texts of rows that are gone, hold another tool, or were made under another recipe
++     * version, then vectors of other models and those no text has any more.
 +     */
-+    pruneVectors: (model: string) =>
++    pruneVectors: (recipeVersion: string, model: string) =>
 +      Effect.gen(function* () {
 +        yield* sql`delete from executor_tool_search_texts x where not exists (
 +          select 1 from executor_tool_search s
-+          where s.id = x.id and sha256(convert_to(s.tool::text, 'UTF8')) = x.source)`;
++          where s.id = x.id
++            and sha256(convert_to(s.tool::text || ${recipeVersion}::text, 'UTF8')) = x.source)`;
 +        yield* sql`delete from executor_tool_search_vectors v
 +          where v.model <> ${model} or not exists (
 +            select 1 from executor_tool_search_texts x where x.digest = v.digest)`;
@@ -487,7 +495,7 @@ index 5cc5b3138..59989571e 100644
      /**
       * One page of the targets' tools that match any term, ranked by BM25, or of every tool in
       * target and name order when there are no terms, with everything the page shows. Statistics
-@@ -326,12 +422,24 @@ export const makeToolSearchStore = (sql: SqlClient.SqlClient) => {
+@@ -326,12 +430,24 @@ export const makeToolSearchStore = (sql: SqlClient.SqlClient) => {
       * Ranking and reading the page's tools, definitions and routers are one statement, so they
       * read one snapshot: a page never holds a row the scopes did not rank, even while another
       * evaluation replaces the listing's rows. `missing` names targets whose listing has no rows.
@@ -512,7 +520,7 @@ index 5cc5b3138..59989571e 100644
      }) =>
        Effect.gen(function* () {
          if (input.targets.length === 0)
-@@ -363,6 +471,48 @@ export const makeToolSearchStore = (sql: SqlClient.SqlClient) => {
+@@ -363,6 +479,48 @@ export const makeToolSearchStore = (sql: SqlClient.SqlClient) => {
                        + ${BM25.b}::float8 * hits.length / stats.avgdl)))::float8 as score
                  from hits join df using (term) cross join stats
                  group by hits.ordinal, hits.id, hits.name, hits.signature)`;
@@ -561,7 +569,7 @@ index 5cc5b3138..59989571e 100644
          const [page] =
            yield* sql`with t(ordinal, listing, app, target, labels, length) as (values ${values}),
            present as (
-@@ -377,10 +527,7 @@ export const makeToolSearchStore = (sql: SqlClient.SqlClient) => {
+@@ -377,10 +535,7 @@ export const makeToolSearchStore = (sql: SqlClient.SqlClient) => {
              join executor_tool_search s on s.listing = t.listing
              where ${permitted}),
            ${scored},
@@ -574,7 +582,7 @@ index 5cc5b3138..59989571e 100644
              select (array_agg(scope.id order by scope.ordinal, scope.id))[1] as id,
                min(scope.ordinal) as target, best.name, best.score,
 diff --git a/packages/sdk/src/implementation/tool-search.ts b/packages/sdk/src/implementation/tool-search.ts
-index 30ecdfde7..d706943cf 100644
+index 30ecdfde7..7e0166ee0 100644
 --- a/packages/sdk/src/implementation/tool-search.ts
 +++ b/packages/sdk/src/implementation/tool-search.ts
 @@ -3,7 +3,7 @@
@@ -623,14 +631,14 @@ index 30ecdfde7..d706943cf 100644
    });
  };
  const objectOf = (value: unknown): JsonObject => (Schema.is(JsonObject)(value) ? value : {});
-@@ -81,11 +88,73 @@ const toolTerms = (listing: ToolListing, tool: Tool) => {
+@@ -81,11 +88,82 @@ const toolTerms = (listing: ToolListing, tool: Tool) => {
    ].flatMap(words);
  };
  
 +/**
-+ * What an embeddings model reads for a tool row: its purpose first, as its title, description,
-+ * name and input names, then where it is listed. A thousand characters stay well inside the
-+ * context of small embedding models.
++ * What an embeddings model reads for a tool row: its canonical path first, exactly as `search`
++ * reports it, then its purpose, as its title, description, name and input names, then where it
++ * is listed. A thousand characters stay well inside the context of small embedding models.
 + */
 +const embeddingText = (row: UntextedRow) => {
 +  const definitions = new Map(row.definitions);
@@ -641,6 +649,7 @@ index 30ecdfde7..d706943cf 100644
 +      ? undefined
 +      : row.routers.find((candidate) => candidate.path === tool.router);
 +  return [
++    `${row.slug}.${tool.name}`,
 +    tool.title ?? "",
 +    tool.description.slice(0, 600),
 +    tool.name.replace(/[^\p{L}\p{N}]+/gu, " "),
@@ -654,6 +663,13 @@ index 30ecdfde7..d706943cf 100644
 +    .join("\n")
 +    .slice(0, 1_000);
 +};
++
++/**
++ * Bump this when `embeddingText`'s recipe changes. It is folded into the digest a tool row's text
++ * is checked against, so every row gets untexted and re-embedded once, without a storage version
++ * bump or touching the tool rows themselves.
++ */
++const RECIPE_VERSION = "2";
 +
  export const makeToolSearch = (options: {
    readonly store: ToolSearchStore;
@@ -685,20 +701,21 @@ index 30ecdfde7..d706943cf 100644
 +            yield* prepare;
 +            let texted = 0;
 +            for (;;) {
-+              const untexted = yield* store.untexted(256);
++              const untexted = yield* store.untexted(RECIPE_VERSION, 256);
 +              if (untexted.length === 0) break;
 +              yield* store.saveTexts(
++                RECIPE_VERSION,
 +                untexted.map((row) => ({ id: row.id, text: embeddingText(row) })),
 +              );
 +              texted += untexted.length;
 +            }
-+            yield* embeddings.embedPending(store, texted > 0);
++            yield* embeddings.embedPending(store, RECIPE_VERSION, texted > 0);
 +          }),
 +        );
    const digest = (text: string) =>
      options.crypto.digest("SHA-256", encoder.encode(text)).pipe(
        Effect.map(Hex.encode),
-@@ -210,6 +279,7 @@ export const makeToolSearch = (options: {
+@@ -210,6 +288,7 @@ export const makeToolSearch = (options: {
            },
            content,
          );
@@ -706,7 +723,7 @@ index 30ecdfde7..d706943cf 100644
        }).pipe(
          Effect.withSpan("sdk.tools.search.write", {
            attributes: { "executor.app.id": state.app.id, "executor.tools": listing.items.length },
-@@ -231,11 +301,23 @@ export const makeToolSearch = (options: {
+@@ -231,11 +310,23 @@ export const makeToolSearch = (options: {
              labels: rest.labels.flatMap(words),
            })),
          );

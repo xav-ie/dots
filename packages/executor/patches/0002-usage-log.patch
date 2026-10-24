@@ -1,4 +1,4 @@
-From 55c41151cfed3b0a7e772c77f2d6988ec21d3291 Mon Sep 17 00:00:00 2001
+From 6d868d9cbf992930cb9230c79e1c4010e5c648f6 Mon Sep 17 00:00:00 2001
 From: Xavier Ruiz <github@xav.ie>
 Date: Thu, 15 Oct 2026 15:04:22 -0400
 Subject: [PATCH 2/3] Add an opt-in JSONL usage log of MCP searches and tool

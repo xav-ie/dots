@@ -1,4 +1,4 @@
-From 2ffaed679e5e8446731663404124dcaaafc7b803 Mon Sep 17 00:00:00 2001
+From 835aefc5611239c1bdee744fcadcf5ab2bc353b1 Mon Sep 17 00:00:00 2001
 From: Xavier Ruiz <github@xav.ie>
 Date: Thu, 15 Oct 2026 19:28:35 -0400
 Subject: [PATCH 3/3] Keep apps named in EXECUTOR_SEARCH_EXCLUDE_APPS out of
