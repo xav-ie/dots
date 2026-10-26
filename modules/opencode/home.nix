@@ -45,10 +45,14 @@
       mcpConfig =
         if useExecutor then
           {
-            executor = {
+            # V2 `servers` shape: the V1 top-level form is normalized
+            # without `codemode`
+            servers.executor = {
               type = "remote";
               url = "https://executor.lalala.casa/mcp";
-              enabled = true;
+              # Executor is its own code mode; opencode only skips wrapping
+              # executor.sh URLs by default, so opt this host out too
+              codemode = false;
               headers = {
                 Authorization = "Bearer {env:EXECUTOR_AUTH_TOKEN}";
                 CF-Access-Client-Id = "{env:CF_ACCESS_CLIENT_ID}";
@@ -116,6 +120,8 @@
               - Debug information, logs, and print statements will not be visible
               - Only the final return value/result will be available
               - Plan your debugging and information gathering accordingly
+              - Executor apps (slack, browser-session, ...) are found with the executor MCP's own `search` tool and run with its `call`/`execute`; opencode's Code Mode catalog does not contain them
+              - Executor's `skills` tool is not an app inventory (apps without skills are missing from it); never conclude an app is unlinked from it
             ''}
 
             ## System Context
