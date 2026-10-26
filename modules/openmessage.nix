@@ -1,13 +1,15 @@
-# OpenMessage: Google Messages (SMS/RCS) on nox, as a native app plus an MCP
-# server for executor on praesidium.
+# OpenMessage: Google Messages (SMS/RCS) and Signal on nox, as a native app
+# plus an MCP server for executor on praesidium.
 #
 # home-manager installs the app, which spotlight-apps copies to ~/Applications.
-# A KeepAlive agent keeps that copy open so its backend (127.0.0.1:7007,
-# patched to serve MCP at /mcp) is always up. It goes through `open -W`, so a
-# launch from Spotlight or login restore attaches to the running app instead
-# of starting a second one, and the agent exits (and relaunches) when the app
-# quits. The agent loads before home-manager makes the copy and launchd never
-# retries a missing program, so /bin/sh waits for the copy first.
+# openmessage-backend keeps the copy's own backend binary serving (web UI and
+# MCP at 127.0.0.1:7007/mcp) whether or not the window is open; the app only
+# adopts a backend started from its own binary path, and is patched never to
+# start one itself (serve takes no instance lock, and a second backend would
+# run a second signal-cli on the account). openmessage opens the app once at
+# login; quitting it leaves the backend up. Both wait for the ~/Applications
+# copy, which home-manager makes after the agents load (launchd never retries
+# a missing program).
 #
 # The backend rejects non-loopback Host headers, so openmessage-mcp is an nginx
 # that forwards only /mcp with the Host rewritten, on the tailnet address only
@@ -22,6 +24,8 @@ _: {
         host = "100.100.88.109";
         port = 38991;
         backend = "127.0.0.1:7007";
+        home = "/Users/${config.system.primaryUser}";
+        app = "${home}/Applications/OpenMessage.app";
 
         nginxConf =
           pkgs.writeText "openmessage-mcp-nginx.conf" # nginx
@@ -76,16 +80,43 @@ _: {
         ];
 
         launchd.user.agents = {
+          # The environment the app's own launcher gives its backend, plus the
+          # MCP transport, the jitfix-wrapped signal-cli and the v2 store
+          # (migrated with `openmessage migrate`), where upstream pairs
+          # sent-message echoes; the legacy store shows every send twice.
+          openmessage-backend.serviceConfig = {
+            ProgramArguments = [
+              "/bin/sh"
+              "-c"
+              ''until [ -x "$0" ]; do sleep 2; done; exec "$0" serve --web --mcp-sse''
+              "${app}/Contents/Resources/openmessage"
+            ];
+            EnvironmentVariables = {
+              HOME = home;
+              OPENMESSAGES_APP_SANDBOX = "1";
+              OPENMESSAGES_DATA_DIR = "${home}/Library/Application Support/OpenMessage";
+              OPENMESSAGES_LOG_LEVEL = "info";
+              OPENMESSAGES_MACOS_NOTIFICATIONS = "0";
+              OPENMESSAGES_PORT = "7007";
+              OPENMESSAGES_SIGNAL_CLI = "${pkgs.pkgs-mine.openmessage.signal-cli}";
+              OPENMESSAGES_V2_PRIMARY = "1";
+              PATH = "/usr/bin:/bin";
+            };
+            WorkingDirectory = "${home}/Library/Application Support/OpenMessage";
+            RunAtLoad = true;
+            KeepAlive = true;
+            ProcessType = "Background";
+            StandardOutPath = "/tmp/openmessage-backend.out.log";
+            StandardErrorPath = "/tmp/openmessage-backend.err.log";
+          };
           openmessage.serviceConfig = {
             ProgramArguments = [
               "/bin/sh"
               "-c"
-              ''until [ -d "$0" ]; do sleep 2; done; exec /usr/bin/open -W "$0"''
-              "/Users/${config.system.primaryUser}/Applications/OpenMessage.app"
+              ''until [ -d "$0" ]; do sleep 2; done; exec /usr/bin/open -g "$0"''
+              app
             ];
             RunAtLoad = true;
-            KeepAlive = true;
-            ProcessType = "Interactive";
             StandardOutPath = "/tmp/openmessage.out.log";
             StandardErrorPath = "/tmp/openmessage.err.log";
           };
@@ -110,17 +141,9 @@ _: {
       };
 
     homeManager.darwin =
-      { lib, pkgs, ... }:
+      { pkgs, ... }:
       {
         home.packages = [ pkgs.pkgs-mine.openmessage ];
-
-        # Serve from the v2 store (migrated with `openmessage migrate`), where
-        # upstream pairs sent-message echoes; the legacy store shows every send
-        # twice. The app refuses to start in this mode without <dataDir>/v2.
-        # Read at launch, so a restart of the app picks up a change.
-        home.activation.openmessageV2Primary = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-          run /usr/bin/defaults write com.openmessage.app V2Primary -bool true
-        '';
       };
   };
 }

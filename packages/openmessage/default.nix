@@ -36,6 +36,10 @@ let
     pname = "openmessage-backend";
     inherit version src;
     vendorHash = "sha256-ZsnPPaviJhG3Ud49IOGCVzlxdX+SOp6k/BptipS18us=";
+    # Serve signal-cli's Signal group photos (/api/signal/group-avatar) instead
+    # of borrowing a member's, and move the platform marker off the avatar to
+    # beside the conversation name. The web UI is embedded in this binary.
+    patches = [ ./signal-group-avatars.patch ];
     subPackages = [ "." ];
     env.CGO_ENABLED = 0;
     ldflags = [
@@ -65,20 +69,14 @@ stdenv.mkDerivation {
     # Notifications only fired on stream reconnects: bytes.lines drops the
     # blank line the app waited for before handling each SSE event.
     ./notification-events.patch
+    # Alert "WhatsApp was logged out" only after WhatsApp was ever paired,
+    # not on every launch of an install that never linked it.
+    ./whatsapp-alert.patch
+    # launchd runs the backend (modules/openmessage.nix); the app only adopts
+    # it and leaves it running on quit, never starting a second one.
+    ./external-backend.patch
   ];
   patchFlags = [ "-p3" ];
-
-  # The app spawns its backend with `serve --web`; also serve MCP over
-  # Streamable HTTP at /mcp so the openmessage-mcp agent can bridge it. The
-  # backend's environment is only what the launcher sets, so point it at
-  # signal-cli directly for the Signal bridge.
-  postPatch = ''
-    substituteInPlace Sources/BackendLauncherCore.swift \
-      --replace-fail 'arguments: ["serve", "--web"],' \
-                     'arguments: ["serve", "--web", "--mcp-sse"],' \
-      --replace-fail '"OPENMESSAGES_MACOS_NOTIFICATIONS": "0",' \
-                     '"OPENMESSAGES_MACOS_NOTIFICATIONS": "0", "OPENMESSAGES_SIGNAL_CLI": "${signal-cli-jitfix}",'
-  '';
 
   buildPhase = ''
     runHook preBuild
@@ -116,7 +114,10 @@ stdenv.mkDerivation {
     /usr/bin/codesign --force --deep --sign - "$out/Applications/OpenMessage.app"
   '';
 
-  passthru = { inherit backend; };
+  passthru = {
+    inherit backend;
+    signal-cli = signal-cli-jitfix;
+  };
 
   meta = {
     description = "Local-first Google Messages, WhatsApp and Signal client with an MCP server";

@@ -1,0 +1,29 @@
+diff --git a/macos/OpenMessage/Sources/NotificationManager.swift b/macos/OpenMessage/Sources/NotificationManager.swift
+index 61ef3e1..eb7bacd 100644
+--- a/macos/OpenMessage/Sources/NotificationManager.swift
++++ b/macos/OpenMessage/Sources/NotificationManager.swift
+@@ -63,6 +63,9 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
+     private var bootstrapTask: Task<Void, Never>?
+     private var silenceLatch: SilenceNotificationLatch
+     private let silenceLatchKey = "silenceNotifiedEpisodes"
++    // Set once WhatsApp has been paired, so "unpaired" means logged out rather
++    // than never linked.
++    private let whatsAppEverPairedKey = "whatsAppEverPaired"
+     private var smsLatch: SilenceNotificationLatch
+     private let smsLatchKey = "smsStoppedNotifiedEpisodes"
+     private var lastSeenTimestamps: [String: Int64] = [:]
+@@ -368,9 +371,13 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
+             title: "Google Messages needs attention",
+             body: "SMS/RCS sync stopped and couldn't recover on its own. Open OpenMessage to see what it needs."
+         )
++        let whatsAppPaired = status.whatsapp?.paired ?? false
++        if whatsAppPaired {
++            defaults.set(true, forKey: whatsAppEverPairedKey)
++        }
+         evaluatePlatformHealth(
+             key: "whatsapp",
+-            broken: !(status.whatsapp?.paired ?? true),
++            broken: defaults.bool(forKey: whatsAppEverPairedKey) && !whatsAppPaired,
+             title: "WhatsApp needs attention",
+             body: "WhatsApp was logged out. Open OpenMessage to scan the QR code and reconnect."
+         )

@@ -1,0 +1,839 @@
+diff --git a/cmd/serve.go b/cmd/serve.go
+index 672edc6..a2e5e4c 100644
+--- a/cmd/serve.go
++++ b/cmd/serve.go
+@@ -759,6 +759,7 @@ func RunServe(logger zerolog.Logger, args ...string) error {
+ 				ConnectSignal:         connectSignal,
+ 				ReplaySignalRecovery:  a.ReplaySignalRecoveryQueue,
+ 				UnpairSignal:          unpairSignal,
++				SignalConfigDir:       a.SignalConfigPath,
+ 				LeaveWhatsAppGroup:    a.LeaveWhatsAppGroup,
+ 				WhatsAppQRCode: func() (any, error) {
+ 					return a.WhatsAppQRCode()
+diff --git a/e2e/ui.spec.js b/e2e/ui.spec.js
+index 206c1fb..19ebf5c 100644
+--- a/e2e/ui.spec.js
++++ b/e2e/ui.spec.js
+@@ -586,7 +586,7 @@ test('coalesces duplicate direct chats into one sidebar row with route tabs in t
+   });
+ 
+   await expect(jordanRows).toHaveCount(3);
+-  await expect(jordanRows.first().locator('.convo-avatar .avatar-platform-stack .platform-chip')).toHaveCount(2);
++  await expect(jordanRows.first().locator('.convo-name-row .convo-name-platforms .platform-chip')).toHaveCount(2);
+ 
+   await jordanRows.first().click();
+   await expect(page.locator('#chat-header-name')).toHaveText('Jordan Rivera');
+@@ -595,10 +595,11 @@ test('coalesces duplicate direct chats into one sidebar row with route tabs in t
+   await expect(page.locator('#chat-header-source')).toContainText('SMS');
+ });
+ 
+-test('shows platform markers on avatars instead of direct-row text pills', async ({ page }) => {
++test('shows platform markers beside the name, not over the avatar', async ({ page }) => {
+   const sarahRow = page.locator('#conversation-list > .convo-item').filter({ hasText: 'Sarah Chen' }).first();
+ 
+-  await expect(sarahRow.locator('.convo-avatar .avatar-platform-stack .platform-chip')).toHaveCount(1);
++  await expect(sarahRow.locator('.convo-name-row .convo-name-platforms .platform-chip')).toHaveCount(1);
++  await expect(sarahRow.locator('.convo-avatar .platform-chip')).toHaveCount(0);
+   await expect(sarahRow.locator('.convo-subline .platform-chip')).toHaveCount(0);
+ });
+ 
+diff --git a/internal/signallive/group_avatar.go b/internal/signallive/group_avatar.go
+new file mode 100644
+index 0000000..33e9331
+--- /dev/null
++++ b/internal/signallive/group_avatar.go
+@@ -0,0 +1,32 @@
++package signallive
++
++import (
++	"encoding/base64"
++	"fmt"
++	"path/filepath"
++	"strings"
++)
++
++// GroupAvatarPath returns where signal-cli keeps the photo of the group a
++// "signal-group:<base64 group id>" conversation names:
++// <configDir>/avatars/group-<standard base64 group id with "/" as "_">
++// (signal-cli keeps "+" and the padding). signal-cli writes
++// the file only for groups that have a photo.
++//
++// The file name is re-encoded from the decoded id, never copied from the
++// input, and an id that doesn't round-trip through standard base64 is
++// rejected, so no conversation id can name a file outside the avatars dir.
++func GroupAvatarPath(configDir, conversationID string) (string, error) {
++	groupID, isGroup, err := parseConversationTarget(conversationID)
++	if err != nil {
++		return "", err
++	}
++	if !isGroup {
++		return "", fmt.Errorf("not a Signal group conversation: %q", conversationID)
++	}
++	raw, err := base64.StdEncoding.DecodeString(groupID)
++	if err != nil || base64.StdEncoding.EncodeToString(raw) != groupID {
++		return "", fmt.Errorf("invalid Signal group id %q", groupID)
++	}
++	return filepath.Join(configDir, "avatars", "group-"+strings.ReplaceAll(base64.StdEncoding.EncodeToString(raw), "/", "_")), nil
++}
+diff --git a/internal/signallive/group_avatar_test.go b/internal/signallive/group_avatar_test.go
+new file mode 100644
+index 0000000..ddf7810
+--- /dev/null
++++ b/internal/signallive/group_avatar_test.go
+@@ -0,0 +1,38 @@
++package signallive_test
++
++import (
++	"path/filepath"
++	"testing"
++
++	"github.com/maxghenis/openmessage/internal/signallive"
++)
++
++func TestGroupAvatarPathUsesPaddedBase64URL(t *testing.T) {
++	// 32 bytes whose standard encoding carries '+', '/' and one '=' of padding.
++	const groupID = "8PE+/vv7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7xSI="
++	got, err := signallive.GroupAvatarPath("/data/signal-cli", "signal-group:"+groupID)
++	if err != nil {
++		t.Fatalf("GroupAvatarPath: %v", err)
++	}
++	want := filepath.Join("/data/signal-cli", "avatars", "group-8PE+_vv7+_v7+_v7+_v7+_v7+_v7+_v7+_v7+_v7xSI=")
++	if got != want {
++		t.Fatalf("GroupAvatarPath = %q, want %q", got, want)
++	}
++}
++
++func TestGroupAvatarPathRejectsNonGroupsAndIDsThatDoNotRoundTrip(t *testing.T) {
++	for _, conversationID := range []string{
++		"",
++		"signal:+15551234567",
++		"signal-group:",
++		"signal-group:../../etc/passwd",
++		"signal-group:8PE-_vv7-_v7-_v7-_v7-_v7-_v7-_v7-_v7-_v7xSI=",
++		"signal-group:8PE+/vv7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7xSI",
++		"signal-group:8PE+/vv7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7xSJ=",
++		"whatsapp:120363000000000000@g.us",
++	} {
++		if path, err := signallive.GroupAvatarPath("/data/signal-cli", conversationID); err == nil {
++			t.Errorf("GroupAvatarPath(%q) = %q, want an error", conversationID, path)
++		}
++	}
++}
+diff --git a/internal/v2read/alias.go b/internal/v2read/alias.go
+index 64275a5..721692d 100644
+--- a/internal/v2read/alias.go
++++ b/internal/v2read/alias.go
+@@ -1,6 +1,7 @@
+ package v2read
+ 
+ import (
++	"database/sql"
+ 	"errors"
+ 	"strings"
+ 
+@@ -60,3 +61,21 @@ func (s *Source) resolveConversationID(id string) string {
+ 	}
+ 	return trimmed
+ }
++
++// RemoteConversationID returns the platform's own id for a conversation
++// ("signal-group:<b64>", a WhatsApp JID, a Google thread id), which the DTOs
++// don't carry. The id may be a v2 conversation ID or a legacy remote ID; an
++// unknown one returns sql.ErrNoRows like GetConversation.
++func (s *Source) RemoteConversationID(id string) (string, error) {
++	if err := s.ready(); err != nil {
++		return "", err
++	}
++	conversation, err := s.store.GetConversation(s.resolveConversationID(id))
++	if errors.Is(err, sqlite.ErrNotFound) {
++		return "", sql.ErrNoRows
++	}
++	if err != nil {
++		return "", err
++	}
++	return conversation.RemoteConversationID, nil
++}
+diff --git a/internal/web/api.go b/internal/web/api.go
+index c3b3750..83ea20a 100644
+--- a/internal/web/api.go
++++ b/internal/web/api.go
+@@ -3,6 +3,7 @@ package web
+ import (
+ 	"context"
+ 	"crypto/rand"
++	"crypto/sha256"
+ 	"database/sql"
+ 	"embed"
+ 	"encoding/hex"
+@@ -14,6 +15,7 @@ import (
+ 	"net"
+ 	"net/http"
+ 	"net/url"
++	"os"
+ 	"runtime"
+ 	"sort"
+ 	"strconv"
+@@ -33,6 +35,7 @@ import (
+ 	"github.com/maxghenis/openmessage/internal/media"
+ 	"github.com/maxghenis/openmessage/internal/messaging"
+ 	"github.com/maxghenis/openmessage/internal/readsource"
++	"github.com/maxghenis/openmessage/internal/signallive"
+ 	"github.com/maxghenis/openmessage/internal/storage/sqlite"
+ 	"github.com/maxghenis/openmessage/internal/story"
+ 	"github.com/maxghenis/openmessage/internal/whatsapplive"
+@@ -112,6 +115,9 @@ type APIOptions struct {
+ 	ConnectSignal         func() error
+ 	ReplaySignalRecovery  func() error
+ 	UnpairSignal          func() error
++	// SignalConfigDir is signal-cli's --config dir, where it keeps group
++	// photos (/api/signal/group-avatar). Empty answers that route with 404.
++	SignalConfigDir       string
+ 	LeaveWhatsAppGroup    func(conversationID string) error
+ 	WhatsAppQRCode        func() (any, error)
+ 	SignalQRCode          func() (any, error)
+@@ -2839,6 +2845,55 @@ func APIHandlerWithOptions(store *db.Store, cli *client.Client, logger zerolog.L
+ 		writeJSON(w, opts.SignalStatus())
+ 	})
+ 
++	mux.HandleFunc("/api/signal/group-avatar", func(w http.ResponseWriter, r *http.Request) {
++		if r.Method != http.MethodGet && r.Method != http.MethodHead {
++			httpError(w, "method not allowed", 405)
++			return
++		}
++		conversationID := strings.TrimSpace(r.URL.Query().Get("conversation_id"))
++		if conversationID == "" {
++			httpError(w, "query parameter 'conversation_id' is required", 400)
++			return
++		}
++		if opts.SignalConfigDir == "" {
++			httpError(w, "signal group avatar not found", 404)
++			return
++		}
++		remoteID, err := conversationRemoteID(reads, conversationID)
++		if errors.Is(err, sql.ErrNoRows) {
++			httpError(w, "conversation not found", 404)
++			return
++		}
++		if err != nil {
++			httpError(w, "get conversation: "+err.Error(), 500)
++			return
++		}
++		path, err := signallive.GroupAvatarPath(opts.SignalConfigDir, remoteID)
++		if err != nil {
++			httpError(w, "signal group avatar not found", 404)
++			return
++		}
++		data, err := os.ReadFile(path)
++		if errors.Is(err, fs.ErrNotExist) || (err == nil && len(data) == 0) {
++			httpError(w, "signal group avatar not found", 404)
++			return
++		}
++		if err != nil {
++			httpError(w, "read signal group avatar: "+err.Error(), 500)
++			return
++		}
++		sum := sha256.Sum256(data)
++		etag := `"` + hex.EncodeToString(sum[:]) + `"`
++		if r.Header.Get("If-None-Match") == etag {
++			w.WriteHeader(http.StatusNotModified)
++			return
++		}
++		w.Header().Set("Content-Type", http.DetectContentType(data))
++		w.Header().Set("Cache-Control", "private, max-age=86400")
++		w.Header().Set("ETag", etag)
++		w.Write(data)
++	})
++
+ 	mux.HandleFunc("/api/whatsapp/connect", func(w http.ResponseWriter, r *http.Request) {
+ 		if r.Method != http.MethodPost {
+ 			httpError(w, "method not allowed", 405)
+@@ -3870,6 +3925,26 @@ func daysBehind(older, newer int64) int {
+ // disagreement are normal; a real projection stall shows up as minutes.
+ const projectionLagFloorMS = int64(5 * 60 * 1000)
+ 
++// remoteConversationIDSource is implemented by read sources whose
++// conversation IDs are not the platform's own (v2read).
++type remoteConversationIDSource interface {
++	RemoteConversationID(id string) (string, error)
++}
++
++// conversationRemoteID returns the platform's own id for a conversation
++// ("signal-group:<b64>", ...). The legacy store keys conversations by it, so
++// there a conversation's id is its remote id. An unknown id is sql.ErrNoRows.
++func conversationRemoteID(reads readsource.ReadSource, id string) (string, error) {
++	if source, ok := reads.(remoteConversationIDSource); ok {
++		return source.RemoteConversationID(id)
++	}
++	conversation, err := reads.GetConversation(id)
++	if err != nil {
++		return "", err
++	}
++	return conversation.ConversationID, nil
++}
++
+ // platformLatestSource is implemented by read sources that report each
+ // platform's newest message times without counting every message (v2read).
+ type platformLatestSource interface {
+diff --git a/internal/web/signal_group_avatar_test.go b/internal/web/signal_group_avatar_test.go
+new file mode 100644
+index 0000000..8d94209
+--- /dev/null
++++ b/internal/web/signal_group_avatar_test.go
+@@ -0,0 +1,153 @@
++package web
++
++import (
++	"bytes"
++	"net/http"
++	"net/http/httptest"
++	"net/url"
++	"os"
++	"path/filepath"
++	"testing"
++	"time"
++
++	"github.com/rs/zerolog"
++
++	"github.com/maxghenis/openmessage/internal/db"
++	"github.com/maxghenis/openmessage/internal/storage/sqlite"
++	"github.com/maxghenis/openmessage/internal/v2keys"
++	"github.com/maxghenis/openmessage/internal/v2read"
++)
++
++const (
++	signalAvatarGroupID      = "8PE+/vv7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7xSI="
++	signalAvatarGroupFile    = "group-8PE+_vv7+_v7+_v7+_v7+_v7+_v7+_v7+_v7+_v7xSI="
++	signalAvatarConversation = "signal-group:" + signalAvatarGroupID
++)
++
++var signalAvatarPNG = []byte("\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR")
++
++func writeSignalGroupAvatar(t *testing.T, configDir string) {
++	t.Helper()
++	dir := filepath.Join(configDir, "avatars")
++	if err := os.MkdirAll(dir, 0o700); err != nil {
++		t.Fatal(err)
++	}
++	if err := os.WriteFile(filepath.Join(dir, signalAvatarGroupFile), signalAvatarPNG, 0o600); err != nil {
++		t.Fatal(err)
++	}
++}
++
++func getSignalGroupAvatar(t *testing.T, handler http.Handler, conversationID, ifNoneMatch string) *httptest.ResponseRecorder {
++	t.Helper()
++	req := httptest.NewRequest(http.MethodGet, "http://127.0.0.1/api/signal/group-avatar?conversation_id="+url.QueryEscape(conversationID), nil)
++	if ifNoneMatch != "" {
++		req.Header.Set("If-None-Match", ifNoneMatch)
++	}
++	recorder := httptest.NewRecorder()
++	handler.ServeHTTP(recorder, req)
++	return recorder
++}
++
++func TestSignalGroupAvatarRouteServesLegacyGroupPhoto(t *testing.T) {
++	configDir := t.TempDir()
++	ts := newTestServerWithOptions(t, APIOptions{SignalConfigDir: configDir})
++	for _, convo := range []*db.Conversation{
++		{ConversationID: signalAvatarConversation, Name: "Climbing", IsGroup: true, SourcePlatform: "signal"},
++		{ConversationID: "signal:+15551234567", Name: "Alice", SourcePlatform: "signal"},
++	} {
++		if err := ts.store.UpsertConversation(convo); err != nil {
++			t.Fatal(err)
++		}
++	}
++	handler := ts.server.Config.Handler
++
++	if got := getSignalGroupAvatar(t, handler, signalAvatarConversation, ""); got.Code != http.StatusNotFound {
++		t.Fatalf("group without a photo file: status = %d, want 404", got.Code)
++	}
++	writeSignalGroupAvatar(t, configDir)
++
++	resp := getSignalGroupAvatar(t, handler, signalAvatarConversation, "")
++	if resp.Code != http.StatusOK {
++		t.Fatalf("status = %d, want 200; body=%s", resp.Code, resp.Body.String())
++	}
++	if got := resp.Header().Get("Content-Type"); got != "image/png" {
++		t.Fatalf("content-type = %q, want image/png", got)
++	}
++	if !bytes.Equal(resp.Body.Bytes(), signalAvatarPNG) {
++		t.Fatalf("body = %q, want the avatar file", resp.Body.Bytes())
++	}
++	etag := resp.Header().Get("ETag")
++	if etag == "" {
++		t.Fatal("missing ETag")
++	}
++	if got := getSignalGroupAvatar(t, handler, signalAvatarConversation, etag); got.Code != http.StatusNotModified {
++		t.Fatalf("If-None-Match: status = %d, want 304", got.Code)
++	}
++
++	for _, conversationID := range []string{"signal:+15551234567", "signal-group:unknown", "missing"} {
++		if got := getSignalGroupAvatar(t, handler, conversationID, ""); got.Code != http.StatusNotFound {
++			t.Errorf("%q: status = %d, want 404", conversationID, got.Code)
++		}
++	}
++}
++
++func TestSignalGroupAvatarRouteResolvesV2ConversationIDs(t *testing.T) {
++	v2, err := sqlite.Open(filepath.Join(t.TempDir(), "v2.sqlite3"))
++	if err != nil {
++		t.Fatal(err)
++	}
++	t.Cleanup(func() { _ = v2.Close() })
++	nowMS := time.Now().UnixMilli()
++	if err := v2.UpsertAccount(sqlite.Account{
++		AccountID:   "signal-primary",
++		BridgeKey:   "signal_cli",
++		DisplayName: "Signal",
++		Mode:        sqlite.AccountModeLive,
++		Enabled:     true,
++		ConfigJSON:  "{}",
++		CreatedAtMS: nowMS,
++		UpdatedAtMS: nowMS,
++	}); err != nil {
++		t.Fatal(err)
++	}
++	conversationID := v2keys.DeriveID("conversation", "signal-primary", signalAvatarConversation)
++	if err := v2.UpsertConversation(sqlite.Conversation{
++		ConversationID:       conversationID,
++		AccountID:            "signal-primary",
++		RemoteConversationID: signalAvatarConversation,
++		Kind:                 sqlite.ConversationKindGroup,
++		Title:                "Climbing",
++		NotificationMode:     sqlite.NotificationModeAll,
++		MetadataJSON:         "{}",
++		CreatedAtMS:          nowMS,
++		UpdatedAtMS:          nowMS,
++	}); err != nil {
++		t.Fatal(err)
++	}
++	legacy, err := db.New(":memory:")
++	if err != nil {
++		t.Fatal(err)
++	}
++	t.Cleanup(func() { _ = legacy.Close() })
++	configDir := t.TempDir()
++	writeSignalGroupAvatar(t, configDir)
++	handler := APIHandlerWithOptions(legacy, nil, zerolog.Nop(), nil, APIOptions{
++		Reads:           v2read.New(v2),
++		V2Primary:       true,
++		SignalConfigDir: configDir,
++	})
++
++	// The v2 hash the list serves, and the legacy key old references hold.
++	for _, id := range []string{conversationID, signalAvatarConversation} {
++		resp := getSignalGroupAvatar(t, handler, id, "")
++		if resp.Code != http.StatusOK {
++			t.Fatalf("%q: status = %d, want 200; body=%s", id, resp.Code, resp.Body.String())
++		}
++		if !bytes.Equal(resp.Body.Bytes(), signalAvatarPNG) {
++			t.Fatalf("%q: body = %q, want the avatar file", id, resp.Body.Bytes())
++		}
++	}
++	if got := getSignalGroupAvatar(t, handler, v2keys.DeriveID("conversation", "signal-primary", "signal-group:other"), ""); got.Code != http.StatusNotFound {
++		t.Fatalf("unknown v2 id: status = %d, want 404", got.Code)
++	}
++}
+diff --git a/internal/web/static/index.html b/internal/web/static/index.html
+index b421ba4..b7f3795 100644
+--- a/internal/web/static/index.html
++++ b/internal/web/static/index.html
+@@ -3832,48 +3832,43 @@ body::after {
+   overflow: hidden;
+ }
+ 
+-.avatar-platform-stack {
+-  position: absolute;
+-  right: -3px;
+-  bottom: -3px;
++.convo-name-row {
++  display: flex;
++  align-items: center;
++  gap: 6px;
++  min-width: 0;
++}
++
++.convo-name-row .convo-name {
++  flex: 0 1 auto;
++  min-width: 0;
++}
++
++.convo-name-platforms {
+   display: inline-flex;
++  flex-shrink: 0;
+   align-items: center;
+-  gap: 2px;
+-  padding: 2px 3px;
+-  border-radius: 999px;
+-  background: rgba(247, 249, 253, 0.92);
+-  border: 1px solid rgba(194, 202, 218, 0.72);
+-  box-shadow: 0 6px 16px rgba(11, 18, 31, 0.14);
+-  backdrop-filter: blur(10px);
+-  pointer-events: none;
++  gap: 3px;
+ }
+ 
+-.avatar-platform-stack .platform-chip {
+-  min-width: 12px;
+-  height: 12px;
+-  padding: 0;
+-  border: 0;
+-  border-radius: 0;
+-  background: transparent;
+-  box-shadow: none;
+-  font-size: 7px;
+-  letter-spacing: 0.02em;
++.convo-name-platforms .platform-chip {
++  min-width: 0;
++  height: 16px;
++  padding: 0 5px;
++  font-size: 8px;
++  letter-spacing: 0.06em;
+ }
+ 
+-.avatar-platform-stack .platform-chip--icon-only {
+-  min-width: 12px;
+-  width: 12px;
++.convo-name-platforms .platform-chip--icon-only {
++  width: 18px;
++  padding: 0;
+ }
+ 
+-.avatar-platform-stack .platform-chip-image {
++.convo-name-platforms .platform-chip-image {
+   width: 10px;
+   height: 10px;
+ }
+ 
+-.avatar-platform-stack .platform-chip--avatar {
+-  color: var(--text-secondary);
+-}
+-
+ .chat-header-name {
+   font-family: var(--font-sans);
+   font-size: 19px;
+@@ -4053,13 +4048,6 @@ body::after {
+   overflow: hidden;
+ }
+ 
+-.favorite-avatar .avatar-platform-stack {
+-  right: -4px;
+-  bottom: -4px;
+-  transform: scale(0.82);
+-  transform-origin: right bottom;
+-}
+-
+ .favorite-unread {
+   position: absolute;
+   top: -5px;
+@@ -6095,6 +6083,7 @@ body::after {
+   const LINK_PREVIEW_CACHE_LIMIT = 256;
+   const NATIVE_AVATAR_CACHE_LIMIT = 256;
+   const WHATSAPP_AVATAR_CACHE_LIMIT = 128;
++  const SIGNAL_GROUP_AVATAR_CACHE_LIMIT = 128;
+   const GOOGLE_AVATAR_CACHE_LIMIT = 256;
+   const MEDIA_LOADER_LABEL_DELAY_MS = 2500;
+   const linkPreviewCache = new Map();
+@@ -6103,6 +6092,8 @@ body::after {
+   const nativeAvatarInflight = new Map();
+   const whatsAppAvatarCache = new Map();
+   const whatsAppAvatarInflight = new Map();
++  const signalGroupAvatarCache = new Map();
++  const signalGroupAvatarInflight = new Map();
+   const googleAvatarCache = new Map();
+   const googleAvatarInflight = new Map();
+   const pendingMediaLoaderTimers = new WeakMap();
+@@ -6363,12 +6354,11 @@ body::after {
+ 
+   function platformBadgeHTML(platform, variant = 'default') {
+     const meta = platformMeta(platform);
+-    const extraClass = variant === 'avatar' ? ' platform-chip--avatar' : '';
+     if (meta.chipAsset) {
+-      return `<span class="platform-chip platform-chip--${meta.css} platform-chip--icon-only${extraClass}" title="${escapeHtml(meta.label)}" aria-label="${escapeHtml(meta.label)}"><span class="platform-chip-logo" aria-hidden="true"><img class="platform-chip-image" src="${escapeHtml(meta.chipAsset)}" alt=""></span><span class="sr-only">${escapeHtml(meta.label)}</span></span>`;
++      return `<span class="platform-chip platform-chip--${meta.css} platform-chip--icon-only" title="${escapeHtml(meta.label)}" aria-label="${escapeHtml(meta.label)}"><span class="platform-chip-logo" aria-hidden="true"><img class="platform-chip-image" src="${escapeHtml(meta.chipAsset)}" alt=""></span><span class="sr-only">${escapeHtml(meta.label)}</span></span>`;
+     }
+     const label = variant === 'header' ? meta.label : meta.short;
+-    return `<span class="platform-chip platform-chip--${meta.css}${extraClass}" title="${escapeHtml(meta.label)}">${escapeHtml(label)}</span>`;
++    return `<span class="platform-chip platform-chip--${meta.css}" title="${escapeHtml(meta.label)}">${escapeHtml(label)}</span>`;
+   }
+ 
+   function distinctPlatforms(platforms = []) {
+@@ -6387,10 +6377,12 @@ body::after {
+     });
+   }
+ 
+-  function avatarPlatformMarkersHTML(platforms = []) {
++  function convoNameRowHTML(name, platforms = []) {
+     const markers = distinctPlatforms(platforms).slice(0, 3);
+-    if (!markers.length) return '';
+-    return `<span class="avatar-platform-stack">${markers.map(platform => platformBadgeHTML(platform, 'avatar')).join('')}</span>`;
++    const markersHTML = markers.length
++      ? `<span class="convo-name-platforms">${markers.map(platform => platformBadgeHTML(platform)).join('')}</span>`
++      : '';
++    return `<div class="convo-name-row"><div class="convo-name">${escapeHtml(name)}</div>${markersHTML}</div>`;
+   }
+ 
+   function normalizeNotificationMode(mode) {
+@@ -6626,7 +6618,7 @@ body::after {
+   }
+ 
+   function conversationAvatarNumbers(convo) {
+-    if (!convo) return [];
++    if (!convo || convo.IsGroup) return [];
+     const participants = conversationParticipants(convo);
+     const others = participants.filter(p => !(p && (p.is_me || p.isMe)));
+     const source = others.length ? others : participants;
+@@ -6646,7 +6638,7 @@ body::after {
+   }
+ 
+   function conversationAvatarRefs(convo) {
+-    if (!convo || sourcePlatformOf(convo) !== 'sms') {
++    if (!convo || convo.IsGroup || sourcePlatformOf(convo) !== 'sms') {
+       return { source: '', participantIDs: [], contactIDs: [] };
+     }
+     const participants = conversationParticipants(convo);
+@@ -6676,6 +6668,14 @@ body::after {
+     };
+   }
+ 
++  // A Signal group's own photo comes from signal-cli, looked up by the
++  // conversation id; the legacy store keys groups as "signal-group:<id>".
++  function conversationAvatarSignalGroupID(convo) {
++    if (!convo || sourcePlatformOf(convo) !== 'signal') return '';
++    const id = String(convo.ConversationID || '');
++    return convo.IsGroup || id.startsWith('signal-group:') ? id : '';
++  }
++
+   function clusterAvatarNumbers(convos) {
+     return uniqueAvatarNumbers((convos || []).flatMap(conversationAvatarNumbers));
+   }
+@@ -6690,7 +6690,7 @@ body::after {
+     return distinctPlatforms((convos || []).map(displayPlatformForRoute));
+   }
+ 
+-  function avatarHTML({ name = '', numbers = [], whatsAppConversationID = '', avatarSource = '', participantIDs = [], contactIDs = [], platforms = [], className = '', style = '', text = initials(name) || '?' } = {}) {
++  function avatarHTML({ name = '', numbers = [], whatsAppConversationID = '', signalGroupConversationID = '', avatarSource = '', participantIDs = [], contactIDs = [], className = '', style = '', text = initials(name) || '?' } = {}) {
+     const lookupNumbers = uniqueAvatarNumbers(numbers);
+     const lookupKey = avatarLookupKey(name, lookupNumbers);
+     const normalizedParticipantIDs = uniqueStringValues(participantIDs);
+@@ -6710,11 +6710,14 @@ body::after {
+     if (whatsAppConversationID) {
+       dataAttrs.push(`data-avatar-wa-conversation-id="${escapeHtml(whatsAppConversationID)}"`);
+     }
++    if (signalGroupConversationID) {
++      dataAttrs.push(`data-avatar-signal-group-id="${escapeHtml(signalGroupConversationID)}"`);
++    }
+     const attrs = dataAttrs.length ? ' ' + dataAttrs.join(' ') : '';
+-    return `<div class="${escapeHtml(className)}"${attrs}><span class="avatar-face"${styleAttr}>${escapeHtml(text || '?')}</span>${avatarPlatformMarkersHTML(platforms)}</div>`;
++    return `<div class="${escapeHtml(className)}"${attrs}><span class="avatar-face"${styleAttr}>${escapeHtml(text || '?')}</span></div>`;
+   }
+ 
+-  function setAvatarDataAttributes(el, name, numbers, whatsAppConversationID = '', avatarSource = '', participantIDs = [], contactIDs = []) {
++  function setAvatarDataAttributes(el, name, numbers, whatsAppConversationID = '', avatarSource = '', participantIDs = [], contactIDs = [], signalGroupConversationID = '') {
+     const lookupNumbers = uniqueAvatarNumbers(numbers);
+     const lookupKey = avatarLookupKey(name, lookupNumbers);
+     const normalizedParticipantIDs = uniqueStringValues(participantIDs);
+@@ -6724,6 +6727,11 @@ body::after {
+     } else {
+       delete el.dataset.avatarWaConversationId;
+     }
++    if (signalGroupConversationID) {
++      el.dataset.avatarSignalGroupId = signalGroupConversationID;
++    } else {
++      delete el.dataset.avatarSignalGroupId;
++    }
+     if (avatarSource && (normalizedParticipantIDs.length || normalizedContactIDs.length || lookupNumbers.length)) {
+       el.dataset.avatarSource = avatarSource;
+       el.dataset.avatarParticipantIds = normalizedParticipantIDs.join('|');
+@@ -6733,7 +6741,7 @@ body::after {
+       delete el.dataset.avatarParticipantIds;
+       delete el.dataset.avatarContactIds;
+     }
+-    if (!lookupKey && !avatarSource) {
++    if (!lookupKey && !avatarSource && !signalGroupConversationID) {
+       delete el.dataset.avatarKey;
+       delete el.dataset.avatarName;
+       delete el.dataset.avatarNumbers;
+@@ -6839,6 +6847,46 @@ body::after {
+     return request;
+   }
+ 
++  async function fetchSignalGroupAvatar(conversationID = '') {
++    const normalizedID = String(conversationID || '').trim();
++    if (!normalizedID) return null;
++    const cachedAvatar = cacheGetFresh(signalGroupAvatarCache, normalizedID);
++    if (cachedAvatar !== undefined) {
++      return cachedAvatar;
++    }
++    if (signalGroupAvatarInflight.has(normalizedID)) {
++      return signalGroupAvatarInflight.get(normalizedID);
++    }
++    const request = fetch(`${API}/api/signal/group-avatar?conversation_id=${encodeURIComponent(normalizedID)}`)
++      .then(async (resp) => {
++        if (resp.status === 404) {
++          cacheSetBounded(signalGroupAvatarCache, normalizedID, null, SIGNAL_GROUP_AVATAR_CACHE_LIMIT);
++          return null;
++        }
++        if (!resp.ok) {
++          throw new Error(`signal group avatar ${resp.status}`);
++        }
++        const blob = await resp.blob();
++        if (!blob || blob.size === 0) {
++          cacheSetBounded(signalGroupAvatarCache, normalizedID, null, SIGNAL_GROUP_AVATAR_CACHE_LIMIT);
++          return null;
++        }
++        const objectURL = URL.createObjectURL(blob);
++        cacheSetBounded(signalGroupAvatarCache, normalizedID, objectURL, SIGNAL_GROUP_AVATAR_CACHE_LIMIT, (staleValue) => {
++          if (typeof staleValue === 'string' && staleValue.startsWith('blob:')) {
++            URL.revokeObjectURL(staleValue);
++          }
++        });
++        return objectURL;
++      })
++      .catch(() => null)
++      .finally(() => {
++        signalGroupAvatarInflight.delete(normalizedID);
++      });
++    signalGroupAvatarInflight.set(normalizedID, request);
++    return request;
++  }
++
+   function googleAvatarLookupKey({ source = '', participantIDs = [], contactIDs = [], numbers = [] } = {}) {
+     const sourceKey = String(source || '').trim().toLowerCase();
+     const participants = uniqueStringValues(participantIDs).join('|');
+@@ -6891,7 +6939,10 @@ body::after {
+     return request;
+   }
+ 
+-  async function fetchAvatarImage(name, numbers = [], whatsAppConversationID = '', googleRefs = {}) {
++  async function fetchAvatarImage(name, numbers = [], whatsAppConversationID = '', googleRefs = {}, signalGroupConversationID = '') {
++    // A Signal group shows its own photo or its initials, never a lookup by
++    // the group's name.
++    if (signalGroupConversationID) return fetchSignalGroupAvatar(signalGroupConversationID);
+     const whatsAppAvatar = await fetchWhatsAppAvatar(whatsAppConversationID);
+     if (whatsAppAvatar) return whatsAppAvatar;
+     const googleAvatar = await fetchGoogleCachedAvatar({ ...googleRefs, numbers });
+@@ -6904,6 +6955,7 @@ body::after {
+     return [
+       el.dataset.avatarKey || '',
+       el.dataset.avatarWaConversationId || '',
++      el.dataset.avatarSignalGroupId || '',
+       el.dataset.avatarSource || '',
+       el.dataset.avatarParticipantIds || '',
+       el.dataset.avatarContactIds || '',
+@@ -6912,11 +6964,11 @@ body::after {
+ 
+   function hydrateNativeAvatars(root = document) {
+     const targets = [];
+-    if (root && root.nodeType === 1 && root.matches && root.matches('[data-avatar-key], [data-avatar-wa-conversation-id], [data-avatar-source]')) {
++    if (root && root.nodeType === 1 && root.matches && root.matches('[data-avatar-key], [data-avatar-wa-conversation-id], [data-avatar-signal-group-id], [data-avatar-source]')) {
+       targets.push(root);
+     }
+     if (root && root.querySelectorAll) {
+-      root.querySelectorAll('[data-avatar-key], [data-avatar-wa-conversation-id], [data-avatar-source]').forEach(el => targets.push(el));
++      root.querySelectorAll('[data-avatar-key], [data-avatar-wa-conversation-id], [data-avatar-signal-group-id], [data-avatar-source]').forEach(el => targets.push(el));
+     }
+     targets.forEach((el) => {
+       if (el.dataset.avatarHydrated === 'true') return;
+@@ -6924,13 +6976,14 @@ body::after {
+       const name = el.dataset.avatarName || '';
+       const numbers = (el.dataset.avatarNumbers || '').split('|').filter(Boolean);
+       const whatsAppConversationID = el.dataset.avatarWaConversationId || '';
++      const signalGroupConversationID = el.dataset.avatarSignalGroupId || '';
+       const googleRefs = {
+         source: el.dataset.avatarSource || '',
+         participantIDs: (el.dataset.avatarParticipantIds || '').split('|').filter(Boolean),
+         contactIDs: (el.dataset.avatarContactIds || '').split('|').filter(Boolean),
+       };
+       const expectedIdentity = avatarHydrationIdentity(el);
+-      fetchAvatarImage(name, numbers, whatsAppConversationID, googleRefs).then((dataURL) => {
++      fetchAvatarImage(name, numbers, whatsAppConversationID, googleRefs, signalGroupConversationID).then((dataURL) => {
+         if (!dataURL || !el.isConnected) return;
+         if (avatarHydrationIdentity(el) !== expectedIdentity) return;
+         applyAvatarImage(el, dataURL, el.dataset.avatarName || name);
+@@ -7156,15 +7209,15 @@ body::after {
+     });
+   }
+ 
+-  function renderAvatarElement(el, { name = '', numbers = [], whatsAppConversationID = '', avatarSource = '', participantIDs = [], contactIDs = [], platforms = [], text = initials(name) || '?', background = avatarColor(name) } = {}) {
++  function renderAvatarElement(el, { name = '', numbers = [], whatsAppConversationID = '', signalGroupConversationID = '', avatarSource = '', participantIDs = [], contactIDs = [], text = initials(name) || '?', background = avatarColor(name) } = {}) {
+     if (!el) return;
+     el.classList.remove('has-photo');
+-    el.innerHTML = `<span class="avatar-face">${escapeHtml(text || '?')}</span>${avatarPlatformMarkersHTML(platforms)}`;
++    el.innerHTML = `<span class="avatar-face">${escapeHtml(text || '?')}</span>`;
+     const face = el.querySelector('.avatar-face');
+     if (face) {
+       face.style.background = background;
+     }
+-    setAvatarDataAttributes(el, name, numbers, whatsAppConversationID, avatarSource, participantIDs, contactIDs);
++    setAvatarDataAttributes(el, name, numbers, whatsAppConversationID, avatarSource, participantIDs, contactIDs, signalGroupConversationID);
+     hydrateNativeAvatars(el);
+   }
+ 
+@@ -8299,15 +8352,15 @@ body::after {
+           name: c.Name,
+           numbers: conversationAvatarNumbers(c),
+           whatsAppConversationID: conversationAvatarWhatsAppConversationID(c),
++          signalGroupConversationID: conversationAvatarSignalGroupID(c),
+           avatarSource: avatarRefs.source,
+           participantIDs: avatarRefs.participantIDs,
+           contactIDs: avatarRefs.contactIDs,
+-          platforms: avatarPlatformsForConversation(c),
+           className: 'convo-avatar',
+           style: `background:${avatarColor(c.Name)}`,
+         })}
+         <div class="convo-meta">
+-          <div class="convo-name">${escapeHtml(c.Name || 'Unknown')}</div>
++          ${convoNameRowHTML(c.Name || 'Unknown', avatarPlatformsForConversation(c))}
+           <div class="convo-subline">
+             ${notificationBadge}
+             ${preview}
+@@ -8363,12 +8416,11 @@ body::after {
+         avatarSource: primaryAvatarRefs.source,
+         participantIDs: routes.flatMap(route => conversationAvatarRefs(route).participantIDs),
+         contactIDs: routes.flatMap(route => conversationAvatarRefs(route).contactIDs),
+-        platforms: avatarPlatformsForConversations(routes),
+         className: 'convo-avatar',
+         style: `background:${avatarColor(identity.displayName)}`,
+       })}
+       <div class="convo-meta">
+-        <div class="convo-name">${escapeHtml(identity.displayName)}</div>
++        ${convoNameRowHTML(identity.displayName, avatarPlatformsForConversations(routes))}
+         ${conversationPreviewHTML(primary)}
+       </div>
+       <div class="convo-time">${formatTime(primary.LastMessageTS)}</div>
+@@ -8416,10 +8468,10 @@ body::after {
+             name: convo.Name,
+             numbers: conversationAvatarNumbers(convo),
+             whatsAppConversationID: conversationAvatarWhatsAppConversationID(convo),
++            signalGroupConversationID: conversationAvatarSignalGroupID(convo),
+             avatarSource: avatarRefs.source,
+             participantIDs: avatarRefs.participantIDs,
+             contactIDs: avatarRefs.contactIDs,
+-            platforms: avatarPlatformsForConversation(convo),
+             className: 'favorite-avatar',
+             style: `background:${avatarColor(convo.Name)}`,
+           })}
+@@ -9317,10 +9369,10 @@ body::after {
+           name: convo.Name,
+           numbers: conversationAvatarNumbers(convo),
+           whatsAppConversationID: conversationAvatarWhatsAppConversationID(convo),
++          signalGroupConversationID: conversationAvatarSignalGroupID(convo),
+           avatarSource: avatarRefs.source,
+           participantIDs: avatarRefs.participantIDs,
+           contactIDs: avatarRefs.contactIDs,
+-          platforms: avatarPlatformsForConversation(convo),
+           className: 'forward-avatar',
+           style: `background:${avatarColor(convo.Name)}`,
+         })}
+@@ -10617,10 +10669,10 @@ body::after {
+       name: convo.Name,
+       numbers: conversationAvatarNumbers(convo),
+       whatsAppConversationID: conversationAvatarWhatsAppConversationID(convo),
++      signalGroupConversationID: conversationAvatarSignalGroupID(convo),
+       avatarSource: avatarRefs.source,
+       participantIDs: avatarRefs.participantIDs,
+       contactIDs: avatarRefs.contactIDs,
+-      platforms: avatarPlatformsForConversation(convo),
+       text: initials(convo.Name),
+       background: avatarColor(convo.Name),
+     });
