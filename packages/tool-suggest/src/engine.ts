@@ -250,7 +250,9 @@ export async function fetchCatalog(c: Config): Promise<Tool[]> {
   for (let i = 0; i < paths.length; i += 20) {
     const result = (await mcpCall(c, sessionId, id++, "describe", {
       paths: paths.slice(i, i + 20),
-    })) as { items: Array<{ path: string; description?: string; signature?: string }> };
+    })) as {
+      items: Array<{ path: string; description?: string; signature?: string }>;
+    };
     for (const item of result.items) {
       const path = canonical(item.path);
       tools.push({
@@ -345,7 +347,7 @@ export const render = (picks: Tool[]): string =>
     `${MARKER} (if one fits the task, call it directly with these inputs; no need to search first):`,
     ...picks.map(
       (p) =>
-        `- ${expression(p.path)}${p.signature ?? ""}: ${(p.description.split("\n")[0] ?? "").slice(0, 140)}`,
+        `- ${expression(p.path)}${p.signature ?? ""}: ${p.description.trim().replaceAll("\n", "\n  ")}`,
     ),
   ].join("\n");
 
@@ -511,7 +513,9 @@ export function selftest(): void {
   );
   check(
     "compact signature",
-    compactSignature("(input: {\n  /** Key. */\n  issue_key: string,\n  /** Fields. */\n  fields?: string,\n}): Promise<{ content: unknown }>"),
+    compactSignature(
+      "(input: {\n  /** Key. */\n  issue_key: string,\n  /** Fields. */\n  fields?: string,\n}): Promise<{ content: unknown }>",
+    ),
     "({ issue_key: string, fields?: string })",
   );
   check("compact signature empty", compactSignature("(): Promise<{}>"), "()");
@@ -544,6 +548,7 @@ export function selftest(): void {
     [
       "Possibly relevant executor tools (if one fits the task, call it directly with these inputs; no need to search first):",
       "- tools.x.y: first line",
+      "  second",
     ].join("\n"),
   );
 }
