@@ -1,44 +1,44 @@
 {
   "native": {
-    "version": "2.1.276",
+    "version": "2.1.296",
     "gcs_bucket": "https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases",
     "sources": {
       "x86_64-linux": {
         "platform": "linux-x64",
-        "hash": "sha256-ilbIoUvTyyRuK9t+YK7+D2Cb/3jIu8xeprGBfBEcYUU="
-      },
-      "aarch64-linux": {
-        "platform": "linux-arm64",
-        "hash": "sha256-6aw9+VYINkVXijgq1k7DBEaGZuNiwzv979gDzW/1lrA="
+        "hash": "sha256-JJcuO8hZ+rK0btTB5R99YTDwbTvVUIEaEUZA3jNw0N4="
       },
       "x86_64-darwin": {
         "platform": "darwin-x64",
-        "hash": "sha256-zwtK97zl2ZGld9EVDobUW3uD71fNsDhARMpUZh3tJMY="
+        "hash": "sha256-pr9PML4kEFOpI/OCCtI8WZHS9awpNbOo3WTaIY2cxgM="
+      },
+      "aarch64-linux": {
+        "platform": "linux-arm64",
+        "hash": "sha256-8fbpbg2DQrnb9B1+iCVTl6alLOPYc2rWpMa1nJti/vo="
       },
       "aarch64-darwin": {
         "platform": "darwin-arm64",
-        "hash": "sha256-neNk2xGkENU8u7D2sfGMZskAU+/JpjNwByhW0Q22Yyk="
+        "hash": "sha256-ybU0Fje+y9Qj3f/FslSvtkVoKjhoy3CLvGzA57tBmTc="
       }
     }
   },
   "npm": {
-    "version": "2.1.281",
+    "version": "2.1.296",
     "sources": {
+      "aarch64-darwin": {
+        "platform": "darwin-arm64",
+        "hash": "sha256-UPv1lNZSbJqufWa4tFoI2JrmuGPivJd3v7J31lIadFg="
+      },
       "x86_64-linux": {
         "platform": "linux-x64",
-        "hash": "sha256-sNo8XYzhnBCEmFvKLkmqTG54rQYGwrSsfeYH2aMd10o="
+        "hash": "sha256-7vWi4rCaXn0s54TRs7ozWuf8bH9iVsgCoOvywh5P0OE="
       },
       "aarch64-linux": {
         "platform": "linux-arm64",
-        "hash": "sha256-+Y9om+Ie9zQozNusulYaFMVrv1SgaQWjWvbdWYF8v3o="
+        "hash": "sha256-Vqu+HPyF5bN6/u9a6LSFbdwyu+RDuCaJo7X5mZIEXNE="
       },
       "x86_64-darwin": {
         "platform": "darwin-x64",
-        "hash": "sha256-mqBDVeFc/MsDP9dht/OLgd3aNDHo+8JS4HMZJ+SZJd0="
-      },
-      "aarch64-darwin": {
-        "platform": "darwin-arm64",
-        "hash": "sha256-nmI9Mp4OrRkoRUn+CZzHHzp60GwuJrUmT+OhL8aHzRs="
+        "hash": "sha256-7CnZYvD3xwz4xEYG7n+7PNeTajP03BPTwuNmTF8LP8Q="
       }
     }
   }
