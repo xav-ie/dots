@@ -173,7 +173,7 @@ fn unwrap_execution(sc: &Value) -> Option<anyhow::Result<String>> {
     Some(match exec["ok"].as_bool() {
         Some(true) => Ok(match &exec["value"] {
             Value::String(s) => s.clone(),
-            v => serde_json::to_string_pretty(v).unwrap_or_default(),
+            v => v.to_string(),
         }),
         Some(false) => Err(anyhow::anyhow!(
             "snippet failed: {}",

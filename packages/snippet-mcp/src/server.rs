@@ -85,12 +85,12 @@ impl SnippetServer {
                         })
                     })
                     .collect();
-                Ok(serde_json::to_string_pretty(&json)?)
+                Ok(serde_json::to_string(&json)?)
             }
             "_get" => {
                 let name = required_str(&args, "name")?;
                 let s = self.registry.load(name)?;
-                Ok(serde_json::to_string_pretty(&json!({
+                Ok(serde_json::to_string(&json!({
                     "name": s.name,
                     "frontmatter": s.frontmatter,
                     "body": s.body,
@@ -133,7 +133,7 @@ impl SnippetServer {
 
 async fn wrap_write(s: Snippet) -> anyhow::Result<String> {
     let r = refresh_executor().await;
-    Ok(serde_json::to_string_pretty(&json!({
+    Ok(serde_json::to_string(&json!({
         "saved": { "name": s.name },
         "executor_refresh": if r.ok { "ok".to_string() } else { r.detail },
     }))?)
