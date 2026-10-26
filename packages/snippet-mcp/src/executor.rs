@@ -32,11 +32,17 @@ pub fn endpoint() -> anyhow::Result<Option<Endpoint>> {
     let Some(base) = std::env::var("EXECUTOR_URL").ok().filter(|v| !v.is_empty()) else {
         return Ok(None);
     };
-    let token = match std::env::var("EXECUTOR_AUTH_TOKEN").ok().filter(|v| !v.is_empty()) {
+    let token = match std::env::var("EXECUTOR_AUTH_TOKEN")
+        .ok()
+        .filter(|v| !v.is_empty())
+    {
         Some(t) => t,
         None => {
-            let path = std::env::var("EXECUTOR_ENV_FILE")
-                .map_err(|_| anyhow::anyhow!("EXECUTOR_URL is set but no EXECUTOR_AUTH_TOKEN or EXECUTOR_ENV_FILE"))?;
+            let path = std::env::var("EXECUTOR_ENV_FILE").map_err(|_| {
+                anyhow::anyhow!(
+                    "EXECUTOR_URL is set but no EXECUTOR_AUTH_TOKEN or EXECUTOR_ENV_FILE"
+                )
+            })?;
             let raw = std::fs::read_to_string(&path)
                 .map_err(|e| anyhow::anyhow!("reading {path}: {e}"))?;
             raw.lines()
@@ -82,7 +88,11 @@ impl Endpoint {
         Ok(res.json().await?)
     }
 
-    async fn post(&self, session: Option<&str>, body: Value) -> anyhow::Result<(Option<String>, Value)> {
+    async fn post(
+        &self,
+        session: Option<&str>,
+        body: Value,
+    ) -> anyhow::Result<(Option<String>, Value)> {
         let mut req = client()
             .post(&self.url)
             .bearer_auth(&self.token)
@@ -101,16 +111,23 @@ impl Endpoint {
             .map(str::to_string);
         let text = res.text().await?;
         if !status.is_success() {
-            anyhow::bail!("executor returned {status}: {}", text.chars().take(300).collect::<String>());
+            anyhow::bail!(
+                "executor returned {status}: {}",
+                text.chars().take(300).collect::<String>()
+            );
         }
-        let value = if text.trim().is_empty() { Value::Null } else { parse_rpc(&text)? };
+        let value = if text.trim().is_empty() {
+            Value::Null
+        } else {
+            parse_rpc(&text)?
+        };
         Ok((session, value))
     }
 
-    /// Runs `code` with executor's `execute` tool and returns its text result
-    /// unchanged: a completed value, an error, or a pending approval the caller
-    /// can `resume`.
-    pub async fn execute(&self, code: &str) -> anyhow::Result<String> {
+    /// Runs `code` with executor's `execute` tool and returns a completed
+    /// run's value, or its text result unchanged: an error, or a pending
+    /// approval the caller can `resume`.
+    pub async fn execute(&self, code: &str) -> anyhow::Result<Value> {
         let (session, init) = self
             .post(
                 None,
@@ -159,25 +176,24 @@ impl Endpoint {
         if result["isError"].as_bool() == Some(true) {
             anyhow::bail!("{text}");
         }
-        unwrap_execution(&result["structuredContent"]).map_or(Ok(text), |r| r)
+        unwrap_execution(&result["structuredContent"]).map_or(Ok(Value::String(text)), |r| r)
     }
 }
 
 /// A completed run returns just its value, a failed one its error. Anything else
 /// (a pending approval to `resume`, a paused input request) passes through whole.
-fn unwrap_execution(sc: &Value) -> Option<anyhow::Result<String>> {
+fn unwrap_execution(sc: &Value) -> Option<anyhow::Result<Value>> {
     if sc["status"].as_str() != Some("completed") {
         return None;
     }
     let exec = &sc["execution"];
     Some(match exec["ok"].as_bool() {
-        Some(true) => Ok(match &exec["value"] {
-            Value::String(s) => s.clone(),
-            v => v.to_string(),
-        }),
+        Some(true) => Ok(exec["value"].clone()),
         Some(false) => Err(anyhow::anyhow!(
             "snippet failed: {}",
-            exec["error"]["message"].as_str().map_or_else(|| exec["error"].to_string(), str::to_string)
+            exec["error"]["message"]
+                .as_str()
+                .map_or_else(|| exec["error"].to_string(), str::to_string)
         )),
         None => return None,
     })

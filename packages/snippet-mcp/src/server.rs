@@ -63,14 +63,29 @@ impl ServerHandler for SnippetServer {
         let name = request.name.as_ref();
         let result = self.dispatch(name, args).await;
         match result {
-            Ok(text) => Ok(CallToolResult::success(vec![Content::text(text)])),
+            Ok(Value::String(text)) => Ok(CallToolResult::success(vec![Content::text(text)])),
+            Ok(value) => Ok(structured(value)),
             Err(err) => Ok(CallToolResult::error(vec![Content::text(err.to_string())])),
         }
     }
 }
 
+/// JSON text as programs parse it, plus the same data as structured content,
+/// which must be an object, so any other value sits under `result`.
+fn structured(value: Value) -> CallToolResult {
+    let text = value.to_string();
+    let object = if value.is_object() {
+        value
+    } else {
+        json!({ "result": value })
+    };
+    let mut result = CallToolResult::structured(object);
+    result.content = vec![Content::text(text)];
+    result
+}
+
 impl SnippetServer {
-    async fn dispatch(&self, name: &str, args: JsonObject) -> anyhow::Result<String> {
+    async fn dispatch(&self, name: &str, args: JsonObject) -> anyhow::Result<Value> {
         match name {
             "_list" => {
                 let snippets = self.registry.list()?;
@@ -85,16 +100,16 @@ impl SnippetServer {
                         })
                     })
                     .collect();
-                Ok(serde_json::to_string(&json)?)
+                Ok(Value::Array(json))
             }
             "_get" => {
                 let name = required_str(&args, "name")?;
                 let s = self.registry.load(name)?;
-                Ok(serde_json::to_string(&json!({
+                Ok(json!({
                     "name": s.name,
                     "frontmatter": s.frontmatter,
                     "body": s.body,
-                }))?)
+                }))
             }
             "_save" => {
                 let input: SaveInput = serde_json::from_value(Value::Object(args))
@@ -112,7 +127,10 @@ impl SnippetServer {
                 let name = required_str(&args, "name")?.to_string();
                 self.registry.delete(&name)?;
                 let r = refresh_executor().await;
-                Ok(format!("deleted {name}; executor refresh: {}", r.detail))
+                Ok(Value::String(format!(
+                    "deleted {name}; executor refresh: {}",
+                    r.detail
+                )))
             }
             _ => {
                 let snippet = self.registry.load(name)?;
@@ -120,23 +138,23 @@ impl SnippetServer {
                 // A code snippet runs through executor's execute when one is
                 // configured; instructions, and an unconfigured host, return text.
                 if snippet.frontmatter.kind.unwrap_or_default() != SnippetKind::Code {
-                    return Ok(rendered);
+                    return Ok(Value::String(rendered));
                 }
                 match executor::endpoint()? {
                     Some(endpoint) => endpoint.execute(&rendered).await,
-                    None => Ok(rendered),
+                    None => Ok(Value::String(rendered)),
                 }
             }
         }
     }
 }
 
-async fn wrap_write(s: Snippet) -> anyhow::Result<String> {
+async fn wrap_write(s: Snippet) -> anyhow::Result<Value> {
     let r = refresh_executor().await;
-    Ok(serde_json::to_string(&json!({
+    Ok(json!({
         "saved": { "name": s.name },
         "executor_refresh": if r.ok { "ok".to_string() } else { r.detail },
-    }))?)
+    }))
 }
 
 fn executor_configured() -> bool {
@@ -159,8 +177,12 @@ fn snippet_tool(s: &Snippet) -> Tool {
     }
     let kind = s.frontmatter.kind.unwrap_or_default();
     description.push_str(match kind {
-        SnippetKind::Code if executor_configured() => " (kind: code) — runs the snippet and returns its result.",
-        SnippetKind::Code => " (kind: code) — returns the rendered snippet body for use inside executor.execute.",
+        SnippetKind::Code if executor_configured() => {
+            " (kind: code) — runs the snippet and returns its result."
+        }
+        SnippetKind::Code => {
+            " (kind: code) — returns the rendered snippet body for use inside executor.execute."
+        }
         SnippetKind::Instructions => " (kind: instructions) — returns the rendered instructions.",
     });
     let tool = build_tool(
