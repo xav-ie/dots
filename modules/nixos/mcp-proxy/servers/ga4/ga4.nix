@@ -43,7 +43,7 @@
         text = ''
           creds="''${GA4_CREDS_FILE:-/data-ga4/creds.json}"
           if [ ! -s "$creds" ]; then
-            echo "ga4-mcp: $creds missing or empty — run: podman exec -it mcp ga4-login" >&2
+            echo "ga4-mcp: $creds missing or empty — run: sudo podman exec -it mcp ga4-login" >&2
           fi
           export GOOGLE_APPLICATION_CREDENTIALS="$creds"
           exec "${venv}/bin/analytics-mcp" "$@"
@@ -51,7 +51,8 @@
       };
 
       # Interactive consent flow, workspace-<account>-login style:
-      #   podman exec -it mcp ga4-login
+      #   sudo podman exec -it mcp ga4-login
+      # (rootful container — podman needs sudo)
       # Uses the gtm/* sops env (same desktop OAuth client) and writes the
       # authorized_user JSON into the server volume.
       ga4-login = pkgs.writeShellApplication {

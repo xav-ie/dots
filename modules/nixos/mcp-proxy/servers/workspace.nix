@@ -38,7 +38,7 @@
             # The token store is salted with hostname + username, so it can only be
             # read back by the same identity that wrote it. Log in from inside this
             # container, not the host:
-            #   podman exec -it mcp workspace-<account> login
+            # sudo podman exec -it mcp workspace-<account> login
             # keytar isn't in the image; skip the probe and go straight to the
             # encrypted file in the state dir.
             envVars.GEMINI_CLI_WORKSPACE_FORCE_FILE_STORAGE = "true";
