@@ -294,7 +294,7 @@ in
             lcmd - 3 : pgrep -x zoom.us >/dev/null || ${confirm-open} zoom.us && ${focus} zoom.us
             lcmd - 4 : ${focus} Finder
             lcmd - 5 : ${focus} "Google Chrome"
-            lcmd - 6 : ${focus} Signal
+            lcmd - 6 : ${focus} OpenMessage
             lcmd - 7 : ${focus} "System Settings"
 
             ctrl + alt - h : yabai -m space --focus prev

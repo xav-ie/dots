@@ -141,7 +141,7 @@ rec {
   pi-show-diffs = pkgs.callPackage ./pi-show-diffs { };
 
 }
-// (optionalAttrs isDarwin {
+// (optionalAttrs isDarwin rec {
   airpods-mode = pkgs.callPackage ./airpods-mode { };
   audio-autoswitch = pkgs.callPackage ./audio-autoswitch { };
   confirm-open = pkgs.callPackage ./confirm-open { };
@@ -151,9 +151,10 @@ rec {
   mic-denoise = mic-denoise-pkg;
   firefox-pip-mover = pkgs.callPackage ./firefox-pip-mover { };
   hidewin = pkgs.callPackage ./hidewin { };
+  jitfix = pkgs.callPackage ./jitfix { };
   menubar-reveal = pkgs.callPackage ./menubar-reveal { };
   move-pip = pkgs.callPackage ./move-pip { };
-  openmessage = pkgs.callPackage ./openmessage { };
+  openmessage = pkgs.callPackage ./openmessage { inherit jitfix; };
   polish-recording = pkgs.callPackage ./polish-recording { };
   sketchybar-battery = pkgs.callPackage ./sketchybar-battery { inherit writeNuApplication; };
   sketchybar-hover = pkgs.callPackage ./sketchybar-hover { };

@@ -110,9 +110,17 @@ _: {
       };
 
     homeManager.darwin =
-      { pkgs, ... }:
+      { lib, pkgs, ... }:
       {
         home.packages = [ pkgs.pkgs-mine.openmessage ];
+
+        # Serve from the v2 store (migrated with `openmessage migrate`), where
+        # upstream pairs sent-message echoes; the legacy store shows every send
+        # twice. The app refuses to start in this mode without <dataDir>/v2.
+        # Read at launch, so a restart of the app picks up a change.
+        home.activation.openmessageV2Primary = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          run /usr/bin/defaults write com.openmessage.app V2Primary -bool true
+        '';
       };
   };
 }

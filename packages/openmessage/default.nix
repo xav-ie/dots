@@ -9,11 +9,20 @@
   lib,
   buildGoModule,
   fetchFromGitHub,
+  jitfix,
+  signal-cli,
   stdenv,
   swift,
   swiftpm,
+  writeShellScript,
 }:
 let
+  # signal-cli runs on JDK 25, which SIGBUSes at startup on nox without jitfix.
+  signal-cli-jitfix = writeShellScript "signal-cli" ''
+    export DYLD_INSERT_LIBRARIES=${jitfix}/lib/libjitfix.dylib
+    exec ${lib.getExe signal-cli} "$@"
+  '';
+
   version = "0.2.9-unstable-2026-10-24";
 
   src = fetchFromGitHub {
@@ -49,12 +58,26 @@ stdenv.mkDerivation {
     swiftpm
   ];
 
+  # Paths are repo-relative, and sourceRoot is macos/OpenMessage.
+  patches = [
+    # Main window without a title bar or traffic lights.
+    ./hide-title-bar.patch
+    # Notifications only fired on stream reconnects: bytes.lines drops the
+    # blank line the app waited for before handling each SSE event.
+    ./notification-events.patch
+  ];
+  patchFlags = [ "-p3" ];
+
   # The app spawns its backend with `serve --web`; also serve MCP over
-  # Streamable HTTP at /mcp so the openmessage-mcp agent can bridge it.
+  # Streamable HTTP at /mcp so the openmessage-mcp agent can bridge it. The
+  # backend's environment is only what the launcher sets, so point it at
+  # signal-cli directly for the Signal bridge.
   postPatch = ''
     substituteInPlace Sources/BackendLauncherCore.swift \
       --replace-fail 'arguments: ["serve", "--web"],' \
-                     'arguments: ["serve", "--web", "--mcp-sse"],'
+                     'arguments: ["serve", "--web", "--mcp-sse"],' \
+      --replace-fail '"OPENMESSAGES_MACOS_NOTIFICATIONS": "0",' \
+                     '"OPENMESSAGES_MACOS_NOTIFICATIONS": "0", "OPENMESSAGES_SIGNAL_CLI": "${signal-cli-jitfix}",'
   '';
 
   buildPhase = ''

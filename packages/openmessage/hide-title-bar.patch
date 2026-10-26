@@ -1,0 +1,38 @@
+diff --git a/macos/OpenMessage/Sources/OpenMessageApp.swift b/macos/OpenMessage/Sources/OpenMessageApp.swift
+index 0cc2999..275645d 100644
+--- a/macos/OpenMessage/Sources/OpenMessageApp.swift
++++ b/macos/OpenMessage/Sources/OpenMessageApp.swift
+@@ -21,8 +21,10 @@ struct OpenMessageApp: App {
+         Window("OpenMessage", id: "main") {
+             ContentView(backend: backend, notifications: notifications, contacts: contacts)
+                 .frame(minWidth: 800, minHeight: 500)
++                .ignoresSafeArea()
+         }
+         .defaultSize(width: 1100, height: 700)
++        .windowStyle(.hiddenTitleBar)
+ 
+         Settings {
+             AppSettingsView(backend: backend, notifications: notifications)
+@@ -35,6 +37,22 @@ struct OpenMessageApp: App {
+ }
+ 
+ final class AppDelegate: NSObject, NSApplicationDelegate, @unchecked Sendable {
++    func applicationDidFinishLaunching(_ notification: Notification) {
++        // The main window has no title bar; hide its traffic lights too. AppKit
++        // re-shows them on some relayouts, so hide them whenever it changes.
++        for name in [NSWindow.didBecomeKeyNotification, NSWindow.didResizeNotification] {
++            NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { note in
++                let window = note.object as? NSWindow
++                MainActor.assumeIsolated {
++                    guard let window, window.identifier?.rawValue.hasPrefix("main") == true else { return }
++                    for button in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] {
++                        window.standardWindowButton(button)?.isHidden = true
++                    }
++                }
++            }
++        }
++    }
++
+     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+         false // Keep running in menu bar when window closed
+     }
