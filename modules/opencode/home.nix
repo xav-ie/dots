@@ -144,13 +144,6 @@
         "opencode/skill/product-ticket-solver".source =
           "${claude-plugins-src}/product-ticket-solver/skills";
 
-        # Tool-suggest plugin: thin shim that spawns the compiled TS engine
-        # (packages/tool-suggest, shared with claude's hooks) and injects its
-        # additionalContext as synthetic parts. Out-of-store symlink so edits
-        # to the live repo checkout load on next opencode start.
-        "opencode/plugins/tool-suggest.ts".source =
-          config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/packages/tool-suggest/src/opencode-plugin.ts";
-
         # Vision shim: pasted images are described by glm-5.3-flash and the
         # description replaces the image part, so text-only coding models
         # (the rest of the coding plan) still accept them. Native vision
@@ -158,9 +151,5 @@
         "opencode/plugins/image-describe.ts".source =
           config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/opencode/image-describe.ts";
       };
-
-      # Stable path the plugin shim (and fingers) use to invoke the shared
-      # tool-suggest engine — the same compiled binary claude's hooks run.
-      home.file.".local/bin/tool-suggest".source = "${pkgs.pkgs-mine.tool-suggest}/bin/tool-suggest";
     };
 }

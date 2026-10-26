@@ -47,17 +47,6 @@
         ]
       }
     ],
-    "PostToolBatch": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/tool-suggest",
-            "timeout": 3
-          }
-        ]
-      }
-    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
@@ -107,17 +96,6 @@
             "type": "command",
             "command": "~/.claude/hooks/herdr-agent-state.sh session",
             "timeout": 10
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/tool-suggest",
-            "timeout": 3
           }
         ]
       }
