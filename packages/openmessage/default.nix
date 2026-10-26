@@ -75,6 +75,10 @@ let
       # Group messages: the avatar and the sender name share one header line on
       # the first message of a consecutive run; later messages repeat neither.
       ./group-message-headers.patch
+      # Block, "block & report spam", and unblock ask the phone to act on the
+      # conversation; the live status event moves the thread into (or out of)
+      # the Spam & blocked tab.
+      ./block-spam-actions.patch
     ];
     subPackages = [ "." ];
     env.CGO_ENABLED = 0;

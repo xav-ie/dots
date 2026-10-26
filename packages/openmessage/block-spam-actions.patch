@@ -1,0 +1,501 @@
+diff --git a/cmd/e2e-server/main.go b/cmd/e2e-server/main.go
+index 1054ee0..7368054 100644
+--- a/cmd/e2e-server/main.go
++++ b/cmd/e2e-server/main.go
+@@ -285,6 +285,37 @@ func newE2EServer(logger zerolog.Logger) (_ *e2eServer, cleanup func(), resultEr
+ 				return nil, "", web.ErrNoLinkPreview
+ 			}
+ 		},
++		// Plays the phone for /api/conversations/{id}/blocked: a block files
++		// the thread under Spam & blocked and an unblock returns it to the
++		// inbox, the same restamp the real phone's live status event does.
++		SetGoogleBlocked: func(remoteID string, block, reportSpam bool) error {
++			conversation, err := v2Store.GetConversationByRemote("google-primary", remoteID)
++			if err != nil {
++				return err
++			}
++			folder := "inbox"
++			if block {
++				folder = "spam"
++			}
++			metadata, changed, err := sqlite.WithConversationFolder(conversation.MetadataJSON, folder)
++			if err != nil {
++				return err
++			}
++			if !changed {
++				return nil
++			}
++			conversation.MetadataJSON = metadata
++			conversation.UpdatedAtMS = time.Now().UnixMilli()
++			if err := v2Store.UpsertConversation(conversation); err != nil {
++				return err
++			}
++			events.PublishConversations()
++			select {
++			case e2eChanges <- struct{}{}:
++			default:
++			}
++			return nil
++		},
+ 		WhatsAppStatus: func() any {
+ 			return map[string]any{"connected": true, "paired": true}
+ 		},
+diff --git a/cmd/serve.go b/cmd/serve.go
+index e2c2bc1..e986b63 100644
+--- a/cmd/serve.go
++++ b/cmd/serve.go
+@@ -783,6 +783,7 @@ func RunServe(logger zerolog.Logger, args ...string) error {
+ 				BackfillPhone:         a.BackfillConversationByPhone,
+ 				FetchHistory:          a.FetchConversationHistory,
+ 				SetGoogleArchived:     a.SetGoogleConversationArchived,
++				SetGoogleBlocked:      a.SetGoogleConversationBlocked,
+ 				SyncGoogleContacts:    a.SyncGoogleContacts,
+ 			})
+ 		} else {
+diff --git a/e2e/ui.spec.js b/e2e/ui.spec.js
+index b71fee6..dbd1235 100644
+--- a/e2e/ui.spec.js
++++ b/e2e/ui.spec.js
+@@ -238,6 +238,29 @@ test('shows one avatar-and-name header per consecutive sender run', async ({ pag
+   await expect(secondRow.locator('.msg-avatar.avatar-hidden')).toHaveCount(1);
+ });
+ 
++test('blocks and reports spam, then unblocks, from the conversation menu', async ({ page }) => {
++  await openConversation(page, 'Sarah Chen');
++
++  const convoItem = page.locator('#conversation-list .convo-item').filter({ hasText: 'Sarah Chen' }).first();
++  await convoItem.click({ button: 'right' });
++  await page.locator('#context-menu .context-menu-item').getByText('Block & report spam', { exact: true }).click();
++  await expect(page.locator('#thread-feedback')).toContainText('Blocked and reported spam.');
++
++  // The phone files the thread under Spam & blocked, and the tab appears.
++  const spamTab = page.locator('.sidebar-tab').filter({ hasText: 'Spam & blocked' });
++  await expect(spamTab).toBeVisible();
++  await spamTab.click();
++  await expect(page.locator('#conversation-list .convo-item').filter({ hasText: 'Sarah Chen' })).toBeVisible();
++
++  // Unblock from the same menu returns the thread to the inbox.
++  await page.locator('#conversation-list .convo-item').filter({ hasText: 'Sarah Chen' }).first().click({ button: 'right' });
++  await page.locator('#context-menu .context-menu-item').getByText('Unblock', { exact: true }).click();
++  await expect(page.locator('#thread-feedback')).toContainText('Unblocked.');
++  await page.locator('.sidebar-tab').filter({ hasText: 'Recent' }).click();
++  await expect(page.locator('#conversation-list .convo-item').filter({ hasText: 'Sarah Chen' })).toBeVisible();
++  await expect(page.locator('.sidebar-tab').filter({ hasText: 'Spam & blocked' })).toHaveCount(0);
++});
++
+ test('does not show stale messages when a selected thread fails to load', async ({ page }) => {
+   await openConversation(page, 'Sarah Chen');
+   await expect(page.locator('#messages-area')).toContainText('Hey! Are you free for dinner tonight?');
+diff --git a/internal/app/block_sync.go b/internal/app/block_sync.go
+new file mode 100644
+index 0000000..f569f24
+--- /dev/null
++++ b/internal/app/block_sync.go
+@@ -0,0 +1,49 @@
++package app
++
++import (
++	"fmt"
++	"strings"
++
++	"go.mau.fi/mautrix-gmessages/pkg/libgm/gmproto"
++)
++
++// SetGoogleConversationBlocked blocks a Google conversation on the phone, or
++// unblocks it with block false. Google Messages has no report-only verb —
++// spam reporting rides on the block as one phone action, so reportSpam asks
++// for "block & report spam" instead of a plain block. The phone owns Spam &
++// blocked: its live status event files the thread into or out of the folder.
++func (a *App) SetGoogleConversationBlocked(remoteID string, block, reportSpam bool) error {
++	remoteID = strings.TrimSpace(remoteID)
++	if remoteID == "" {
++		return fmt.Errorf("conversation id is required")
++	}
++	gm := a.getGMClient()
++	if gm == nil {
++		return fmt.Errorf("client not connected")
++	}
++	updater, ok := gm.(gmConversationUpdater)
++	if !ok {
++		return fmt.Errorf("conversation updates are unavailable")
++	}
++	var action gmproto.ConversationActionStatus
++	switch {
++	case block && reportSpam:
++		action = gmproto.ConversationActionStatus_BLOCK_AND_REPORT
++	case block:
++		action = gmproto.ConversationActionStatus_BLOCK
++	default:
++		action = gmproto.ConversationActionStatus_UNBLOCK
++	}
++	resp, err := updater.UpdateConversation(&gmproto.UpdateConversationRequest{
++		Action:         action,
++		ConversationID: remoteID,
++	})
++	if err != nil {
++		a.HandleGoogleAuthExpiredError(err)
++		return fmt.Errorf("update conversation: %w", err)
++	}
++	if !resp.GetSuccess() {
++		return ErrPhoneRejectedUpdate
++	}
++	return nil
++}
+diff --git a/internal/app/block_sync_test.go b/internal/app/block_sync_test.go
+new file mode 100644
+index 0000000..db124a5
+--- /dev/null
++++ b/internal/app/block_sync_test.go
+@@ -0,0 +1,54 @@
++package app
++
++import (
++	"errors"
++	"testing"
++
++	"github.com/rs/zerolog"
++	"go.mau.fi/mautrix-gmessages/pkg/libgm/gmproto"
++)
++
++func TestSetGoogleConversationBlocked(t *testing.T) {
++	gm := &updatingGMClient{mockGMClient: &mockGMClient{}, resp: &gmproto.UpdateConversationResponse{Success: true}}
++	a := &App{Logger: zerolog.Nop(), gmClient: gm}
++
++	cases := []struct {
++		block, reportSpam bool
++		want              gmproto.ConversationActionStatus
++	}{
++		{true, false, gmproto.ConversationActionStatus_BLOCK},
++		{true, true, gmproto.ConversationActionStatus_BLOCK_AND_REPORT},
++		{false, false, gmproto.ConversationActionStatus_UNBLOCK},
++	}
++	for _, tc := range cases {
++		if err := a.SetGoogleConversationBlocked("1189", tc.block, tc.reportSpam); err != nil {
++			t.Fatalf("SetGoogleConversationBlocked(1189, %v, %v): %v", tc.block, tc.reportSpam, err)
++		}
++	}
++	if len(gm.requests) != len(cases) {
++		t.Fatalf("sent %d updates, want %d", len(gm.requests), len(cases))
++	}
++	for i, req := range gm.requests {
++		if req.GetConversationID() != "1189" || req.GetAction() != cases[i].want {
++			t.Errorf("update %d = action %s for %q, want action %s", i, req.GetAction(), req.GetConversationID(), cases[i].want)
++		}
++	}
++
++	gm.resp = &gmproto.UpdateConversationResponse{}
++	if err := a.SetGoogleConversationBlocked("1189", true, false); !errors.Is(err, ErrPhoneRejectedUpdate) {
++		t.Errorf("unsuccessful answer = %v, want ErrPhoneRejectedUpdate", err)
++	}
++	failure := errors.New("timed out")
++	gm.resp, gm.err = nil, failure
++	if err := a.SetGoogleConversationBlocked("1189", true, false); !errors.Is(err, failure) {
++		t.Errorf("failed call = %v, want it wrapped", err)
++	}
++
++	plain := &App{Logger: zerolog.Nop(), gmClient: &mockGMClient{}}
++	if err := plain.SetGoogleConversationBlocked("1189", true, false); err == nil {
++		t.Error("a client without conversation updates reported success")
++	}
++	if err := a.SetGoogleConversationBlocked("  ", true, false); err == nil {
++		t.Error("an empty conversation id reported success")
++	}
++}
+diff --git a/internal/web/api.go b/internal/web/api.go
+index 5ada6d7..49e836f 100644
+--- a/internal/web/api.go
++++ b/internal/web/api.go
+@@ -143,7 +143,11 @@ type APIOptions struct {
+ 	FetchHistory func(string) (int, error)
+ 	// SetGoogleArchived archives or unarchives a Google conversation (by its
+ 	// Google ID) on the phone, so a tab move into or out of Archive matches it.
+-	SetGoogleArchived  func(remoteID string, archived bool) error
++	SetGoogleArchived func(remoteID string, archived bool) error
++	// SetGoogleBlocked blocks, block-and-reports, or unblocks a Google
++	// conversation on the phone (by its Google ID). The phone's live status
++	// event then files the thread into or out of Spam & blocked.
++	SetGoogleBlocked   func(remoteID string, block, reportSpam bool) error
+ 	SyncGoogleContacts func() (int, error)
+ 
+ 	// Activity reports when each platform's transport last delivered anything.
+@@ -989,6 +993,70 @@ func APIHandlerWithOptions(store *db.Store, cli *client.Client, logger zerolog.L
+ 			writeJSON(w, convo)
+ 			return
+ 		}
++		if action == "blocked" {
++			if r.Method != http.MethodPost && r.Method != http.MethodPatch {
++				httpError(w, "method not allowed", 405)
++				return
++			}
++			var req struct {
++				Blocked    *bool `json:"blocked"`
++				ReportSpam bool  `json:"report_spam"`
++			}
++			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
++				httpError(w, "invalid JSON: "+err.Error(), 400)
++				return
++			}
++			if req.Blocked == nil {
++				httpError(w, "blocked is required", 400)
++				return
++			}
++			if opts.SetGoogleBlocked == nil {
++				httpError(w, "blocking is unavailable without a Google Messages bridge", 503)
++				return
++			}
++			convo, err := reads.GetConversation(convID)
++			if err != nil {
++				if errors.Is(err, sql.ErrNoRows) {
++					httpError(w, "conversation not found", 404)
++					return
++				}
++				httpError(w, "get conversation: "+err.Error(), 500)
++				return
++			}
++			if convo.SourcePlatform != "sms" {
++				httpError(w, "only Google Messages conversations can be blocked on the phone", 400)
++				return
++			}
++			remoteID, err := conversationRemoteID(reads, convID)
++			if err != nil {
++				httpError(w, "resolve conversation: "+err.Error(), 500)
++				return
++			}
++			if err := opts.SetGoogleBlocked(remoteID, *req.Blocked, req.ReportSpam); err != nil {
++				switch {
++				case errors.Is(err, app.ErrPhoneRejectedUpdate):
++					httpError(w, "phone rejected the block request", 502)
++				default:
++					markGoogleAuthExpired(err)
++					httpError(w, googleAPIErrorMessage("block conversation", err), 502)
++				}
++				return
++			}
++			// The phone owns Spam & blocked: no local folder write here. Its
++			// live status event files the thread into or out of the folder.
++			convo, err = reads.GetConversation(convID)
++			if err != nil {
++				if errors.Is(err, sql.ErrNoRows) {
++					httpError(w, "conversation not found", 404)
++					return
++				}
++				httpError(w, "get conversation: "+err.Error(), 500)
++				return
++			}
++			publishConversations()
++			writeJSON(w, convo)
++			return
++		}
+ 		if action == "tab" {
+ 			if r.Method != http.MethodPost && r.Method != http.MethodPatch {
+ 				httpError(w, "method not allowed", 405)
+diff --git a/internal/web/block_test.go b/internal/web/block_test.go
+new file mode 100644
+index 0000000..0fcde13
+--- /dev/null
++++ b/internal/web/block_test.go
+@@ -0,0 +1,141 @@
++package web
++
++import (
++	"encoding/json"
++	"net/http"
++	"net/http/httptest"
++	"path/filepath"
++	"strings"
++	"testing"
++	"time"
++
++	"github.com/rs/zerolog"
++
++	"github.com/maxghenis/openmessage/internal/app"
++	"github.com/maxghenis/openmessage/internal/db"
++	"github.com/maxghenis/openmessage/internal/storage/sqlite"
++	"github.com/maxghenis/openmessage/internal/v2read"
++)
++
++func blockedTestHandler(t *testing.T, setBlocked func(remoteID string, block, reportSpam bool) error) http.Handler {
++	t.Helper()
++	v2, err := sqlite.Open(filepath.Join(t.TempDir(), "v2.sqlite3"))
++	if err != nil {
++		t.Fatal(err)
++	}
++	t.Cleanup(func() { _ = v2.Close() })
++	nowMS := time.Now().UnixMilli()
++	for id, bridge := range map[string]string{"google-primary": "google_messages", "signal-primary": "signal"} {
++		if err := v2.UpsertAccount(sqlite.Account{
++			AccountID:   id,
++			BridgeKey:   bridge,
++			DisplayName: bridge,
++			Mode:        sqlite.AccountModeLive,
++			Enabled:     true,
++			ConfigJSON:  "{}",
++			CreatedAtMS: nowMS,
++			UpdatedAtMS: nowMS,
++		}); err != nil {
++			t.Fatal(err)
++		}
++	}
++	for id, account := range map[string]string{"conv-a": "google-primary", "conv-sig": "signal-primary"} {
++		if err := v2.UpsertConversation(sqlite.Conversation{
++			ConversationID:       id,
++			AccountID:            account,
++			RemoteConversationID: "remote-" + id,
++			Kind:                 sqlite.ConversationKindDirect,
++			NotificationMode:     sqlite.NotificationModeAll,
++			MetadataJSON:         "{}",
++			CreatedAtMS:          nowMS,
++			UpdatedAtMS:          nowMS,
++		}); err != nil {
++			t.Fatal(err)
++		}
++	}
++	legacy, err := db.New(":memory:")
++	if err != nil {
++		t.Fatal(err)
++	}
++	t.Cleanup(func() { _ = legacy.Close() })
++	return APIHandlerWithOptions(legacy, nil, zerolog.Nop(), nil, APIOptions{
++		Reads:            v2read.New(v2),
++		V2Primary:        true,
++		SetGoogleBlocked: setBlocked,
++	})
++}
++
++func TestConversationBlockedAction(t *testing.T) {
++	type blockCall struct {
++		remoteID          string
++		block, reportSpam bool
++	}
++	calls := []blockCall{}
++	reject := false
++	handler := blockedTestHandler(t, func(remoteID string, block, reportSpam bool) error {
++		calls = append(calls, blockCall{remoteID, block, reportSpam})
++		if reject {
++			return app.ErrPhoneRejectedUpdate
++		}
++		return nil
++	})
++	do := func(method, path, body string) *httptest.ResponseRecorder {
++		t.Helper()
++		req := httptest.NewRequest(method, "http://127.0.0.1"+path, strings.NewReader(body))
++		req.Header.Set("Origin", "http://127.0.0.1")
++		req.Header.Set("Content-Type", "application/json")
++		resp := httptest.NewRecorder()
++		handler.ServeHTTP(resp, req)
++		return resp
++	}
++
++	resp := do(http.MethodPost, "/api/conversations/conv-a/blocked", `{"blocked": true, "report_spam": true}`)
++	if resp.Code != http.StatusOK {
++		t.Fatalf("block: status = %d; body=%s", resp.Code, resp.Body.String())
++	}
++	var convo db.Conversation
++	if err := json.Unmarshal(resp.Body.Bytes(), &convo); err != nil {
++		t.Fatal(err)
++	}
++	if convo.ConversationID != "conv-a" {
++		t.Fatalf("block answered %+v, want conv-a", convo)
++	}
++	resp = do(http.MethodPost, "/api/conversations/conv-a/blocked", `{"blocked": false}`)
++	if resp.Code != http.StatusOK {
++		t.Fatalf("unblock: status = %d; body=%s", resp.Code, resp.Body.String())
++	}
++	want := []blockCall{{"remote-conv-a", true, true}, {"remote-conv-a", false, false}}
++	if len(calls) != len(want) {
++		t.Fatalf("phone calls = %+v, want %+v", calls, want)
++	}
++	for i, call := range calls {
++		if call != want[i] {
++			t.Errorf("phone call %d = %+v, want %+v", i, call, want[i])
++		}
++	}
++
++	if resp := do(http.MethodPost, "/api/conversations/conv-a/blocked", `{}`); resp.Code != http.StatusBadRequest {
++		t.Errorf("missing flag: status = %d, want 400", resp.Code)
++	}
++	if resp := do(http.MethodPost, "/api/conversations/conv-sig/blocked", `{"blocked": true}`); resp.Code != http.StatusBadRequest {
++		t.Errorf("non-Google conversation: status = %d, want 400", resp.Code)
++	}
++	if resp := do(http.MethodPost, "/api/conversations/missing/blocked", `{"blocked": true}`); resp.Code != http.StatusNotFound {
++		t.Errorf("unknown conversation: status = %d, want 404", resp.Code)
++	}
++	reject = true
++	if resp := do(http.MethodPost, "/api/conversations/conv-a/blocked", `{"blocked": true}`); resp.Code != http.StatusBadGateway {
++		t.Errorf("phone rejection: status = %d, want 502", resp.Code)
++	}
++
++	if handler := blockedTestHandler(t, nil); func() bool {
++		req := httptest.NewRequest(http.MethodPost, "http://127.0.0.1/api/conversations/conv-a/blocked", strings.NewReader(`{"blocked": true}`))
++		req.Header.Set("Origin", "http://127.0.0.1")
++		req.Header.Set("Content-Type", "application/json")
++		resp := httptest.NewRecorder()
++		handler.ServeHTTP(resp, req)
++		return resp.Code != http.StatusServiceUnavailable
++	}() {
++		t.Error("without a bridge the action should answer 503")
++	}
++}
+diff --git a/internal/web/static/index.html b/internal/web/static/index.html
+index 4ef1483..008f2c3 100644
+--- a/internal/web/static/index.html
++++ b/internal/web/static/index.html
+@@ -9138,6 +9138,18 @@ body::after {
+     }
+   }
+ 
++  async function setConversationBlocked(convo, blocked, reportSpam) {
++    if (!convo) return;
++    await postJSON(`/api/conversations/${encodeURIComponent(convo.ConversationID)}/blocked`, {
++      blocked: !!blocked,
++      report_spam: !!reportSpam,
++    });
++    showThreadFeedback(blocked ? (reportSpam ? 'Blocked and reported spam.' : 'Blocked.') : 'Unblocked.');
++    // The phone owns Spam & blocked; its live event moves the thread, so the
++    // list only refetches to pick the new folder state up promptly.
++    await loadConversations();
++  }
++
+   async function setConversationFavorite(convo, favorite) {
+     if (!convo) return;
+     const updated = await postJSON(`/api/conversations/${encodeURIComponent(convo.ConversationID)}/favorite`, {
+@@ -9312,6 +9324,27 @@ body::after {
+       { type: 'divider' },
+       ...conversationNotificationMenuItems(convo),
+     );
++    // The phone owns Spam & blocked; these actions ask Google Messages to
++    // block (optionally reporting spam) or unblock the sender, and its live
++    // status event files the thread into or out of the folder.
++    if (sourcePlatformOf(convo) === 'sms' && !convo.IsGroup) {
++      items.push({ type: 'divider' });
++      if (conversationTabOf(convo) === TAB_SPAM) {
++        items.push({
++          label: 'Unblock',
++          action: 'unblock-conversation',
++        });
++      } else {
++        items.push({
++          label: 'Block',
++          action: 'block-conversation',
++        });
++        items.push({
++          label: 'Block & report spam',
++          action: 'block-report-conversation',
++        });
++      }
++    }
+     const identity = conversationPersonIdentity(convo);
+     const number = identity && identity.number ? identity.number : '';
+     if (number) {
+@@ -15021,6 +15054,11 @@ body::after {
+             }
+             return;
+           }
++          if (action === 'block-conversation' || action === 'block-report-conversation' || action === 'unblock-conversation') {
++            const blocked = action !== 'unblock-conversation';
++            await setConversationBlocked(context.conversation, blocked, action === 'block-report-conversation');
++            return;
++          }
+           if (action.startsWith('notification:')) {
+             const mode = action.split(':')[1] || NOTIFICATION_MODE_ALL;
+             await setConversationNotificationMode(context.conversation, mode);
