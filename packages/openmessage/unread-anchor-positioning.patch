@@ -1,0 +1,163 @@
+diff --git a/e2e/ui.spec.js b/e2e/ui.spec.js
+index dbd1235..a890354 100644
+--- a/e2e/ui.spec.js
++++ b/e2e/ui.spec.js
+@@ -1300,38 +1300,44 @@ async function titleUnreadTotal(page) {
+ 
+ test('opens a thread with unread messages at a New messages divider', async ({ page, request }) => {
+   // Read the whole paged thread first so its cursor sits at the newest
+-  // message, then leave it and let a new message arrive.
++  // message, then leave it and let new messages arrive.
+   await openConversation(page, 'Paged Thread');
+   await expect(page.locator('#messages-area .msg')).toHaveCount(100);
+   await openConversation(page, 'Sarah Chen');
+   await expect(page.locator('#messages-area .msg').first()).toBeVisible();
+ 
+   const unreadBefore = await titleUnreadTotal(page);
+-  await request.post('/_e2e/messages', {
+-    data: {
+-      body: 'Unread anchor arrival',
+-      conversation_id: 'conv-paged',
+-      is_from_me: false,
+-      sender_name: 'Pat Page',
+-      sender_number: '+15550001111',
+-    },
+-  });
++  for (let i = 1; i <= 5; i++) {
++    await request.post('/_e2e/messages', {
++      data: {
++        body: `Unread anchor arrival ${i}/5`,
++        conversation_id: 'conv-paged',
++        is_from_me: false,
++        sender_name: 'Pat Page',
++        sender_number: '+15550001111',
++      },
++    });
++  }
+ 
+   const pagedRow = page.locator('#conversation-list .convo-item').filter({ hasText: 'Paged Thread' });
+-  await expect(pagedRow.locator('.convo-unread')).toHaveText('1');
+-  await expect.poll(() => titleUnreadTotal(page)).toBe(unreadBefore + 1);
++  await expect(pagedRow.locator('.convo-unread')).toHaveText('5');
++  await expect.poll(() => titleUnreadTotal(page)).toBe(unreadBefore + 5);
+ 
+   await pagedRow.click();
+   const divider = page.locator('#messages-area .unread-divider');
+   await expect(divider).toHaveText('New messages');
+-  await expect(page.locator('#messages-area .msg').filter({ hasText: 'Unread anchor arrival' })).toBeVisible();
+-  // The thread opens anchored at the first unread message, not at the
+-  // bottom: the anchor is the last message, so content stays below it.
+-  await expect.poll(() => page.locator('#messages-area').evaluate(
+-    el => el.scrollHeight - el.scrollTop - el.clientHeight,
+-  )).toBeGreaterThan(0);
+-  // The anchored message is on screen, so it is marked read: the badge and
+-  // the title clear without leaving the thread.
++  const anchor = page.locator('#messages-area .msg').filter({ hasText: 'Unread anchor arrival 1/' });
++  await expect(anchor).toBeVisible();
++  // The thread opens with the divider near the top of the viewport — not
++  // buried up in history (the old regression) and not merely dumped at the
++  // bottom. When the unread block is short the whole tail still fits on
++  // screen, so the distance to the bottom can legitimately be 0.
++  await expect.poll(() => divider.evaluate(el => el.getBoundingClientRect().top)).toBeLessThan(200);
++  await expect.poll(() => page.locator('#messages-area .msg').first().evaluate(
++    el => el.getBoundingClientRect().bottom,
++  )).toBeLessThan(0);
++  // The anchored messages are on screen, so they are marked read: the
++  // badge and the title clear without leaving the thread.
+   await expect(pagedRow.locator('.convo-unread')).toHaveCount(0);
+   await expect.poll(() => titleUnreadTotal(page)).toBe(unreadBefore);
+ });
+diff --git a/internal/web/static/index.html b/internal/web/static/index.html
+index 008f2c3..ba97d0e 100644
+--- a/internal/web/static/index.html
++++ b/internal/web/static/index.html
+@@ -10914,6 +10914,7 @@ body::after {
+   let threadUnreadDividerID = '';
+   let threadReadThroughMS = 0;
+   let threadVisibleReadFrame = 0;
++  let threadRepositioning = false;
+   let threadReadMarkInFlight = false;
+   let threadReadMarkQueued = null; // {conversationID, throughMS} pending store mark
+ 
+@@ -10947,6 +10948,7 @@ body::after {
+     lastRenderedWindowStart = 0;
+     lastRenderedWindowEnd = 0;
+     threadUnreadDividerID = '';
++    threadRepositioning = false;
+     activeProtocolDetail = '';
+     if (!preserveThreadSearch) {
+       threadSearchMode = 'latest';
+@@ -11201,6 +11203,9 @@ body::after {
+   // scrolls it (under its divider) to the top of the viewport.
+   async function positionThreadAtUnreadAnchor() {
+     const threadToken = activeThreadToken;
++    // Programmatic scrolls below must not be mistaken for the user
++    // scrolling up (which would fetch history or mark things read).
++    threadRepositioning = true;
+     let index = threadUnreadAnchorIndex();
+     let pages = 0;
+     while (index < 0 && hasOlderMessages && pages++ < 20) {
+@@ -11212,18 +11217,27 @@ body::after {
+       // The unread count was stale or its messages are unreachable: open
+       // like a normal thread.
+       scrollThreadToBottom(true);
++      threadRepositioning = false;
+       return;
+     }
+     threadUnreadDividerID = String(loadedMessages[index].MessageID || '');
+     threadRenderWindowStart = clampThreadRenderWindowStart(index - 8);
+-    renderLoadedMessages({stickToBottom: false});
++    renderLoadedMessages({
++      stickToBottom: false,
++      previousScrollTop: $messagesArea.scrollTop,
++      previousScrollHeight: $messagesArea.scrollHeight,
++    });
+     requestAnimationFrame(() => {
+       if (threadToken !== activeThreadToken) return;
+       const target = $messagesArea.querySelector('.unread-divider')
+         || messageElementByID(threadUnreadDividerID);
+       if (target) target.scrollIntoView({block: 'start'});
+-      syncThreadBottomFollowState();
+-      scheduleVisibleThreadReadCheck();
++      requestAnimationFrame(() => {
++        if (threadToken !== activeThreadToken) return;
++        threadRepositioning = false;
++        syncThreadBottomFollowState();
++        scheduleVisibleThreadReadCheck();
++      });
+     });
+   }
+ 
+@@ -11254,6 +11268,7 @@ body::after {
+   }
+ 
+   function maybeMarkVisibleThreadRead() {
++    if (threadRepositioning) return;
+     if (!activeConvoId || threadSearchMode === 'centered' || !threadWindowFocused()) return;
+     const edge = visibleThreadReadEdge();
+     if (edge > threadReadThroughMS) markThreadReadThrough(edge);
+@@ -11944,10 +11959,14 @@ body::after {
+ 
+       updateLoadedMessageBounds();
+       rememberKnownMessages(loadedMessages);
+-      const shouldStickToBottom = (reset && !positionAtUnread)
++      // Opening at the unread anchor must not fight the anchor pass: the
++      // reset render leaves the scroll alone and the anchor pass positions.
++      const shouldStickToBottom = !positionAtUnread && (
++        reset
+         || forceBottom
+         || (!older && !poll)
+-        || (!older && wasNearBottom);
++        || (!older && wasNearBottom)
++      );
+       renderLoadedMessages({
+         older,
+         previousScrollTop,
+@@ -12158,6 +12177,7 @@ body::after {
+   }
+ 
+   $messagesArea.addEventListener('scroll', () => {
++    if (threadRepositioning) return;
+     scheduleVisibleThreadReadCheck();
+     if (hasThreadUserScrollIntent() && !shouldIgnoreThreadScrollSync()) {
+       syncThreadBottomFollowState();

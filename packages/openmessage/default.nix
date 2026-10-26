@@ -84,6 +84,13 @@ let
       # message*" bubble. Pair media echoes with their sends by caption and
       # attachment, like text; a startup repair sweeps stored duplicates.
       ./media-echo-pairing.patch
+      # Unread threads opened into history: the reset render stuck to the
+      # bottom first, the anchor render snapped the scroll to 0, and the
+      # scroll listener read that snap as the user scrolling up — fetching
+      # an older page whose viewport anchor dragged the view into history.
+      # Positioning now owns the whole open: no sticking, scroll preserved,
+      # and programmatic scrolls fenced from the listener and read-marker.
+      ./unread-anchor-positioning.patch
     ];
     subPackages = [ "." ];
     env.CGO_ENABLED = 0;
