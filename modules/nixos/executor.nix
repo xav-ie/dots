@@ -78,12 +78,113 @@
           '';
       };
 
+      # The PGlite executor itself runs, so dumps and restores read and write
+      # exactly its on-disk format.
+      pglite = "${pkgs.pkgs-mine.executor}/lib/executor/runtime/node_modules/@electric-sql/pglite";
+
+      # Every table except the derived executor_tool_search* index, as
+      # <schema>.<table>.csv sorted by the first column.
+      dumpTables =
+        pkgs.writeText "executor-dump-tables.mjs" # javascript
+          ''
+            import { mkdir, writeFile } from 'node:fs/promises';
+            const [pglite, dir, out] = process.argv.slice(2);
+            const { PGlite } = await import(`''${pglite}/dist/index.js`);
+            const db = await PGlite.create(dir);
+            const tables = (await db.query(`select schemaname, tablename from pg_tables
+              where schemaname not in ('pg_catalog', 'information_schema')
+                and tablename not like 'executor_tool_search%' order by 1, 2`)).rows;
+            await mkdir(out, { recursive: true });
+            for (const { schemaname, tablename } of tables) {
+              const ident = `"''${schemaname}"."''${tablename}"`;
+              const result = await db.query(
+                `copy (select * from ''${ident} order by 1) to '/dev/blob' with (format csv, header)`,
+              );
+              await writeFile(`''${out}/''${schemaname}.''${tablename}.csv`, Buffer.from(await result.blob.arrayBuffer()));
+            }
+            await db.close();
+          '';
+
+      # Loads a dump into a freshly created database of the same schema
+      # version. The private_* bookkeeping tables stay as the fresh start wrote
+      # them; everything else is replaced in one transaction.
+      restoreTables =
+        pkgs.writeText "executor-restore-tables.mjs" # javascript
+          ''
+            import { readdir, readFile } from 'node:fs/promises';
+            const [pglite, dir, dump] = process.argv.slice(2);
+            const { PGlite } = await import(`''${pglite}/dist/index.js`);
+            const db = await PGlite.create(dir);
+            const files = (await readdir(dump)).filter((f) => f.endsWith('.csv'));
+            const settings = files.find((f) => f.endsWith('.private_executor_settings.csv'));
+            if (settings) {
+              const dumped = (await readFile(`''${dump}/''${settings}`, 'utf8')).match(/^version,(.*)$/m)?.[1];
+              const fresh = (await db.query(`select value from private_executor_settings where key = 'version'`)).rows[0]?.value;
+              if (dumped !== fresh) throw new Error(`schema version mismatch: dump ''${dumped}, database ''${fresh}`);
+            }
+            const tables = files
+              .map((f) => [f, f.slice(0, -4).split('.')])
+              .filter(([, [, table]]) => !table.startsWith('private_'))
+              .map(([f, [schema, table]]) => [f, `"''${schema}"."''${table}"`]);
+            await db.transaction(async (tx) => {
+              await tx.exec('set local session_replication_role = replica');
+              // One statement, so tables that reference each other truncate together.
+              await tx.exec(`truncate ''${tables.map(([, ident]) => ident).join(', ')}`);
+              for (const [f, ident] of tables) {
+                const blob = new Blob([await readFile(`''${dump}/''${f}`)]);
+                await tx.query(`copy ''${ident} from '/dev/blob' with (format csv, header)`, [], { blob });
+              }
+            });
+            await db.close();
+            console.log(`restored ''${tables.length} tables into ''${dir}`);
+          '';
+
+      restoreState = pkgs.writeShellApplication {
+        name = "executor-restore-state";
+        runtimeInputs = [
+          pkgs.nodejs
+          pkgs.systemd
+        ];
+        text = # sh
+          ''
+            if [ "$#" -ne 2 ]; then
+              echo "usage: executor-restore-state <unpacked backup dir> <data dir>" >&2
+              exit 2
+            fi
+            if systemctl is-active --quiet executor-web; then
+              echo "stop executor-web first" >&2
+              exit 1
+            fi
+            for db in executor mcp-auth; do
+              [ -d "$1/$db" ] || continue
+              node ${restoreTables} ${pglite} "$2/$db.pglite" "$1/$db"
+            done
+          '';
+      };
+
       # v2 persists state as PGlite directories plus installation.json under
-      # EXECUTOR_DATA_DIR (apps/local/server/README.md). builds/ and
-      # diagnostics/ are re-derivable caches, left out of the snapshot. The
-      # API key and encryption key are NOT backed up here: they live in
+      # EXECUTOR_DATA_DIR (apps/local/server/README.md). The backup keeps the
+      # rows of executor.pglite and mcp-auth.pglite (MCP OAuth clients and
+      # tokens) as CSV, one file per table, plus installation.json,
+      # repositories/ (app sources) and builds/ (deployments point at these
+      # blobs and fail with RuntimeBuildUnavailable without them). Left out:
+      # the executor_tool_search* tables, derived data rebuilt on the next
+      # search or executor-refresh-tools (vectors refill from the local embed
+      # server); browser-auth.pglite (web UI sessions; losing it means logging
+      # in again); diagnostics/ and workerd/. A raw copy of the PGlite dirs
+      # was ~200 MB, nearly all search index and WAL, for ~0.2 MB of rows.
+      # The API key and encryption key are NOT backed up here: they live in
       # secrets/executor-v2.yaml already, supplied at start instead of a
       # keys.json/OS-keyring record (see the docs' "Back up and update").
+      #
+      # Restore (executor-restore-state, tested against a fresh install):
+      # decrypt and unpack the tarball; stop executor-web; start the same
+      # executor version once on an empty EXECUTOR_DATA_DIR with the same keys
+      # so it creates the schema, then stop it; run executor-restore-state
+      # <unpacked dir> <data dir>, which checks the schema version matches and
+      # loads every non-bookkeeping table; copy installation.json,
+      # repositories/ and builds/ back; start executor-web and run
+      # executor-refresh-tools.
       #
       # modules/nixos/hardware-configuration.nix mounts /home as its own
       # btrfs subvolume (@home), with @snapshots reserved at /.snapshots for
@@ -105,6 +206,7 @@
           pkgs.btrfs-progs
           pkgs.coreutils
           pkgs.gnutar
+          pkgs.nodejs
           pkgs.sops
           pkgs.zstd
         ];
@@ -133,10 +235,19 @@
             trap cleanup EXIT
 
             tmp=$(mktemp -d)
-            tar -C "$tarsrc" --zstd -cf "$tmp/state.tar.zst" \
-              --ignore-failed-read \
-              executor.pglite browser-auth.pglite installation.json
+            # PGlite has to write to open a database, so dump from copies.
+            mkdir "$tmp/db" "$tmp/state"
+            for db in executor mcp-auth; do
+              [ -e "$tarsrc/$db.pglite" ] || continue
+              cp -a "$tarsrc/$db.pglite" "$tmp/db/"
+              rm -f "$tmp/db/$db.pglite/postmaster.pid"
+              node ${dumpTables} ${pglite} "$tmp/db/$db.pglite" "$tmp/state/$db"
+            done
+            cp -a "$tarsrc/installation.json" "$tarsrc/repositories" "$tarsrc/builds" "$tmp/state/"
             drop_snapshot
+            # Reproducible, so unchanged state hashes the same and is skipped.
+            tar -C "$tmp/state" --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -cf - . \
+              | zstd -q -19 -T0 > "$tmp/state.tar.zst"
 
             sum=$(sha256sum "$tmp/state.tar.zst" | cut -d' ' -f1)
             [ "$sum" = "$(cat "$stamp" 2>/dev/null || true)" ] && exit 0
@@ -204,6 +315,8 @@
       config = lib.mkIf cfg.enable {
         # Register subdomain
         services.local-networking.proxies.executor = { inherit (cfg) subdomain port; };
+
+        environment.systemPackages = [ restoreState ];
 
         # Create workspace directory
         systemd.tmpfiles.rules = [
