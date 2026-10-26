@@ -1,0 +1,113 @@
+diff --git a/macos/OpenMessage/Sources/NotificationManager.swift b/macos/OpenMessage/Sources/NotificationManager.swift
+index 3842351..ec13877 100644
+--- a/macos/OpenMessage/Sources/NotificationManager.swift
++++ b/macos/OpenMessage/Sources/NotificationManager.swift
+@@ -41,6 +41,8 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
+         let mentionsMe: Bool?
+         let senderName: String?
+         let senderNumber: String?
++        let mediaID: String?
++        let mimeType: String?
+ 
+         enum CodingKeys: String, CodingKey {
+             case messageID = "MessageID"
+@@ -50,6 +52,8 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
+             case mentionsMe = "mentions_me"
+             case senderName = "SenderName"
+             case senderNumber = "SenderNumber"
++            case mediaID = "MediaID"
++            case mimeType = "MimeType"
+         }
+     }
+ 
+@@ -534,15 +538,31 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
+                     number: latest.senderNumber
+                 )
+             }
+-            let avatar = avatarData.flatMap(avatarAttachment)
++            let avatar = avatarData.flatMap { attachment($0, kind: "avatar") }
+ 
+             if incoming.count == 1 {
++                // A photo is its own thumbnail: show the image itself instead
++                // of the sender's avatar, with the caption (if any) as the
++                // body. Fall back to the avatar when the image can't be
++                // fetched.
++                var image: UNNotificationAttachment?
++                if Self.isImage(latest), let data = await messageImageData(messageID: latest.messageID) {
++                    image = attachment(data, kind: "image")
++                }
++                let body: String
++                if let caption = Self.nonEmpty(latest.body) {
++                    body = caption
++                } else if Self.isImage(latest) {
++                    body = "📷 Photo"
++                } else {
++                    body = latest.body ?? "New message"
++                }
+                 sendNotification(
+                     title: isGroup ? name : sender ?? name,
+                     subtitle: isGroup ? sender : nil,
+-                    body: latest.body ?? "New message",
++                    body: body,
+                     conversationID: conversationID,
+-                    avatar: avatar
++                    avatar: image ?? avatar
+                 )
+                 return
+             }
+@@ -605,7 +625,22 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
+         return data
+     }
+ 
+-    private func avatarAttachment(_ data: Data) -> UNNotificationAttachment? {
++    /// The message's own image. The backend downloads media on demand, which
++    /// can take a few seconds for a large photo, so the request waits longer
++    /// than the default timeout.
++    private func messageImageData(messageID: String) async -> Data? {
++        let url = apiURL(pathComponents: ["api", "media", messageID])
++        var request = URLRequest(url: url)
++        request.timeoutInterval = 20
++        guard let (body, response) = try? await URLSession.shared.data(for: request),
++              (response as? HTTPURLResponse)?.statusCode == 200,
++              !body.isEmpty else {
++            return nil
++        }
++        return body
++    }
++
++    private func attachment(_ data: Data, kind: String) -> UNNotificationAttachment? {
+         // UNNotificationAttachment infers the type from the extension and moves
+         // the file into the notification store.
+         let ext: String
+@@ -617,12 +652,12 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
+             ext = "jpg"
+         }
+         let file = FileManager.default.temporaryDirectory
+-            .appendingPathComponent("openmessage-avatar-\(UUID().uuidString).\(ext)")
++            .appendingPathComponent("openmessage-\(kind)-\(UUID().uuidString).\(ext)")
+         do {
+             try data.write(to: file)
+-            return try UNNotificationAttachment(identifier: "avatar", url: file)
++            return try UNNotificationAttachment(identifier: kind, url: file)
+         } catch {
+-            logger.debug("Notification avatar error: \(error)")
++            logger.debug("Notification \(kind) error: \(error)")
+             try? FileManager.default.removeItem(at: file)
+             return nil
+         }
+@@ -635,6 +670,15 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
+         return value
+     }
+ 
++    /// Mirrors the web UI's rule: a message is an image when it carries a
++    /// media id and its mime type starts with "image/".
++    private static func isImage(_ message: MessageSummary) -> Bool {
++        guard let mediaID = message.mediaID, !mediaID.isEmpty else {
++            return false
++        }
++        return message.mimeType?.hasPrefix("image/") == true
++    }
++
+     private func rememberMessage(id: String) -> Bool {
+         guard !id.isEmpty else { return false }
+         if seenMessageIDs.contains(id) {

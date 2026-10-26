@@ -137,6 +137,10 @@ stdenv.mkDerivation {
     # A group notification is titled with the group, the sender as subtitle,
     # and shows the group's photo (Signal, WhatsApp) before the sender's.
     ./group-notifications.patch
+    # A received photo is its own thumbnail: the notification shows the image
+    # itself (fetched from the backend, which downloads on demand) instead of
+    # the sender's avatar, with the caption as the body.
+    ./notification-media.patch
     # Alert "WhatsApp was logged out" only after WhatsApp was ever paired,
     # not on every launch of an install that never linked it.
     ./whatsapp-alert.patch
