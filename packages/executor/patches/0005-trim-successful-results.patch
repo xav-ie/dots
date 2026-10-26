@@ -1,0 +1,397 @@
+From 65b4315526bcd3b714f0fcabf2819d01ebf406d1 Mon Sep 17 00:00:00 2001
+From: Xavier Ruiz <github@xav.ie>
+Date: Sun, 25 Oct 2026 23:42:28 -0400
+Subject: [PATCH] Trim successful call and execute results to what the agent
+ needs
+
+A single direct call that succeeds returns its value alone instead of
+{ path, ok, value }; a batch and a failure keep that shape. A call's MCP result
+whose content is all text sends only its structuredContent, the same data the
+text repeats; an error or other content keeps the whole result. Programs in
+execute still receive whole results.
+
+A completed execution leaves out toolCalls when every call succeeded, and keeps
+the list when one failed, was interrupted or waits for approval. The call
+description, the executor skill and the e2e expectations follow the new shapes.
+---
+ e2e/benchmarks/perf/scenarios.ts              | 14 +++++-----
+ e2e/tests/mcp-direct-calls.spec.ts            | 26 +++++++------------
+ e2e/tests/mcp-execute-concurrency.spec.ts     | 20 +++++---------
+ e2e/tests/mcp-tool-input.spec.ts              |  1 -
+ e2e/tests/tool-index-redeploy.spec.ts         | 10 +++----
+ .../executor/skills/executor/SKILL.md         |  5 ++--
+ .../src/implementation/executor-intro.gen.ts  |  2 +-
+ .../executor-skill-digests.gen.ts             |  2 +-
+ packages/mcp/src/contracts/execute.ts         | 15 +++++++++--
+ packages/mcp/src/implementation/execute.ts    | 23 ++++++++++++++--
+ 10 files changed, 68 insertions(+), 50 deletions(-)
+
+diff --git a/e2e/benchmarks/perf/scenarios.ts b/e2e/benchmarks/perf/scenarios.ts
+index aa3d981de..b25f26e77 100644
+--- a/e2e/benchmarks/perf/scenarios.ts
++++ b/e2e/benchmarks/perf/scenarios.ts
+@@ -805,8 +805,8 @@ const FailedExecution = Schema.Struct({
+       }),
+     ),
+     logs: Schema.optional(Schema.Array(Schema.String)),
+-    toolCalls: Schema.Array(
+-      Schema.Struct({ name: Schema.String, outcome: Schema.optional(Schema.String) }),
++    toolCalls: Schema.optional(
++      Schema.Array(Schema.Struct({ name: Schema.String, outcome: Schema.optional(Schema.String) })),
+     ),
+   }),
+   unavailableApps: Schema.optional(
+@@ -886,8 +886,9 @@ return "unreachable";`,
+           logsReported: (execution.logs ?? []).some((line) => line.includes("first call finished"))
+             ? 1
+             : 0,
+-          succeededReported: execution.toolCalls.filter((call) => call.outcome === "success")
+-            .length,
++          succeededReported: (execution.toolCalls ?? []).filter(
++            (call) => call.outcome === "success",
++          ).length,
+         }),
+       ),
+   },
+@@ -952,8 +953,9 @@ return "unreachable";`;
+         ),
+         ({ execution }) => ({
+           logsReported: (execution.logs ?? []).includes("refresh started") ? 1 : 0,
+-          succeededReported: execution.toolCalls.filter((call) => call.outcome === "success")
+-            .length,
++          succeededReported: (execution.toolCalls ?? []).filter(
++            (call) => call.outcome === "success",
++          ).length,
+         }),
+       ),
+   },
+diff --git a/e2e/tests/mcp-direct-calls.spec.ts b/e2e/tests/mcp-direct-calls.spec.ts
+index c50be6ad7..f91c6fe06 100644
+--- a/e2e/tests/mcp-direct-calls.spec.ts
++++ b/e2e/tests/mcp-direct-calls.spec.ts
+@@ -36,7 +36,9 @@ const Completed = Schema.Struct({
+   execution: Schema.Struct({
+     ok: Schema.Boolean,
+     value: Schema.optional(Schema.Unknown),
+-    toolCalls: Schema.Array(Schema.Struct({ name: Schema.String, outcome: Schema.String })),
++    toolCalls: Schema.optional(
++      Schema.Array(Schema.Struct({ name: Schema.String, outcome: Schema.String })),
++    ),
+   }),
+ });
+ const Pending = Schema.Struct({
+@@ -131,15 +133,11 @@ layer(HostedLive, { excludeTestServices: true })("MCP direct calls", (it) => {
+         expect(described.missing.map((entry) => entry.path)).toEqual([`${echo}x`]);
+         expect(described.missing[0]?.matches[0]).toBe(echo);
+ 
+-        // One call returns its outcome alone.
++        // One call that succeeds returns its value alone, without the calls that all succeeded.
+         const single = yield* Schema.decodeUnknownEffect(Completed)(
+           yield* tool("Call one tool", "call", { calls: { path: echo, input: { text: "hi" } } }),
+         );
+-        expect(single.execution).toMatchObject({
+-          ok: true,
+-          value: { path: echo, ok: true, value: { text: "hi" } },
+-          toolCalls: [{ name: echo, outcome: "success" }],
+-        });
++        expect(single.execution).toStrictEqual({ ok: true, value: { text: "hi" } });
+ 
+         // A batch keeps its order, and one call failing does not stop the others.
+         const batch = yield* Schema.decodeUnknownEffect(Completed)(
+@@ -153,6 +151,8 @@ layer(HostedLive, { excludeTestServices: true })("MCP direct calls", (it) => {
+           }),
+         );
+         expect(batch.execution.ok).toBe(true);
++        // Every call that ran succeeded, so the failures show only in the values below.
++        expect(batch.execution.toolCalls).toBeUndefined();
+         expect(batch.execution.value).toMatchObject([
+           { path: echo, ok: true, value: { text: "first" } },
+           { path: `${echo}x`, ok: false, error: { kind: "UnknownTool" } },
+@@ -175,11 +175,7 @@ layer(HostedLive, { excludeTestServices: true })("MCP direct calls", (it) => {
+             response: { action: "accept" },
+           }),
+         );
+-        expect(resumed.execution).toMatchObject({
+-          ok: true,
+-          value: { path: review, ok: true, value: { reviewed: "ship it" } },
+-          toolCalls: [{ name: review, outcome: "success" }],
+-        });
++        expect(resumed.execution).toStrictEqual({ ok: true, value: { reviewed: "ship it" } });
+       }).pipe(Effect.provide(McpClient.layer)),
+     ),
+   );
+@@ -210,11 +206,7 @@ layer(HostedLive, { excludeTestServices: true })("MCP direct calls", (it) => {
+             calls: { path: review, input: { note: "native" } },
+           }),
+         );
+-        expect(called.execution).toMatchObject({
+-          ok: true,
+-          value: { path: review, ok: true, value: { reviewed: "native" } },
+-          toolCalls: [{ name: review, outcome: "success" }],
+-        });
++        expect(called.execution).toStrictEqual({ ok: true, value: { reviewed: "native" } });
+         expect(yield* client.elicitationCount).toBe(0);
+ 
+         // A program has no per-call confirmation, so execute still asks through the client.
+diff --git a/e2e/tests/mcp-execute-concurrency.spec.ts b/e2e/tests/mcp-execute-concurrency.spec.ts
+index 037999e4e..da890d13c 100644
+--- a/e2e/tests/mcp-execute-concurrency.spec.ts
++++ b/e2e/tests/mcp-execute-concurrency.spec.ts
+@@ -42,7 +42,6 @@ await Promise.all([extract(), extract(), extract()]);
+ let entries = 0;
+ for (const entry of byKey.values()) entries += entry.n;
+ return { counter, text: text.length, property: record.n, entries };`,
+-    calls: 6,
+     expected: { counter: 18_000, text: 18_000, property: 9000, entries: 9000 },
+   },
+   {
+@@ -64,7 +63,6 @@ async function worker() {
+ }
+ const added = await Promise.all([1, 2, 3, 4, 5].map(() => worker()));
+ return { added, total: shared.read(), text: text.length };`,
+-    calls: 10,
+     expected: { added: [2400, 2400, 2400, 2400, 2400], total: 12_000, text: 8000 },
+   },
+   {
+@@ -83,7 +81,6 @@ const second = job();
+ const afterSecond = counter;
+ await Promise.all([first, second]);
+ return { afterFirst, afterSecond, total: counter };`,
+-    calls: 2,
+     expected: { afterFirst: 20_000, afterSecond: 40_000, total: 80_000 },
+   },
+   {
+@@ -103,7 +100,6 @@ async function extract(id) {
+ }
+ await Promise.all(Array.from({ length: 40 }, (_, id) => extract(id)));
+ return { rows: rows.length, totalRows: totals.rows, cells: totals.cells, csvLines: csv.trim().split('\\n').length - 1 };`,
+-    calls: 40,
+     expected: { rows: 120, totalRows: 120, cells: 120_000, csvLines: 120 },
+   },
+   {
+@@ -123,7 +119,6 @@ const reactions = [1, 2, 3].map(() => tools.search({ query: 'github', limit: 1 }
+ }));
+ await Promise.all([consume(), consume(), consume(), ...reactions]);
+ return { sum, seen, handled };`,
+-    calls: 15,
+     expected: { sum: 5_997_000, seen: 4500, handled: 6000 },
+   },
+   {
+@@ -137,7 +132,6 @@ const ticks = Promise.all([tick('a', 3), tick('b', 2)]);
+ log.push('sync');
+ await Promise.all([ticks, reaction]);
+ return log;`,
+-    calls: 0,
+     expected: ["a0", "b0", "sync", "then1", "a1", "b1", "then2", "a2"],
+   },
+ ] as const;
+@@ -292,7 +286,9 @@ const Executed = Schema.Struct({
+     ok: Schema.Boolean,
+     value: Schema.optional(Schema.Unknown),
+     error: Schema.optional(Schema.Struct({ kind: Schema.String, message: Schema.String })),
+-    toolCalls: Schema.Array(Schema.Struct({ name: Schema.String, outcome: Schema.String })),
++    toolCalls: Schema.optional(
++      Schema.Array(Schema.Struct({ name: Schema.String, outcome: Schema.String })),
++    ),
+   }),
+ });
+ 
+@@ -310,7 +306,8 @@ const execute = (client: Connected, name: string, code: string) =>
+     yield* (yield* Evidence).json(`${name}.json`, execution);
+     return {
+       value: execution.ok ? execution.value : execution.error,
+-      calls: execution.toolCalls.map((call) => call.outcome),
++      // Present only when a call did not succeed, so a clean program matches its value alone.
++      calls: execution.toolCalls?.map((call) => call.outcome),
+     };
+   });
+ 
+@@ -321,14 +318,11 @@ const runPrograms = (client: Connected) =>
+     const expected: Record<string, unknown> = {};
+     for (const program of programs) {
+       actual[program.name] = yield* execute(client, program.name, program.code);
+-      expected[program.name] = {
+-        value: program.expected,
+-        calls: Array.from({ length: program.calls }, () => "success"),
+-      };
++      expected[program.name] = { value: program.expected };
+     }
+     for (const program of orderPrograms) {
+       actual[program.name] = yield* execute(client, program.name, program.code);
+-      expected[program.name] = { value: yield* runInNode(program.code), calls: [] };
++      expected[program.name] = { value: yield* runInNode(program.code) };
+     }
+     expect(actual).toEqual(expected);
+   });
+diff --git a/e2e/tests/mcp-tool-input.spec.ts b/e2e/tests/mcp-tool-input.spec.ts
+index d3cd426be..dad72c638 100644
+--- a/e2e/tests/mcp-tool-input.spec.ts
++++ b/e2e/tests/mcp-tool-input.spec.ts
+@@ -92,7 +92,6 @@ return { before, named };`;
+ const answered = (name: string) => ({
+   ok: true,
+   value: { before: "kept", named: { action: "accept", name } },
+-  toolCalls: [expect.objectContaining({ outcome: "success" })],
+ });
+ /** Answer an input request through resume and expect the program to finish with that answer. */
+ const answer = (client: Connection, step: string, requestId: string, name: string) =>
+diff --git a/e2e/tests/tool-index-redeploy.spec.ts b/e2e/tests/tool-index-redeploy.spec.ts
+index 501782ac8..467ec4445 100644
+--- a/e2e/tests/tool-index-redeploy.spec.ts
++++ b/e2e/tests/tool-index-redeploy.spec.ts
+@@ -34,7 +34,9 @@ const Executed = Schema.Struct({
+         suggestions: Schema.optional(Schema.Array(Schema.String)),
+       }),
+     ),
+-    toolCalls: Schema.Array(Schema.Struct({ name: Schema.String, outcome: Schema.String })),
++    toolCalls: Schema.optional(
++      Schema.Array(Schema.Struct({ name: Schema.String, outcome: Schema.String })),
++    ),
+   }),
+   unavailableApps: Schema.Array(Schema.Struct({ app: Schema.String, reason: Schema.String })),
+ });
+@@ -155,10 +157,8 @@ const deployed = ${deployFrom(source("ping, diagnose", "recovered"))};
+ return { version: deployed.app.activeVersion, health: await ${tools}.diagnose({}) };`,
+         );
+         expect(changed.execution.error, JSON.stringify(changed)).toBeUndefined();
+-        expect(changed.execution.toolCalls).toEqual([
+-          expect.objectContaining({ outcome: "success" }),
+-          expect.objectContaining({ outcome: "success" }),
+-        ]);
++        // Both calls succeeded, so the result does not list them.
++        expect(changed.execution.toolCalls).toBeUndefined();
+         const { version: recovered, health } = yield* Schema.decodeUnknownEffect(
+           Schema.Struct({ version: Schema.String, health: Schema.String }),
+         )(changed.execution.value);
+diff --git a/packages/app-templates/executor/skills/executor/SKILL.md b/packages/app-templates/executor/skills/executor/SKILL.md
+index 98bc1ddcf..c05a8dc1c 100644
+--- a/packages/app-templates/executor/skills/executor/SKILL.md
++++ b/packages/app-templates/executor/skills/executor/SKILL.md
+@@ -22,8 +22,9 @@ This is the Executor app's `executor` skill. Read its other skills with
+ `tools.<slug>.<tool>`, and input type; `describe({ paths })` returns full
+ signatures. Never guess argument names.
+ 
+-For a few independent calls, use `call({ calls: { path, input } })`; an array
+-of calls runs concurrently. Each result has `ok` and its `value` or `error`.
++For a few independent calls, use `call({ calls: { path, input } })`, which
++returns the tool's result; an array of calls runs concurrently, and each result
++has its `path`, `ok` and its `value` or `error`.
+ 
+ Write a JavaScript program for `execute` when one call's result feeds another,
+ or a large result should be filtered before it reaches you. Inside it, the same
+diff --git a/packages/app-templates/src/implementation/executor-intro.gen.ts b/packages/app-templates/src/implementation/executor-intro.gen.ts
+index 8223f40b8..429157b22 100644
+--- a/packages/app-templates/src/implementation/executor-intro.gen.ts
++++ b/packages/app-templates/src/implementation/executor-intro.gen.ts
+@@ -1,4 +1,4 @@
+ // Generated by packages/app-templates/scripts/executor-intro.ts. Do not edit.
+ 
+ /** The body of skills/executor/SKILL.md, without its frontmatter. MCP servers send it as their instructions. */
+-export const executorIntro = "# Executor\n\n## What Executor is\n\nExecutor is a host that runs apps: TypeScript packages that expose tools,\nstorage, UI, accounts and background work. Agents reach every app through the\nMCP tools `skills`, `search`, `describe`, `call` and `execute`, with each app's\nslug as its namespace. Credentials go only through Executor's secure connection\nlinks, never through chat or source code. Some calls pause for user approval.\n\nThis is the Executor app's `executor` skill. Read its other skills with\n`skills`, such as `{app: \"executor\", name: \"code-mode\"}`; `{}` lists them all.\n\n## Find and call tools\n\n`search({ query: \"...\" })` returns each tool's exact `path`, such as\n`tools.<slug>.<tool>`, and input type; `describe({ paths })` returns full\nsignatures. Never guess argument names.\n\nFor a few independent calls, use `call({ calls: { path, input } })`; an array\nof calls runs concurrently. Each result has `ok` and its `value` or `error`.\n\nWrite a JavaScript program for `execute` when one call's result feeds another,\nor a large result should be filtered before it reaches you. Inside it, the same\npaths are async functions, and `tools.search` and `tools.search.describe` work\nas above. Return only the data you need. For depth, read the `code-mode` skill.\nWhen `call` or `execute` pauses for approval or input, show the request to the\nuser and resume it; never repeat the call or run the program again.\n\n## Build an app\n\nBuild an app when no existing app provides the tools, data, UI or automation\nthe user needs. For a known service, first check Quick Add on the Add app page,\nwhich installs published apps and remote MCP servers without code. With a\nshell, deploy a source directory with the `executor apps` CLI; without one,\nbuild through `execute`. Read the `app-authoring` skill before writing an app.\n\n## Send feedback\n\nSend feedback with the Executor app's `feedback.submit` tool when Executor gets\nin your way, can't do something you need, works especially well, or the user\nhas feedback. Before your final reply, check whether anything is worth\nreporting. Be specific; never include credentials or user data (`feedback.md`).";
++export const executorIntro = "# Executor\n\n## What Executor is\n\nExecutor is a host that runs apps: TypeScript packages that expose tools,\nstorage, UI, accounts and background work. Agents reach every app through the\nMCP tools `skills`, `search`, `describe`, `call` and `execute`, with each app's\nslug as its namespace. Credentials go only through Executor's secure connection\nlinks, never through chat or source code. Some calls pause for user approval.\n\nThis is the Executor app's `executor` skill. Read its other skills with\n`skills`, such as `{app: \"executor\", name: \"code-mode\"}`; `{}` lists them all.\n\n## Find and call tools\n\n`search({ query: \"...\" })` returns each tool's exact `path`, such as\n`tools.<slug>.<tool>`, and input type; `describe({ paths })` returns full\nsignatures. Never guess argument names.\n\nFor a few independent calls, use `call({ calls: { path, input } })`, which\nreturns the tool's result; an array of calls runs concurrently, and each result\nhas its `path`, `ok` and its `value` or `error`.\n\nWrite a JavaScript program for `execute` when one call's result feeds another,\nor a large result should be filtered before it reaches you. Inside it, the same\npaths are async functions, and `tools.search` and `tools.search.describe` work\nas above. Return only the data you need. For depth, read the `code-mode` skill.\nWhen `call` or `execute` pauses for approval or input, show the request to the\nuser and resume it; never repeat the call or run the program again.\n\n## Build an app\n\nBuild an app when no existing app provides the tools, data, UI or automation\nthe user needs. For a known service, first check Quick Add on the Add app page,\nwhich installs published apps and remote MCP servers without code. With a\nshell, deploy a source directory with the `executor apps` CLI; without one,\nbuild through `execute`. Read the `app-authoring` skill before writing an app.\n\n## Send feedback\n\nSend feedback with the Executor app's `feedback.submit` tool when Executor gets\nin your way, can't do something you need, works especially well, or the user\nhas feedback. Before your final reply, check whether anything is worth\nreporting. Be specific; never include credentials or user data (`feedback.md`).";
+diff --git a/packages/app-templates/src/implementation/executor-skill-digests.gen.ts b/packages/app-templates/src/implementation/executor-skill-digests.gen.ts
+index ce38fcb75..a376ae77e 100644
+--- a/packages/app-templates/src/implementation/executor-skill-digests.gen.ts
++++ b/packages/app-templates/src/implementation/executor-skill-digests.gen.ts
+@@ -14,6 +14,6 @@ export const executorSkillDigests: Readonly<Record<string, string>> = {
+   "app-authoring/webhooks.md": "713dde373c65582dcfb257001f4fd4d79ce6e89ad95669842137a5cd58c873dd",
+   "app-authoring/workflows.md": "243842172b2f3e12f3ba0b0bc28961c85a9e9e6f9a6c8e8191697c1d8dd479ae",
+   "code-mode/SKILL.md": "a1fb5110a9d12613eee7097ca01369b2b64ea9ac9d3bd297dafc0f471132875f",
+-  "executor/SKILL.md": "8e8ae6af79edec98ecb62a14e591ae46f15deed14832972bf0a92de46761b432",
++  "executor/SKILL.md": "8a2330c6d0275ced1f98f674ee47c7cc82c7bb5a6e64c281f3f356952c9efd29",
+   "executor/feedback.md": "11397bd260917e5a21e92897a19368d0426bf5944a7c081adc2c061d1ea797cd"
+ };
+diff --git a/packages/mcp/src/contracts/execute.ts b/packages/mcp/src/contracts/execute.ts
+index ce422a6d4..f40016afd 100644
+--- a/packages/mcp/src/contracts/execute.ts
++++ b/packages/mcp/src/contracts/execute.ts
+@@ -250,6 +250,17 @@ export const McpToolCall = Schema.Struct({
+   durationMs: Schema.optionalKey(Schema.Number),
+ });
+ export type McpToolCall = typeof McpToolCall.Type;
++/** A completed program's calls, sent only when one did not succeed; decoding restores an empty list. */
++const CompletedToolCalls = Schema.optionalKey(Schema.Array(McpToolCall)).pipe(
++  Schema.decodeTo(Schema.Array(McpToolCall), {
++    decode: SchemaGetter.transformOptional((calls) =>
++      Option.some(Option.getOrElse(calls, () => [])),
++    ),
++    encode: SchemaGetter.transformOptional(
++      Option.filter((calls) => calls.some((call) => call.outcome !== "success")),
++    ),
++  }),
++);
+ /**
+  * A failed tool's curated explanation as an agent receives it; a program can read it from a
+  * caught tool error. `retryable` means an unchanged repeat may help and is considered safe. It
+@@ -264,7 +275,7 @@ export type McpErrorResponse = typeof McpErrorResponse.Type;
+ /** Program result plus apps that could not expose a live catalog during this execution. */
+ export const ExecuteResult = Schema.Struct({
+   execution: Schema.Union([
+-    Schema.Struct({ ...CodeMode.Success.fields, toolCalls: Schema.Array(McpToolCall) }),
++    Schema.Struct({ ...CodeMode.Success.fields, toolCalls: CompletedToolCalls }),
+     Schema.Struct({
+       ...CodeMode.Failure.fields,
+       error: Schema.Struct({
+@@ -517,7 +528,7 @@ export const DescribeTool = McpTool.make("describe", {
+ 
+ /** Shared by every delivery mode; each appends how pending interactions are answered. */
+ export const callDescription =
+-  "Call Executor app tools directly by exact path from search. Pass one {path, input} as calls, or an array of independent calls to run them concurrently; results come back in the same order, each with ok and its value or error. Use execute instead when one call's output feeds another, or to filter a large result before it reaches you. Results over the output limit are refused, not cut. Never ask the user for secrets in chat; accounts connect through Executor's secure links.";
++  "Call Executor app tools directly by exact path from search. Pass one {path, input} as calls to get its result, or an array of independent calls to run them concurrently; an array's results come back in the same order, each with path, ok and its value or error. A tool's structured content replaces its text copy. Use execute instead when one call's output feeds another, or to filter a large result before it reaches you. Results over the output limit are refused, not cut. Never ask the user for secrets in chat; accounts connect through Executor's secure links.";
+ /** Call tools without a program. Pending interactions return as from execute. */
+ export const CallTool = McpTool.make("call", {
+   description: `${callDescription} If approval-required or input-required is returned, show it to the user and call resume with their answer; never repeat the call to continue it.`,
+diff --git a/packages/mcp/src/implementation/execute.ts b/packages/mcp/src/implementation/execute.ts
+index 2d0b93099..ae9a0386e 100644
+--- a/packages/mcp/src/implementation/execute.ts
++++ b/packages/mcp/src/implementation/execute.ts
+@@ -1777,6 +1777,21 @@ const callFailure = (
+   ...(matches === undefined ? {} : { matches }),
+ });
+ 
++/**
++ * A direct call's value as the agent reads it. An MCP tool's structured content stands in for
++ * the text copy of the same data; an error, or content beyond text, keeps the whole result.
++ * Programs still receive the whole result.
++ */
++const isStructuredText = Schema.is(
++  Schema.Struct({
++    content: Schema.Array(Schema.Struct({ type: Schema.Literal("text") })),
++    structuredContent: Schema.Json,
++    isError: Schema.optionalKey(Schema.Literal(false)),
++  }),
++);
++const presented = (value: typeof Schema.Json.Type): typeof Schema.Json.Type =>
++  isStructuredText(value) ? value.structuredContent : value;
++
+ /**
+  * Call tools by exact path without a program. Each call runs the same catalog tool a program
+  * would call, through the run's backend, so approvals and tool input pause and resume as they do
+@@ -1862,7 +1877,9 @@ export function callTools(input: typeof CallInput.Type): Program {
+               .pipe(
+                 Effect.matchEffect({
+                   onSuccess: (value) =>
+-                    finish("success").pipe(Effect.as<CallOutcome>({ path: name, ok: true, value })),
++                    finish("success").pipe(
++                      Effect.as<CallOutcome>({ path: name, ok: true, value: presented(value) }),
++                    ),
+                   onFailure: (error) =>
+                     finish("failure").pipe(
+                       Effect.as(callFailure(name, "ToolFailure", error.message)),
+@@ -1899,10 +1916,12 @@ export function callTools(input: typeof CallInput.Type): Program {
+           "executor.call.count": requests.length,
+           "executor.outcome": "completed",
+         });
++        // A single call that succeeded is just its value; a batch keeps each path beside its value.
++        const only = bounded[0];
+         return {
+           execution: {
+             ok: true as const,
+-            value: single ? (bounded[0] ?? null) : bounded,
++            value: single ? (only?.ok === true ? only.value : (only ?? null)) : bounded,
+             toolCalls: reportedCalls(progress),
+           },
+           unavailableApps: discovered.unavailableApps(),
+-- 
+2.55.0
+

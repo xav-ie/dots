@@ -1,0 +1,134 @@
+From 7404f205ecb99e043ab2be3dd4ad601f57810ff5 Mon Sep 17 00:00:00 2001
+From: Xavier Ruiz <github@xav.ie>
+Date: Sun, 25 Oct 2026 23:23:44 -0400
+Subject: [PATCH] Send unavailableApps only when an app failed to load
+
+Execute, call, search and skills results carried unavailableApps on every
+response, as an empty list when every app loaded. The field schema now drops
+the key on encode when the list is empty, so a clean result spends no tokens
+on it and a failure still names each app and why. The two e2e decoders that
+read clean results accept the missing key.
+---
+ e2e/benchmarks/discovery.ts           |  4 ++--
+ e2e/tests/mcp-execute-reach.spec.ts   |  8 ++++++--
+ packages/mcp/src/contracts/execute.ts | 13 ++++++++++---
+ packages/mcp/src/contracts/skills.ts  |  4 ++--
+ 4 files changed, 20 insertions(+), 9 deletions(-)
+
+diff --git a/e2e/benchmarks/discovery.ts b/e2e/benchmarks/discovery.ts
+index 541585f4f..1adf398d1 100644
+--- a/e2e/benchmarks/discovery.ts
++++ b/e2e/benchmarks/discovery.ts
+@@ -25,7 +25,7 @@ count:query({input:object({})},async ctx=>({count:ctx.sql.exec("SELECT count(*)
+ const Completed = Schema.Struct({
+   status: Schema.Literal("completed"),
+   execution: Schema.Struct({ ok: Schema.Boolean, value: Schema.optional(Schema.Unknown) }),
+-  unavailableApps: Schema.Array(Schema.Struct({ reason: Schema.String })),
++  unavailableApps: Schema.optional(Schema.Array(Schema.Struct({ reason: Schema.String }))),
+ });
+ 
+ /** Seed 24 apps, 16 accounts, one linked account per app and 1000 records; sample 1/8/24 apps. */
+@@ -107,7 +107,7 @@ export const discoveryBenchmark = Effect.gen(function* () {
+           links: inventory.links.length,
+         },
+         ok: completed.execution.ok,
+-        unavailable: completed.unavailableApps.length,
++        unavailable: completed.unavailableApps?.length ?? 0,
+         value: completed.execution.value,
+         traceIds: (yield* evidence.requests).slice(before).map((r) => r.traceId),
+       };
+diff --git a/e2e/tests/mcp-execute-reach.spec.ts b/e2e/tests/mcp-execute-reach.spec.ts
+index 7bbe98c0a..2501e202a 100644
+--- a/e2e/tests/mcp-execute-reach.spec.ts
++++ b/e2e/tests/mcp-execute-reach.spec.ts
+@@ -32,7 +32,9 @@ const Completed = Schema.Struct({
+     value: Schema.optional(Schema.Unknown),
+     error: Schema.optional(Schema.Struct({ kind: Schema.String, message: Schema.String })),
+   }),
+-  unavailableApps: Schema.Array(Schema.Struct({ app: Schema.String, reason: Schema.String })),
++  unavailableApps: Schema.optional(
++    Schema.Array(Schema.Struct({ app: Schema.String, reason: Schema.String })),
++  ),
+ });
+ 
+ layer(HostedLive, { excludeTestServices: true })("MCP execute reach", (it) => {
+@@ -91,7 +93,9 @@ layer(HostedLive, { excludeTestServices: true })("MCP execute reach", (it) => {
+             );
+             return {
+               execution: completed.execution,
+-              touchedBroken: completed.unavailableApps.some((entry) => entry.app === broken.id),
++              touchedBroken: (completed.unavailableApps ?? []).some(
++                (entry) => entry.app === broken.id,
++              ),
+             };
+           });
+         const echoed = (app: string, text: string) => ({
+diff --git a/packages/mcp/src/contracts/execute.ts b/packages/mcp/src/contracts/execute.ts
+index 97d8a1a86..ce422a6d4 100644
+--- a/packages/mcp/src/contracts/execute.ts
++++ b/packages/mcp/src/contracts/execute.ts
+@@ -1,6 +1,6 @@
+ /** Execute tool schemas, limits and discovery instructions. */
+ import { CodeMode } from "@opencode-ai/codemode";
+-import { Schema } from "effect";
++import { Option, Schema, SchemaGetter } from "effect";
+ import { HttpServerRequest } from "effect/http";
+ import { McpSchema, Tool as McpTool } from "effect/ai";
+ import { ApiErrorResponse, ElicitationResponse } from "apps/contracts";
+@@ -231,6 +231,13 @@ export const UnavailableApp = Schema.Struct({
+   /** Only this router's tools are missing; the rest of the app loaded. */
+   router: Schema.optionalKey(Schema.String),
+ });
++/** Sent only when an app failed, so a clean result carries no empty list. */
++export const UnavailableApps = Schema.optionalKey(Schema.Array(UnavailableApp)).pipe(
++  Schema.decodeTo(Schema.optionalKey(Schema.Array(UnavailableApp)), {
++    decode: SchemaGetter.passthrough(),
++    encode: SchemaGetter.transformOptional(Option.filter((apps) => apps.length > 0)),
++  }),
++);
+ /**
+  * One admitted tool call in call order. `interrupted` calls were still running when the
+  * execution ended; the upstream may or may not have applied them. `awaiting-approval` calls
+@@ -267,7 +274,7 @@ export const ExecuteResult = Schema.Struct({
+       toolCalls: Schema.Array(McpToolCall),
+     }),
+   ]),
+-  unavailableApps: Schema.Array(UnavailableApp),
++  unavailableApps: UnavailableApps,
+ });
+ /** MCP execution may return a live pause; completed program results retain the existing fields. */
+ export const ExecutionOutcome = Schema.Union([
+@@ -485,7 +492,7 @@ export const NativeExecuteTool = McpTool.make("execute", {
+ /** Search reports the apps it could not load beside its matches, as execute results do. */
+ export const SearchToolResult = Schema.Struct({
+   ...SearchResult.fields,
+-  unavailableApps: Schema.Array(UnavailableApp),
++  unavailableApps: UnavailableApps,
+ });
+ /** The catalog search a program reaches as tools.search, as its own MCP tool. */
+ export const SearchTool = McpTool.make("search", {
+diff --git a/packages/mcp/src/contracts/skills.ts b/packages/mcp/src/contracts/skills.ts
+index 88749dcdc..bf27efc69 100644
+--- a/packages/mcp/src/contracts/skills.ts
++++ b/packages/mcp/src/contracts/skills.ts
+@@ -12,7 +12,7 @@ import {
+ import { Schema } from "effect";
+ import { Tool as McpTool } from "effect/ai";
+ import { RecordedMessage } from "@executor-js/utils/recorded-message";
+-import { UnavailableApp } from "./execute.ts";
++import { UnavailableApps } from "./execute.ts";
+ 
+ const absent = Schema.optionalKey(Schema.Never);
+ const version = Schema.optionalKey(VersionId);
+@@ -67,7 +67,7 @@ export const SkillDocument = AppSkillDocument;
+ export const SkillsResult = Schema.Union([
+   Schema.Struct({
+     skills: Schema.Array(SkillSummary),
+-    unavailableApps: Schema.optionalKey(Schema.Array(UnavailableApp)),
++    unavailableApps: UnavailableApps,
+   }),
+   SkillDocument,
+ ]);
+-- 
+2.55.0
+

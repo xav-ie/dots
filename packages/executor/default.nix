@@ -143,6 +143,11 @@ stdenv.mkDerivation {
     ./patches/0002-usage-log.patch
     # Hide the dashboard apps, which re-mount other apps' tools, from unscoped tools.search.
     ./patches/0003-search-exclude-apps.patch
+    # Leave unavailableApps out of results when every app loaded.
+    ./patches/0004-omit-empty-unavailable-apps.patch
+    # A successful call returns its value alone, structured content over its text copy, and
+    # successful results leave out toolCalls.
+    ./patches/0005-trim-successful-results.patch
   ];
 
   nativeBuildInputs = [
