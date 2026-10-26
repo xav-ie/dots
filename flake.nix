@@ -68,6 +68,10 @@
     # in flake-edit.toml's ignore list so `just dedupe` stops re-adding it.
     openspec.url = "github:Fission-AI/OpenSpec";
     openspec.inputs.nixpkgs.follows = "nixpkgs";
+    # uv2nix trio: pure builds of PyPI apps from a uv.lock (ga4-mcp)
+    pyproject-nix.url = "github:pyproject-nix/pyproject.nix";
+    pyproject-build-systems.url = "github:pyproject-nix/build-system-pkgs";
+    uv2nix.url = "github:pyproject-nix/uv2nix";
     quadlet-nix.url = "github:SEIAROTg/quadlet-nix";
     scribe.url = "git+ssh://git@github.com/xav-ie/scribe";
     scribe.inputs.nixpkgs.follows = "nixpkgs";

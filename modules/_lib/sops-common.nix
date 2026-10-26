@@ -65,6 +65,23 @@
         mode = "0400";
       };
 
+      # GA4 MCP server (analytics-mcp): same OAuth desktop client as gtm/*,
+      # but a refresh token consented to analytics.readonly only. The
+      # ga4-mcp wrapper assembles an authorized_user JSON from these at
+      # startup — see modules/nixos/mcp-proxy/servers/ga4/.
+      secrets."ga4/client_id" = {
+        owner = config.defaultUser;
+        mode = "0400";
+      };
+      secrets."ga4/client_secret" = {
+        owner = config.defaultUser;
+        mode = "0400";
+      };
+      secrets."ga4/refresh_token" = {
+        owner = config.defaultUser;
+        mode = "0400";
+      };
+
       # Proton Mail Bridge SMTP creds (protonmail-mcp). Username is the Proton
       # address; password is Bridge's generated SMTP password, not the login one.
       secrets."proton/smtp_username" = {
