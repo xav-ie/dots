@@ -3,7 +3,10 @@
 #
 # home-manager installs the app, which spotlight-apps copies to ~/Applications.
 # openmessage-backend keeps the copy's own backend binary serving (web UI and
-# MCP at 127.0.0.1:7007/mcp) whether or not the window is open; the app only
+# MCP at 127.0.0.1:7007/mcp) whether or not the window is open; when
+# spotlight-apps re-copies the app, the home-manager activation restarts the
+# agent onto the new binary (launchd's WatchPaths can't do this: it watches
+# the bundle's original inode, which rm-rf-plus-ditto replaces). The app only
 # adopts a backend started from its own binary path, and is patched never to
 # start one itself (serve takes no instance lock, and a second backend would
 # run a second signal-cli on the account). openmessage opens the app once at
@@ -141,9 +144,34 @@ _: {
       };
 
     homeManager.darwin =
-      { pkgs, ... }:
+      { pkgs, lib, ... }:
+      let
+        # spotlight-apps re-copies ~/Applications/OpenMessage.app only when its
+        # store path changes, and the backend agent's plist is identical before
+        # and after, so nothing else restarts it: the running process would
+        # keep serving the old embedded web UI until this kicks it onto the
+        # new binary. Guarded by the spotlight-apps marker, so an unchanged
+        # app never restarts the backend.
+        restart-backend = pkgs.writeShellApplication {
+          name = "openmessage-restart-backend";
+          runtimeInputs = [ pkgs.coreutils ];
+          text = # sh
+            ''
+              marker="''${HOME}/.local/state/hm-spotlight-apps/OpenMessage.app.source"
+              state="''${HOME}/.local/state/openmessage-backend.source"
+              [ -r "$marker" ] || exit 0
+              if [ "$(cat "$state" 2>/dev/null)" = "$(cat "$marker")" ]; then exit 0; fi
+              echo "openmessage: app re-copied; restarting the backend"
+              /bin/launchctl kickstart -k "gui/$(id -u)/org.nixos.openmessage-backend"
+              mkdir -p "$(dirname "$state")"
+              cat "$marker" > "$state"
+            '';
+        };
+      in
       {
         home.packages = [ pkgs.pkgs-mine.openmessage ];
+        home.activation.openmessageBackendRestart =
+          lib.hm.dag.entryAfter [ "spotlightApps" ] "${restart-backend}/bin/openmessage-restart-backend";
       };
   };
 }
