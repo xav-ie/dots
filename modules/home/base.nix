@@ -20,9 +20,6 @@
           # AI chat client
           claude.enable = true;
           claude.nativeInstall = false;
-          # fuzzy finder; atuin owns Ctrl-R, so fzf's history widget stays unbound
-          fzf.enable = true;
-          fzf.historyWidget.nushell.command = "";
           # GitHub CLI + declaratively-managed extensions
           gh = {
             enable = true;
