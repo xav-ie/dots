@@ -231,7 +231,9 @@
               echo "warning: $1/secrets/executor-state.json not found" >&2
             fi
             if [ -f "$1/secrets/executor-deployments.json" ]; then
-              sops -d "$1/secrets/executor-deployments.json" | tar --zstd -xf - -C "$out"
+              # plain `sops -d` re-serializes to JSON; --output-type binary
+              # restores the original tar.zst bytes
+              sops -d --output-type binary "$1/secrets/executor-deployments.json" | tar --zstd -xf - -C "$out"
             else
               echo "warning: $1/secrets/executor-deployments.json not found" >&2
             fi
