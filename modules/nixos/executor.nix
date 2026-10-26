@@ -163,28 +163,80 @@
       };
 
       # v2 persists state as PGlite directories plus installation.json under
-      # EXECUTOR_DATA_DIR (apps/local/server/README.md). The backup keeps the
-      # rows of executor.pglite and mcp-auth.pglite (MCP OAuth clients and
-      # tokens) as CSV, one file per table, plus installation.json,
-      # repositories/ (app sources) and builds/ (deployments point at these
-      # blobs and fail with RuntimeBuildUnavailable without them). Left out:
-      # the executor_tool_search* tables, derived data rebuilt on the next
-      # search or executor-refresh-tools (vectors refill from the local embed
-      # server); browser-auth.pglite (web UI sessions; losing it means logging
-      # in again); diagnostics/ and workerd/. A raw copy of the PGlite dirs
-      # was ~200 MB, nearly all search index and WAL, for ~0.2 MB of rows.
-      # The API key and encryption key are NOT backed up here: they live in
-      # secrets/executor-v2.yaml already, supplied at start instead of a
-      # keys.json/OS-keyring record (see the docs' "Back up and update").
+      # EXECUTOR_DATA_DIR (apps/local/server/README.md). The backup splits
+      # into two sops files in secrets/, so each changes only when its
+      # contents do:
+      #
+      #   executor-state.json — the rows of executor.pglite and
+      #   mcp-auth.pglite (MCP OAuth clients and tokens) as one sops JSON
+      #   leaf per table CSV, plus installation.json. OAuth token rotation
+      #   rewrites a leaf or two a day, no more: the update goes through
+      #   sops's EDITOR path (verified against sops 3.13), which rebuilds
+      #   the document from the dump while sops keeps the ciphertext of
+      #   every leaf whose value did not change — a git diff touches just
+      #   the rotated lines instead of the whole file.
+      #
+      #   executor-deployments.json — builds/ (deployments point at these
+      #   blobs and fail with RuntimeBuildUnavailable without them) and
+      #   repositories/ (app sources), ~5 MB compressed as one binary sops
+      #   blob, re-encrypted only when an install or deploy changes them.
+      #
+      # Left out of both: the executor_tool_search* tables, derived data
+      # rebuilt on the next search or executor-refresh-tools (vectors refill
+      # from the local embed server); browser-auth.pglite (web UI sessions;
+      # losing it means logging in again); diagnostics/ and workerd/. A raw
+      # copy of the PGlite dirs was ~200 MB, nearly all search index and WAL,
+      # for ~0.2 MB of rows. The API key and encryption key are NOT backed up
+      # here: they live in secrets/executor-v2.yaml already, supplied at
+      # start instead of a keys.json/OS-keyring record (see the docs' "Back
+      # up and update").
       #
       # Restore (executor-restore-state, tested against a fresh install):
-      # decrypt and unpack the tarball; stop executor-web; start the same
-      # executor version once on an empty EXECUTOR_DATA_DIR with the same keys
-      # so it creates the schema, then stop it; run executor-restore-state
-      # <unpacked dir> <data dir>, which checks the schema version matches and
-      # loads every non-bookkeeping table; copy installation.json,
-      # repositories/ and builds/ back; start executor-web and run
-      # executor-refresh-tools.
+      # sudo executor-unpack-state <repo> <dir> decrypts and unpacks both
+      # files; stop executor-web; start the same executor version once on an
+      # empty EXECUTOR_DATA_DIR with the same keys so it creates the schema,
+      # then stop it; run executor-restore-state <dir> <data dir>, which
+      # checks the schema version matches and loads every non-bookkeeping
+      # table; copy installation.json, repositories/ and builds/ from the
+      # same dir back; start executor-web and run executor-refresh-tools.
+      #
+      # Decrypting both files needs the age identity in /etc/age/keys.txt,
+      # so executor-unpack-state and the backup unit run as root.
+      unpackState = pkgs.writeShellApplication {
+        name = "executor-unpack-state";
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.gnutar
+          pkgs.jq
+          pkgs.sops
+          pkgs.zstd
+        ];
+        text = # sh
+          ''
+            if [ "$#" -ne 2 ]; then
+              echo "usage: executor-unpack-state <repo dir> <output dir>" >&2
+              exit 2
+            fi
+            mkdir -p "$2"
+            out=$2
+            tmp=$(mktemp -d)
+            trap 'rm -rf "$tmp"' EXIT
+            if [ -f "$1/secrets/executor-state.json" ]; then
+              sops -d "$1/secrets/executor-state.json" > "$tmp/state.json"
+              jq -r 'keys[]' "$tmp/state.json" | while IFS= read -r k; do
+                mkdir -p "$out/$(dirname "$k")"
+                jq -j --arg k "$k" '.[$k]' "$tmp/state.json" > "$out/$k"
+              done
+            else
+              echo "warning: $1/secrets/executor-state.json not found" >&2
+            fi
+            if [ -f "$1/secrets/executor-deployments.json" ]; then
+              sops -d "$1/secrets/executor-deployments.json" | tar --zstd -xf - -C "$out"
+            else
+              echo "warning: $1/secrets/executor-deployments.json not found" >&2
+            fi
+          '';
+      };
       #
       # modules/nixos/hardware-configuration.nix mounts /home as its own
       # btrfs subvolume (@home), with @snapshots reserved at /.snapshots for
@@ -205,7 +257,9 @@
         runtimeInputs = [
           pkgs.btrfs-progs
           pkgs.coreutils
+          pkgs.findutils
           pkgs.gnutar
+          pkgs.jq
           pkgs.nodejs
           pkgs.sops
           pkgs.zstd
@@ -213,7 +267,8 @@
         text = # sh
           ''
             repo=${userHome}/Projects/dots
-            stamp=${userHome}/.local/state/executor-v2-backup.sha256
+            stamp_state=${userHome}/.local/state/executor-v2-state.sha256
+            stamp_payload=${userHome}/.local/state/executor-v2-deployments.sha256
             [ -d "$repo/secrets" ] || exit 0
             [ -e ${dataDir}/executor.pglite ] || exit 0
 
@@ -236,29 +291,61 @@
 
             tmp=$(mktemp -d)
             # PGlite has to write to open a database, so dump from copies.
-            mkdir "$tmp/db" "$tmp/state"
+            mkdir "$tmp/db" "$tmp/state" "$tmp/payload"
             for db in executor mcp-auth; do
               [ -e "$tarsrc/$db.pglite" ] || continue
               cp -a "$tarsrc/$db.pglite" "$tmp/db/"
               rm -f "$tmp/db/$db.pglite/postmaster.pid"
               node ${dumpTables} ${pglite} "$tmp/db/$db.pglite" "$tmp/state/$db"
             done
-            cp -a "$tarsrc/installation.json" "$tarsrc/repositories" "$tarsrc/builds" "$tmp/state/"
+            cp -a "$tarsrc/installation.json" "$tmp/state/"
+            cp -a "$tarsrc/repositories" "$tarsrc/builds" "$tmp/payload/"
             drop_snapshot
-            # Reproducible, so unchanged state hashes the same and is skipped.
-            tar -C "$tmp/state" --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -cf - . \
-              | zstd -q -19 -T0 > "$tmp/state.tar.zst"
-
-            sum=$(sha256sum "$tmp/state.tar.zst" | cut -d' ' -f1)
-            [ "$sum" = "$(cat "$stamp" 2>/dev/null || true)" ] && exit 0
             cd "$repo"
-            sops -e --input-type binary --output-type json --filename-override secrets/executor.json "$tmp/state.tar.zst" > "$tmp/executor.json"
-            mv "$tmp/executor.json" secrets/executor.json
-            chown ${defaultUser}:users secrets/executor.json
-            mkdir -p "$(dirname "$stamp")"
-            echo "$sum" > "$stamp"
-            chown ${defaultUser}:users "$stamp"
-            echo "wrote $repo/secrets/executor.json"
+
+            # State: hash every row file; re-encrypt only if any changed.
+            state_sum=$(
+              cd "$tmp/state" &&
+                find . -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum | cut -d' ' -f1
+            )
+            if [ "$state_sum" != "$(cat "$stamp_state" 2>/dev/null || true)" ]; then
+              # `sops -e` would re-encrypt the whole document every run; the
+              # EDITOR path instead rebuilds it and sops keeps the ciphertext
+              # of unchanged leaves (verified against sops 3.13).
+              cat > "$tmp/update-state" <<'EDITOR'
+#!/bin/sh
+# sops invokes: $EDITOR <decrypted document>. Rebuild it from $STATEDIR;
+# sops reuses the old ciphertext for leaves whose value did not change.
+f=$1
+printf '{}\n' > "$f"
+find "$STATEDIR" -type f | LC_ALL=C sort | while IFS= read -r p; do
+  k=''${p#"$STATEDIR"/}
+  jq --arg k "$k" --rawfile v "$p" '.[$k] = $v' "$f" > "$f.new" && mv "$f.new" "$f"
+done
+EDITOR
+              chmod +x "$tmp/update-state"
+              STATEDIR="$tmp/state" EDITOR="$tmp/update-state" sops secrets/executor-state.json </dev/null
+              chown ${defaultUser}:users secrets/executor-state.json
+              mkdir -p "$(dirname "$stamp_state")"
+              echo "$state_sum" > "$stamp_state"
+              chown ${defaultUser}:users "$stamp_state"
+              echo "wrote $repo/secrets/executor-state.json"
+            fi
+
+            # Deploy payload: reproducible tar, so unchanged contents hash
+            # the same and are skipped.
+            tar -C "$tmp/payload" --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -cf - . \
+              | zstd -q -19 -T0 > "$tmp/payload.tar.zst"
+            payload_sum=$(sha256sum "$tmp/payload.tar.zst" | cut -d' ' -f1)
+            if [ "$payload_sum" != "$(cat "$stamp_payload" 2>/dev/null || true)" ]; then
+              sops -e --input-type binary --output-type json --filename-override secrets/executor-deployments.json "$tmp/payload.tar.zst" > "$tmp/executor-deployments.json"
+              mv "$tmp/executor-deployments.json" secrets/executor-deployments.json
+              chown ${defaultUser}:users secrets/executor-deployments.json
+              mkdir -p "$(dirname "$stamp_payload")"
+              echo "$payload_sum" > "$stamp_payload"
+              chown ${defaultUser}:users "$stamp_payload"
+              echo "wrote $repo/secrets/executor-deployments.json"
+            fi
           '';
       };
 
@@ -316,7 +403,10 @@
         # Register subdomain
         services.local-networking.proxies.executor = { inherit (cfg) subdomain port; };
 
-        environment.systemPackages = [ restoreState ];
+        environment.systemPackages = [
+          restoreState
+          unpackState
+        ];
 
         # Create workspace directory
         systemd.tmpfiles.rules = [
@@ -419,6 +509,10 @@
         systemd.services.executor-backup = {
           description = "Back up executor v2 state into the dots repo";
           after = [ "executor-web.service" ];
+          # The state update decrypts through sops's EDITOR path, which
+          # needs an age identity; services do not inherit the login
+          # environment that usually points SOPS_AGE_KEY_FILE at this file.
+          environment.SOPS_AGE_KEY_FILE = "/etc/age/keys.txt";
           serviceConfig = {
             Type = "oneshot";
             # Root: btrfs subvolume snapshot/delete has no normal-user grant
