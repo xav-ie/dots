@@ -16,22 +16,22 @@ tags: [slack, message]
 kind: code # or: instructions
 ---
 
-const res = await tools["slack.org.workspace.conversations_add_message"]({
+const r = await tools.slack.conversations_add_message({
 channel_id: {{json channel_id}},
 text: {{json message}},
 })
-if (!res.ok) return `FAILED ${res.error.code}: ${res.error.message}`
-return res.data
+if (r.isError) return `FAILED: ${r.content[0].text}`
+return r.structuredContent ?? r.content[0].text
 ```
 
 ## Rules
 
 - **Filename** = tool name. Must match `^[a-z][a-z0-9_]*$`. `README.md` is ignored.
 - **description** (required) — specific; this is what `tools.search(...)` scores against.
-- **args** (optional) — `name → { type, description?, optional?, default? }`. Types: `string`, `number`, `boolean`.
+- **args** (optional) — `name → { type, description?, optional?, default? }`. Types: `string`, `number`, `boolean`, `array`, `object`.
 - **tags** (optional) — boost search relevance.
-- **kind** (optional, default `code`) — `code` or `instructions`. Both are just returned-text; the kind is a hint.
-- **Tool paths** — always the full `<integration>.<owner>.<connection>.<tool>` address from `tools.search()` / `tools.describe.tool()`; short aliases like `tools.slack.<tool>` don't resolve. Calls return `{ ok, data }` or `{ ok: false, error }`, so check `ok` before using `data`.
+- **kind** (optional, default `code`) — `code` runs through executor's `execute` and returns the program's value; `instructions` returns the rendered text.
+- **Tool paths** — the exact `tools.<app>.<tool>` path from `tools.search()` / `tools.search.describe()`, e.g. `tools.slack.conversations_add_message`; an app with several accounts has one slug per account, such as `tools["google-workspace-work"]`. Calls return the raw MCP result `{ content, structuredContent?, isError }`: check `isError`, then read `structuredContent` or parse `content[0].text`.
 
 ## Templating
 
