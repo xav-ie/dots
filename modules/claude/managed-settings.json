@@ -4,7 +4,7 @@
   "allowManagedMcpServersOnly": true,
   "allowedMcpServers": [
     {
-      "serverUrl": "https://executor.lalala.casa/mcp"
+      "serverUrl": "https://executor.lalala.casa/mcp*"
     }
   ],
   "disableSideloadFlags": true,
