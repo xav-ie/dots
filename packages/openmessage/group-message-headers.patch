@@ -1,0 +1,198 @@
+diff --git a/e2e/ui.spec.js b/e2e/ui.spec.js
+index 4a57f55..b71fee6 100644
+--- a/e2e/ui.spec.js
++++ b/e2e/ui.spec.js
+@@ -204,6 +204,40 @@ test('shows sender labels only in group conversations', async ({ page }) => {
+   await expect(page.locator('#messages-area .msg-sender').filter({ hasText: 'David Kim' }).first()).toBeVisible();
+ });
+ 
++test('shows one avatar-and-name header per consecutive sender run', async ({ page, request }) => {
++  await openConversation(page, 'Weekend Hiking Group');
++  const now = Date.now();
++  await request.post('/_e2e/messages', {
++    data: {
++      body: 'First of a consecutive run',
++      conversation_id: 'conv3',
++      sender_name: 'Emily Park',
++      sender_number: '+13105553456',
++      timestamp_ms: now,
++    },
++  });
++  await request.post('/_e2e/messages', {
++    data: {
++      body: 'Second of the same run',
++      conversation_id: 'conv3',
++      sender_name: 'Emily Park',
++      sender_number: '+13105553456',
++      timestamp_ms: now + 1000,
++    },
++  });
++
++  // First message of the run: avatar and name share the header line.
++  const firstRow = page.locator('#messages-area .msg-row').filter({ hasText: 'First of a consecutive run' });
++  await expect(firstRow.locator('.msg-sender')).toHaveText('Emily Park');
++  await expect(firstRow.locator('.msg-avatar:not(.avatar-hidden)')).toBeVisible();
++
++  // Consecutive message from the same sender: no repeated name, avatar kept
++  // only as a hidden spacer so the bubble stays aligned under the header.
++  const secondRow = page.locator('#messages-area .msg-row').filter({ hasText: 'Second of the same run' });
++  await expect(secondRow.locator('.msg-sender')).toHaveCount(0);
++  await expect(secondRow.locator('.msg-avatar.avatar-hidden')).toHaveCount(1);
++});
++
+ test('does not show stale messages when a selected thread fails to load', async ({ page }) => {
+   await openConversation(page, 'Sarah Chen');
+   await expect(page.locator('#messages-area')).toContainText('Hey! Are you free for dinner tonight?');
+diff --git a/internal/web/static/index.html b/internal/web/static/index.html
+index a5f28bc..4ef1483 100644
+--- a/internal/web/static/index.html
++++ b/internal/web/static/index.html
+@@ -1283,7 +1283,7 @@ html, body {
+ /* ─── Message Avatar (group chats) ─── */
+ .msg-row {
+   display: flex;
+-  align-items: flex-end;
++  align-items: flex-start;
+   gap: 8px;
+   max-width: 560px;
+   animation: msgIn 0.25s ease-out;
+@@ -1310,24 +1310,44 @@ html, body {
+   font-weight: 600;
+   color: #ffffff;
+   flex-shrink: 0;
+-  margin-bottom: 2px;
+ }
+ 
+ .msg-avatar.avatar-hidden {
+   visibility: hidden;
+ }
+ 
++/* The bubble column beside the avatar. The sender header (first message of a
++   run) and the bubbles both live here, so consecutive messages without a
++   header stay left-aligned with the run's first bubble. */
++.msg-stack {
++  display: flex;
++  flex-direction: column;
++  min-width: 0;
++  max-width: 100%;
++}
++
+ .msg-row .msg {
+   align-self: auto;
+   animation: none;
+   min-width: 0;
+ }
+ 
++/* Inside the stack the bubble keeps its content width instead of stretching
++   to the stack's full width (this rule must follow .msg-row .msg above). */
++.msg-stack .msg {
++  align-self: flex-start;
++  max-width: 100%;
++}
++
++/* Header line shared by the avatar and the sender name: the 28px line box
++   matches the avatar height, so the name centers against the avatar and the
++   bubble starts below both. */
+ .msg-sender {
+   font-size: 12px;
+   font-weight: 500;
+   color: var(--accent);
+-  margin-bottom: 3px;
++  line-height: 28px;
++  margin-bottom: 4px;
+   font-family: var(--font-sans);
+ }
+ 
+@@ -11399,14 +11419,16 @@ body::after {
+     ].join(':');
+   }
+ 
+-  function groupAvatarRenderSignature(message, nextMessage) {
++  // The avatar + name header rides on the FIRST message of a consecutive run
++  // from one sender, so a node's header state depends on the message BEFORE it.
++  function groupAvatarRenderSignature(message, prevMessage) {
+     if (!activeConvoIsGroup || !message || message.IsFromMe || !message.SenderName) return '';
+-    if (!nextMessage) return 'last';
++    if (!prevMessage) return 'first';
+     return [
+-      nextMessage.IsFromMe ? 'me' : 'other',
+-      nextMessage.SenderName || '',
+-      nextMessage.Status || '',
+-      isSameDay(message.TimestampMS, nextMessage.TimestampMS) ? 'same-day' : 'new-day',
++      prevMessage.IsFromMe ? 'me' : 'other',
++      prevMessage.SenderName || '',
++      prevMessage.Status || '',
++      isSameDay(message.TimestampMS, prevMessage.TimestampMS) ? 'same-day' : 'new-day',
+     ].join(':');
+   }
+ 
+@@ -11479,7 +11501,7 @@ body::after {
+       context.showMixedSourceChips ? 'mixed-source' : 'single-source',
+       activeConvoIsGroup ? 'group' : 'direct',
+       replyPreviewRenderSignature(message, context.messagesByID),
+-      groupAvatarRenderSignature(message, context.nextMessage),
++      groupAvatarRenderSignature(message, context.prevMessage),
+     ].join('::');
+   }
+ 
+@@ -11500,9 +11522,6 @@ body::after {
+       html += `<div class="msg-reply-preview" data-reply-id="${escapeHtml(message.ReplyToID)}" onclick="scrollToMessage('${escapeHtml(message.ReplyToID)}')"><span class="reply-author">${escapeHtml(origName)}</span><span class="reply-body">${escapeHtml(truncBody)}</span></div>`;
+     }
+ 
+-    if (activeConvoIsGroup && !message.IsFromMe && message.SenderName) {
+-      html += `<div class="msg-sender" style="color:${avatarColor(message.SenderName)}">${escapeHtml(message.SenderName)}</div>`;
+-    }
+     if (context.showMixedSourceChips) {
+       html += `<div class="msg-source-row">${platformBadgeHTML(sourcePlatformOf(message))}</div>`;
+     }
+@@ -11648,14 +11667,17 @@ body::after {
+     });
+ 
+     if (activeConvoIsGroup && !message.IsFromMe && message.SenderName) {
+-      const nextMsg = allMsgs[absoluteMessageIndex + 1];
+-      const isLastFromSender = !nextMsg || nextMsg.IsFromMe || nextMsg.SenderName !== message.SenderName ||
+-        (nextMsg.Status || '').startsWith('TOMBSTONE_') || !isSameDay(message.TimestampMS, nextMsg.TimestampMS);
++      // Discord-style header: the avatar and the sender name share one line on
++      // the first message of a consecutive run; the rest of the run keeps only
++      // the hidden avatar spacer so bubbles stay aligned under the header.
++      const prevMsg = absoluteMessageIndex > 0 ? allMsgs[absoluteMessageIndex - 1] : null;
++      const isFirstFromSender = !prevMsg || prevMsg.IsFromMe || prevMsg.SenderName !== message.SenderName ||
++        (prevMsg.Status || '').startsWith('TOMBSTONE_') || !isSameDay(message.TimestampMS, prevMsg.TimestampMS);
+ 
+       const row = document.createElement('div');
+       row.className = 'msg-row received';
+       const avatarDiv = document.createElement('div');
+-      avatarDiv.className = 'msg-avatar' + (isLastFromSender ? '' : ' avatar-hidden');
++      avatarDiv.className = 'msg-avatar' + (isFirstFromSender ? '' : ' avatar-hidden');
+       const avatarRefs = senderAvatarRefs(message);
+       renderAvatarElement(avatarDiv, {
+         name: message.SenderName,
+@@ -11667,8 +11689,18 @@ body::after {
+         text: initials(message.SenderName).charAt(0),
+         background: avatarColor(message.SenderName),
+       });
++      const stack = document.createElement('div');
++      stack.className = 'msg-stack';
++      if (isFirstFromSender) {
++        const senderDiv = document.createElement('div');
++        senderDiv.className = 'msg-sender';
++        senderDiv.style.color = avatarColor(message.SenderName);
++        senderDiv.textContent = message.SenderName;
++        stack.appendChild(senderDiv);
++      }
++      stack.appendChild(el);
+       row.appendChild(avatarDiv);
+-      row.appendChild(el);
++      row.appendChild(stack);
+       return row;
+     }
+     return el;
+@@ -11717,7 +11749,7 @@ body::after {
+         absoluteMessageIndex,
+         messagesByID,
+         showMixedSourceChips,
+-        nextMessage: allMsgs[absoluteMessageIndex + 1],
++        prevMessage: absoluteMessageIndex > 0 ? allMsgs[absoluteMessageIndex - 1] : undefined,
+       };
+       const key = threadMessageRenderKey(message, absoluteMessageIndex);
+       const signature = threadMessageRenderSignature(message, context);

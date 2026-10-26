@@ -65,6 +65,13 @@ let
       # Threads archived on the phone get their messages at startup, opening an
       # empty thread fetches its history, and archive syncs both ways.
       ./empty-threads.patch
+      # Threads with unread messages open anchored at the oldest one under a
+      # "New messages" divider instead of marking everything read at the
+      # bottom; incoming messages are marked read as they scroll into view
+      # while the window is focused (cursor forward-only, via through_ms).
+      # Outgoing bubbles keep one mounted element from Sending through Read,
+      # patching only their status icon, so sends never flicker.
+      ./unread-read-tracking.patch
     ];
     subPackages = [ "." ];
     env.CGO_ENABLED = 0;
