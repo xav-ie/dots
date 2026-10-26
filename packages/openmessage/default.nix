@@ -79,6 +79,11 @@ let
       # conversation; the live status event moves the thread into (or out of)
       # the Spam & blocked tab.
       ./block-spam-actions.patch
+      # The phone echoes sent media with no TmpID, so the optimistic local row
+      # never reconciled and every image send left a duplicate "*Empty
+      # message*" bubble. Pair media echoes with their sends by caption and
+      # attachment, like text; a startup repair sweeps stored duplicates.
+      ./media-echo-pairing.patch
     ];
     subPackages = [ "." ];
     env.CGO_ENABLED = 0;

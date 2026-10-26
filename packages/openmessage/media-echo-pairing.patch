@@ -1,0 +1,662 @@
+diff --git a/docs/agent-runbook.md b/docs/agent-runbook.md
+index 30ba6d4..8e0b2ad 100644
+--- a/docs/agent-runbook.md
++++ b/docs/agent-runbook.md
+@@ -89,9 +89,12 @@ each sent message with an empty `TmpID`. Correlation used only the `TmpID`
+ outbox reconcile and projected as its own row. The v2 store holds the same
+ doubling for sends on 9/22 and 9/29, under the old QR pairing.
+ 
+-**Fix (#245):** outgoing Google text echoes without a `TmpID` are paired
++**Fix (#245):** outgoing Google echoes without a `TmpID` are paired
+ with their sends by content and timing, within one thread and one body
+-(`sqlite.pairEchoes`). Both times come from this machine's clock: when the
++(`sqlite.pairEchoes`) — media sends too, paired by caption (empty for an
++uncaptioned image), where the echo's attachment row tells a media echo from a
++text one and keeps the two candidate sets disjoint. Both times come from this
++machine's clock: when the
+ send went out (the intent's `updated_at_ms`, its confirm) and when the echo
+ was first seen (the frame's receipt, or the echo row's `created_at_ms`). On
+ the 10/16 live store all 44 doubled sends had their echo first seen
+@@ -100,7 +103,8 @@ ahead, so it is not used. Pairs keep time order, and a pair's cost grows with
+ the square of its lag's distance from 0.5 s. A pair therefore only beats
+ leaving both unpaired for lags of about -5 s to +6 s, so the same words typed
+ on the phone near a send stay their own message. Each pair then takes the
+-normal reconcile, which repoints the local row and merges the echo row.
++normal reconcile, which repoints the local row and merges the echo row
++(for media, the merge carries the attachment onto the surviving local row).
+ A candidate's phone stamp must also be within 5 minutes of when it was first
+ seen. That rules out an old message arriving now, from a history catch-up or
+ from a live re-delivery after a reaction changes, however well its arrival
+@@ -108,7 +112,6 @@ fits.
+ `echo_content_matched` counts these. On v2-primary installs a daemon-startup
+ sweep pairs the duplicates already stored: on the 10/16 live-store copy it
+ merged 43, left 0 twins, and took 86 ms. Not covered:
+-- media sends;
+ - uncertain sends: lease recovery stamps `updated_at_ms` about 30 s after the
+   call, and an abandoned call is stamped when it is given up (at its bound, or
+   about 2 s after a shutdown cancel), so their echo looks early and is left;
+diff --git a/internal/ingest/google_echo_e2e_test.go b/internal/ingest/google_echo_e2e_test.go
+index 6e041d1..c5840cb 100644
+--- a/internal/ingest/google_echo_e2e_test.go
++++ b/internal/ingest/google_echo_e2e_test.go
+@@ -895,8 +895,29 @@ func (s *googleEchoTextSender) SendText(
+ 	}, nil
+ }
+ 
++// SendMedia answers with the transport request ID, the way the Google adapter
++// does: the phone's real ID only arrives with the echo.
++func (s *googleEchoTextSender) SendMedia(
++	_ context.Context,
++	request bridge.MediaRequest,
++) (bridge.SendResult, error) {
++	if s.uncertain {
++		return bridge.SendResult{}, bridge.OpError{
++			Class:     bridge.FailureTransient,
++			Operation: "send_media",
++			Dispatch:  bridge.DispatchUncertain,
++			Cause:     errors.New("transport call timed out"),
++		}
++	}
++	return bridge.SendResult{
++		RemoteMessageID: request.RequestID,
++		AcceptedAt:      s.clock.Now(),
++		EchoExpected:    true,
++	}, nil
++}
++
+ type googleEchoRegistry struct {
+-	sender bridge.TextSender
++	sender *googleEchoTextSender
+ }
+ 
+ func (r *googleEchoRegistry) Snapshot(accountID string) (bridge.Snapshot, bool) {
+@@ -921,19 +942,28 @@ func (r *googleEchoRegistry) Acquire(
+ 	if accountID != googleEchoAccountID {
+ 		return nil, bridge.ErrAccountNotRegistered
+ 	}
+-	if capability != bridge.CapabilityTextSend || r.sender == nil {
++	if r.sender == nil {
+ 		return nil, bridge.ErrCapabilityUnavailable
+ 	}
+-	return &bridge.DispatchLease{
++	lease := &bridge.DispatchLease{
+ 		AccountID: googleEchoAccountID,
+ 		Platform:  bridge.PlatformGoogle,
+ 		Ctx:       ctx,
+-		Text:      r.sender,
+-	}, nil
++	}
++	switch capability {
++	case bridge.CapabilityTextSend:
++		lease.Text = r.sender
++	case bridge.CapabilityMediaSend:
++		lease.Media = r.sender
++	default:
++		return nil, bridge.ErrCapabilityUnavailable
++	}
++	return lease, nil
+ }
+ 
+ func (r *googleEchoRegistry) Capabilities(accountID string) bridge.CapabilitySet {
+-	return bridge.CapabilitySet{TextSend: accountID == googleEchoAccountID && r.sender != nil}
++	online := accountID == googleEchoAccountID && r.sender != nil
++	return bridge.CapabilitySet{TextSend: online, MediaSend: online}
+ }
+ 
+ type googleEchoClock struct {
+diff --git a/internal/ingest/google_echo_media_test.go b/internal/ingest/google_echo_media_test.go
+new file mode 100644
+index 0000000..608d284
+--- /dev/null
++++ b/internal/ingest/google_echo_media_test.go
+@@ -0,0 +1,205 @@
++package ingest
++
++// Google media echoes that carry no TmpID. The phone echoes an image sent
++// from OpenMessage like any other message (raw inbox frames, 2026-10-16),
++// and the echo's TmpID is empty, so before media content pairing the echo
++// projected as a second row: the optimistic local row, bodyless and without
++// the attachment, beside the real image. These tests drive the real service,
++// worker and store against the same ground truth as the text echo tests.
++
++import (
++	"context"
++	"strings"
++	"testing"
++	"time"
++
++	"go.mau.fi/mautrix-gmessages/pkg/libgm/gmproto"
++
++	"github.com/maxghenis/openmessage/internal/messaging"
++)
++
++// googleEchoMediaMessage is an outgoing media frame with no TmpID, the shape
++// the phone echoes for an image sent from OpenMessage. A caption rides in a
++// text entry beside the media one, as in a live frame.
++func googleEchoMediaMessage(
++	remoteID string,
++	mediaID string,
++	caption string,
++	status gmproto.MessageStatusType,
++	occurredAt time.Time,
++) *gmproto.Message {
++	message := googleEchoMessage(remoteID, "", caption, true, occurredAt)
++	message.MessageStatus = &gmproto.MessageStatus{Status: status}
++	if caption == "" {
++		// An uncaptioned echo carries the media entry alone.
++		message.MessageInfo = nil
++	}
++	message.MessageInfo = append(message.MessageInfo, &gmproto.MessageInfo{
++		Data: &gmproto.MessageInfo_MediaContent{MediaContent: &gmproto.MediaContent{
++			MediaID: mediaID, DecryptionKey: []byte{0x01, 0x02}, MimeType: "image/jpeg",
++		}},
++	})
++	return message
++}
++
++// mediaEcho delivers an outgoing media frame with no TmpID that this machine
++// receives at arrivedAt. A reconcile error fails the test.
++func (h *googleEchoHarness) mediaEcho(
++	t *testing.T,
++	remoteID, mediaID, caption string,
++	status gmproto.MessageStatusType,
++	arrivedAt time.Time,
++) {
++	t.Helper()
++	if arrivedAt.Before(h.clock.Now()) {
++		t.Fatalf("media echo arrives at %v, before the clock's %v", arrivedAt, h.clock.Now())
++	}
++	h.clock.Set(arrivedAt)
++	h.appendMessage(t, googleEchoMediaMessage(remoteID, mediaID, caption, status, arrivedAt.Add(phoneClockOffset)))
++	h.waitDrained(t)
++	if errors := h.counters.Snapshot(googleEchoAccountID).EchoErrors; errors != 0 {
++		t.Fatalf("media echo reconcile failed %d times", errors)
++	}
++}
++
++// sendMediaAt submits an image at createdAt and confirms it at sentAt. The
++// sender answers with the transport request ID, as the Google adapter does.
++func (h *googleEchoHarness) sendMediaAt(
++	t *testing.T,
++	key, caption string,
++	createdAt, sentAt time.Time,
++) messaging.Submission {
++	t.Helper()
++	h.clock.Set(createdAt)
++	submission, err := h.service.SendMedia(context.Background(), messaging.SendMediaCommand{
++		CommonCommand: messaging.CommonCommand{
++			AccountID:      googleEchoAccountID,
++			ConversationID: googleEchoConversationID,
++			IdempotencyKey: "google-echo-" + key,
++		},
++		Content:  strings.NewReader("png bytes for " + key),
++		Filename: "photo.png",
++		MIME:     "image/png",
++		Caption:  caption,
++	})
++	if err != nil {
++		t.Fatalf("MessageService.SendMedia(): %v", err)
++	}
++	h.clock.Set(sentAt)
++	h.confirm(t, submission.OutboxID)
++	return submission
++}
++
++func (h *googleEchoHarness) attachmentCount(t *testing.T, messageID string) int {
++	t.Helper()
++	return countSQLiteRows(t, h.storePath,
++		"SELECT COUNT(*) FROM message_attachments WHERE message_id = ?", messageID)
++}
++
++// The live sequence for an image sent without a caption: the phone echoes it
++// without a TmpID, once per status change, and every frame carries the media.
++func TestGoogleMediaEchoWithoutTmpIDMergesIntoTheSentMessage(t *testing.T) {
++	h := newGoogleEchoHarness(t, nil)
++	send := h.sendMediaAt(t, "untagged", "", googleEchoNow, googleEchoNow.Add(time.Second))
++	h.mediaEcho(t, "89107", "media-1", "", complete, googleEchoNow.Add(1800*time.Millisecond))
++	h.mediaEcho(t, "89107", "media-1", "", delivered, googleEchoNow.Add(3*time.Second))
++
++	h.assertBound(t, send, "89107")
++	if got := h.countV2Messages(t); got != 1 {
++		t.Fatalf("messages = %d, want one", got)
++	}
++	if got := h.attachmentCount(t, send.LocalMessageID); got != 1 {
++		t.Fatalf("attachments on the local row = %d, want the echoed image", got)
++	}
++	if snapshot := h.counters.Snapshot(googleEchoAccountID); snapshot.EchoContentMatched != 1 || snapshot.EchoErrors != 0 {
++		t.Fatalf("counters = %+v, want one content match and no errors", snapshot)
++	}
++}
++
++// A captioned image pairs by its caption: the echo's attachment tells it from
++// the echo of a text send of the same words.
++func TestGoogleMediaEchoWithCaptionMergesByCaption(t *testing.T) {
++	h := newGoogleEchoHarness(t, nil)
++	send := h.sendMediaAt(t, "captioned", "look at this", googleEchoNow, googleEchoNow.Add(time.Second))
++	h.mediaEcho(t, "89108", "media-2", "look at this", complete, googleEchoNow.Add(1800*time.Millisecond))
++
++	h.assertBound(t, send, "89108")
++	if got := h.countV2Messages(t); got != 1 {
++		t.Fatalf("messages = %d, want one", got)
++	}
++	if got := h.attachmentCount(t, send.LocalMessageID); got != 1 {
++		t.Fatalf("attachments on the local row = %d, want the echoed image", got)
++	}
++}
++
++// The echo row may already sit beside the optimistic row, as on the live
++// store: the startup repair pairs and merges them, and the image lands on the
++// surviving local row.
++func TestRepairMergesAMediaEchoThatAlreadyProjected(t *testing.T) {
++	h := newGoogleEchoHarnessWithObserver(t, nil, preFixObserver)
++	send := h.sendMediaAt(t, "prefix", "", googleEchoNow, googleEchoNow.Add(time.Second))
++	h.mediaEcho(t, "89201", "media-3", "", delivered, googleEchoNow.Add(1800*time.Millisecond))
++	if got := h.countV2Messages(t); got != 2 {
++		t.Fatalf("messages before repair = %d, want the local row and the echo row", got)
++	}
++
++	report, err := h.service.RepairUncorrelatedEchoDuplicates(context.Background())
++	if err != nil || report.Merged != 1 {
++		t.Fatalf("repair = %+v, %v; want one merge", report, err)
++	}
++	h.assertBound(t, send, "89201")
++	if got := h.countV2Messages(t); got != 1 {
++		t.Fatalf("messages after repair = %d, want one", got)
++	}
++	if got := h.attachmentCount(t, send.LocalMessageID); got != 1 {
++		t.Fatalf("attachments on the local row = %d, want the echoed image", got)
++	}
++	again, err := h.service.RepairUncorrelatedEchoDuplicates(context.Background())
++	if err != nil || again.Merged != 0 {
++		t.Fatalf("second repair = %+v, %v; want nothing left to do", again, err)
++	}
++}
++
++// A media echo never takes the echo of a text send of the same caption, and a
++// text echo never takes a media send's: the candidate sets are disjoint.
++func TestMediaAndTextEchoesOfTheSameWordsStayDisjoint(t *testing.T) {
++	h := newGoogleEchoHarness(t, nil)
++	textSend := h.sendAt(t, "text", "look at this", googleEchoNow, googleEchoNow)
++	h.mediaEcho(t, "89301", "media-4", "", complete, googleEchoNow.Add(800*time.Millisecond))
++	if delivery := h.delivery(t, textSend.OutboxID); delivery.RemoteMessageID == "89301" {
++		t.Fatalf("text send took the media echo: %+v", delivery)
++	}
++
++	// The text send's own echo pairs it; the phone's image stays its own row.
++	h.echo(t, "89302", "look at this", complete, googleEchoNow.Add(1300*time.Millisecond))
++	h.assertBound(t, textSend, "89302")
++
++	mediaSend := h.sendMediaAt(t, "media", "look at this",
++		googleEchoNow.Add(10*time.Second), googleEchoNow.Add(10*time.Second))
++	// A text echo of the same caption must not take the media send, whose
++	// own echo arrives right after it.
++	h.echo(t, "89303", "look at this", complete, googleEchoNow.Add(10800*time.Millisecond))
++	if delivery := h.delivery(t, mediaSend.OutboxID); delivery.RemoteMessageID == "89303" {
++		t.Fatalf("media send took the text echo: %+v", delivery)
++	}
++	h.mediaEcho(t, "89304", "media-5", "look at this", complete, googleEchoNow.Add(11600*time.Millisecond))
++	h.assertBound(t, mediaSend, "89304")
++	// Four rows stay: the two sends, the phone's image, and the late untagged
++	// text — indistinguishable from one typed on the phone, so its own row.
++	if got := h.countV2Messages(t); got != 4 {
++		t.Fatalf("messages = %d, want the two sends, the phone's image and the phone's text", got)
++	}
++}
++
++// An image sent from the phone itself has no send here to pair with; it stays
++// its own message and the pairing is a successful no-op.
++func TestGoogleMediaEchoOfAPhoneSentImageStaysItsOwnRow(t *testing.T) {
++	h := newGoogleEchoHarness(t, nil)
++	h.mediaEcho(t, "89401", "media-6", "", complete, googleEchoNow)
++	if got := h.countV2Messages(t); got != 1 {
++		t.Fatalf("messages = %d, want the phone's image alone", got)
++	}
++	if snapshot := h.counters.Snapshot(googleEchoAccountID); snapshot.EchoContentMatched != 0 || snapshot.EchoErrors != 0 {
++		t.Fatalf("counters = %+v, want no content match and no errors", snapshot)
++	}
++}
+diff --git a/internal/ingest/worker.go b/internal/ingest/worker.go
+index a0968f6..777f07c 100644
+--- a/internal/ingest/worker.go
++++ b/internal/ingest/worker.go
+@@ -1720,11 +1720,12 @@ func (w *Worker) echoSeenAt(receivedAt time.Time) time.Time {
+ 	return receivedAt
+ }
+ 
+-// observeUncorrelatedEcho correlates an outgoing Google text echo whose TmpID
++// observeUncorrelatedEcho correlates an outgoing Google echo whose TmpID
+ // is empty to its send (see sqlite.ReconcileUncorrelatedEcho). Like a TmpID
+ // echo, it is best-effort: a fault is counted and the frame projects anyway.
+ // Echoes of messages sent from the phone itself match nothing and are not
+-// counted.
++// counted. Media echoes pair by caption and attachment, so one with an empty
++// body is still correlated.
+ func (w *Worker) observeUncorrelatedEcho(
+ 	ctx context.Context,
+ 	accountID string,
+@@ -1733,7 +1734,8 @@ func (w *Worker) observeUncorrelatedEcho(
+ 	remoteMessageID string,
+ 	receivedAt time.Time,
+ ) {
+-	if platform != bridge.PlatformGoogle || strings.TrimSpace(event.Body) == "" || len(event.Attachments) > 0 {
++	hasAttachment := len(event.Attachments) > 0
++	if platform != bridge.PlatformGoogle || (strings.TrimSpace(event.Body) == "" && !hasAttachment) {
+ 		return
+ 	}
+ 	observer, ok := w.echoes.(UncorrelatedEchoObserver)
+@@ -1745,6 +1747,7 @@ func (w *Worker) observeUncorrelatedEcho(
+ 		RemoteConversationID: v2keys.NormalizeRemoteConversationID(string(platform), event.RemoteConversationID),
+ 		RemoteMessageID:      remoteMessageID,
+ 		Body:                 event.Body,
++		HasAttachment:        hasAttachment,
+ 		SeenAt:               w.echoSeenAt(receivedAt),
+ 		OccurredAt:           event.OccurredAt,
+ 	})
+diff --git a/internal/messaging/service.go b/internal/messaging/service.go
+index 11ca56b..d03716c 100644
+--- a/internal/messaging/service.go
++++ b/internal/messaging/service.go
+@@ -938,9 +938,9 @@ func (s *MessageService) ObserveTransportEcho(
+ }
+ 
+ // ObserveUncorrelatedEcho pairs an echo that names no transport request with
+-// the send it echoes (same conversation, identical body, received right after
+-// the send went out; see sqlite.pairEchoes) and reconciles it like
+-// ObserveTransportEcho. An echo of a
++// the send it echoes (same conversation, identical body — for media, the
++// caption — received right after the send went out; see sqlite.pairEchoes)
++// and reconciles it like ObserveTransportEcho. An echo of a
+ // message sent from the phone itself matches nothing and is a successful
+ // NotFound.
+ func (s *MessageService) ObserveUncorrelatedEcho(
+@@ -955,6 +955,7 @@ func (s *MessageService) ObserveUncorrelatedEcho(
+ 		RemoteConversationID: echo.RemoteConversationID,
+ 		RemoteMessageID:      echo.RemoteMessageID,
+ 		Body:                 echo.Body,
++		HasAttachment:        echo.HasAttachment,
+ 		SeenAtMS:             echo.SeenAt.UnixMilli(),
+ 		OccurredAtMS:         echo.OccurredAt.UnixMilli(),
+ 	})
+diff --git a/internal/messaging/types.go b/internal/messaging/types.go
+index 7e46a69..7fd0527 100644
+--- a/internal/messaging/types.go
++++ b/internal/messaging/types.go
+@@ -130,7 +130,10 @@ type UncorrelatedEcho struct {
+ 	RemoteConversationID string
+ 	RemoteMessageID      string
+ 	Body                 string
+-	SeenAt               time.Time
++	// HasAttachment marks a media frame; it pairs with media sends by caption
++	// (Body, possibly empty) instead of requiring a non-empty body.
++	HasAttachment bool
++	SeenAt        time.Time
+ 	// OccurredAt is the phone's stamp on the message.
+ 	OccurredAt time.Time
+ }
+diff --git a/internal/storage/sqlite/uncorrelated_echo.go b/internal/storage/sqlite/uncorrelated_echo.go
+index 05b68c6..6dd08ee 100644
+--- a/internal/storage/sqlite/uncorrelated_echo.go
++++ b/internal/storage/sqlite/uncorrelated_echo.go
+@@ -20,7 +20,10 @@ import (
+ // The functions here pair such echoes with their sends by content instead.
+ // Within one conversation and one body, sent-but-unbound text intents are
+ // aligned in time order with the outgoing messages this machine first saw
+-// near the moment each send went out (see pairEchoes).
++// near the moment each send went out (see pairEchoes). Media sends pair the
++// same way, grouped by caption (usually empty): the echo of an image carries
++// the attachment the local optimistic row lacks, so the two are told apart
++// from a text by that attachment, not by a body.
+ //
+ // Both times are on this machine's clock. "Went out" is the intent's
+ // updated_at_ms: for an unbound confirmed or uncertain intent, that is when
+@@ -67,23 +70,28 @@ const EchoMaxLag = time.Duration(echoMaxLagMS) * time.Millisecond
+ 
+ // UncorrelatedEchoRequest is an outgoing message frame that names no
+ // transport request. SeenAtMS is when this machine received the frame;
+-// OccurredAtMS is the phone's stamp on the message.
++// OccurredAtMS is the phone's stamp on the message. HasAttachment marks a
++// media frame: it pairs with media sends by caption (which may be empty)
++// instead of requiring a body.
+ type UncorrelatedEchoRequest struct {
+ 	AccountID            string
+ 	RemoteConversationID string
+ 	RemoteMessageID      string
+ 	Body                 string
++	HasAttachment        bool
+ 	SeenAtMS             int64
+ 	OccurredAtMS         int64
+ }
+ 
+-// unboundTextIntentPredicate selects text intents the transport accepted (or
+-// may have accepted) whose local row still carries the transport request ID
++// unboundIntentPredicate selects text or media intents the transport accepted
++// (or may have accepted) whose local row still carries the transport request ID
+ // because no echo has bound it to the real remote ID. An uncertain intent the
+ // user already sent again is left alone: the resend owns the echo. It expects
+-// the outbox as o and the intent's local message as m.
+-const unboundTextIntentPredicate = `
+-	o.kind = 'text'
++// the outbox as o and the intent's local message as m. kind is one of the
++// OutboxKind constants "text" or "media".
++func unboundIntentPredicate(kind OutboxKind) string {
++	return `
++	o.kind = '` + string(kind) + `'
+ 	AND o.state IN ('confirmed', 'uncertain', 'store_failed')
+ 	AND (o.result_remote_id IS NULL OR o.result_remote_id = o.transport_request_id)
+ 	AND m.remote_message_id = o.transport_request_id
+@@ -92,6 +100,7 @@ const unboundTextIntentPredicate = `
+ 		SELECT 1 FROM outbox AS again WHERE again.send_again_of_outbox_id = o.outbox_id
+ 	))
+ `
++}
+ 
+ type echoIntent struct {
+ 	transportRequestID string
+@@ -190,10 +199,11 @@ func echoPairCost(intent echoIntent, echo echoCandidate) (int64, bool) {
+ 	return off * off * 1000 / (2 * echoLagSpreadMS * echoLagSpreadMS), true
+ }
+ 
+-// reconcileEchoGroupTx pairs the unbound text intents of one conversation and
+-// body with that conversation's unclaimed outgoing rows of the same body, plus
+-// incoming (a frame not projected yet), and reconciles each pair. It reports
+-// how many pairs changed durable state and whether incoming was one of them.
++// reconcileEchoGroupTx pairs the unbound text (media=false) or media
++// (media=true) intents of one conversation and body with that conversation's
++// unclaimed outgoing rows of the same body, plus incoming (a frame not
++// projected yet), and reconciles each pair. It reports how many pairs changed
++// durable state and whether incoming was one of them.
+ func (r *OutboxRepository) reconcileEchoGroupTx(
+ 	ctx context.Context,
+ 	tx *sql.Tx,
+@@ -201,7 +211,12 @@ func (r *OutboxRepository) reconcileEchoGroupTx(
+ 	conversationID string,
+ 	body string,
+ 	incoming *echoCandidate,
++	media bool,
+ ) (int, bool, error) {
++	kind := OutboxKindText
++	if media {
++		kind = OutboxKindMedia
++	}
+ 	rows, err := tx.QueryContext(ctx, `
+ 		SELECT o.transport_request_id, o.updated_at_ms
+ 		FROM outbox AS o
+@@ -209,7 +224,7 @@ func (r *OutboxRepository) reconcileEchoGroupTx(
+ 		WHERE o.account_id = ?
+ 		  AND m.conversation_id = ?
+ 		  AND m.body = ?
+-		  AND `+unboundTextIntentPredicate,
++		  AND `+unboundIntentPredicate(kind),
+ 		accountID, conversationID, body)
+ 	if err != nil {
+ 		return 0, false, fmt.Errorf("list unbound intents: %w", err)
+@@ -239,6 +254,17 @@ func (r *OutboxRepository) reconcileEchoGroupTx(
+ 	// so a remote ID Google reused in another thread blocks nothing here.
+ 	// Bounding the phone stamp too lets the conversation-time index serve
+ 	// this, and drops rows that were stored long after they were sent.
++	// A media echo is told from a text echo by its attachment row: the two
++	// candidate sets stay disjoint, so a captioned image can never pass for
++	// the echo of a text send of the same caption (or the other way round).
++	attachmentGate := `NOT EXISTS (
++		      SELECT 1 FROM message_attachments WHERE message_id = e.message_id
++		  )`
++	if media {
++		attachmentGate = `EXISTS (
++		      SELECT 1 FROM message_attachments WHERE message_id = e.message_id
++		  )`
++	}
+ 	rows, err = tx.QueryContext(ctx, `
+ 		SELECT e.remote_message_id, e.created_at_ms
+ 		FROM messages AS e
+@@ -249,6 +275,7 @@ func (r *OutboxRepository) reconcileEchoGroupTx(
+ 		  AND e.occurred_at_ms BETWEEN e.created_at_ms - ? AND e.created_at_ms + ?
+ 		  AND e.direction = 'outgoing'
+ 		  AND e.body = ?
++		  AND `+attachmentGate+`
+ 		  AND NOT EXISTS (
+ 		      SELECT 1 FROM outbox AS o WHERE o.local_message_id = e.message_id
+ 		  )
+@@ -315,11 +342,12 @@ func (r *OutboxRepository) reconcileEchoGroupTx(
+ 
+ // ReconcileUncorrelatedEcho pairs the sends in an echo's conversation that
+ // carry the echo's body with their echoes, counting the echo itself (see
+-// pairEchoes), and reconciles each pair. It returns Enriched or Reconciled
+-// when the echo was paired with a send, Noop when other pairs changed (an
+-// earlier echo row merged) or nothing applied, and NotFound when the
+-// conversation has no unbound send with this body (a message sent from the
+-// phone itself).
++// pairEchoes), and reconciles each pair. A media echo (HasAttachment) pairs
++// with media sends by caption, which may be empty. It returns Enriched or
++// Reconciled when the echo was paired with a send, Noop when other pairs
++// changed (an earlier echo row merged) or nothing applied, and NotFound when
++// the conversation has no unbound send with this body (a message sent from
++// the phone itself).
+ func (r *OutboxRepository) ReconcileUncorrelatedEcho(
+ 	ctx context.Context,
+ 	req UncorrelatedEchoRequest,
+@@ -331,13 +359,18 @@ func (r *OutboxRepository) ReconcileUncorrelatedEcho(
+ 		{name: "account ID", value: req.AccountID},
+ 		{name: "remote conversation ID", value: req.RemoteConversationID},
+ 		{name: "remote message ID", value: req.RemoteMessageID},
+-		{name: "body", value: req.Body},
+ 	}
+ 	for _, check := range checks {
+ 		if strings.TrimSpace(check.value) == "" {
+ 			return "", fmt.Errorf("reconcile uncorrelated echo: %s is empty", check.name)
+ 		}
+ 	}
++	// A text echo is paired by its body, so an empty one matches nothing; a
++	// media echo is paired by its caption, which is empty whenever the image
++	// was sent without one.
++	if !req.HasAttachment && strings.TrimSpace(req.Body) == "" {
++		return "", fmt.Errorf("reconcile uncorrelated echo: body is empty")
++	}
+ 	if req.SeenAtMS <= 0 || req.OccurredAtMS <= 0 {
+ 		return "", fmt.Errorf("reconcile uncorrelated echo: receipt or occurrence time is not positive")
+ 	}
+@@ -345,6 +378,10 @@ func (r *OutboxRepository) ReconcileUncorrelatedEcho(
+ 	// Most outgoing frames (sent from the phone, or status re-deliveries of a
+ 	// bound send) have no unbound send to pair with: answer them from a read,
+ 	// without taking the write lock.
++	kind := OutboxKindText
++	if req.HasAttachment {
++		kind = OutboxKindMedia
++	}
+ 	var conversationID string
+ 	err := r.store.db.QueryRowContext(ctx, `
+ 		SELECT m.conversation_id
+@@ -354,7 +391,7 @@ func (r *OutboxRepository) ReconcileUncorrelatedEcho(
+ 		WHERE o.account_id = ?
+ 		  AND c.remote_conversation_id = ?
+ 		  AND m.body = ?
+-		  AND `+unboundTextIntentPredicate+`
++		  AND `+unboundIntentPredicate(kind)+`
+ 		LIMIT 1
+ 	`, req.AccountID, req.RemoteConversationID, req.Body).Scan(&conversationID)
+ 	if errors.Is(err, sql.ErrNoRows) {
+@@ -373,7 +410,7 @@ func (r *OutboxRepository) ReconcileUncorrelatedEcho(
+ 		remoteMessageID: req.RemoteMessageID,
+ 		seenAtMS:        req.SeenAtMS,
+ 		occurredAtMS:    req.OccurredAtMS,
+-	})
++	}, req.HasAttachment)
+ 	if err != nil {
+ 		return "", fmt.Errorf("reconcile uncorrelated echo: %w", err)
+ 	}
+@@ -401,30 +438,43 @@ type EchoDuplicateRepairReport struct {
+ // RepairUncorrelatedEchoDuplicates pairs every Google conversation's unbound
+ // text sends with their echo rows, exactly as the live path does (see
+ // pairEchoes), and reconciles each pair, merging the echo row into the local
+-// row. Each conversation and body is repaired in its own transaction; a group
+-// that fails is counted and skipped so it cannot block the rest. It is
+-// idempotent: a repaired send is bound and no longer selected.
++// row. Media sends are repaired the same way, paired by caption (empty for an
++// uncaptioned image). Each conversation and body is repaired in its own
++// transaction; a group that fails is counted and skipped so it cannot block
++// the rest. It is idempotent: a repaired send is bound and no longer
++// selected.
+ func (r *OutboxRepository) RepairUncorrelatedEchoDuplicates(ctx context.Context) (EchoDuplicateRepairReport, error) {
+ 	var report EchoDuplicateRepairReport
++	// Text echoes are paired by body, media echoes by caption: the same
++	// (conversation, body) grouping serves both, and an uncaptioned media
++	// send's empty body never leaves its group unlisted.
+ 	rows, err := r.store.db.QueryContext(ctx, `
+-		SELECT DISTINCT o.account_id, m.conversation_id, m.body
++		SELECT DISTINCT o.account_id, m.conversation_id, m.body, o.kind
+ 		FROM outbox AS o
+ 		JOIN accounts AS a ON a.account_id = o.account_id
+ 		JOIN messages AS m ON m.message_id = o.local_message_id
+ 		WHERE a.bridge_key = 'google_messages'
+-		  AND m.body <> ''
+-		  AND `+unboundTextIntentPredicate)
++		  AND (o.kind = 'media' OR m.body <> '')
++		  AND (`+unboundIntentPredicate(OutboxKindText)+` OR `+unboundIntentPredicate(OutboxKindMedia)+`)
++	`)
+ 	if err != nil {
+ 		return report, fmt.Errorf("repair echo duplicates: list groups: %w", err)
+ 	}
+-	type group struct{ accountID, conversationID, body string }
++	type group struct {
++		accountID      string
++		conversationID string
++		body           string
++		media          bool
++	}
+ 	var groups []group
+ 	for rows.Next() {
+ 		var g group
+-		if err := rows.Scan(&g.accountID, &g.conversationID, &g.body); err != nil {
++		var kind OutboxKind
++		if err := rows.Scan(&g.accountID, &g.conversationID, &g.body, &kind); err != nil {
+ 			rows.Close()
+ 			return report, fmt.Errorf("repair echo duplicates: scan group: %w", err)
+ 		}
++		g.media = kind == OutboxKindMedia
+ 		groups = append(groups, g)
+ 	}
+ 	if err := errors.Join(rows.Err(), rows.Close()); err != nil {
+@@ -434,7 +484,7 @@ func (r *OutboxRepository) RepairUncorrelatedEchoDuplicates(ctx context.Context)
+ 
+ 	var errs []error
+ 	for _, g := range groups {
+-		merged, err := r.repairEchoGroup(ctx, g.accountID, g.conversationID, g.body)
++		merged, err := r.repairEchoGroup(ctx, g.accountID, g.conversationID, g.body, g.media)
+ 		if err != nil {
+ 			report.Failed++
+ 			errs = append(errs, err)
+@@ -445,13 +495,13 @@ func (r *OutboxRepository) RepairUncorrelatedEchoDuplicates(ctx context.Context)
+ 	return report, errors.Join(errs...)
+ }
+ 
+-func (r *OutboxRepository) repairEchoGroup(ctx context.Context, accountID, conversationID, body string) (int, error) {
++func (r *OutboxRepository) repairEchoGroup(ctx context.Context, accountID, conversationID, body string, media bool) (int, error) {
+ 	tx, err := r.store.db.BeginTx(ctx, nil)
+ 	if err != nil {
+ 		return 0, fmt.Errorf("repair echo duplicates in %q: begin transaction: %w", conversationID, err)
+ 	}
+ 	defer tx.Rollback()
+-	changed, _, err := r.reconcileEchoGroupTx(ctx, tx, accountID, conversationID, body, nil)
++	changed, _, err := r.reconcileEchoGroupTx(ctx, tx, accountID, conversationID, body, nil, media)
+ 	if err != nil {
+ 		return 0, fmt.Errorf("repair echo duplicates in %q: %w", conversationID, err)
+ 	}
