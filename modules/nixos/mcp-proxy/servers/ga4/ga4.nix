@@ -12,7 +12,6 @@
     {
       pkgs,
       lib,
-      writeNuApplication,
       ...
     }:
     let
@@ -35,52 +34,62 @@
 
       venv = pythonSet.mkVirtualEnv "ga4-mcp-env" workspace.deps.default;
 
-      # The container has no ADC. Assemble an authorized_user credential from
-      # the GA4_* sops env vars and point google-auth at it — analytics-mcp
-      # calls google.auth.default(scopes=[analytics.readonly]), and a refresh
-      # token minted for that scope (ga4-mcp-auth) refreshes correctly. The
-      # values are URL-safe OAuth strings, so printf-JSON needs no escaping.
+      # The container has no ADC. google-auth reads the authorized_user JSON
+      # written to the volume by `ga4-login` (see login.py) — analytics-mcp
+      # calls google.auth.default(scopes=[analytics.readonly]) and refreshes
+      # the token itself, so nothing but the creds file is needed at runtime.
       ga4-mcp = pkgs.writeShellApplication {
         name = "ga4-mcp";
         text = ''
-          if [ -z "''${GA4_CLIENT_ID:-}" ] || [ -z "''${GA4_CLIENT_SECRET:-}" ] || [ -z "''${GA4_REFRESH_TOKEN:-}" ]; then
-            echo "ga4-mcp: GA4_CLIENT_ID/GA4_CLIENT_SECRET/GA4_REFRESH_TOKEN not set — run ga4-mcp-auth and sops set (see servers/ga4/auth.nu)" >&2
+          creds="''${GA4_CREDS_FILE:-/data-ga4/creds.json}"
+          if [ ! -s "$creds" ]; then
+            echo "ga4-mcp: $creds missing or empty — run: podman exec -it mcp ga4-login" >&2
           fi
-          creds="$(mktemp)"
-          trap 'rm -f "$creds"' EXIT
           export GOOGLE_APPLICATION_CREDENTIALS="$creds"
-          printf '{"type":"authorized_user","client_id":"%s","client_secret":"%s","refresh_token":"%s"}' \
-            "''${GA4_CLIENT_ID:-}" "''${GA4_CLIENT_SECRET:-}" "''${GA4_REFRESH_TOKEN:-}" > "$creds"
           exec "${venv}/bin/analytics-mcp" "$@"
         '';
       };
 
-      # One-off credential minter, same oauth2l flow as gtm's (see auth.nu).
-      ga4-mcp-auth = writeNuApplication {
-        name = "ga4-mcp-auth";
-        runtimeInputs = [ pkgs.oauth2l ];
-        text = builtins.readFile ./auth.nu;
+      # Interactive consent flow, workspace-<account>-login style:
+      #   podman exec -it mcp ga4-login
+      # Uses the gtm/* sops env (same desktop OAuth client) and writes the
+      # authorized_user JSON into the server volume.
+      ga4-login = pkgs.writeShellApplication {
+        name = "ga4-login";
+        runtimeInputs = [ venv ];
+        text = ''
+          exec "${venv}/bin/python" "${./login.py}" "$@"
+        '';
       };
     in
     {
       packages = {
-        inherit ga4-mcp ga4-mcp-auth;
+        inherit ga4-mcp ga4-login;
       };
     };
 
   flake.modules.nixos.praesidium =
     { pkgs, ... }:
     let
-      inherit (pkgs.pkgs-mine) ga4-mcp;
+      inherit (pkgs.pkgs-mine) ga4-mcp ga4-login;
+      stateDir = "/data-ga4";
     in
     {
+      systemd.tmpfiles.rules = [ "d /var/lib/ga4 0700 root root -" ];
+
       services.mcp-proxy.servers.ga4 = {
         command = "${ga4-mcp}/bin/ga4-mcp";
-        packages = [ ga4-mcp ];
+        packages = [
+          ga4-mcp
+          ga4-login
+        ];
+        volumes = [ "/var/lib/ga4:${stateDir}" ];
+        # Same outsmartly-app desktop client as the gtm server — reusing its
+        # sops keys means no new secrets to mint; only the consent (which
+        # scopes the refresh token to analytics.readonly) happens in-container.
         secretEnvVars = {
-          GA4_CLIENT_ID = "ga4/client_id";
-          GA4_CLIENT_SECRET = "ga4/client_secret";
-          GA4_REFRESH_TOKEN = "ga4/refresh_token";
+          GA4_CLIENT_ID = "gtm/client_id";
+          GA4_CLIENT_SECRET = "gtm/client_secret";
         };
       };
     };
