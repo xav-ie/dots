@@ -5,7 +5,12 @@
       home = "/home/${config.defaultUser}";
       server = pkgs.writers.writePython3Bin "herdr-mcp" {
         libraries = [ pkgs.python3Packages.mcp ];
-        flakeIgnore = [ "E501" ];
+        # W503: ruff format (treefmt) breaks long conditions before the
+        # operator, which pycodestyle only flags because the writer enables it.
+        flakeIgnore = [
+          "E501"
+          "W503"
+        ];
       } (builtins.readFile ./server.py);
     in
     {
