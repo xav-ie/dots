@@ -576,7 +576,11 @@ in
                   )
                 }; do
                   echo "🍃 Relaunching $label"
-                  sudo -u ${config.defaultUser} launchctl kickstart -k "gui/$(id -u ${config.defaultUser})/$label" || true
+                  # kickstart waits for the spawn, which never comes for an agent
+                  # launchd is holding back (missing program, crash throttle).
+                  sudo -u ${config.defaultUser} ${pkgs.coreutils}/bin/timeout 15 \
+                    launchctl kickstart -k "gui/$(id -u ${config.defaultUser})/$label" \
+                    || echo "🍃 $label did not start; see launchctl print gui/$(id -u ${config.defaultUser})/$label"
                 done
                 mkdir -p "$(dirname "$hash_file")"
                 echo "$current_hash" > "$hash_file"
