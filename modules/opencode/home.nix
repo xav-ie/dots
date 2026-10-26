@@ -83,6 +83,13 @@
 
       programs.opencode = {
         enable = true;
+        # The real binary is npm's @opencode/cli (V2, self-updating, tracked
+        # by modules/home/npm/packages.json). nixpkgs' opencode is a stale V1
+        # that lands in /etc/profiles (or ~/.nix-profile) and can shadow the
+        # npm one when the npm install is broken — exactly what happened on
+        # nox. Keep the config generation (settings/tui/context/...), drop
+        # the binary.
+        package = null;
         settings = {
           # GLM via the z.ai coding plan; the key lives in opencode's own
           # credential store (`opencode auth login` → auth.json), so the
