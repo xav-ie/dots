@@ -1,0 +1,527 @@
+diff --git a/internal/app/backfill.go b/internal/app/backfill.go
+index 72a7dec..26a80d4 100644
+--- a/internal/app/backfill.go
++++ b/internal/app/backfill.go
+@@ -83,9 +83,11 @@ func (a *App) Backfill() error {
+ 	convos := resp.GetConversations()
+ 	a.Logger.Info().Int("count", len(convos)).Msg("Fetched conversations")
+ 
++	closed := false
+ 	for _, conv := range convos {
+ 		if err := catchUp.storeConversation(conv); err != nil {
+ 			if errors.Is(err, ErrGoogleHistoryClosed) {
++				closed = true
+ 				break
+ 			}
+ 			a.Logger.Error().Err(err).Str("conv_id", conv.GetConversationID()).Msg("Failed to store conversation")
+@@ -106,6 +108,10 @@ func (a *App) Backfill() error {
+ 		}
+ 	}
+ 
++	if !closed {
++		a.backfillSpamFolder(catchUp)
++	}
++
+ 	a.Logger.Info().Int("conversations", len(convos)).Msg("Backfill complete")
+ 	a.emitConversationsChange()
+ 	a.emitMessagesChange("")
+@@ -123,6 +129,30 @@ func (a *App) DeepBackfill() {
+ 	a.deepBackfill()
+ }
+ 
++// backfillSpamFolder lists the newest Spam & blocked threads, without their
++// messages, so threads already stored learn their folder on every connect
++// rather than only on a deep or window backfill. A failure is logged and
++// never fails the startup backfill.
++func (a *App) backfillSpamFolder(catchUp *googleCatchUp) {
++	folder := gmproto.ListConversationsRequest_SPAM_BLOCKED
++	// Not recorded as a pull: the startup backfill's INBOX listing stays the
++	// last pull pull health reports after a connect.
++	resp, err := catchUp.gm.ListConversationsWithCursor(100, folder, nil)
++	if err != nil {
++		a.HandleGoogleAuthExpiredError(err)
++		a.Logger.Warn().Err(err).Msg("Failed to list spam and blocked conversations")
++		return
++	}
++	for _, conv := range resp.GetConversations() {
++		if err := catchUp.storeConversation(conv); err != nil {
++			if errors.Is(err, ErrGoogleHistoryClosed) {
++				return
++			}
++			a.Logger.Error().Err(err).Str("conv_id", conv.GetConversationID()).Msg("Failed to store conversation")
++		}
++	}
++}
++
+ // backfillFolders are the folders deep and window backfills scan.
+ var backfillFolders = []gmproto.ListConversationsRequest_Folder{
+ 	gmproto.ListConversationsRequest_INBOX,
+diff --git a/internal/app/history_catchup_test.go b/internal/app/history_catchup_test.go
+index 8f9e429..cff80d7 100644
+--- a/internal/app/history_catchup_test.go
++++ b/internal/app/history_catchup_test.go
+@@ -2159,8 +2159,13 @@ func TestHistoryShallowBackfillTeesFirstPageThroughGMClient(t *testing.T) {
+ 	}
+ 	v2.drain(t)
+ 
+-	if want := []hcdListCall{{Count: 100, Folder: gmproto.ListConversationsRequest_INBOX}}; !reflect.DeepEqual(gm.listCalls, want) {
+-		t.Errorf("list calls = %+v, want one INBOX first-page call for 100", gm.listCalls)
++	// Then one Spam & blocked first page, conversations only, to restamp
++	// stored threads' folders.
++	if want := []hcdListCall{
++		{Count: 100, Folder: gmproto.ListConversationsRequest_INBOX},
++		{Count: 100, Folder: gmproto.ListConversationsRequest_SPAM_BLOCKED},
++	}; !reflect.DeepEqual(gm.listCalls, want) {
++		t.Errorf("list calls = %+v, want INBOX then SPAM_BLOCKED first-page calls for 100", gm.listCalls)
+ 	}
+ 	wantFetches := []hcdFetchCall{{"s1", 20, ""}, {"s2", 20, ""}, {"s3", 20, ""}}
+ 	if !reflect.DeepEqual(gm.fetches, wantFetches) {
+diff --git a/internal/bridge/types.go b/internal/bridge/types.go
+index 801ec41..f3eb7d8 100644
+--- a/internal/bridge/types.go
++++ b/internal/bridge/types.go
+@@ -51,8 +51,17 @@ type ConversationEvent struct {
+ 	Title                string
+ 	Participants         []Participant
+ 	RemoteRevision       string
++	// Folder is where the transport files the thread: ConversationFolderSpam
++	// for spam and blocked threads, ConversationFolderInbox for any other.
++	// Empty means the transport did not say, and leaves the stored folder.
++	Folder string
+ }
+ 
++const (
++	ConversationFolderInbox = "inbox"
++	ConversationFolderSpam  = "spam"
++)
++
+ type MessageEvent struct {
+ 	RemoteConversationID string
+ 	RemoteMessageID      string
+diff --git a/internal/db/conversations.go b/internal/db/conversations.go
+index 08f6c3b..6466ed3 100644
+--- a/internal/db/conversations.go
++++ b/internal/db/conversations.go
+@@ -228,6 +228,7 @@ func (s *Store) SetConversationDisplayProtocol(id, protocol string) error {
+ const (
+ 	TabInbox   = ""        // Recent threads
+ 	TabArchive = "archive" // Archived threads
++	TabSpam    = "spam"    // Spam and blocked threads, as the transport files them
+ )
+ 
+ // SetConversationTab moves a single conversation into the given tab.
+diff --git a/internal/db/db.go b/internal/db/db.go
+index d3a0f30..a710e1a 100644
+--- a/internal/db/db.go
++++ b/internal/db/db.go
+@@ -27,7 +27,7 @@ type Conversation struct {
+ 	UnifiedName        string `json:"unified_name,omitempty"`
+ 	IsFavorite         bool   `json:"is_favorite,omitempty"`
+ 	NotificationMode   string `json:"notification_mode,omitempty"` // all, mentions, muted
+-	Tab                string `json:"tab,omitempty"`               // "" = Recent (inbox), "archive", or a custom tab id
++	Tab                string `json:"tab,omitempty"`               // "" = Recent (inbox), "archive", "spam", or a custom tab id
+ }
+ 
+ type Message struct {
+diff --git a/internal/ingest/conversation_folder_test.go b/internal/ingest/conversation_folder_test.go
+new file mode 100644
+index 0000000..684aaf8
+--- /dev/null
++++ b/internal/ingest/conversation_folder_test.go
+@@ -0,0 +1,65 @@
++package ingest
++
++import (
++	"testing"
++
++	"go.mau.fi/mautrix-gmessages/pkg/libgm/gmproto"
++
++	"github.com/maxghenis/openmessage/internal/bridge"
++	"github.com/maxghenis/openmessage/internal/storage/sqlite"
++)
++
++func TestGoogleConversationFolder(t *testing.T) {
++	for status, want := range map[gmproto.ConversationStatus]string{
++		gmproto.ConversationStatus_UNKNOWN_CONVERSATION_STATUS: "",
++		gmproto.ConversationStatus_ACTIVE:                      bridge.ConversationFolderInbox,
++		gmproto.ConversationStatus_ARCHIVED:                    bridge.ConversationFolderInbox,
++		gmproto.ConversationStatus_SPAM_FOLDER:                 bridge.ConversationFolderSpam,
++		gmproto.ConversationStatus_BLOCKED_FOLDER:              bridge.ConversationFolderSpam,
++		gmproto.ConversationStatus_CROSS_COUNTRY_FOLDER:        bridge.ConversationFolderSpam,
++	} {
++		if got := googleConversationFolder(status); got != want {
++			t.Errorf("googleConversationFolder(%v) = %q, want %q", status, got, want)
++		}
++	}
++}
++
++// Live snapshots file a thread into and out of spam; a history snapshot of a
++// thread v2 already holds restamps its folder (how a Spam & blocked folder
++// scan reaches existing threads) and one with no status leaves it.
++func TestConversationFolderFollowsGoogleStatus(t *testing.T) {
++	h := newHWTHarness(t, false)
++	folder := func() string {
++		t.Helper()
++		return sqlite.ConversationFolder(h.conversation(t, "hwt-spam").MetadataJSON)
++	}
++	snapshot := func(status gmproto.ConversationStatus) *gmproto.Conversation {
++		conversation := hwtConversation("hwt-spam", "", false, hwtKarl)
++		conversation.Status = status
++		return conversation
++	}
++
++	h.liveConversation(t, snapshot(gmproto.ConversationStatus_ACTIVE))
++	h.pump(t)
++	if got := folder(); got != "" {
++		t.Fatalf("active thread folder = %q, want inbox", got)
++	}
++
++	h.historyConversation(t, snapshot(gmproto.ConversationStatus_BLOCKED_FOLDER))
++	h.pump(t)
++	if got := folder(); got != "spam" {
++		t.Fatalf("after blocked history snapshot folder = %q, want spam", got)
++	}
++
++	h.historyConversation(t, snapshot(gmproto.ConversationStatus_UNKNOWN_CONVERSATION_STATUS))
++	h.pump(t)
++	if got := folder(); got != "spam" {
++		t.Fatalf("after status-less history snapshot folder = %q, want spam kept", got)
++	}
++
++	h.liveConversation(t, snapshot(gmproto.ConversationStatus_ACTIVE))
++	h.pump(t)
++	if got := folder(); got != "" {
++		t.Fatalf("after unblock folder = %q, want inbox", got)
++	}
++}
+diff --git a/internal/ingest/googledecoder.go b/internal/ingest/googledecoder.go
+index 70b4e9e..cdacd8e 100644
+--- a/internal/ingest/googledecoder.go
++++ b/internal/ingest/googledecoder.go
+@@ -470,10 +470,27 @@ func googleConversationEvent(conversation *gmproto.Conversation) bridge.Event {
+ 			Kind:                 kind,
+ 			Title:                conversation.GetName(),
+ 			Participants:         participants,
++			Folder:               googleConversationFolder(conversation.GetStatus()),
+ 		},
+ 	}
+ }
+ 
++// googleConversationFolder maps a Google thread status to its folder. Google
++// Messages lists spam, blocked and cross-country threads together under Spam
++// & blocked; an unknown status says nothing about the folder.
++func googleConversationFolder(status gmproto.ConversationStatus) string {
++	switch status {
++	case gmproto.ConversationStatus_UNKNOWN_CONVERSATION_STATUS:
++		return ""
++	case gmproto.ConversationStatus_SPAM_FOLDER,
++		gmproto.ConversationStatus_BLOCKED_FOLDER,
++		gmproto.ConversationStatus_CROSS_COUNTRY_FOLDER:
++		return bridge.ConversationFolderSpam
++	default:
++		return bridge.ConversationFolderInbox
++	}
++}
++
+ func googleReactionEvent(
+ 	message *gmproto.Message,
+ 	emoji string,
+diff --git a/internal/ingest/worker.go b/internal/ingest/worker.go
+index b74e1b2..15597c5 100644
+--- a/internal/ingest/worker.go
++++ b/internal/ingest/worker.go
+@@ -1016,6 +1016,10 @@ func (w *Worker) refreshConversation(
+ 		conversation.RemoteRevision = optionalTrimmed(event.RemoteRevision)
+ 		conversation.UpdatedAtMS = nowMS
+ 	}
++	conversation.MetadataJSON, _, err = sqlite.WithConversationFolder(conversation.MetadataJSON, event.Folder)
++	if err != nil {
++		return sqlite.Conversation{}, err
++	}
+ 	if err := w.store.UpsertConversation(conversation); err != nil {
+ 		return sqlite.Conversation{}, err
+ 	}
+@@ -1149,7 +1153,10 @@ func (w *Worker) applyHistoryConversation(
+ 			if contradicts {
+ 				return false, errHistoryContradicted
+ 			}
+-			return false, nil
++			// History never rewrites a bound thread, except to file it where
++			// the transport now does (a folder scan is how existing threads
++			// learn they are spam or blocked).
++			return false, w.restampConversationFolder(bound, event.Folder)
+ 		}
+ 		if !errors.Is(err, sqlite.ErrNotFound) {
+ 			return false, err
+@@ -1179,6 +1186,17 @@ func (w *Worker) applyHistoryConversation(
+ 	return true, nil
+ }
+ 
++// restampConversationFolder stores folder on an existing conversation when it
++// differs from the stored one.
++func (w *Worker) restampConversationFolder(conversation sqlite.Conversation, folder string) error {
++	metadata, changed, err := sqlite.WithConversationFolder(conversation.MetadataJSON, folder)
++	if err != nil || !changed {
++		return err
++	}
++	conversation.MetadataJSON = metadata
++	return w.store.UpsertConversation(conversation)
++}
++
+ // historySnapshotContradicts reports whether a fetched snapshot names a
+ // different thread than the one its remote ID is bound to in v2. That is the
+ // signature of a stale binding after a phone swap or restore, which the live
+diff --git a/internal/storage/sqlite/conversation_folder.go b/internal/storage/sqlite/conversation_folder.go
+new file mode 100644
+index 0000000..01099e2
+--- /dev/null
++++ b/internal/storage/sqlite/conversation_folder.go
+@@ -0,0 +1,58 @@
++package sqlite
++
++import (
++	"encoding/json"
++	"fmt"
++	"strings"
++)
++
++// conversationFolderKey holds, in a conversation's metadata_json, the folder
++// its transport files it under when that is not the inbox: "spam" for spam
++// and blocked threads. The key is absent for inbox threads.
++const conversationFolderKey = "folder"
++
++// ConversationFolder returns the folder stored in a conversation's
++// metadata_json, or "" for the inbox.
++func ConversationFolder(metadataJSON string) string {
++	var metadata map[string]any
++	if json.Unmarshal([]byte(metadataJSON), &metadata) != nil {
++		return ""
++	}
++	folder, _ := metadata[conversationFolderKey].(string)
++	return folder
++}
++
++// WithConversationFolder returns metadataJSON with its folder set to folder
++// ("inbox" removes it, "" leaves metadataJSON as is), and whether it changed.
++func WithConversationFolder(metadataJSON, folder string) (string, bool, error) {
++	folder = strings.TrimSpace(folder)
++	if folder == "" {
++		return metadataJSON, false, nil
++	}
++	metadata := map[string]any{}
++	if strings.TrimSpace(metadataJSON) != "" {
++		if err := json.Unmarshal([]byte(metadataJSON), &metadata); err != nil {
++			return "", false, fmt.Errorf("conversation metadata: %w", err)
++		}
++		if metadata == nil {
++			metadata = map[string]any{}
++		}
++	}
++	current, _ := metadata[conversationFolderKey].(string)
++	if folder == "inbox" {
++		folder = ""
++	}
++	if current == folder {
++		return metadataJSON, false, nil
++	}
++	if folder == "" {
++		delete(metadata, conversationFolderKey)
++	} else {
++		metadata[conversationFolderKey] = folder
++	}
++	encoded, err := json.Marshal(metadata)
++	if err != nil {
++		return "", false, fmt.Errorf("conversation metadata: %w", err)
++	}
++	return string(encoded), true, nil
++}
+diff --git a/internal/storage/sqlite/conversation_folder_test.go b/internal/storage/sqlite/conversation_folder_test.go
+new file mode 100644
+index 0000000..e485e68
+--- /dev/null
++++ b/internal/storage/sqlite/conversation_folder_test.go
+@@ -0,0 +1,33 @@
++package sqlite
++
++import (
++	"strings"
++	"testing"
++)
++
++func TestWithConversationFolder(t *testing.T) {
++	for _, tc := range []struct {
++		metadata, folder, want string
++		changed                bool
++	}{
++		{"{}", "spam", `{"folder":"spam"}`, true},
++		{"", "spam", `{"folder":"spam"}`, true},
++		{`{"other":1}`, "spam", `{"folder":"spam","other":1}`, true},
++		{`{"folder":"spam"}`, "spam", `{"folder":"spam"}`, false},
++		{`{"folder":"spam","other":1}`, "inbox", `{"other":1}`, true},
++		{"{}", "inbox", "{}", false},
++		{`{"folder":"spam"}`, "", `{"folder":"spam"}`, false},
++	} {
++		got, changed, err := WithConversationFolder(tc.metadata, tc.folder)
++		if err != nil || got != tc.want || changed != tc.changed {
++			t.Errorf("WithConversationFolder(%q, %q) = %q, %v, %v; want %q, %v",
++				tc.metadata, tc.folder, got, changed, err, tc.want, tc.changed)
++		}
++		if folder := ConversationFolder(got); (folder == "spam") != strings.Contains(tc.want, "spam") {
++			t.Errorf("ConversationFolder(%q) = %q", got, folder)
++		}
++	}
++	if _, _, err := WithConversationFolder("not json", "spam"); err == nil {
++		t.Error("invalid metadata: want an error")
++	}
++}
+diff --git a/internal/tools/list_conversations.go b/internal/tools/list_conversations.go
+index b5ff0d0..3f26930 100644
+--- a/internal/tools/list_conversations.go
++++ b/internal/tools/list_conversations.go
+@@ -19,6 +19,7 @@ func listConversationsTool() mcp.Tool {
+ 		mcp.WithDescription("List recent conversations, sorted by most recent message. Includes conversations from all synced platforms such as SMS/RCS, Google Chat, iMessage, WhatsApp, and Signal."),
+ 		mcp.WithNumber("limit", mcp.Description("Maximum conversations to return (default 20)")),
+ 		mcp.WithString("source_platform", mcp.Description("Filter by platform: sms, gchat, imessage, whatsapp, signal, telegram")),
++		mcp.WithBoolean("include_spam", mcp.Description("Also list threads the phone files under Spam & blocked (default false)")),
+ 		mcp.WithReadOnlyHintAnnotation(true),
+ 		mcp.WithDestructiveHintAnnotation(false),
+ 	)
+@@ -30,6 +31,7 @@ func listConversationsHandler(a *app.App, configured ...Options) server.ToolHand
+ 		args := req.GetArguments()
+ 		limit := intArg(args, "limit", 20)
+ 		platform := strArg(args, "source_platform")
++		includeSpam, _ := args["include_spam"].(bool)
+ 
+ 		var convs []*db.Conversation
+ 		var err error
+@@ -37,25 +39,36 @@ func listConversationsHandler(a *app.App, configured ...Options) server.ToolHand
+ 			convs, err = a.Store.ListConversationsByPlatform(platform, limit)
+ 		} else if !options.V2Primary {
+ 			convs, err = a.Store.ListConversations(limit)
+-		} else if platform == "" {
++		} else if platform == "" && includeSpam {
+ 			convs, err = options.Reads.ListConversations(limit)
+ 		} else if limit <= 0 {
+ 			convs = []*db.Conversation{}
+ 		} else {
+ 			// ReadSource intentionally mirrors only the canonical legacy methods;
+ 			// filter the v2 cross-account recency result here rather than widening
+-			// the cutover seam with a platform-specific convenience query.
+-			var candidates []*db.Conversation
+-			candidates, err = options.Reads.ListConversations(math.MaxInt)
+-			if err == nil {
++			// the cutover seam with a platform-specific convenience query. Read
++			// twice as far each round until limit matches or the list runs out.
++			for window := limit; ; window *= 2 {
++				var candidates []*db.Conversation
++				candidates, err = options.Reads.ListConversations(window)
++				if err != nil {
++					break
++				}
++				convs = convs[:0]
+ 				for _, conversation := range candidates {
+-					if conversation != nil && normalizedPlatform(conversation.SourcePlatform) == normalizedPlatform(platform) {
++					if conversation == nil || (!includeSpam && conversation.Tab == db.TabSpam) {
++						continue
++					}
++					if platform == "" || normalizedPlatform(conversation.SourcePlatform) == normalizedPlatform(platform) {
+ 						convs = append(convs, conversation)
+ 						if len(convs) >= limit {
+ 							break
+ 						}
+ 					}
+ 				}
++				if len(convs) >= limit || len(candidates) < window || window > math.MaxInt/2 {
++					break
++				}
+ 			}
+ 		}
+ 		if err != nil {
+diff --git a/internal/v2read/map.go b/internal/v2read/map.go
+index 5ec92f8..edc4e37 100644
+--- a/internal/v2read/map.go
++++ b/internal/v2read/map.go
+@@ -94,9 +94,19 @@ func (s *Source) mapConversation(
+ 		SourcePlatform:   platformForBridgeKey(account.BridgeKey),
+ 		IsFavorite:       conversation.IsFavorite,
+ 		NotificationMode: string(conversation.NotificationMode),
++		Tab:              conversationTab(conversation),
+ 	}, nil
+ }
+ 
++// conversationTab files spam and blocked threads under db.TabSpam, so they
++// leave Recent and show only when that tab is picked.
++func conversationTab(conversation sqlite.Conversation) string {
++	if sqlite.ConversationFolder(conversation.MetadataJSON) == "spam" {
++		return db.TabSpam
++	}
++	return db.TabInbox
++}
++
+ type participantInfo struct {
+ 	dto    participantDTO
+ 	isSelf bool
+diff --git a/internal/web/static/index.html b/internal/web/static/index.html
+index 43bb352..b240fff 100644
+--- a/internal/web/static/index.html
++++ b/internal/web/static/index.html
+@@ -6005,8 +6005,11 @@ body::after {
+   let activeConversation = null;
+   let currentPlatformFilter = 'all';
+   let customTabs = [];          // [{tab_id, name, position, created_at}]
+-  let currentTab = '';          // '' = Recent (inbox), 'archive', or a custom tab id
++  let currentTab = '';          // '' = Recent (inbox), 'archive', 'spam', or a custom tab id
+   const TAB_ARCHIVE = 'archive';
++  // Spam and blocked threads, filed there by the phone (Google Messages'
++  // Spam & blocked folder) rather than moved by the user.
++  const TAB_SPAM = 'spam';
+   let selectionMode = false;
+   const selectedIds = new Set();
+   let conversationsRefreshTimer = null;
+@@ -8008,6 +8011,7 @@ body::after {
+   function tabDisplayName(tab) {
+     if (tab === '') return 'Recent';
+     if (tab === TAB_ARCHIVE) return 'Archive';
++    if (tab === TAB_SPAM) return 'Spam & blocked';
+     const t = tabById(tab);
+     return t ? t.name : 'tab';
+   }
+@@ -8024,6 +8028,10 @@ body::after {
+       { id: TAB_ARCHIVE, label: 'Archive' },
+       ...customTabs.map(t => ({ id: t.tab_id, label: t.name, custom: true })),
+     ];
++    // Shown only while there is something in it.
++    if (counts.get(TAB_SPAM) || currentTab === TAB_SPAM) {
++      tabs.push({ id: TAB_SPAM, label: 'Spam & blocked' });
++    }
+     $sidebarTabs.innerHTML = tabs.map(tab => {
+       const count = counts.get(tab.id) || 0;
+       const countHTML = count ? `<span class="sidebar-tab-count">${count}</span>` : '';
+@@ -8068,7 +8076,7 @@ body::after {
+       console.error('Failed to load tabs:', err);
+       customTabs = [];
+     }
+-    if (currentTab && currentTab !== TAB_ARCHIVE && !tabById(currentTab)) {
++    if (currentTab && currentTab !== TAB_ARCHIVE && currentTab !== TAB_SPAM && !tabById(currentTab)) {
+       currentTab = '';
+     }
+     renderTabs();
+@@ -8144,6 +8152,9 @@ body::after {
+ 
+   // ─── Moving conversations between tabs ───
+   function tabMoveMenuItems(excludeTab) {
++    // The phone owns Spam & blocked; a thread leaves it when it is unblocked
++    // or marked not spam there.
++    if (excludeTab === TAB_SPAM) return [];
+     const targets = [
+       { id: '', label: 'Move to Recent' },
+       { id: TAB_ARCHIVE, label: 'Archive' },
+@@ -10402,6 +10413,8 @@ body::after {
+       if (!isSearch && currentTab) {
+         emptyMsg = currentTab === TAB_ARCHIVE
+           ? 'No archived threads'
++          : currentTab === TAB_SPAM
++          ? 'No spam or blocked threads'
+           : `No threads in “${tabDisplayName(currentTab)}” yet`;
+       } else if (currentPlatformFilter !== 'all') {
+         emptyMsg = isSearch

@@ -39,7 +39,33 @@ let
     # Serve signal-cli's Signal group photos (/api/signal/group-avatar) instead
     # of borrowing a member's, and move the platform marker off the avatar to
     # beside the conversation name. The web UI is embedded in this binary.
-    patches = [ ./signal-group-avatars.patch ];
+    # /api/avatar falls back to signal-cli's contact/profile photo by phone,
+    # for Signal 1:1s and SMS contacts Google has no photo of. Threads the
+    # phone files under Spam & blocked leave Recent for their own tab (and
+    # list_conversations unless include_spam); every connect lists that
+    # folder so stored threads learn their status.
+    patches = [
+      ./signal-group-avatars.patch
+      ./signal-contact-avatars.patch
+      ./spam-blocked-tab.patch
+      # Ctrl+Tab / Ctrl+Shift+Tab cycle conversations.
+      ./ctrl-tab-conversations.patch
+      # Tab moves (Archive, custom tabs) write the v2 store, which v2 reads
+      # serve; they only reached the legacy store and failed with "no rows".
+      ./v2-conversation-tabs.patch
+      # Name people who aren't contacts after their RCS profile ("~name", as
+      # Google Messages shows it), read from a Participant field libgm skips.
+      ./rcs-profile-names.patch
+      # Favorite, notification mode, unread counts, mark-read and People read
+      # and write the v2 store; they hit the legacy one and failed or went stale.
+      ./v2-conversation-writes.patch
+      # Signal threads muted on the phone (signal-cli syncs the mute) read as
+      # notification mode "muted" while the mute lasts.
+      ./signal-mute.patch
+      # Threads archived on the phone get their messages at startup, opening an
+      # empty thread fetches its history, and archive syncs both ways.
+      ./empty-threads.patch
+    ];
     subPackages = [ "." ];
     env.CGO_ENABLED = 0;
     ldflags = [
@@ -69,6 +95,22 @@ stdenv.mkDerivation {
     # Notifications only fired on stream reconnects: bytes.lines drops the
     # blank line the app waited for before handling each SSE event.
     ./notification-events.patch
+    # Title notifications from unsaved contacts with their number (SenderName
+    # is empty, and an empty title shows the app name), and attach the
+    # sender's photo from the backend's synced avatars or Contacts.
+    ./notification-sender.patch
+    # The WebView reloaded on every SwiftUI update, since its loaded URL never
+    # equals baseURL exactly; reload only when the backend's host/port moves.
+    ./webview-reload.patch
+    # Spam and blocked threads (tab "spam") never notify.
+    ./spam-notifications.patch
+    # No window tabbing, so Ctrl+Tab reaches the web UI.
+    ./ctrl-tab-window.patch
+    # Muted threads never notify; "mentions" ones only when mentioned.
+    ./mute-notifications.patch
+    # A group notification is titled with the group, the sender as subtitle,
+    # and shows the group's photo (Signal, WhatsApp) before the sender's.
+    ./group-notifications.patch
     # Alert "WhatsApp was logged out" only after WhatsApp was ever paired,
     # not on every launch of an install that never linked it.
     ./whatsapp-alert.patch

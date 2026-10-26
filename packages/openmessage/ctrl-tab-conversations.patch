@@ -1,0 +1,23 @@
+diff --git a/internal/web/static/index.html b/internal/web/static/index.html
+index b240fff..584c1f9 100644
+--- a/internal/web/static/index.html
++++ b/internal/web/static/index.html
+@@ -14907,6 +14907,18 @@ body::after {
+       return;
+     }
+ 
++    // ── Ctrl+Tab / Ctrl+Shift+Tab: Next / previous conversation, wrapping
++    // like browser tabs (works everywhere) ──
++    if (e.ctrlKey && !e.metaKey && !e.altKey && e.key === 'Tab') {
++      e.preventDefault();
++      const count = getConvoItems().length;
++      if (count === 0) return;
++      const idx = getActiveConvoIndex();
++      const next = idx < 0 ? (e.shiftKey ? count - 1 : 0) : idx + (e.shiftKey ? -1 : 1);
++      selectConvoByIndex((next + count) % count);
++      return;
++    }
++
+     // ── The remaining shortcuts should NOT fire when typing in inputs ──
+     if (isInput) return;
+ 

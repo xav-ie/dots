@@ -1,0 +1,340 @@
+diff --git a/cmd/serve.go b/cmd/serve.go
+index a2e5e4c..07c84e3 100644
+--- a/cmd/serve.go
++++ b/cmd/serve.go
+@@ -34,6 +34,7 @@ import (
+ 	"github.com/maxghenis/openmessage/internal/localapi"
+ 	"github.com/maxghenis/openmessage/internal/notify"
+ 	"github.com/maxghenis/openmessage/internal/readsource"
++	"github.com/maxghenis/openmessage/internal/signallive"
+ 	"github.com/maxghenis/openmessage/internal/storage/sqlite"
+ 	"github.com/maxghenis/openmessage/internal/telemetry"
+ 	"github.com/maxghenis/openmessage/internal/tools"
+@@ -644,7 +645,7 @@ func RunServe(logger zerolog.Logger, args ...string) error {
+ 		if stack == nil {
+ 			return errors.New("v2-primary selected but the v2 stack is unavailable")
+ 		}
+-		reads = v2read.New(stack.Store)
++		reads = newV2Reads(a, stack.Store)
+ 	}
+ 
+ 	// Create MCP server
+@@ -929,7 +930,7 @@ func runServeMCPClient(logger zerolog.Logger, opts serveOptions) error {
+ 
+ 	var reads readsource.ReadSource = a.Store
+ 	if v2Store != nil {
+-		reads = v2read.New(v2Store)
++		reads = newV2Reads(a, v2Store)
+ 	}
+ 
+ 	mcpSrv := mcpserver.NewMCPServer(
+@@ -1223,3 +1224,16 @@ func installGooglePullCounter(a *app.App, v2Primary bool, stack *v2Stack) {
+ 	}
+ 	a.SetGoogleConversationCounter(func() (int, error) { return reads.ConversationCount("sms") })
+ }
++
++// newV2Reads is the v2 read source with Signal threads the phone muted
++// reading as muted, from the mute state signal-cli syncs.
++func newV2Reads(a *app.App, store *sqlite.Store) *v2read.Source {
++	reads := v2read.New(store)
++	if a.SignalConfigPath != "" {
++		mutes := signallive.NewMuteReader(a.SignalConfigPath)
++		reads.SetRemoteMute(func(platform, remoteConversationID string) bool {
++			return platform == "signal" && mutes.Muted(remoteConversationID)
++		})
++	}
++	return reads
++}
+diff --git a/internal/signallive/mute.go b/internal/signallive/mute.go
+new file mode 100644
+index 0000000..b856545
+--- /dev/null
++++ b/internal/signallive/mute.go
+@@ -0,0 +1,148 @@
++package signallive
++
++import (
++	"database/sql"
++	"encoding/base64"
++	"net/url"
++	"path/filepath"
++	"strings"
++	"sync"
++	"time"
++
++	"google.golang.org/protobuf/encoding/protowire"
++	_ "modernc.org/sqlite"
++)
++
++// groupV2RecordMutedUntilField is GroupV2Record.mutedUntilTimestamp in
++// Signal's storage service protos. signal-cli keeps the record verbatim in
++// group_v2.storage_record but doesn't decode the mute into a column.
++const groupV2RecordMutedUntilField protowire.Number = 6
++
++const muteRefreshInterval = 10 * time.Second
++
++// MuteReader reports which Signal conversations are muted on the user's
++// phone, from the mute state signal-cli syncs from Signal's storage service:
++// recipient.mute_until for 1:1s and the GroupV2Record for groups. Reads are
++// cached for muteRefreshInterval.
++type MuteReader struct {
++	configDir string
++	now       func() time.Time
++
++	mu        sync.Mutex
++	loadedAt  time.Time
++	mutedTill map[string]int64
++}
++
++func NewMuteReader(configDir string) *MuteReader {
++	return &MuteReader{configDir: configDir, now: time.Now}
++}
++
++// Muted reports whether the conversation with this remote id
++// ("signal:<number or ACI>" or "signal-group:<base64 group id>") is muted now.
++func (r *MuteReader) Muted(remoteConversationID string) bool {
++	if r == nil || r.configDir == "" {
++		return false
++	}
++	key := strings.TrimSpace(remoteConversationID)
++	if !strings.HasPrefix(key, "signal:") && !strings.HasPrefix(key, "signal-group:") {
++		return false
++	}
++	r.mu.Lock()
++	defer r.mu.Unlock()
++	now := r.now()
++	if r.mutedTill == nil || now.Sub(r.loadedAt) >= muteRefreshInterval {
++		if muted, err := loadSignalMutes(r.configDir); err == nil {
++			r.mutedTill = muted
++		} else if r.mutedTill == nil {
++			r.mutedTill = map[string]int64{}
++		}
++		r.loadedAt = now
++	}
++	return r.mutedTill[key] > now.UnixMilli()
++}
++
++// loadSignalMutes maps conversation remote ids to their mute-until time in
++// unix ms (math.MaxInt64 is "until unmuted"), for every muted conversation.
++func loadSignalMutes(configDir string) (map[string]int64, error) {
++	paths, err := filepath.Glob(filepath.Join(configDir, "data", "*.d", "account.db"))
++	if err != nil || len(paths) == 0 {
++		return map[string]int64{}, err
++	}
++	muted := map[string]int64{}
++	for _, path := range paths {
++		dsn := (&url.URL{Scheme: "file", Path: path, RawQuery: "mode=ro"}).String()
++		db, err := sql.Open("sqlite", dsn)
++		if err != nil {
++			return nil, err
++		}
++		err = readSignalMutes(db, muted)
++		db.Close()
++		if err != nil {
++			return nil, err
++		}
++	}
++	return muted, nil
++}
++
++func readSignalMutes(db *sql.DB, muted map[string]int64) error {
++	rows, err := db.Query(`SELECT COALESCE(number, ''), COALESCE(aci, ''), mute_until FROM recipient WHERE mute_until > 0`)
++	if err != nil {
++		return err
++	}
++	for rows.Next() {
++		var number, aci string
++		var until int64
++		if err := rows.Scan(&number, &aci, &until); err != nil {
++			rows.Close()
++			return err
++		}
++		for _, id := range []string{number, strings.ToLower(aci)} {
++			if id != "" {
++				muted["signal:"+id] = until
++			}
++		}
++	}
++	rows.Close()
++	if err := rows.Err(); err != nil {
++		return err
++	}
++
++	rows, err = db.Query(`SELECT group_id, storage_record FROM group_v2 WHERE storage_record IS NOT NULL`)
++	if err != nil {
++		return err
++	}
++	defer rows.Close()
++	for rows.Next() {
++		var groupID, record []byte
++		if err := rows.Scan(&groupID, &record); err != nil {
++			return err
++		}
++		if until := groupMutedUntil(record); until > 0 {
++			muted["signal-group:"+base64.StdEncoding.EncodeToString(groupID)] = until
++		}
++	}
++	return rows.Err()
++}
++
++func groupMutedUntil(record []byte) int64 {
++	for len(record) > 0 {
++		num, typ, n := protowire.ConsumeTag(record)
++		if n < 0 {
++			return 0
++		}
++		record = record[n:]
++		if num == groupV2RecordMutedUntilField && typ == protowire.VarintType {
++			v, n := protowire.ConsumeVarint(record)
++			if n < 0 {
++				return 0
++			}
++			return int64(v)
++		}
++		n = protowire.ConsumeFieldValue(num, typ, record)
++		if n < 0 {
++			return 0
++		}
++		record = record[n:]
++	}
++	return 0
++}
+diff --git a/internal/signallive/mute_test.go b/internal/signallive/mute_test.go
+new file mode 100644
+index 0000000..c9f1e19
+--- /dev/null
++++ b/internal/signallive/mute_test.go
+@@ -0,0 +1,80 @@
++package signallive
++
++import (
++	"database/sql"
++	"encoding/base64"
++	"math"
++	"os"
++	"path/filepath"
++	"testing"
++	"time"
++
++	"google.golang.org/protobuf/encoding/protowire"
++)
++
++func TestMuteReader(t *testing.T) {
++	dir := t.TempDir()
++	dataDir := filepath.Join(dir, "data", "123.d")
++	if err := os.MkdirAll(dataDir, 0o755); err != nil {
++		t.Fatal(err)
++	}
++	db, err := sql.Open("sqlite", filepath.Join(dataDir, "account.db"))
++	if err != nil {
++		t.Fatal(err)
++	}
++	now := time.UnixMilli(1_800_000_000_000)
++	record := func(mutedUntil int64) []byte {
++		b := protowire.AppendTag(nil, 1, protowire.BytesType)
++		b = protowire.AppendBytes(b, []byte("master key"))
++		if mutedUntil != 0 {
++			b = protowire.AppendTag(b, groupV2RecordMutedUntilField, protowire.VarintType)
++			b = protowire.AppendVarint(b, uint64(mutedUntil))
++		}
++		b = protowire.AppendTag(b, 11, protowire.VarintType)
++		return protowire.AppendVarint(b, 1)
++	}
++	for _, stmt := range []string{
++		`CREATE TABLE recipient (_id INTEGER PRIMARY KEY, number TEXT, aci TEXT, mute_until INTEGER NOT NULL DEFAULT 0)`,
++		`CREATE TABLE group_v2 (_id INTEGER PRIMARY KEY, group_id BLOB, storage_record BLOB)`,
++	} {
++		if _, err := db.Exec(stmt); err != nil {
++			t.Fatal(err)
++		}
++	}
++	mustExec := func(q string, args ...any) {
++		t.Helper()
++		if _, err := db.Exec(q, args...); err != nil {
++			t.Fatal(err)
++		}
++	}
++	mustExec(`INSERT INTO recipient (number, aci, mute_until) VALUES (?, ?, ?)`, "+14805550100", "0F0E0D0C-0B0A-4908-8706-050403020100", now.Add(time.Hour).UnixMilli())
++	mustExec(`INSERT INTO recipient (number, aci, mute_until) VALUES (?, ?, ?)`, "+14805550101", nil, now.Add(-time.Hour).UnixMilli())
++	mustExec(`INSERT INTO group_v2 (group_id, storage_record) VALUES (?, ?)`, []byte{1, 2, 3}, record(math.MaxInt64))
++	mustExec(`INSERT INTO group_v2 (group_id, storage_record) VALUES (?, ?)`, []byte{4, 5, 6}, record(now.Add(-time.Minute).UnixMilli()))
++	mustExec(`INSERT INTO group_v2 (group_id, storage_record) VALUES (?, ?)`, []byte{7, 8, 9}, record(0))
++	db.Close()
++
++	r := NewMuteReader(dir)
++	r.now = func() time.Time { return now }
++	group := func(id ...byte) string { return "signal-group:" + base64.StdEncoding.EncodeToString(id) }
++	for _, tc := range []struct {
++		id   string
++		want bool
++	}{
++		{"signal:+14805550100", true},
++		{"signal:0f0e0d0c-0b0a-4908-8706-050403020100", true},
++		{"signal:+14805550101", false},
++		{group(1, 2, 3), true},
++		{group(4, 5, 6), false},
++		{group(7, 8, 9), false},
++		{"signal:+14805550199", false},
++		{"+14805550100", false},
++	} {
++		if got := r.Muted(tc.id); got != tc.want {
++			t.Errorf("Muted(%q) = %v, want %v", tc.id, got, tc.want)
++		}
++	}
++	if NewMuteReader("").Muted("signal:+14805550100") {
++		t.Error("empty config dir reported a mute")
++	}
++}
+diff --git a/internal/v2read/map.go b/internal/v2read/map.go
+index 61eedd5..ead1f74 100644
+--- a/internal/v2read/map.go
++++ b/internal/v2read/map.go
+@@ -92,7 +92,7 @@ func (s *Source) mapConversation(
+ 		LastMessageTS:    conversation.LastMessageAtMS,
+ 		SourcePlatform:   platformForBridgeKey(account.BridgeKey),
+ 		IsFavorite:       conversation.IsFavorite,
+-		NotificationMode: string(conversation.NotificationMode),
++		NotificationMode: s.notificationMode(conversation, platformForBridgeKey(account.BridgeKey)),
+ 		Tab:              conversationTab(conversation),
+ 	}, nil
+ }
+@@ -392,3 +392,13 @@ func (s *Source) sendStatusForMessage(message sqlite.Message) (string, error) {
+ 		return "", nil
+ 	}
+ }
++
++// notificationMode is the conversation's own mode, overridden to muted while
++// the user's phone has it muted, so OpenMessage never notifies for a thread
++// the phone silences.
++func (s *Source) notificationMode(conversation sqlite.Conversation, platform string) string {
++	if s.mutedRemotely != nil && s.mutedRemotely(platform, conversation.RemoteConversationID) {
++		return string(sqlite.NotificationModeMuted)
++	}
++	return string(conversation.NotificationMode)
++}
+diff --git a/internal/v2read/source.go b/internal/v2read/source.go
+index 99aa357..6c2349b 100644
+--- a/internal/v2read/source.go
++++ b/internal/v2read/source.go
+@@ -23,12 +23,21 @@ type Source struct {
+ 	// now times an attachment's unavailable mark and tab moves; time.Now
+ 	// outside tests.
+ 	now func() time.Time
++	// mutedRemotely reports a conversation muted on the user's phone (Signal
++	// syncs its mutes to linked devices); nil when no transport does.
++	mutedRemotely func(platform, remoteConversationID string) bool
+ 
+ 	// batchPageQueries counts the page reads issued by the batch walks so
+ 	// tests can bound the read work, not just the result.
+ 	batchPageQueries atomic.Int64
+ }
+ 
++// SetRemoteMute installs the check for conversations muted on the user's
++// phone, which read as NotificationMode "muted" while the mute lasts.
++func (s *Source) SetRemoteMute(muted func(platform, remoteConversationID string) bool) {
++	s.mutedRemotely = muted
++}
++
+ // New constructs a v2 canonical read source. A nil store is retained as an
+ // invalid source so callers receive method errors rather than a constructor
+ // panic; production wiring always passes an opened store.

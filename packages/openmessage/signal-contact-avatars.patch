@@ -1,0 +1,159 @@
+diff --git a/internal/signallive/contact_avatar.go b/internal/signallive/contact_avatar.go
+new file mode 100644
+index 0000000..4d66ac0
+--- /dev/null
++++ b/internal/signallive/contact_avatar.go
+@@ -0,0 +1,55 @@
++package signallive
++
++import (
++	"os"
++	"path/filepath"
++	"regexp"
++	"strings"
++)
++
++var serviceIDPattern = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
++
++// ContactAvatar returns the photo signal-cli keeps for a person, looked up by
++// phone number or ACI. signal-cli writes <configDir>/avatars/contact-<id>
++// (the photo the primary device synced for that contact, which is what the
++// phone shows) and profile-<id> (the person's own Signal profile photo),
++// with <id> an E.164 number or an ACI; the contact photo wins.
++//
++// File names are built only from the digits of a number or a canonical
++// lowercase ACI, so no input can name a file outside the avatars dir.
++// Returns nil when there is no photo.
++func ContactAvatar(configDir, id string) []byte {
++	if configDir == "" {
++		return nil
++	}
++	var ids []string
++	raw := strings.ToLower(strings.TrimSpace(id))
++	if serviceIDPattern.MatchString(raw) {
++		ids = []string{raw}
++	} else {
++		var digits strings.Builder
++		for _, r := range raw {
++			if r >= '0' && r <= '9' {
++				digits.WriteRune(r)
++			}
++		}
++		d := digits.String()
++		if d == "" {
++			return nil
++		}
++		ids = []string{"+" + d}
++		// A bare 10-digit number is a NANP number without its country code.
++		if len(d) == 10 && !strings.HasPrefix(raw, "+") {
++			ids = append(ids, "+1"+d)
++		}
++	}
++	for _, prefix := range []string{"contact-", "profile-"} {
++		for _, candidate := range ids {
++			data, err := os.ReadFile(filepath.Join(configDir, "avatars", prefix+candidate))
++			if err == nil && len(data) > 0 {
++				return data
++			}
++		}
++	}
++	return nil
++}
+diff --git a/internal/signallive/contact_avatar_test.go b/internal/signallive/contact_avatar_test.go
+new file mode 100644
+index 0000000..49ace60
+--- /dev/null
++++ b/internal/signallive/contact_avatar_test.go
+@@ -0,0 +1,42 @@
++package signallive
++
++import (
++	"os"
++	"path/filepath"
++	"testing"
++)
++
++func TestContactAvatar(t *testing.T) {
++	dir := t.TempDir()
++	avatars := filepath.Join(dir, "avatars")
++	if err := os.MkdirAll(avatars, 0o755); err != nil {
++		t.Fatal(err)
++	}
++	write := func(name, body string) {
++		if err := os.WriteFile(filepath.Join(avatars, name), []byte(body), 0o644); err != nil {
++			t.Fatal(err)
++		}
++	}
++	write("profile-+13185550100", "profile")
++	write("profile-+13185550101", "profile")
++	write("contact-+13185550101", "contact")
++	write("profile-0f0e0d0c-0b0a-4908-8706-050403020100", "aci")
++	write("secret", "outside")
++
++	for _, tc := range []struct{ id, want string }{
++		{"+13185550100", "profile"},
++		{"(318) 555-0100", "profile"},
++		{"+1 318 555 0101", "contact"},
++		{"0F0E0D0C-0B0A-4908-8706-050403020100", "aci"},
++		{"+13185550199", ""},
++		{"../secret", ""},
++		{"", ""},
++	} {
++		if got := string(ContactAvatar(dir, tc.id)); got != tc.want {
++			t.Errorf("ContactAvatar(%q) = %q, want %q", tc.id, got, tc.want)
++		}
++	}
++	if got := ContactAvatar("", "+13185550100"); got != nil {
++		t.Errorf("empty config dir returned %q", got)
++	}
++}
+diff --git a/internal/web/api.go b/internal/web/api.go
+index 83ea20a..0ef44d6 100644
+--- a/internal/web/api.go
++++ b/internal/web/api.go
+@@ -1619,8 +1619,18 @@ func APIHandlerWithOptions(store *db.Store, cli *client.Client, logger zerolog.L
+ 			return
+ 		}
+ 		if avatar == nil || len(avatar.ImageData) == 0 || avatar.ImageHash == "" {
+-			httpError(w, "avatar not found", 404)
+-			return
++			// The same person's Signal photo, for Signal threads and for SMS
++			// threads whose Google contact has none.
++			data := signallive.ContactAvatar(opts.SignalConfigDir, r.URL.Query().Get("phone"))
++			if data == nil {
++				httpError(w, "avatar not found", 404)
++				return
++			}
++			sum := sha256.Sum256(data)
++			avatar = &db.ContactAvatar{
++				ImageData: data,
++				ImageHash: hex.EncodeToString(sum[:]),
++			}
+ 		}
+ 		etag := `"` + avatar.ImageHash + `"`
+ 		if r.Header.Get("If-None-Match") == etag {
+diff --git a/internal/web/static/index.html b/internal/web/static/index.html
+index b7f3795..43bb352 100644
+--- a/internal/web/static/index.html
++++ b/internal/web/static/index.html
+@@ -6637,15 +6637,18 @@ body::after {
+     return result;
+   }
+ 
++  // /api/avatar serves Google's contact photos for SMS and signal-cli's for
++  // a Signal 1:1 (and for an SMS contact Google has no photo of).
+   function conversationAvatarRefs(convo) {
+-    if (!convo || convo.IsGroup || sourcePlatformOf(convo) !== 'sms') {
++    const platform = sourcePlatformOf(convo);
++    if (!convo || convo.IsGroup || (platform !== 'sms' && platform !== 'signal')) {
+       return { source: '', participantIDs: [], contactIDs: [] };
+     }
+     const participants = conversationParticipants(convo);
+     const others = participants.filter(p => !(p && (p.is_me || p.isMe)));
+     const source = others.length ? others : participants;
+     return {
+-      source: 'sms',
++      source: platform,
+       participantIDs: uniqueStringValues(source.map(p => p && (p.id || p.participant_id || p.participantId))),
+       contactIDs: uniqueStringValues(source.map(p => p && (p.contact_id || p.contactId))),
+     };

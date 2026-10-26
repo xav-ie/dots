@@ -1,0 +1,61 @@
+diff --git a/macos/OpenMessage/Sources/NotificationManager.swift b/macos/OpenMessage/Sources/NotificationManager.swift
+index 1659a88..c0e6ca0 100644
+--- a/macos/OpenMessage/Sources/NotificationManager.swift
++++ b/macos/OpenMessage/Sources/NotificationManager.swift
+@@ -18,6 +18,7 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
+         let isGroup: Bool?
+         let lastMessageTS: Int64
+         let name: String?
++        let notificationMode: String?
+         let sourcePlatform: String?
+         let tab: String?
+ 
+@@ -26,6 +27,7 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
+             case isGroup = "IsGroup"
+             case lastMessageTS = "LastMessageTS"
+             case name = "Name"
++            case notificationMode = "notification_mode"
+             case sourcePlatform = "source_platform"
+             case tab
+         }
+@@ -36,6 +38,7 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
+         let timestampMS: Int64
+         let isFromMe: Bool
+         let body: String?
++        let mentionsMe: Bool?
+         let senderName: String?
+         let senderNumber: String?
+ 
+@@ -44,6 +47,7 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
+             case timestampMS = "TimestampMS"
+             case isFromMe = "IsFromMe"
+             case body = "Body"
++            case mentionsMe = "mentions_me"
+             case senderName = "SenderName"
+             case senderNumber = "SenderNumber"
+         }
+@@ -449,8 +453,9 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
+             for conversation in conversations {
+                 let previousTS = lastSeenTimestamps[conversation.conversationID] ?? 0
+                 // The phone files spam and blocked threads under "spam"; they
+-                // never notify.
+-                if !notify || previousTS == 0 || conversation.tab == "spam" {
++                // never notify, nor do muted threads (which includes threads
++                // muted on the phone).
++                if !notify || previousTS == 0 || conversation.tab == "spam" || conversation.notificationMode == "muted" {
+                     lastSeenTimestamps[conversation.conversationID] = max(previousTS, conversation.lastMessageTS)
+                     continue
+                 }
+@@ -490,8 +495,12 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
+             let (data, _) = try await URLSession.shared.data(from: url)
+             let messages = try JSONDecoder().decode([MessageSummary].self, from: data)
+ 
++            // A "mentions" thread notifies only for messages that mention the
++            // user.
++            let mode = conversation.notificationMode ?? "all"
+             let incoming = messages
+                 .filter { !$0.isFromMe && $0.timestampMS > since }
++                .filter { mode != "mentions" || $0.mentionsMe == true }
+                 .filter { rememberMessage(id: $0.messageID) }
+                 .sorted { lhs, rhs in
+                     if lhs.timestampMS != rhs.timestampMS {
