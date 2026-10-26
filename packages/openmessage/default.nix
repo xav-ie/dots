@@ -72,6 +72,9 @@ let
       # Outgoing bubbles keep one mounted element from Sending through Read,
       # patching only their status icon, so sends never flicker.
       ./unread-read-tracking.patch
+      # Group messages: the avatar and the sender name share one header line on
+      # the first message of a consecutive run; later messages repeat neither.
+      ./group-message-headers.patch
     ];
     subPackages = [ "." ];
     env.CGO_ENABLED = 0;

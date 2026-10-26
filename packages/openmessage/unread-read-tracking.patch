@@ -34,51 +34,10 @@ index 9657740..1054ee0 100644
  		if r.Method != http.MethodPost {
  			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 diff --git a/e2e/ui.spec.js b/e2e/ui.spec.js
-index 19ebf5c..b71fee6 100644
+index 19ebf5c..4a57f55 100644
 --- a/e2e/ui.spec.js
 +++ b/e2e/ui.spec.js
-@@ -204,6 +204,40 @@ test('shows sender labels only in group conversations', async ({ page }) => {
-   await expect(page.locator('#messages-area .msg-sender').filter({ hasText: 'David Kim' }).first()).toBeVisible();
- });
- 
-+test('shows one avatar-and-name header per consecutive sender run', async ({ page, request }) => {
-+  await openConversation(page, 'Weekend Hiking Group');
-+  const now = Date.now();
-+  await request.post('/_e2e/messages', {
-+    data: {
-+      body: 'First of a consecutive run',
-+      conversation_id: 'conv3',
-+      sender_name: 'Emily Park',
-+      sender_number: '+13105553456',
-+      timestamp_ms: now,
-+    },
-+  });
-+  await request.post('/_e2e/messages', {
-+    data: {
-+      body: 'Second of the same run',
-+      conversation_id: 'conv3',
-+      sender_name: 'Emily Park',
-+      sender_number: '+13105553456',
-+      timestamp_ms: now + 1000,
-+    },
-+  });
-+
-+  // First message of the run: avatar and name share the header line.
-+  const firstRow = page.locator('#messages-area .msg-row').filter({ hasText: 'First of a consecutive run' });
-+  await expect(firstRow.locator('.msg-sender')).toHaveText('Emily Park');
-+  await expect(firstRow.locator('.msg-avatar:not(.avatar-hidden)')).toBeVisible();
-+
-+  // Consecutive message from the same sender: no repeated name, avatar kept
-+  // only as a hidden spacer so the bubble stays aligned under the header.
-+  const secondRow = page.locator('#messages-area .msg-row').filter({ hasText: 'Second of the same run' });
-+  await expect(secondRow.locator('.msg-sender')).toHaveCount(0);
-+  await expect(secondRow.locator('.msg-avatar.avatar-hidden')).toHaveCount(1);
-+});
-+
- test('does not show stale messages when a selected thread fails to load', async ({ page }) => {
-   await openConversation(page, 'Sarah Chen');
-   await expect(page.locator('#messages-area')).toContainText('Hey! Are you free for dinner tonight?');
-@@ -1175,6 +1209,173 @@ test('keeps existing thread nodes mounted after sending', async ({ page }) => {
+@@ -1175,6 +1175,173 @@ test('keeps existing thread nodes mounted after sending', async ({ page }) => {
    await expectStableThreadNodeStillMounted(page);
  });
  
@@ -654,66 +613,10 @@ index 88ba9d0..5ada6d7 100644
  
  // peopleSource builds the People view: the legacy store, or the v2 read
 diff --git a/internal/web/static/index.html b/internal/web/static/index.html
-index 8282f0f..4ef1483 100644
+index 8282f0f..a5f28bc 100644
 --- a/internal/web/static/index.html
 +++ b/internal/web/static/index.html
-@@ -1283,7 +1283,7 @@ html, body {
- /* ─── Message Avatar (group chats) ─── */
- .msg-row {
-   display: flex;
--  align-items: flex-end;
-+  align-items: flex-start;
-   gap: 8px;
-   max-width: 560px;
-   animation: msgIn 0.25s ease-out;
-@@ -1310,24 +1310,44 @@ html, body {
-   font-weight: 600;
-   color: #ffffff;
-   flex-shrink: 0;
--  margin-bottom: 2px;
- }
- 
- .msg-avatar.avatar-hidden {
-   visibility: hidden;
- }
- 
-+/* The bubble column beside the avatar. The sender header (first message of a
-+   run) and the bubbles both live here, so consecutive messages without a
-+   header stay left-aligned with the run's first bubble. */
-+.msg-stack {
-+  display: flex;
-+  flex-direction: column;
-+  min-width: 0;
-+  max-width: 100%;
-+}
-+
- .msg-row .msg {
-   align-self: auto;
-   animation: none;
-   min-width: 0;
- }
- 
-+/* Inside the stack the bubble keeps its content width instead of stretching
-+   to the stack's full width (this rule must follow .msg-row .msg above). */
-+.msg-stack .msg {
-+  align-self: flex-start;
-+  max-width: 100%;
-+}
-+
-+/* Header line shared by the avatar and the sender name: the 28px line box
-+   matches the avatar height, so the name centers against the avatar and the
-+   bubble starts below both. */
- .msg-sender {
-   font-size: 12px;
-   font-weight: 500;
-   color: var(--accent);
--  margin-bottom: 3px;
-+  line-height: 28px;
-+  margin-bottom: 4px;
-   font-family: var(--font-sans);
- }
- 
-@@ -1341,17 +1361,31 @@ html, body {
+@@ -1341,17 +1341,31 @@ html, body {
  .msg.sent .msg-time { color: rgba(250, 246, 241, 0.35); }
  
  /* ─── Message Status Indicators ─── */
@@ -749,7 +652,7 @@ index 8282f0f..4ef1483 100644
  }
  
  .msg-status.status-sent {
-@@ -1368,7 +1402,36 @@ html, body {
+@@ -1368,7 +1382,36 @@ html, body {
  
  .msg-status.status-failed {
    color: #dc503c;
@@ -787,7 +690,7 @@ index 8282f0f..4ef1483 100644
  }
  
  .msg-retry-send {
-@@ -9545,6 +9608,19 @@ body::after {
+@@ -9545,6 +9588,19 @@ body::after {
    }
  
    // ─── Message Status Indicator ───
@@ -807,7 +710,7 @@ index 8282f0f..4ef1483 100644
    function formatStatusIndicator(status) {
      if (!status) return '';
      const s = status.toUpperCase();
-@@ -9552,23 +9628,23 @@ body::after {
+@@ -9552,23 +9608,23 @@ body::after {
      if (s.includes('SENDING') || s.includes('YET_TO_SEND') || s.includes('RESENDING') ||
          s.includes('VALIDATING') || s.includes('SEND_AFTER_PROCESSING') ||
          s.includes('NOT_DELIVERED_YET')) {
@@ -836,7 +739,7 @@ index 8282f0f..4ef1483 100644
      }
      return '';
    }
-@@ -9986,10 +10062,53 @@ body::after {
+@@ -9986,10 +10042,53 @@ body::after {
      });
    }
  
@@ -891,7 +794,7 @@ index 8282f0f..4ef1483 100644
      return mergeMessages(base, queued);
    }
  
-@@ -10017,11 +10136,15 @@ body::after {
+@@ -10017,11 +10116,15 @@ body::after {
      return item;
    }
  
@@ -908,7 +811,7 @@ index 8282f0f..4ef1483 100644
      if (item && activeConvoId === item.conversation_id) {
        loadedMessages = loadedMessages.filter(message => String(message.MessageID || '') !== id);
        updateLoadedMessageBounds();
-@@ -10217,7 +10340,7 @@ body::after {
+@@ -10217,7 +10320,7 @@ body::after {
          updateQueuedSend(item.id, { status: 'sending', last_error: '' });
          try {
            await sendQueuedItem(item);
@@ -917,7 +820,7 @@ index 8282f0f..4ef1483 100644
            sentAny = true;
          } catch (err) {
            const retryable = queuedSendErrorIsRetryable(err);
-@@ -10371,9 +10494,19 @@ body::after {
+@@ -10371,9 +10474,19 @@ body::after {
  
      const desiredNodes = renderItems.map(item => {
        const existing = existingByKey.get(item.key);
@@ -940,7 +843,7 @@ index 8282f0f..4ef1483 100644
        return setKeyedRenderMetadata(node, item.key, item.signature);
      });
      const desiredSet = new Set(desiredNodes);
-@@ -10659,8 +10792,14 @@ body::after {
+@@ -10659,8 +10772,14 @@ body::after {
      document.body.classList.add('thread-open');
      syncConversationURL(convo.ConversationID);
  
@@ -957,7 +860,7 @@ index 8282f0f..4ef1483 100644
        convo.UnreadCount = 0;
        fetch(API + '/api/mark-read', {
          method: 'POST',
-@@ -10703,9 +10842,12 @@ body::after {
+@@ -10703,9 +10822,12 @@ body::after {
      }
      refreshConversationChrome();
      resetLoadedThreadState();
@@ -971,7 +874,7 @@ index 8282f0f..4ef1483 100644
      loadScheduledMessages(convo.ConversationID);
    }
  
-@@ -10736,6 +10878,11 @@ body::after {
+@@ -10736,6 +10858,11 @@ body::after {
    let threadRenderWindowStart = 0;
    let lastRenderedWindowStart = 0;
    let lastRenderedWindowEnd = 0;
@@ -983,7 +886,7 @@ index 8282f0f..4ef1483 100644
  
    function resetLoadedThreadState({ preserveThreadSearch = false } = {}) {
      activeThreadToken += 1;
-@@ -10766,6 +10913,7 @@ body::after {
+@@ -10766,6 +10893,7 @@ body::after {
      threadRenderWindowStart = 0;
      lastRenderedWindowStart = 0;
      lastRenderedWindowEnd = 0;
@@ -991,7 +894,7 @@ index 8282f0f..4ef1483 100644
      activeProtocolDetail = '';
      if (!preserveThreadSearch) {
        threadSearchMode = 'latest';
-@@ -10990,6 +11138,132 @@ body::after {
+@@ -10990,6 +11118,132 @@ body::after {
      newestLoadedID = loadedMessages.length ? String(loadedMessages[loadedMessages.length - 1].MessageID || '') : '';
    }
  
@@ -1124,7 +1027,7 @@ index 8282f0f..4ef1483 100644
    function messageRenderSignature(msg) {
      if (!msg) return '';
      return [
-@@ -11013,7 +11287,7 @@ body::after {
+@@ -11013,7 +11267,7 @@ body::after {
    function threadSignature(msgs, drafts, windowStart = 0, windowEnd = msgs.length, loadedCount = msgs.length) {
      const messagesSig = msgs.map(messageRenderSignature).join('|');
      const draftsSig = drafts.map(d => `${d.DraftID}:${draftDisplayBody(d)}`).join('|');
@@ -1133,7 +1036,7 @@ index 8282f0f..4ef1483 100644
    }
  
    function captureDraftEdits() {
-@@ -11105,8 +11379,11 @@ body::after {
+@@ -11105,8 +11359,11 @@ body::after {
      };
    }
  
@@ -1146,36 +1049,17 @@ index 8282f0f..4ef1483 100644
      return `msg:${id || `index-${index}`}`;
    }
  
-@@ -11142,24 +11419,89 @@ body::after {
+@@ -11153,9 +11410,72 @@ body::after {
      ].join(':');
    }
  
--  function groupAvatarRenderSignature(message, nextMessage) {
-+  // The avatar + name header rides on the FIRST message of a consecutive run
-+  // from one sender, so a node's header state depends on the message BEFORE it.
-+  function groupAvatarRenderSignature(message, prevMessage) {
-     if (!activeConvoIsGroup || !message || message.IsFromMe || !message.SenderName) return '';
--    if (!nextMessage) return 'last';
-+    if (!prevMessage) return 'first';
-+    return [
-+      prevMessage.IsFromMe ? 'me' : 'other',
-+      prevMessage.SenderName || '',
-+      prevMessage.Status || '',
-+      isSameDay(message.TimestampMS, prevMessage.TimestampMS) ? 'same-day' : 'new-day',
-+    ].join(':');
-+  }
-+
 +  // What a message node is built from, less its send status: status changes
 +  // patch the status slot in place (patchThreadMessageStatus) instead of
 +  // rebuilding the bubble. A failed queued send still rebuilds, for its Retry
 +  // buttons.
 +  function threadMessageNodeSignature(message) {
 +    const failedQueuedSend = !!(message._pendingSend && message._pendingSendItem && message._pendingSendItem.status === 'failed');
-     return [
--      nextMessage.IsFromMe ? 'me' : 'other',
--      nextMessage.SenderName || '',
--      nextMessage.Status || '',
--      isSameDay(message.TimestampMS, nextMessage.TimestampMS) ? 'same-day' : 'new-day',
++    return [
 +      message.MessageID || '',
 +      Number(message.TimestampMS || 0),
 +      message.IsFromMe ? '1' : '0',
@@ -1190,9 +1074,9 @@ index 8282f0f..4ef1483 100644
 +      sourcePlatformOf(message),
 +      message._pendingSend ? 'pending' : '',
 +      failedQueuedSend ? 'failed' : '',
-     ].join(':');
-   }
- 
++    ].join(':');
++  }
++
 +  // Moves a rebuilt message node's content into the element already on screen
 +  // (a queued send becoming the stored message, a reaction, a failed send), so
 +  // the bubble is never removed and re-inserted. The children carry their own
@@ -1239,22 +1123,7 @@ index 8282f0f..4ef1483 100644
        context.showMixedSourceChips ? 'mixed-source' : 'single-source',
        activeConvoIsGroup ? 'group' : 'direct',
        replyPreviewRenderSignature(message, context.messagesByID),
--      groupAvatarRenderSignature(message, context.nextMessage),
-+      groupAvatarRenderSignature(message, context.prevMessage),
-     ].join('::');
-   }
- 
-@@ -11180,9 +11522,6 @@ body::after {
-       html += `<div class="msg-reply-preview" data-reply-id="${escapeHtml(message.ReplyToID)}" onclick="scrollToMessage('${escapeHtml(message.ReplyToID)}')"><span class="reply-author">${escapeHtml(origName)}</span><span class="reply-body">${escapeHtml(truncBody)}</span></div>`;
-     }
- 
--    if (activeConvoIsGroup && !message.IsFromMe && message.SenderName) {
--      html += `<div class="msg-sender" style="color:${avatarColor(message.SenderName)}">${escapeHtml(message.SenderName)}</div>`;
--    }
-     if (context.showMixedSourceChips) {
-       html += `<div class="msg-source-row">${platformBadgeHTML(sourcePlatformOf(message))}</div>`;
-     }
-@@ -11296,6 +11635,7 @@ body::after {
+@@ -11296,6 +11616,7 @@ body::after {
  
      el.innerHTML = html;
      el.dataset.msgId = message.MessageID;
@@ -1262,7 +1131,7 @@ index 8282f0f..4ef1483 100644
  
      el.querySelectorAll('.msg-retry-send, .action-retry-send').forEach(button => {
        button.addEventListener('click', (e) => {
-@@ -11320,19 +11660,24 @@ body::after {
+@@ -11320,8 +11641,10 @@ body::after {
        e.stopPropagation();
        openForwardDialog(message);
      });
@@ -1274,45 +1143,7 @@ index 8282f0f..4ef1483 100644
      });
  
      if (activeConvoIsGroup && !message.IsFromMe && message.SenderName) {
--      const nextMsg = allMsgs[absoluteMessageIndex + 1];
--      const isLastFromSender = !nextMsg || nextMsg.IsFromMe || nextMsg.SenderName !== message.SenderName ||
--        (nextMsg.Status || '').startsWith('TOMBSTONE_') || !isSameDay(message.TimestampMS, nextMsg.TimestampMS);
-+      // Discord-style header: the avatar and the sender name share one line on
-+      // the first message of a consecutive run; the rest of the run keeps only
-+      // the hidden avatar spacer so bubbles stay aligned under the header.
-+      const prevMsg = absoluteMessageIndex > 0 ? allMsgs[absoluteMessageIndex - 1] : null;
-+      const isFirstFromSender = !prevMsg || prevMsg.IsFromMe || prevMsg.SenderName !== message.SenderName ||
-+        (prevMsg.Status || '').startsWith('TOMBSTONE_') || !isSameDay(message.TimestampMS, prevMsg.TimestampMS);
- 
-       const row = document.createElement('div');
-       row.className = 'msg-row received';
-       const avatarDiv = document.createElement('div');
--      avatarDiv.className = 'msg-avatar' + (isLastFromSender ? '' : ' avatar-hidden');
-+      avatarDiv.className = 'msg-avatar' + (isFirstFromSender ? '' : ' avatar-hidden');
-       const avatarRefs = senderAvatarRefs(message);
-       renderAvatarElement(avatarDiv, {
-         name: message.SenderName,
-@@ -11344,8 +11689,18 @@ body::after {
-         text: initials(message.SenderName).charAt(0),
-         background: avatarColor(message.SenderName),
-       });
-+      const stack = document.createElement('div');
-+      stack.className = 'msg-stack';
-+      if (isFirstFromSender) {
-+        const senderDiv = document.createElement('div');
-+        senderDiv.className = 'msg-sender';
-+        senderDiv.style.color = avatarColor(message.SenderName);
-+        senderDiv.textContent = message.SenderName;
-+        stack.appendChild(senderDiv);
-+      }
-+      stack.appendChild(el);
-       row.appendChild(avatarDiv);
--      row.appendChild(el);
-+      row.appendChild(stack);
-       return row;
-     }
-     return el;
-@@ -11382,6 +11737,9 @@ body::after {
+@@ -11382,6 +11705,9 @@ body::after {
          items.push(threadDateDividerRenderItem(message.TimestampMS));
          lastDate = message.TimestampMS;
        }
@@ -1322,15 +1153,7 @@ index 8282f0f..4ef1483 100644
        if ((message.Status || '').startsWith('TOMBSTONE_')) {
          items.push(threadSystemRenderItem(message, absoluteMessageIndex));
          return;
-@@ -11391,14 +11749,20 @@ body::after {
-         absoluteMessageIndex,
-         messagesByID,
-         showMixedSourceChips,
--        nextMessage: allMsgs[absoluteMessageIndex + 1],
-+        prevMessage: absoluteMessageIndex > 0 ? allMsgs[absoluteMessageIndex - 1] : undefined,
-       };
-       const key = threadMessageRenderKey(message, absoluteMessageIndex);
-       const signature = threadMessageRenderSignature(message, context);
+@@ -11398,7 +11724,13 @@ body::after {
        items.push({
          key,
          signature,
@@ -1345,7 +1168,7 @@ index 8282f0f..4ef1483 100644
        });
      });
  
-@@ -11480,6 +11844,7 @@ body::after {
+@@ -11480,6 +11812,7 @@ body::after {
        $messagesArea.scrollTop = previousScrollTop;
        syncThreadBottomFollowState();
      }
@@ -1353,7 +1176,7 @@ index 8282f0f..4ef1483 100644
    }
  
    async function loadMessages(convoId, options = {}) {
-@@ -11489,6 +11854,7 @@ body::after {
+@@ -11489,6 +11822,7 @@ body::after {
      const reset = !!options.reset;
      const poll = !!options.poll;
      const forceBottom = !!options.forceBottom;
@@ -1361,7 +1184,7 @@ index 8282f0f..4ef1483 100644
      if (poll && !forceBottom && threadSearchMode === 'centered') return;
      if (older && (!hasOlderMessages || loadingOlderMessages || !oldestLoadedTS)) return;
  
-@@ -11545,7 +11911,7 @@ body::after {
+@@ -11545,7 +11879,7 @@ body::after {
  
        updateLoadedMessageBounds();
        rememberKnownMessages(loadedMessages);
@@ -1370,7 +1193,7 @@ index 8282f0f..4ef1483 100644
          || forceBottom
          || (!older && !poll)
          || (!older && wasNearBottom);
-@@ -11759,6 +12125,7 @@ body::after {
+@@ -11759,6 +12093,7 @@ body::after {
    }
  
    $messagesArea.addEventListener('scroll', () => {
@@ -1378,7 +1201,7 @@ index 8282f0f..4ef1483 100644
      if (hasThreadUserScrollIntent() && !shouldIgnoreThreadScrollSync()) {
        syncThreadBottomFollowState();
      }
-@@ -14720,6 +15087,12 @@ body::after {
+@@ -14720,6 +15055,12 @@ body::after {
    window.addEventListener('blur', closeContextMenu);
    window.addEventListener('resize', closeContextMenu);
  
