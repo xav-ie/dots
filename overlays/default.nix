@@ -184,6 +184,31 @@ in
           hash = "sha256-cEEPRKoWtNXk8LsDbkhNjnIY7UD1rfYbv2Q6ThG0YLg=";
         };
       });
+      # Ahead of nixpkgs (2026.10.3 on master) to pick up 2026.10.5, whose
+      # go.mod wants go >= 1.27.3 (the pin has 1.27.2). Drop once the pin
+      # carries both.
+      cloudflared =
+        (prev.cloudflared.override {
+          buildGoModule = final.buildGo127Module.override {
+            go = final.go_1_27.overrideAttrs {
+              version = "1.27.3";
+              src = final.fetchurl {
+                url = "https://go.dev/dl/go1.27.3.src.tar.gz";
+                hash = "sha256-bndJA1zzYPBrJXXRYup535/ajvZxiJ5cN1+OUHd/Jrs=";
+              };
+            };
+          };
+        }).overrideAttrs
+          (_: {
+            version = "2026.10.5";
+            src = final.fetchFromGitHub {
+              owner = "cloudflare";
+              repo = "cloudflared";
+              tag = "2026.10.5";
+              hash = "sha256-mr7ziBGV0k0jzEm40l0VkLj7szCI41VwV5tiqMT6mxU=";
+            };
+            vendorHash = "sha256-epDwgafi8NQ/k++E+OYowa43TrH7ITDddW8aHYDUcS4=";
+          });
       writeNuApplication = final.nuenv.writeShellApplication;
 
       # sketchybar built from the upstream tag pinned by sketchybar-src.

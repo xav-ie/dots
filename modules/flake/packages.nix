@@ -40,11 +40,13 @@
         # mic-denoise virtual mic agent (extracted to its own repo); darwin-only.
         mic-denoise-pkg = inputs.mic-denoise.packages.${system}.default or null;
         generate-kaomoji = inputs.generate-kaomoji.packages.${system}.default;
-        # uair carries an unmerged PR patch from overlays/default.nix: PR#31's
+        # cloudflared and uair carry overrides from overlays/default.nix: the
+        # cloudflared bump past the eMudhra certificate advisory, and PR#31's
         # newline-flushed `uairctl listen` for the AGS bar. The package-set pkgs
         # below has no overlays applied, so extend it with them and pull the
-        # patched build out.
+        # overridden builds out.
         inherit ((pkgs.extend (inputs.self.overlays |> builtins.attrValues |> lib.composeManyExtensions)))
+          cloudflared
           uair
           ;
         # Use regular nixpkgs - most packages are writeNuApplication wrappers

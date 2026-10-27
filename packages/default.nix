@@ -32,6 +32,9 @@
   # mic-denoise, extracted to its own repo
   # (inputs.mic-denoise.packages.<system>.default); darwin-only.
   mic-denoise-pkg ? null,
+  # cloudflared bumped in overlays/default.nix, threaded in from packages.nix
+  # for ssh-praesidium-route.
+  cloudflared,
   # uair patched with PR#31 (overlays/default.nix), threaded in from packages.nix:
   # `uairctl listen` must be newline-delimited and flushed so the AGS bar can
   # stream it. Forwarded to the bar below.
@@ -124,7 +127,9 @@ rec {
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
   secrets-diff = pkgs.callPackage ./secrets-diff { };
   slack-mcp-server = pkgs.callPackage ./slack-mcp-server { src = slack-mcp-server-src; };
-  ssh-praesidium-route = pkgs.callPackage ./ssh-praesidium-route { inherit writeNuApplication; };
+  ssh-praesidium-route = pkgs.callPackage ./ssh-praesidium-route {
+    inherit cloudflared writeNuApplication;
+  };
   toggle-theme = pkgs.callPackage ./toggle-theme { inherit writeNuApplication; };
   toml-merge = pkgs.callPackage ./toml-merge { };
   tsc-filter = pkgs.callPackage ./tsc-filter { inherit writeNuApplication; };
