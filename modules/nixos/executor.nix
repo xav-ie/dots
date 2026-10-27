@@ -250,7 +250,7 @@
       #
       # This needs root (btrfs subvolume administration is not grantable to
       # a normal user without a setuid helper), so the unit runs as root and
-      # chowns the file it writes back to the user before exiting. If /home
+      # chowns the files it writes back to the user before exiting. If /home
       # is ever not a btrfs subvolume (a different host, a reinstall that
       # changes the layout), this falls back to tarring the live directory
       # directly — a best-effort snapshot, not a guaranteed-consistent one.
@@ -304,13 +304,22 @@
             cp -a "$tarsrc/repositories" "$tarsrc/builds" "$tmp/payload/"
             drop_snapshot
             cd "$repo"
+            # Staging files from an interrupted run are harmless (gitignored),
+            # but clear them so failed runs never leave droppings behind.
+            rm -f secrets/.executor-state.tmp.json secrets/.executor-deployments.tmp.json
 
-            # State: hash every row file; re-encrypt only if any changed.
-            state_sum=$(
-              cd "$tmp/state" &&
-                find . -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum | cut -d' ' -f1
-            )
-            if [ "$state_sum" != "$(cat "$stamp_state" 2>/dev/null || true)" ]; then
+            # Each update stages a temp inside secrets/ and renames it into
+            # place: same filesystem, so mv is an atomic rename(2) and a crash
+            # can never truncate the committed secret (sops itself writes in
+            # place, and a cross-device mv from $tmp would silently degrade to
+            # copy+unlink). The two updates are also independent — one failing
+            # must not block the other — while rc still marks the unit failed.
+            backup_state() {
+              state_sum=$(
+                cd "$tmp/state" &&
+                  find . -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum | cut -d' ' -f1
+              ) || return 1
+              [ "$state_sum" != "$(cat "$stamp_state" 2>/dev/null || true)" ] || return 0
               # `sops -e` would re-encrypt the whole document every run; the
               # EDITOR path instead rebuilds it and sops keeps the ciphertext
               # of unchanged leaves (verified against sops 3.13).
@@ -325,29 +334,44 @@ find "$STATEDIR" -type f | LC_ALL=C sort | while IFS= read -r p; do
   jq --arg k "$k" --rawfile v "$p" '.[$k] = $v' "$f" > "$f.new" && mv "$f.new" "$f"
 done
 EDITOR
-              chmod +x "$tmp/update-state"
-              STATEDIR="$tmp/state" EDITOR="$tmp/update-state" sops secrets/executor-state.json </dev/null
-              chown ${defaultUser}:users secrets/executor-state.json
-              mkdir -p "$(dirname "$stamp_state")"
-              echo "$state_sum" > "$stamp_state"
-              chown ${defaultUser}:users "$stamp_state"
+              chmod +x "$tmp/update-state" || return 1
+              # Edit a copy: a crash mid-write can then only ever damage the
+              # staging file, and the committed one stays parseable.
+              if [ -f secrets/executor-state.json ]; then
+                cp -p secrets/executor-state.json secrets/.executor-state.tmp.json || return 1
+              fi
+              STATEDIR="$tmp/state" EDITOR="$tmp/update-state" sops secrets/.executor-state.tmp.json </dev/null || return 1
+              mv -f secrets/.executor-state.tmp.json secrets/executor-state.json || return 1
+              chown ${defaultUser}:users secrets/executor-state.json || return 1
+              mkdir -p "$(dirname "$stamp_state")" || return 1
+              echo "$state_sum" > "$stamp_state" || return 1
+              chown ${defaultUser}:users "$stamp_state" || return 1
               echo "wrote $repo/secrets/executor-state.json"
-            fi
+            }
 
-            # Deploy payload: reproducible tar, so unchanged contents hash
-            # the same and are skipped.
-            tar -C "$tmp/payload" --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -cf - . \
-              | zstd -q -19 -T0 > "$tmp/payload.tar.zst"
-            payload_sum=$(sha256sum "$tmp/payload.tar.zst" | cut -d' ' -f1)
-            if [ "$payload_sum" != "$(cat "$stamp_payload" 2>/dev/null || true)" ]; then
-              sops -e --input-type binary --output-type json --filename-override secrets/executor-deployments.json "$tmp/payload.tar.zst" > "$tmp/executor-deployments.json"
-              mv "$tmp/executor-deployments.json" secrets/executor-deployments.json
-              chown ${defaultUser}:users secrets/executor-deployments.json
-              mkdir -p "$(dirname "$stamp_payload")"
-              echo "$payload_sum" > "$stamp_payload"
-              chown ${defaultUser}:users "$stamp_payload"
+            backup_payload() {
+              # Reproducible tar, so unchanged contents hash the same and
+              # are skipped.
+              tar -C "$tmp/payload" --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -cf - . \
+                | zstd -q -19 -T0 > "$tmp/payload.tar.zst" || return 1
+              payload_sum=$(sha256sum "$tmp/payload.tar.zst" | cut -d' ' -f1) || return 1
+              [ "$payload_sum" != "$(cat "$stamp_payload" 2>/dev/null || true)" ] || return 0
+              sops -e --input-type binary --output-type json --filename-override secrets/executor-deployments.json "$tmp/payload.tar.zst" > secrets/.executor-deployments.tmp.json || return 1
+              mv -f secrets/.executor-deployments.tmp.json secrets/executor-deployments.json || return 1
+              chown ${defaultUser}:users secrets/executor-deployments.json || return 1
+              mkdir -p "$(dirname "$stamp_payload")" || return 1
+              echo "$payload_sum" > "$stamp_payload" || return 1
+              chown ${defaultUser}:users "$stamp_payload" || return 1
               echo "wrote $repo/secrets/executor-deployments.json"
-            fi
+            }
+
+            rc=0
+            backup_state || rc=1
+            backup_payload || rc=1
+            # The last command sets the unit's exit status. An explicit
+            # `exit $rc` here makes shellcheck 0.11 flag the trap-only
+            # cleanup() as never invoked (SC2329) and fail the build.
+            [ "$rc" -eq 0 ]
           '';
       };
 

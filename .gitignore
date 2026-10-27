@@ -10,3 +10,7 @@ __pycache__/
 
 # OpenTofu / terranix — disposable tofu workdir (state lives in R2, not here).
 /.terranix/
+
+# executor-backup staging files (renamed into place atomically; a crash can
+# leave one behind, never a truncated secret)
+secrets/.executor-*.tmp.json
