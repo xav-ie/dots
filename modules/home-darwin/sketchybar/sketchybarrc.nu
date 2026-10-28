@@ -230,30 +230,20 @@ sb-cluster volume right 24 61 (
   [hidewin_mode mouse.entered mouse.exited mouse.clicked]
 )
 
-# mic_denoise — single icon (sb-icon-item, icon_only), LEFT of hidewin. RNNoise
-# virtual mic (packages/mic-denoise): the plugin owns the icon (green = on,
-# orange = enabled but failing, white = off); `mic_denoise_changed` is bound to
-# the agent's com.x.mic-denoise.changed. mouse.clicked opens its settings panel.
-(sketchybar --add event mic_denoise_changed com.x.mic-denoise.changed)
+# virtual_headset — single icon (sb-icon-item, icon_only), LEFT of hidewin.
+# virtual-headset's denoising mic agent and call mute in one: the plugin owns the
+# icon (the call's mic while in a call, else a plain mic);
+# `virtual_headset_changed` is bound to the agent's com.github.virtual-headset.changed and
+# front_app_switched catches Zoom desktop meetings. Left click opens the agent's
+# panel, right click toggles mute.
+(sketchybar --add event virtual_headset_changed com.github.virtual-headset.changed)
 (sb-icon-item
-  mic_denoise
+  virtual_headset
   right
   26
-  $"sketchybar-hover --plugin ($PLUGIN_DIR)/mic_denoise.nu"
-  [mic_denoise_changed mouse.entered mouse.exited mouse.clicked]
+  $"sketchybar-hover --plugin ($PLUGIN_DIR)/virtual_headset.nu"
+  [virtual_headset_changed front_app_switched mouse.entered mouse.exited mouse.clicked]
 )
-
-# zoom mute — shows ONLY during an active Zoom meeting: white mic.slash when
-# muted, red mic when LIVE. State is read/toggled from Zoom's own "Meeting" menu
-# over Accessibility (see plugins/zoom_mute.nu). Wrapped in sketchybar-hover like
-# the other items, so the hover daemon owns the highlight (zoom_mute -> bg_only in
-# its map); mouse.entered/exited go to the daemon, everything else (forced,
-# front_app_switched, mouse.clicked) execs the plugin. front_app_switched drives
-# show/hide, so there's no polling. Added LAST among right items so it sits
-# left-most in the right cluster (left of the volume icon). Hidden until a meeting.
-(sketchybar --add item zoom_mute right
-  --set zoom_mute $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/zoom_mute.nu" drawing=off
-  --subscribe zoom_mute front_app_switched mouse.entered mouse.exited mouse.clicked)
 
 ##### Force all scripts to run the first time (never do this in a script) #####
 sketchybar --update

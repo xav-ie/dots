@@ -1252,26 +1252,6 @@
         "type": "github"
       }
     },
-    "mic-denoise": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1791228159,
-        "narHash": "sha256-VIzYB1H6iNh6Qpre3Dq0lnZnl4by55VZne6yQpb47mk=",
-        "ref": "refs/heads/main",
-        "rev": "f87a11b9415d87dae4d89896024bc7590b1a5ca1",
-        "revCount": 11,
-        "type": "git",
-        "url": "ssh://git@github.com/xav-ie/mic-denoise"
-      },
-      "original": {
-        "type": "git",
-        "url": "ssh://git@github.com/xav-ie/mic-denoise"
-      }
-    },
     "morlana": {
       "inputs": {
         "ferrix": "ferrix",
@@ -1980,7 +1960,6 @@
         "macos-corner-fix-src": "macos-corner-fix-src",
         "mcp-atlassian-src": "mcp-atlassian-src",
         "mcp-nixos": "mcp-nixos",
-        "mic-denoise": "mic-denoise",
         "morlana": "morlana",
         "morrow": "morrow",
         "muscat": "muscat",
@@ -2363,11 +2342,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792035668,
-        "narHash": "sha256-EiyWPb/H2NTPomjeVnNd2Cjz+Jpio0c7LnBHKfwE+4o=",
+        "lastModified": 1793166666,
+        "narHash": "sha256-gfOjfeFUNZzKQpJPkd8yeHDmgYg7BdGGAUwFd9xGYpE=",
         "owner": "xav-ie",
         "repo": "virtual-headset",
-        "rev": "755b0cb779627816e16d3b0a7ab9cab184df7b31",
+        "rev": "416f6bdb828c759746f5507aac70205f37308f94",
         "type": "github"
       },
       "original": {

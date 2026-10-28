@@ -29,9 +29,8 @@
   # sketchybar-icons, extracted to its own repo
   # (inputs.sketchybar-icons.packages.<system>.default); darwin-only.
   sketchybar-icons-pkg ? null,
-  # mic-denoise, extracted to its own repo
-  # (inputs.mic-denoise.packages.<system>.default); darwin-only.
-  mic-denoise-pkg ? null,
+  # virtual-headset's macOS agent (inputs.virtual-headset); darwin-only.
+  virtual-headset-pkg ? null,
   # uair patched with PR#31 (overlays/default.nix), threaded in from packages.nix:
   # `uairctl listen` must be newline-delimited and flushed so the AGS bar can
   # stream it. Forwarded to the bar below.
@@ -147,7 +146,6 @@ rec {
   fix-yabai = pkgs.callPackage ./fix-yabai { inherit writeNuApplication; };
   focus-daemon = pkgs.callPackage ./focus-daemon { };
   hidewin-bar = pkgs.callPackage ./hidewin-bar { };
-  mic-denoise = mic-denoise-pkg;
   firefox-pip-mover = pkgs.callPackage ./firefox-pip-mover { };
   hidewin = pkgs.callPackage ./hidewin { };
   jitfix = pkgs.callPackage ./jitfix { };
@@ -159,6 +157,7 @@ rec {
   sketchybar-hover = pkgs.callPackage ./sketchybar-hover { };
   sketchybar-icons = sketchybar-icons-pkg;
   zerobrew = pkgs.callPackage ./zerobrew { src = zerobrew-src; };
+  virtual-headset = virtual-headset-pkg;
 })
 // (optionalAttrs isLinux rec {
   askpass = pkgs.callPackage ./askpass {

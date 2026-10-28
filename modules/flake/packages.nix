@@ -37,8 +37,8 @@
         # scribe dictation client (extracted to its own repo); linux-only.
         scribe-desktop-pkg = inputs.scribe-desktop.packages.${system}.default or null;
         sketchybar-icons-pkg = inputs.sketchybar-icons.packages.${system}.default or null;
-        # mic-denoise virtual mic agent (extracted to its own repo); darwin-only.
-        mic-denoise-pkg = inputs.mic-denoise.packages.${system}.default or null;
+        # virtual-headset's macOS agent (for sketchybar and skhd); used on darwin only.
+        virtual-headset-pkg = inputs.virtual-headset.packages.${system}.virtual-headset or null;
         generate-kaomoji = inputs.generate-kaomoji.packages.${system}.default;
         # uair carries an unmerged PR patch from overlays/default.nix: PR#31's
         # newline-flushed `uairctl listen` for the AGS bar. The package-set pkgs
