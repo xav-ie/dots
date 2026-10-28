@@ -9,7 +9,7 @@
 #
 # Shipped as a .app bundle with a stable bundle id: IOBluetooth's pairedDevices()
 # and the L2CAP open are gated by the Bluetooth TCC permission, and the grant
-# (tcc-grant, in _nox-body.nix activation) pins this bundle's cdhash. Re-pins
+# (security.tcc, from nix-darwin-tcc) pins this bundle's cdhash. Re-pins
 # automatically when the code changes. NSBluetoothAlwaysUsageDescription is
 # required for the permission to be grantable at all.
 stdenv.mkDerivation {

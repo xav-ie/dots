@@ -13,7 +13,7 @@ stdenv.mkDerivation {
     runHook postBuild
   '';
   # Ship as a .app bundle with a stable bundle id: the daemon needs Accessibility
-  # for the AX window move, and the grant (tcc-grant, in _nox-body.nix activation)
+  # for the AX window move, and the grant (security.tcc, from nix-darwin-tcc)
   # pins this bundle's cdhash. Re-pins automatically when focusd's code changes.
   installPhase = ''
     runHook preInstall

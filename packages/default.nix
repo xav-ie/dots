@@ -159,7 +159,6 @@ rec {
   sketchybar-hover = pkgs.callPackage ./sketchybar-hover { };
   sketchybar-icons = sketchybar-icons-pkg;
   zerobrew = pkgs.callPackage ./zerobrew { src = zerobrew-src; };
-  tcc-grant = pkgs.callPackage ./tcc-grant { inherit writeNuApplication; };
 })
 // (optionalAttrs isLinux rec {
   askpass = pkgs.callPackage ./askpass {
