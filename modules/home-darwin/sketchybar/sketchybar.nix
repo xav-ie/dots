@@ -79,18 +79,16 @@
             config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/plugins/front_app.nu";
           "sketchybar/plugins/hidewin.nu".source =
             config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/plugins/hidewin.nu";
-          "sketchybar/plugins/mic_denoise.nu".source =
-            config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/plugins/mic_denoise.nu";
           "sketchybar/plugins/space.nu".source =
             config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/plugins/space.nu";
+          "sketchybar/plugins/virtual_headset.nu".source =
+            config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/plugins/virtual_headset.nu";
           "sketchybar/plugins/volume.nu".source =
             config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/plugins/volume.nu";
           "sketchybar/plugins/volume_icon.nu".source =
             config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/plugins/volume_icon.nu";
           "sketchybar/plugins/wifi.nu".source =
             config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/plugins/wifi.nu";
-          "sketchybar/plugins/zoom_mute.nu".source =
-            config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/plugins/zoom_mute.nu";
         };
 
         launchd.agents.sketchybar = {
@@ -115,8 +113,8 @@
                 pkgs.pkgs-mine.sketchybar-icons
                 # The `hidewin` item's click_script runs `hidewin panel`.
                 pkgs.pkgs-mine.hidewin
-                # The `mic_denoise` item's click runs `mic-denoise panel`.
-                pkgs.pkgs-mine.mic-denoise
+                # The `virtual_headset` item's clicks run `virtual-headset panel|toggle-mute`.
+                pkgs.pkgs-mine.virtual-headset
                 # Control Center click_scripts skip the menu bar slide-down.
                 pkgs.pkgs-mine.menubar-reveal
               ]

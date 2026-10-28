@@ -157,9 +157,8 @@ fn item_configs() -> (NameToTarget, TargetKeys) {
         ("battery_icon", "battery"),
         ("volume", "volume"),
         ("volume_icon", "volume"),
-        ("zoom_mute", "zoom_mute"),
         ("hidewin", "hidewin"),
-        ("mic_denoise", "mic_denoise"),
+        ("virtual_headset", "virtual_headset"),
     ]);
     let target_keys: TargetKeys = HashMap::from([
         // clock is now an sb-cluster (like volume/battery): ONE shared
@@ -172,12 +171,9 @@ fn item_configs() -> (NameToTarget, TargetKeys) {
         ("control_center", icon_only),
         ("battery", label_only),
         ("volume", label_only),
-        // zoom_mute is an image with no label, so like wifi it paints its own
-        // item background as the hover highlight.
-        ("zoom_mute", bg_only),
         // hidewin mirrors control_center (icon-only image button).
         ("hidewin", icon_only),
-        ("mic_denoise", icon_only),
+        ("virtual_headset", icon_only),
     ]);
     (name_to_target, target_keys)
 }

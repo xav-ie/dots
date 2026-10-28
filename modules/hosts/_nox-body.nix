@@ -50,7 +50,6 @@ in
       };
       casks = [
         "android-studio"
-        "blackhole-2ch"
         "blender"
         "chromium"
         "claude"
@@ -259,6 +258,9 @@ in
             # sends the app name(s) over a unix socket and exits in ~1ms, so a
             # held key never backlogs.
             focus = "${pkgs.pkgs-mine.focus-daemon}/bin/focusd";
+            # Presses the Virtual_Headset mute button; the call app toggles mute
+            # and the agent follows its LED (see modules/darwin/virtual-headset.nix).
+            headset-mute = "${pkgs.pkgs-mine.virtual-headset}/bin/virtual-headset toggle-mute";
             move-pip = "${pkgs.pkgs-mine.move-pip}/bin/move-pip";
             confirm-open = "${pkgs.pkgs-mine.confirm-open}/bin/confirm-open";
             spotlight-clipboard =
@@ -312,6 +314,8 @@ in
             ctrl + alt - w : yabai -m space --focus prev
             ctrl + alt - e : yabai -m space --focus next
             ctrl + alt - r : yabai -m window --space next
+
+            ctrl + alt - m : ${headset-mute}
 
             ctrl + alt - f : yabai -m window --toggle float;\
              yabai -m window --grid 4:4:1:1:2:2
