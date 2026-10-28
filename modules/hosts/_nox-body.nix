@@ -208,11 +208,6 @@ in
             "Accessibility"
             "InputMonitoring"
           ];
-          # focusd caches both grants at launch and is loaded before this
-          # activation writes them, so relaunch it once the grant is live. Names
-          # the launchd.user.agents.focusd attribute below (the module resolves the
-          # label + validates it exists).
-          reloadAgent = "focusd";
         }
       ];
     };

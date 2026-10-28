@@ -23,7 +23,6 @@ _: {
           appPath = "${pkgs.pkgs-mine.mic-denoise}/Applications/mic-denoise.app";
           pin = "cdhash";
           services = [ "Microphone" ];
-          reloadAgent = "mic-denoise";
         }
       ];
     };

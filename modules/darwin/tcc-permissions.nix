@@ -24,9 +24,20 @@
       ];
       dbFor = service: if builtins.elem service systemServices then "$SYS_TCC_DB" else "$USER_TCC_DB";
 
-      # Generate grant commands for all apps and services
+      # cdhash pins name an immutable store bundle, so they can be written in
+      # preActivation, before launchd (re)loads the agents that run those
+      # bundles: a rebuilt daemon then never launches against a grant pinned to
+      # its previous build (which pops the system "would like to control this
+      # computer" prompt). Everything else waits for postActivation — designated
+      # pins read the bundle's signature after its owner re-signs it.
+      isEarly = app: app.appPath != "" && app.pin == "cdhash";
+      earlyApps = lib.filter isEarly cfg.apps;
+      lateApps = lib.filter (app: !isEarly app) cfg.apps;
+
+      # Generate grant commands for the given apps and their services
       grantCommands =
-        cfg.apps
+        apps:
+        apps
         |> lib.concatMapStringsSep "\n" (
           app:
           let
@@ -66,34 +77,6 @@
           ''
         );
 
-      # Resolve each app's reloadAgent (a launchd ATTR NAME) to a concrete
-      # `launchctl kickstart` command, reading the real label + domain from the
-      # launchd config already in scope (TCC only writes activation scripts and
-      # launchd never reads security.tcc, so there's no eval cycle). A name that
-      # matches no agent throws here — a build error, not a silent permission
-      # starve. GUI apps (reloadAgent = null) contribute nothing.
-      reloadCmds = lib.concatMap (
-        app:
-        lib.optional (app.reloadAgent != null) (
-          let
-            name = app.reloadAgent;
-            inUser = config.launchd.user.agents ? ${name};
-            inSys = config.launchd.daemons ? ${name};
-            agent =
-              if inUser then
-                config.launchd.user.agents.${name}
-              else if inSys then
-                config.launchd.daemons.${name}
-              else
-                throw "security.tcc: reloadAgent \"${name}\" names no launchd.user.agents.<name> or launchd.daemons.<name>";
-            label = agent.serviceConfig.Label or "org.nixos.${name}";
-          in
-          if inUser then
-            ''sudo -u ${config.defaultUser} launchctl kickstart -k "gui/$(id -u ${config.defaultUser})/${label}"''
-          else
-            ''launchctl kickstart -k "system/${label}"''
-        )
-      ) cfg.apps;
     in
     {
       options.security.tcc = {
@@ -190,28 +173,6 @@
                   description = "TCC services to grant access to";
                 };
 
-                reloadAgent = lib.mkOption {
-                  type = lib.types.nullOr lib.types.str;
-                  default = null;
-                  example = "focusd";
-                  description = ''
-                    The launchd ATTRIBUTE NAME (e.g. "focusd" for
-                    launchd.user.agents.focusd or launchd.daemons.focusd — NOT the
-                    full "org.nixos.focusd" label) of a background daemon THIS config
-                    manages that must be relaunched after this app's grant is
-                    (re)written. TCC latches an app's authorization per process
-                    launch, and nix-darwin loads agents BEFORE this activation writes
-                    the grant, so a daemon that checks its own auth at launch
-                    (AXIsProcessTrusted(), creating a CGEventTap, …) caches a
-                    pre-grant "denied" and stays starved until relaunched.
-
-                    The module resolves the real launchd label + kickstart domain
-                    from config, and THROWS at eval if the name matches no agent —
-                    so a typo becomes a build error, never a silently un-granted
-                    daemon. Leave null for GUI apps (Firefox, Signal, …); you never
-                    want to force-restart those, and the user relaunches them anyway.
-                  '';
-                };
               };
             }
           );
@@ -230,31 +191,34 @@
         # Grant at activation (runs as root). System-db writes work because SIP is
         # off; reload tccd so it picks them up without a logout. tcc-grant skips
         # already-allowed entries, so existing System-Settings grants are safe.
+        system.activationScripts.preActivation.text = lib.mkIf (earlyApps != [ ]) (
+          lib.mkAfter ''
+            echo "Ensuring build-pinned TCC permissions for ${config.defaultUser}..."
+            USER_TCC_DB="/Users/${config.defaultUser}/Library/Application Support/com.apple.TCC/TCC.db"
+            SYS_TCC_DB="/Library/Application Support/com.apple.TCC/TCC.db"
+            ${grantCommands earlyApps}
+            # Only when a pinned build changed: reload tccd and give it a moment
+            # (the kickstart is async, with no readiness signal) so the agents
+            # launchd is about to relaunch see the new grant.
+            early_hash="${builtins.hashString "sha256" (builtins.toJSON earlyApps)}"
+            early_marker="/var/lib/nix-darwin/tcc-early.hash"
+            if [ "$(cat "$early_marker" 2>/dev/null)" != "$early_hash" ]; then
+              sudo -u ${config.defaultUser} launchctl kickstart -k \
+                "gui/$(id -u ${config.defaultUser})/com.apple.tccd" 2>/dev/null || true
+              sleep 1
+              mkdir -p "$(dirname "$early_marker")"
+              echo "$early_hash" > "$early_marker"
+            fi
+          ''
+        );
+
         system.activationScripts.postActivation.text = lib.mkAfter ''
           echo "Ensuring TCC permissions for ${config.defaultUser}..."
           USER_TCC_DB="/Users/${config.defaultUser}/Library/Application Support/com.apple.TCC/TCC.db"
           SYS_TCC_DB="/Library/Application Support/com.apple.TCC/TCC.db"
-          ${grantCommands}
+          ${grantCommands lateApps}
           sudo -u ${config.defaultUser} launchctl kickstart -k \
             "gui/$(id -u ${config.defaultUser})/com.apple.tccd" 2>/dev/null || true
-          ${lib.optionalString (reloadCmds != [ ]) ''
-            # Relaunch the managed daemons whose grant we just (re)wrote, so they
-            # re-evaluate their launch-cached authorization against the live grant
-            # (see the reloadAgent option). Guarded by a hash of the grant config
-            # (which includes each app's store path, so it changes when a granted
-            # binary is rebuilt) so a no-op `just system` doesn't SIGKILL-restart
-            # them every time.
-            reload_hash="${builtins.hashString "sha256" (builtins.toJSON cfg.apps)}"
-            reload_marker="/var/lib/nix-darwin/tcc-reload.hash"
-            if [ "$(cat "$reload_marker" 2>/dev/null)" != "$reload_hash" ]; then
-              # tccd kickstart above is async and exposes no readiness signal; give
-              # it a moment to reload the freshly-written db before agents re-check.
-              sleep 1
-              ${lib.concatMapStringsSep "\n" (cmd: "${cmd} 2>/dev/null || true") reloadCmds}
-              mkdir -p "$(dirname "$reload_marker")"
-              echo "$reload_hash" > "$reload_marker"
-            fi
-          ''}
         '';
       };
     };
