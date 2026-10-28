@@ -20,6 +20,8 @@
     browser-session-mcp.inputs.flake-parts.follows = "flake-parts";
     browser-session-mcp.inputs.rust-overlay.follows = "rust-overlay";
     browser-session-mcp.inputs.treefmt-nix.follows = "treefmt-nix";
+    cmdtab.url = "git+ssh://git@github.com/xav-ie/cmdtab";
+    cmdtab.inputs.nixpkgs.follows = "nixpkgs";
     collie.url = "github:AltanS/collie";
     collie.inputs.nixpkgs.follows = "nixpkgs";
     ctpv.url = "github:xav-ie/ctpv-nix";
