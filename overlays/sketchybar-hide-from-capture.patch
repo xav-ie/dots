@@ -1,0 +1,21 @@
+--- a/src/window.c
++++ b/src/window.c
+@@ -5,6 +5,8 @@
+ #include "layer.h"
+ #include <pthread.h>
+ 
++extern CGError SLSSetWindowSharingState(int cid, uint32_t wid, uint32_t state);
++
+ extern struct bar_manager g_bar_manager;
+ extern int64_t g_disable_capture;
+ extern CGError (* SBSLSTransactionAddPostDecodeAction)(CFTypeRef, void (^)());
+@@ -82,6 +84,9 @@
+   SLSSetWindowTags(g_connection, window->id, &set_tags, 64);
+   SLSClearWindowTags(g_connection, window->id, &clear_tags, 64);
+   SLSSetWindowOpacity(g_connection, window->id, 0);
++  // Never in a screen share or recording. Only the owning process can set
++  // this, so it has to happen here.
++  SLSSetWindowSharingState(g_connection, window->id, 0);
+ 
+   window->context = SLWindowContextCreate(g_connection, window->id, NULL);
+   window_clear_background(window);
