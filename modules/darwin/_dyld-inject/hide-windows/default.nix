@@ -45,11 +45,60 @@ in
         them for a meeting, and you reveal apps to present.
       '';
     };
+
+    grantScreenCaptureToAllApps = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = ''
+        Grant Screen Recording to every installed app at activation. On
+        macOS 26, an app WITHOUT Screen Recording can hide a window from
+        capture only once: after the window has been made capturable again,
+        the WindowServer ignores every later NSWindowSharingNone from that
+        app (AppKit, raw CGSSetWindowSharingState, re-showing with either
+        value, rebuilding the server window: all refused; only a relaunch
+        resets it). Apps WITH the permission toggle normally (verified with
+        the same test app, in real captures). So a second Screenshare Mode in
+        one session would leak every such app. The cost: any app can record
+        the screen without asking (the menu-bar recording indicator still
+        shows). Covers apps installed at activation time; one installed later
+        is covered at the next rebuild.
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {
     services.dyldInject.libraries = [
       "${hide-windows}/lib/HideWindows.dylib"
     ];
+
+    # Grants only what's missing (one DB read), so a rebuild costs nothing once
+    # everything is covered. Bundle-id grants, no code-requirement pin: they
+    # must keep matching across app updates and re-signs.
+    system.activationScripts.postActivation.text = lib.mkIf cfg.grantScreenCaptureToAllApps (
+      lib.mkAfter ''
+        echo "Granting Screen Recording to installed apps (hide-windows)..."
+        sc_db="/Library/Application Support/com.apple.TCC/TCC.db"
+        sc_have=$(/usr/bin/sqlite3 "$sc_db" \
+          "SELECT client FROM access WHERE service='kTCCServiceScreenCapture' AND client_type=0 AND auth_value=2;")
+        sc_granted=0
+        for sc_app in /Applications/*.app /Applications/*/*.app \
+          "/Users/${config.defaultUser}"/Applications/*.app \
+          /System/Applications/*.app /System/Applications/Utilities/*.app \
+          /System/Library/CoreServices/Finder.app; do
+          [ -f "$sc_app/Contents/Info.plist" ] || continue
+          sc_id=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$sc_app/Contents/Info.plist" 2>/dev/null) || continue
+          [ -n "$sc_id" ] || continue
+          printf '%s\n' "$sc_have" | /usr/bin/grep -qxF "$sc_id" && continue
+          ${lib.getExe config.security.tcc.package} --service ScreenCapture \
+            --bundle-id "$sc_id" --db "$sc_db" >/dev/null && sc_granted=$((sc_granted + 1))
+          sc_have=$(printf '%s\n%s' "$sc_have" "$sc_id")
+        done
+        if [ "$sc_granted" -gt 0 ]; then
+          echo "  granted $sc_granted app(s); relaunch apps that were already running"
+          sudo -u ${config.defaultUser} launchctl kickstart -k \
+            "gui/$(id -u ${config.defaultUser})/com.apple.tccd" 2>/dev/null || true
+        fi
+      ''
+    );
   };
 }
