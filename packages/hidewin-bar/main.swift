@@ -316,7 +316,9 @@ final class Controller: NSObject {
           post(HIDE, String(app.processIdentifier))
         }
       }
+      startLeakAudit()
     } else {
+      stopLeakAudit()
       post(SHOW, nil)
       if let o = launchObserver {
         NSWorkspace.shared.notificationCenter.removeObserver(o)
@@ -331,7 +333,9 @@ final class Controller: NSObject {
   func publishMode() {
     let dir = ("~/.cache/hidewin" as NSString).expandingTildeInPath
     try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
-    try? (screenshareMode ? "on" : "off").write(
+    // "on-leak": an audited window is still capturable (see LeakAudit.swift).
+    let mode = screenshareMode ? (leakingPids.isEmpty ? "on" : "on-leak") : "off"
+    try? mode.write(
       toFile: "\(dir)/mode", atomically: true, encoding: .utf8)
     post(MODE_CHANGED, nil)
   }
