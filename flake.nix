@@ -55,6 +55,7 @@
     neverest.inputs.nixpkgs.follows = "nixpkgs";
     nix-auto-follow.url = "github:xav-ie/nix-auto-follow/feat-consolidation";
     nix-darwin.url = "github:LnL7/nix-darwin";
+    nix-darwin-tcc.url = "git+ssh://git@github.com/xav-ie/nix-darwin-tcc";
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
     nix-homebrew.inputs.brew-src.follows = "brew-src";
     # Parallel derivationStrict (DeterminateSystems/nix-src#572): system eval

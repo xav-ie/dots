@@ -1407,6 +1407,21 @@
         "type": "github"
       }
     },
+    "nix-darwin-tcc": {
+      "locked": {
+        "lastModified": 1793163706,
+        "narHash": "sha256-mvDT7iFxRoC0ufFa91LEk2Nm2inucNufPvoYvNnJmjg=",
+        "ref": "refs/heads/main",
+        "rev": "c50121a1f9209af7f6329ee914245914322dcd04",
+        "revCount": 2,
+        "type": "git",
+        "url": "ssh://git@github.com/xav-ie/nix-darwin-tcc"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/xav-ie/nix-darwin-tcc"
+      }
+    },
     "nix-homebrew": {
       "inputs": {
         "brew-src": [
@@ -2004,6 +2019,7 @@
         "neverest": "neverest",
         "nix-auto-follow": "nix-auto-follow",
         "nix-darwin": "nix-darwin",
+        "nix-darwin-tcc": "nix-darwin-tcc",
         "nix-homebrew": "nix-homebrew",
         "nix-src": "nix-src",
         "nix-vscode-extensions": "nix-vscode-extensions",
