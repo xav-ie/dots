@@ -23,7 +23,7 @@ stdenv.mkDerivation {
 
   buildPhase = ''
     runHook preBuild
-    clang -arch arm64e -arch x86_64 -dynamiclib -framework AppKit \
+    clang -arch arm64e -arch x86_64 -dynamiclib -framework AppKit -framework QuartzCore \
       -o HideWindows.dylib HideWindows.m
     codesign -f -s - HideWindows.dylib
     runHook postBuild
