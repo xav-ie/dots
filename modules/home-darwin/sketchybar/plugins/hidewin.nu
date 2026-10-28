@@ -4,8 +4,9 @@
 #
 # Mirrors control_center.nu (an icon-only image button): renders the round
 # iris/pupil glyph (`record.circle` — a ring + centre dot, no eye outline) via
-# `sketchybar-icons`, white in Normal mode and orange when Screenshare Mode is
-# active (every app hidden from capture, for a meeting). Sized to MATCH the
+# `sketchybar-icons`, white in Normal mode, orange when Screenshare Mode is
+# active (every app hidden from capture, for a meeting), and red when the
+# agent's leak audit finds a window still capturable. Sized to MATCH the
 # neighbouring control_center icon (POINT_SIZE 14 in a MIN_WIDTH canvas, drawn
 # at background.image.scale 0.5), with the same zeroed paddings so it doesn't
 # overlap the volume icon. Hover highlight is painted by sketchybar-hoverd onto
@@ -21,7 +22,11 @@ const POINT_SIZE = 14
 const MIN_WIDTH = 26
 
 def render [mode: string] {
-  let color = if $mode == "on" { "0xffffa000" } else { "0xffffffff" }
+  let color = match $mode {
+    "on" => "0xffffa000"
+    "on-leak" => "0xffff453a"
+    _ => "0xffffffff"
+  }
   let out = $"($CACHE)/bar-($mode)-($POINT_SIZE).png"
   if not ($out | path exists) {
     mkdir $CACHE
