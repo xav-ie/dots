@@ -382,6 +382,26 @@
         "type": "github"
       }
     },
+    "cmdtab": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1793150710,
+        "narHash": "sha256-eQPqLUcdvIv8/U3CHkMvJpV3ty8cXU0hrdKI50Bd+/w=",
+        "ref": "refs/heads/main",
+        "rev": "b77b1a58f258bfe600131be3437ab211fa7f985f",
+        "revCount": 1,
+        "type": "git",
+        "url": "ssh://git@github.com/xav-ie/cmdtab"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/xav-ie/cmdtab"
+      }
+    },
     "collie": {
       "inputs": {
         "nixpkgs": [
@@ -1920,6 +1940,7 @@
         "claude-marketplace-ponytail": "claude-marketplace-ponytail",
         "claude-marketplace-runpod": "claude-marketplace-runpod",
         "claude-marketplace-wakatime": "claude-marketplace-wakatime",
+        "cmdtab": "cmdtab",
         "collie": "collie",
         "crane": "crane",
         "ctpv": "ctpv",

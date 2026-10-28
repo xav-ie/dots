@@ -453,15 +453,105 @@ static void swizzled_orderWindow(id self, SEL _cmd, NSInteger place,
     orig_orderWindow(self, _cmd, place, relativeTo);
 }
 
+// ⌘-Tab icons (~/Projects/cmdtab). An app's runtime Dock icon — e.g. each
+// Firefox profile's badge — goes only to Dock; NSRunningApplication.icon
+// returns the bundle icon (verified). Firefox draws its badge in a custom
+// NSDockTile contentView (applicationIconImage stays the plain icon), so
+// whenever an app pushes its tile (-[NSDockTile display]) or sets its icon, we
+// render what Dock gets to ~/.cache/cmdtab/icons/<pid>.png and post
+// com.x.cmdtab.icon-changed (object = pid). Setting a nil icon with no tile
+// view deletes the file; cmdtab drops it when the process quits.
+static IMP orig_setIcon = NULL, orig_tileDisplay = NULL;
+static BOOL g_iconPending = NO;
+
+static NSBitmapImageRep *renderTile(void) {
+  NSInteger side = 512;
+  NSBitmapImageRep *rep = [[[NSBitmapImageRep alloc]
+      initWithBitmapDataPlanes:NULL
+                    pixelsWide:side
+                    pixelsHigh:side
+                 bitsPerSample:8
+               samplesPerPixel:4
+                      hasAlpha:YES
+                      isPlanar:NO
+                colorSpaceName:NSDeviceRGBColorSpace
+                   bytesPerRow:0
+                  bitsPerPixel:0] autorelease];
+  NSView *view = [[NSApp dockTile] contentView];
+  if (view) {
+    [rep setSize:view.bounds.size]; // draw the points at 512px
+    [view cacheDisplayInRect:view.bounds toBitmapImageRep:rep];
+    return rep;
+  }
+  NSImage *image = [NSApp applicationIconImage];
+  if (!image)
+    return nil;
+  [NSGraphicsContext saveGraphicsState];
+  [NSGraphicsContext
+      setCurrentContext:[NSGraphicsContext
+                            graphicsContextWithBitmapImageRep:rep]];
+  [image drawInRect:NSMakeRect(0, 0, side, side)];
+  [NSGraphicsContext restoreGraphicsState];
+  return rep;
+}
+
+static void publishIcon(void) {
+  NSString *dir = [@"~/.cache/cmdtab/icons" stringByExpandingTildeInPath];
+  NSString *path = [dir stringByAppendingFormat:@"/%@.png", g_pid];
+  NSBitmapImageRep *rep = renderTile();
+  if (rep) {
+    [[NSFileManager defaultManager] createDirectoryAtPath:dir
+                              withIntermediateDirectories:YES
+                                               attributes:nil
+                                                    error:NULL];
+    [[rep representationUsingType:NSBitmapImageFileTypePNG properties:@{}]
+        writeToFile:path
+         atomically:YES];
+  } else {
+    [[NSFileManager defaultManager] removeItemAtPath:path error:NULL];
+  }
+  [[NSDistributedNotificationCenter defaultCenter]
+      postNotificationName:@"com.x.cmdtab.icon-changed"
+                    object:g_pid
+                  userInfo:nil
+        deliverImmediately:YES];
+}
+
+// Coalesced and off the caller's path: Firefox redraws its tile for every
+// download-progress tick, and one publish per burst is plenty.
+static void schedulePublish(void) {
+  if (g_iconPending || !regularApp())
+    return;
+  g_iconPending = YES;
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 300 * NSEC_PER_MSEC),
+                 dispatch_get_main_queue(), ^{
+                   @autoreleasepool {
+                     g_iconPending = NO;
+                     publishIcon();
+                   }
+                 });
+}
+
+static void swizzled_setIcon(id self, SEL _cmd, NSImage *image) {
+  ((void (*)(id, SEL, NSImage *))orig_setIcon)(self, _cmd, image);
+  schedulePublish();
+}
+
+static void swizzled_tileDisplay(id self, SEL _cmd) {
+  ((void (*)(id, SEL))orig_tileDisplay)(self, _cmd);
+  schedulePublish();
+}
+
 __attribute__((constructor)) static void init(void) {
   @autoreleasepool {
     NSString *bundleID = [[NSBundle mainBundle] bundleIdentifier];
     if (!bundleID)
       return; // non-app process (daemon/CLI); nothing to hide.
-    // Our own menubar manages its own window hiding (a custom sharingType
-    // .none panel — native NSMenus ignore the flag). Skip it so this
-    // swizzle can't fight/override that.
-    if ([bundleID isEqualToString:@"com.x.hidewin-bar"])
+    // Our own menubar and ⌘-Tab switcher manage their own window hiding (a
+    // custom sharingType .none panel each — native NSMenus ignore the flag).
+    // Skip them so this swizzle can't fight/override that.
+    if ([bundleID isEqualToString:@"com.x.hidewin-bar"] ||
+        [bundleID isEqualToString:@"com.x.cmdtab"])
       return;
     g_bundleID = [bundleID retain];
     g_pid = [[NSString stringWithFormat:@"%d", getpid()] retain];
@@ -482,6 +572,18 @@ __attribute__((constructor)) static void init(void) {
 
     if ([bundleID isEqualToString:@"com.apple.dock"])
       dockInstall();
+
+    Method setIcon = class_getInstanceMethod(
+        NSClassFromString(@"NSApplication"),
+        @selector(setApplicationIconImage:));
+    if (setIcon)
+      orig_setIcon =
+          method_setImplementation(setIcon, (IMP)swizzled_setIcon);
+    Method tileDisplay = class_getInstanceMethod(
+        NSClassFromString(@"NSDockTile"), @selector(display));
+    if (tileDisplay)
+      orig_tileDisplay =
+          method_setImplementation(tileDisplay, (IMP)swizzled_tileDisplay);
 
     Class win = NSClassFromString(@"NSWindow");
     if (win) {
