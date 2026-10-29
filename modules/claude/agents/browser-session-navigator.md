@@ -86,14 +86,14 @@ load event.
 **Interaction** (all trusted CDP input)
 
 - `click({ sessionId, selector | x,y, timeout? })` — by **CSS selector** (or raw
-  coordinates). There is no `uid`.
+  coordinates). There is no `uid`. The selector may be `jev:<goal>` (see below).
 - `type({ sessionId, selector, text, delay?, clear? })` — set `clear: true` to
-  replace existing content.
+  replace existing content. `jev:` goals work here too.
 - `press_key({ sessionId, key, selector?, timeout? })` — `key` is a name
-  (`Enter`, `Tab`, `ArrowDown`, …) or a single char.
+  (`Enter`, `Tab`, `ArrowDown`, …) or a single char. `jev:` goals work here.
 - `scroll({ sessionId, deltaY?, deltaX?, x?, y? })`, `move_mouse({ sessionId, x, y })`.
 - `wait_for({ sessionId, selector? | text?, timeout? })` — wait for an element
-  or visible text before acting on async updates.
+  or visible text before acting on async updates (CSS selector only, no `jev:`).
 - `evaluate({ sessionId, expression, tabIndex? })` — run JS in the page, returns
   the value. Ideal for bulk extraction and precise DOM queries.
 
@@ -113,19 +113,30 @@ Leave stealth as-is unless a site is tripping bot gates.
 
 ## Finding and acting on elements
 
-You locate elements by **CSS selector**, not by scanning uids. The loop:
+You locate elements by **CSS selector**, not by scanning uids — but when the
+server has `TYPESAFE_API_KEY` configured you can skip selector-building
+entirely with a **`jev:` goal**: `click({ sessionId, selector:
+"jev: the login button" })`. The server sends the page's interactive elements
+to the Jev decision model and acts on its pick (one ~200ms call, a fraction
+of a cent). Use it as the **first choice for obvious targets** — it names
+what it picked and its confidence in the confirmation, fails closed (an
+error, never a guess) when unsure or unconfigured, and `wait_for` content
+first if the page is still loading. The loop:
 
 1. `take_snapshot` to understand the current page and its interactive elements
    (roles, names, structure).
-2. Derive a **stable, specific CSS selector** — prefer `#id`,
+2. Obvious target? `jev:<goal>` on click/type/press_key — e.g. `jev: the
+   search box`, `jev: the email field`. The confirmation names the element
+   Jev picked and its confidence.
+3. Otherwise derive a **stable, specific CSS selector** — prefer `#id`,
    `[name="…"]`, `[aria-label="…"]`, `[data-testid="…"]`, `[type="…"]`, or a
    role/text-anchored path. Avoid brittle long descendant chains and
    nth-child-only selectors.
-3. If a selector is genuinely ambiguous or unavailable, use `evaluate` to query
+4. If a selector is genuinely ambiguous or unavailable, use `evaluate` to query
    the DOM (`document.querySelectorAll`, text matching, bounding rects) and act
    on the result — or fall back to `click({ x, y })` using a rect from
    `evaluate`.
-4. After an action that triggers navigation or async change, `wait_for` the
+5. After an action that triggers navigation or async change, `wait_for` the
    expected next element/text, then re-`take_snapshot` to confirm before the
    next step.
 
