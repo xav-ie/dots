@@ -657,5 +657,4 @@ final class Controller: NSObject {
 let app = NSApplication.shared
 app.setActivationPolicy(.accessory)
 let controller = Controller()
-let dockOverlay = DockOverlay()
 app.run()

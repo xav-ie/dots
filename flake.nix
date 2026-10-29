@@ -20,8 +20,6 @@
     browser-session-mcp.inputs.flake-parts.follows = "flake-parts";
     browser-session-mcp.inputs.rust-overlay.follows = "rust-overlay";
     browser-session-mcp.inputs.treefmt-nix.follows = "treefmt-nix";
-    cmdtab.url = "git+ssh://git@github.com/xav-ie/cmdtab";
-    cmdtab.inputs.nixpkgs.follows = "nixpkgs";
     collie.url = "github:AltanS/collie";
     collie.inputs.nixpkgs.follows = "nixpkgs";
     ctpv.url = "github:xav-ie/ctpv-nix";
@@ -79,6 +77,8 @@
     scribe-desktop.url = "git+ssh://git@github.com/xav-ie/scribe-desktop";
     scribe-desktop.inputs.nixpkgs.follows = "nixpkgs";
     scribe-desktop.inputs.ags.follows = "ags";
+    # Main flake has no inputs; dev/ holds its pinned nixpkgs.
+    screenshare-ui.url = "git+ssh://git@github.com/xav-ie/screenshare-ui";
     sketchybar-icons.url = "github:xav-ie/sketchybar-icons";
     sketchybar-icons.inputs.nixpkgs.follows = "nixpkgs";
     sketchybar-icons.inputs.flake-parts.follows = "flake-parts";

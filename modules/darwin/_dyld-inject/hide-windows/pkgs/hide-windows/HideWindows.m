@@ -107,210 +107,6 @@ static void applyAll(void) {
     applyWindow(w);
 }
 
-// ── Dock ──────────────────────────────────────────────────────────────────
-// Dock draws Mission Control's hover outline + window title and the Dock icon
-// name tooltips in its own windows, which ignore sharingType (setting it
-// sticks, but capture still sees them — verified). So Dock never draws them:
-//   • plain CALayer with a ≥4pt border — Mission Control's hover outline (5pt;
-//     the 3pt one is the Spaces bar's selection, left alone), added at the
-//     hovered window's rect and removed on unhover.
-//   • ECTooltipLayer — Mission Control's window title (one reused layer,
-//     retitled just before each outline appears, drawn centred on it).
-//   • DOCKLabelLayer — the name over a hovered Dock icon (text from its Tile).
-// Instead we report what Dock wanted to show to hidewin-bar's DockOverlay
-// (com.x.hidewin.dock-ui; protocol in packages/hidewin-bar/DockOverlay.swift),
-// which draws look-alikes in sharingType = .none panels: visible to you, never
-// captured. Mission Control's window thumbnails need nothing: they're the real
-// windows, already hidden from capture in Screenshare Mode.
-static NSHashTable *g_outlines = nil; // outline layers seen (weak)
-static NSString *g_title = @"";       // Mission Control's current window title
-static NSMutableDictionary *g_dockPending = nil, *g_dockSent = nil;
-static char kWantHidden;
-static IMP o_tooltipLayout, o_tooltipSetHidden, o_labelUpdate, o_labelSetHidden,
-    o_setBorderWidth, o_setPosition, o_setBounds, o_removeFromSuperlayer;
-
-// Coalesced: Dock sets an outline's position then bounds, and animates a label
-// every frame — post at most once per kind per runloop turn, and only changes.
-static void dockPublish(NSString *kind, NSString *message) {
-  if (![NSThread isMainThread]) {
-    NSString *k = [kind copy], *m = [message copy];
-    dispatch_async(dispatch_get_main_queue(), ^{
-      dockPublish(k, m);
-      [k release];
-      [m release];
-    });
-    return;
-  }
-  BOOL scheduled = g_dockPending.count > 0;
-  g_dockPending[kind] = message;
-  if (scheduled)
-    return;
-  dispatch_async(dispatch_get_main_queue(), ^{
-    @autoreleasepool {
-      for (NSString *k in g_dockPending) {
-        NSString *m = g_dockPending[k];
-        if ([m isEqualToString:g_dockSent[k]])
-          continue;
-        g_dockSent[k] = m;
-        [[NSDistributedNotificationCenter defaultCenter]
-            postNotificationName:@"com.x.hidewin.dock-ui"
-                          object:m
-                        userInfo:nil
-              deliverImmediately:YES];
-      }
-      [g_dockPending removeAllObjects];
-    }
-  });
-}
-
-// Dock's overlay windows cover a whole display with a bottom-left origin; map
-// a layer to global top-left points on the display under the cursor (where
-// any hover UI is).
-static NSString *dockRect(CALayer *l) {
-  CALayer *root = l;
-  while (root.superlayer)
-    root = root.superlayer;
-  CGRect r = [l convertRect:l.bounds toLayer:root];
-  CGEventRef e = CGEventCreate(NULL);
-  CGPoint cursor = CGEventGetLocation(e);
-  CFRelease(e);
-  CGDirectDisplayID display = CGMainDisplayID();
-  uint32_t n = 0;
-  CGGetDisplaysWithPoint(cursor, 1, &display, &n);
-  CGRect d = CGDisplayBounds(display);
-  return [NSString stringWithFormat:@"%.1f\t%.1f\t%.1f\t%.1f",
-                                    d.origin.x + r.origin.x,
-                                    d.origin.y + d.size.height - r.origin.y -
-                                        r.size.height,
-                                    r.size.width, r.size.height];
-}
-
-static BOOL isOutline(CALayer *l) { return [g_outlines containsObject:l]; }
-
-static void publishOutline(CALayer *l) {
-  if (l.superlayer && l.bounds.size.width > 0)
-    dockPublish(@"outline", [NSString stringWithFormat:@"outline\t%@\t%@",
-                                                       dockRect(l), g_title]);
-}
-
-// Hidden on Dock's screen, always; setHidden: is overridden on the class.
-#define DOCK_FORCE_HIDDEN(l, setHidden)                                         \
-  ((void (*)(id, SEL, BOOL))setHidden)(l, @selector(setHidden:), YES)
-
-static void tooltipSetHidden(id self, SEL _cmd, BOOL hidden) {
-  DOCK_FORCE_HIDDEN(self, o_tooltipSetHidden);
-}
-
-static void tooltipLayout(id self, SEL _cmd) {
-  ((void (*)(id, SEL))o_tooltipLayout)(self, _cmd);
-  DOCK_FORCE_HIDDEN(self, o_tooltipSetHidden);
-  id text = [self respondsToSelector:@selector(textLayer)]
-                ? [[self performSelector:@selector(textLayer)] string]
-                : nil;
-  NSString *title = [[text description]
-      stringByReplacingOccurrencesOfString:@"\t"
-                                withString:@" "];
-  if (title && ![title isEqualToString:g_title]) {
-    [g_title release];
-    g_title = [title copy];
-    for (CALayer *l in g_outlines) // retitle an outline already showing
-      publishOutline(l);
-  }
-}
-
-// A label is showing while Dock wants it unhidden and fully faded in; any
-// fade-out counts as gone (the overlay hides at once).
-static void publishLabel(CALayer *l) {
-  BOOL wantHidden = [objc_getAssociatedObject(l, &kWantHidden) boolValue];
-  if (wantHidden || l.opacity < 0.99) {
-    dockPublish(@"label", @"label\thide");
-    return;
-  }
-  id tile = [l respondsToSelector:@selector(source)]
-                ? [l performSelector:@selector(source)]
-                : nil;
-  NSString *text = [tile respondsToSelector:@selector(label)]
-                       ? [tile performSelector:@selector(label)]
-                       : nil;
-  if (text.length && l.bounds.size.width > 0)
-    dockPublish(@"label", [NSString stringWithFormat:@"label\t%@\t%@",
-                                                     dockRect(l), text]);
-}
-
-static void labelSetHidden(id self, SEL _cmd, BOOL hidden) {
-  objc_setAssociatedObject(self, &kWantHidden, @(hidden),
-                           OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-  DOCK_FORCE_HIDDEN(self, o_labelSetHidden);
-  publishLabel(self);
-}
-
-static void labelUpdate(id self, SEL _cmd) {
-  ((void (*)(id, SEL))o_labelUpdate)(self, _cmd);
-  DOCK_FORCE_HIDDEN(self, o_labelSetHidden);
-  publishLabel(self);
-}
-
-static void dockSetBorderWidth(CALayer *self, SEL _cmd, CGFloat width) {
-  if (width >= 4 && object_getClass(self) == [CALayer class]) {
-    [g_outlines addObject:self];
-    width = 0;
-  }
-  ((void (*)(id, SEL, CGFloat))o_setBorderWidth)(self, _cmd, width);
-}
-
-static void dockSetPosition(CALayer *self, SEL _cmd, CGPoint p) {
-  ((void (*)(id, SEL, CGPoint))o_setPosition)(self, _cmd, p);
-  if (isOutline(self))
-    publishOutline(self);
-}
-
-static void dockSetBounds(CALayer *self, SEL _cmd, CGRect b) {
-  ((void (*)(id, SEL, CGRect))o_setBounds)(self, _cmd, b);
-  if (isOutline(self))
-    publishOutline(self);
-}
-
-static void dockRemoveFromSuperlayer(CALayer *self, SEL _cmd) {
-  if (isOutline(self) && self.superlayer)
-    dockPublish(@"outline", @"outline\thide");
-  ((void (*)(id, SEL))o_removeFromSuperlayer)(self, _cmd);
-}
-
-// Override setHidden: on the class itself (it inherits CALayer's), and wrap
-// the method Dock calls each time it shows the element.
-static void dockHookLabel(const char *cls, SEL show, IMP setHiddenHook,
-                          IMP showHook, IMP *origSetHidden, IMP *origShow) {
-  Class c = objc_getClass(cls);
-  Method m = c ? class_getInstanceMethod(c, show) : NULL;
-  if (!m)
-    return; // a macOS update renamed it; leave Dock alone
-  *origSetHidden = class_getMethodImplementation(c, @selector(setHidden:));
-  class_replaceMethod(c, @selector(setHidden:), setHiddenHook, "v@:B");
-  *origShow = method_setImplementation(m, showHook);
-}
-
-static IMP dockSwizzle(SEL sel, IMP hook) {
-  return method_setImplementation(
-      class_getInstanceMethod([CALayer class], sel), hook);
-}
-
-static void dockInstall(void) {
-  g_outlines = [[NSHashTable weakObjectsHashTable] retain];
-  g_dockPending = [[NSMutableDictionary alloc] init];
-  g_dockSent = [[NSMutableDictionary alloc] init];
-  dockHookLabel("ECTooltipLayer", @selector(layout), (IMP)tooltipSetHidden,
-                (IMP)tooltipLayout, &o_tooltipSetHidden, &o_tooltipLayout);
-  dockHookLabel("DOCKLabelLayer", sel_registerName("update"),
-                (IMP)labelSetHidden, (IMP)labelUpdate, &o_labelSetHidden,
-                &o_labelUpdate);
-  o_setBorderWidth =
-      dockSwizzle(@selector(setBorderWidth:), (IMP)dockSetBorderWidth);
-  o_setPosition = dockSwizzle(@selector(setPosition:), (IMP)dockSetPosition);
-  o_setBounds = dockSwizzle(@selector(setBounds:), (IMP)dockSetBounds);
-  o_removeFromSuperlayer = dockSwizzle(@selector(removeFromSuperlayer),
-                                       (IMP)dockRemoveFromSuperlayer);
-}
-
 // A show/hide notification targets us if its object is nil (broadcast),
 // our pid (this instance), or our bundle id (every instance of the app).
 static BOOL targetsUs(NSString *o) {
@@ -453,14 +249,14 @@ static void swizzled_orderWindow(id self, SEL _cmd, NSInteger place,
     orig_orderWindow(self, _cmd, place, relativeTo);
 }
 
-// ⌘-Tab icons (~/Projects/cmdtab). An app's runtime Dock icon — e.g. each
+// ⌘-Tab icons (screenshare-ui's switcher). An app's runtime Dock icon — e.g. each
 // Firefox profile's badge — goes only to Dock; NSRunningApplication.icon
 // returns the bundle icon (verified). Firefox draws its badge in a custom
 // NSDockTile contentView (applicationIconImage stays the plain icon), so
 // whenever an app pushes its tile (-[NSDockTile display]) or sets its icon, we
 // render what Dock gets to ~/.cache/cmdtab/icons/<pid>.png and post
 // com.x.cmdtab.icon-changed (object = pid). Setting a nil icon with no tile
-// view deletes the file; cmdtab drops it when the process quits.
+// view deletes the file; the switcher drops it when the process quits.
 static IMP orig_setIcon = NULL, orig_tileDisplay = NULL;
 static BOOL g_iconPending = NO;
 
@@ -547,11 +343,11 @@ __attribute__((constructor)) static void init(void) {
     NSString *bundleID = [[NSBundle mainBundle] bundleIdentifier];
     if (!bundleID)
       return; // non-app process (daemon/CLI); nothing to hide.
-    // Our own menubar and ⌘-Tab switcher manage their own window hiding (a
+    // Our own menubar and screenshare-ui manage their own window hiding (a
     // custom sharingType .none panel each — native NSMenus ignore the flag).
     // Skip them so this swizzle can't fight/override that.
     if ([bundleID isEqualToString:@"com.x.hidewin-bar"] ||
-        [bundleID isEqualToString:@"com.x.cmdtab"])
+        [bundleID isEqualToString:@"com.x.screenshare-ui"])
       return;
     g_bundleID = [bundleID retain];
     g_pid = [[NSString stringWithFormat:@"%d", getpid()] retain];
@@ -570,8 +366,6 @@ __attribute__((constructor)) static void init(void) {
     if ([mode hasPrefix:@"on"])
       g_hidden = 1;
 
-    if ([bundleID isEqualToString:@"com.apple.dock"])
-      dockInstall();
 
     Method setIcon = class_getInstanceMethod(
         NSClassFromString(@"NSApplication"),
