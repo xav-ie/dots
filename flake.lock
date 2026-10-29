@@ -1920,11 +1920,11 @@
     "rcsd-web-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1793292799,
-        "narHash": "sha256-EDmikOYEIMZsjzf/e5vRdC0RGhzb5AhCIcDcPDsA91E=",
+        "lastModified": 1793294468,
+        "narHash": "sha256-YhcD2Faew8ie2bCuIAxsBrkhH93LlNOOIwQvBnrghqU=",
         "ref": "refs/heads/main",
-        "rev": "ff8caa40c883714a040f6a68f4c8989e588a85c8",
-        "revCount": 6,
+        "rev": "f690b338035a465378c3cf71dda408d104c09b6c",
+        "revCount": 7,
         "type": "git",
         "url": "file:///home/x/Projects/rcsd-web"
       },

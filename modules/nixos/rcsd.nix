@@ -7,8 +7,12 @@
 #   https://messages.<baseDomain>/{api,mcp,auth}  -> rcsd (port 7007)
 #   https://messages.<baseDomain>/*               -> rcsd-web (static files)
 #
-# Tailnet-only: no Cloudflare Tunnel route. Every request needs the bearer
-# token (OPENMESSAGES_AUTH_MODE=enforce), MCP clients included. rcsd mints it
+# messages.<baseDomain> has its own Cloudflare record (a tunnel route behind
+# Cloudflare Access, managed in the dashboard), so off this host it is public
+# behind Access rather than on the tailnet wildcard; on praesidium it resolves
+# to loopback. Every request still needs the bearer token
+# (OPENMESSAGES_AUTH_MODE=enforce), MCP clients included; rcsd-web sends the
+# Access cookie along since it is same-origin. rcsd mints it
 # on first start as /var/lib/rcsd/control.token (0600, uid 7007); nox's data
 # dir already carries one, so the migrated token keeps working.
 #
@@ -17,7 +21,7 @@
 # GET never does, so it would gzip and hold back /api/events (SSE). Traefik
 # adds no response buffering of its own.
 #
-# Off until the migration from nox; flip services.rcsd.enable. First copy
+# Enabled on praesidium after the migration from nox. To migrate again, first copy
 # nox's data dir with the container stopped, then hand it to the rcsd user:
 #   rsync -a "nox:Library/Application Support/OpenMessage/" /var/lib/rcsd/
 #   chown -R 7007:7007 /var/lib/rcsd
