@@ -35,7 +35,9 @@
           ])
           ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux (
             [
-              pkgs-bleeding.nh
+              # nh wraps its own nom; use ours so Determinate's activity
+              # types don't error.
+              (pkgs-bleeding.nh.override { inherit (config.packages) nix-output-monitor; })
               # nixos-rebuild puts its nix on PATH ahead of the system's; build
               # it with the daemon's nix so `nix` in the shell speaks its protocol.
               (pkgs-bleeding.nixos-rebuild.override {
