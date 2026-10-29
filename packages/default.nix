@@ -45,6 +45,7 @@
   mcp-atlassian-src,
   muscat-pkg,
   protonmail-mcp-src,
+  rcsd-src,
   simulstreaming-src,
   slack-mcp-server-src,
   workspace-mcp-src,
@@ -58,6 +59,7 @@ let
   notify = pkgs.callPackage ./notify {
     inherit generate-kaomoji ssh-client-host writeNuApplication;
   };
+  rcsd = pkgs.callPackage ./rcsd { src = rcsd-src; };
   ssh-client-host = pkgs.callPackage ./ssh-client-host { inherit writeNuApplication; };
   uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
 in
@@ -65,6 +67,7 @@ rec {
   inherit
     is-sshed
     notify
+    rcsd
     ssh-client-host
     uair-toggle-and-notify
     ;
@@ -158,7 +161,7 @@ rec {
   jitfix = pkgs.callPackage ./jitfix { };
   menubar-reveal = pkgs.callPackage ./menubar-reveal { };
   move-pip = pkgs.callPackage ./move-pip { };
-  openmessage = pkgs.callPackage ./openmessage { };
+  openmessage = pkgs.callPackage ./openmessage { inherit rcsd; };
   polish-recording = pkgs.callPackage ./polish-recording { };
   sketchybar-battery = pkgs.callPackage ./sketchybar-battery { inherit writeNuApplication; };
   sketchybar-hover = pkgs.callPackage ./sketchybar-hover { };

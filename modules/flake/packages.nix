@@ -81,6 +81,7 @@
           executor-src
           mcp-atlassian-src
           protonmail-mcp-src
+          rcsd-src
           simulstreaming-src
           workspace-mcp-src
           zerobrew-src

@@ -1,49 +1,21 @@
 # OpenMessage, cut over to rcsd: a private fork of MaxGhenis/openmessage
 # stripped to Google Messages (SMS/RCS) only. Every fix that used to live in
-# the patch pile below is committed upstream in the fork (branch main), so
-# this file is down to a source pin. The fork also carries the native macOS
-# app (mirrors macos/build.sh: Go backend in Contents/Resources, Swift app in
-# Contents/MacOS, ad-hoc signed). Bump `rev` + `vendorHash` together.
-#
-# The repo is private: fetched over ssh with the invoking user's key
-# (builtins.fetchGit is impure on purpose — switch needs key access).
+# a patch pile is committed in the fork (branch main). The fork also carries
+# the native macOS app (mirrors macos/build.sh: Go backend in
+# Contents/Resources, Swift app in Contents/MacOS, ad-hoc signed). Source and
+# backend both come from the rcsd package (the `rcsd-src` flake input).
 {
   lib,
-  buildGoModule,
+  rcsd,
   stdenv,
   swift,
   swiftpm,
 }:
-let
-  version = "unstable-2026-10-29";
-
-  src = builtins.fetchGit {
-    url = "git@github.com:xav-ie/rcsd.git";
-    ref = "main";
-    rev = "a1952a87aa117340d2ad3cc0a987d43c22afa833";
-  };
-
-  backend = buildGoModule {
-    pname = "openmessage-backend";
-    inherit version src;
-    vendorHash = "sha256-c0DFcF6PUGqyerOkzTMgyIpHtgj0dF+D6erVNZKi6Hs=";
-    subPackages = [ "." ];
-    env.CGO_ENABLED = 0;
-    ldflags = [
-      "-s"
-      "-w"
-      "-X main.version=${version}"
-    ];
-    # Tests drive live sessions and Playwright.
-    doCheck = false;
-  };
-in
 stdenv.mkDerivation {
   pname = "openmessage";
-  inherit version src;
+  inherit (rcsd) version src;
 
-  # Directory sources are copied to ./<hash-stripped name>; fetchGit names
-  # its output "source", like fetchFromGitHub did before the cutover.
+  # The flake input is a /nix/store/<hash>-source path, unpacked to ./source.
   sourceRoot = "source/macos/OpenMessage";
 
   nativeBuildInputs = [
@@ -62,7 +34,7 @@ stdenv.mkDerivation {
     app=$out/Applications/OpenMessage.app
     mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources" $out/bin
     cp "$(swift build -c release --show-bin-path)/OpenMessage" "$app/Contents/MacOS/OpenMessage"
-    cp ${backend}/bin/openmessage "$app/Contents/Resources/openmessage"
+    cp ${lib.getExe rcsd} "$app/Contents/Resources/openmessage"
     cp Sources/Info.plist "$app/Contents/Info.plist"
 
     icon=Sources/Assets.xcassets/AppIcon.appiconset
@@ -86,10 +58,6 @@ stdenv.mkDerivation {
   postFixup = ''
     /usr/bin/codesign --force --deep --sign - "$out/Applications/OpenMessage.app"
   '';
-
-  passthru = {
-    inherit backend;
-  };
 
   meta = {
     description = "Local-first Google Messages client with an MCP server";
