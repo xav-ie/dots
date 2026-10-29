@@ -162,7 +162,6 @@ rec {
   jitfix = pkgs.callPackage ./jitfix { };
   menubar-reveal = pkgs.callPackage ./menubar-reveal { };
   move-pip = pkgs.callPackage ./move-pip { };
-  openmessage = pkgs.callPackage ./openmessage { inherit rcsd; };
   polish-recording = pkgs.callPackage ./polish-recording { };
   screenshare-ui = pkgs.callPackage "${screenshare-ui-src}/default.nix" { };
   screenshare-ui-dock-hooks = pkgs.callPackage "${screenshare-ui-src}/dock-hooks.nix" { };
