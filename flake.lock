@@ -1921,11 +1921,11 @@
         "rev": "f690b338035a465378c3cf71dda408d104c09b6c",
         "revCount": 7,
         "type": "git",
-        "url": "file:///home/x/Projects/rcsd-web"
+        "url": "ssh://git@github.com/xav-ie/rcsd-web.git"
       },
       "original": {
         "type": "git",
-        "url": "file:///home/x/Projects/rcsd-web"
+        "url": "ssh://git@github.com/xav-ie/rcsd-web.git"
       }
     },
     "root": {

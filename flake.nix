@@ -199,8 +199,8 @@
     # (SMS/RCS). Fetched over ssh with the invoking user's key.
     rcsd-src.url = "git+ssh://git@github.com/xav-ie/rcsd.git";
     rcsd-src.flake = false;
-    # rcsd's web client; local only until it has a remote.
-    rcsd-web-src.url = "git+file:///home/x/Projects/rcsd-web";
+    # rcsd's web client.
+    rcsd-web-src.url = "git+ssh://git@github.com/xav-ie/rcsd-web.git";
     rcsd-web-src.flake = false;
 
     # no way around this :/
