@@ -1,0 +1,1077 @@
+diff --git a/cmd/e2e-server/main.go b/cmd/e2e-server/main.go
+index 7368054..15ad350 100644
+--- a/cmd/e2e-server/main.go
++++ b/cmd/e2e-server/main.go
+@@ -27,6 +27,7 @@ import (
+ 	"github.com/maxghenis/openmessage/internal/v2keys"
+ 	"github.com/maxghenis/openmessage/internal/v2read"
+ 	"github.com/maxghenis/openmessage/internal/v2wire"
++	"go.mau.fi/mautrix-gmessages/pkg/libgm/gmproto"
+ 	"github.com/maxghenis/openmessage/internal/web"
+ )
+ 
+@@ -316,6 +317,51 @@ func newE2EServer(logger zerolog.Logger) (_ *e2eServer, cleanup func(), resultEr
+ 			}
+ 			return nil
+ 		},
++		// Plays the phone for /api/new-conversation groups: creating the
++		// conversation allocates a remote id, and the follow-up history fetch
++		// materializes the v2 thread the real ingest pipeline would build
++		// (kind group, roster, and the "created this group" system message).
++		CreateGoogleConversation: func(phones []string) (*gmproto.Conversation, error) {
++			remoteID := fmt.Sprintf("e2e-group-%d", nextID.Add(1))
++			pendingGroupsMu.Lock()
++			pendingGroups[remoteID] = append([]string(nil), phones...)
++			pendingGroupsMu.Unlock()
++			participants := []*gmproto.Participant{{
++				FullName:         "Max Ghenis",
++				FormattedNumber:  selfNumberE2E,
++				IsMe:             true,
++				ID:               &gmproto.SmallInfo{Number: selfNumberE2E},
++			}}
++			for _, phone := range phones {
++				participants = append(participants, &gmproto.Participant{
++					FullName:         v2DisplayNameForNumber(v2Store, phone),
++					FormattedNumber:  phone,
++					ID:               &gmproto.SmallInfo{Number: phone},
++				})
++			}
++			return &gmproto.Conversation{
++				ConversationID: remoteID,
++				IsGroupChat:    true,
++				Participants:   participants,
++			}, nil
++		},
++		FetchHistory: func(remoteID string) (int, error) {
++			pendingGroupsMu.Lock()
++			phones := pendingGroups[remoteID]
++			delete(pendingGroups, remoteID)
++			pendingGroupsMu.Unlock()
++			if phones == nil {
++				return 0, nil
++			}
++			if err := materializeE2EGroup(v2Store, events, remoteID, phones); err != nil {
++				return 0, err
++			}
++			select {
++			case e2eChanges <- struct{}{}:
++			default:
++			}
++			return 1, nil
++		},
+ 		WhatsAppStatus: func() any {
+ 			return map[string]any{"connected": true, "paired": true}
+ 		},
+@@ -927,6 +973,133 @@ func importSyntheticV2Message(v2Store *sqlite.Store, legacy *db.Store, msg *db.M
+ 	return conversationID, messageID, nil
+ }
+ 
++const selfNumberE2E = "+14155550001"
++
++var (
++	pendingGroupsMu sync.Mutex
++	pendingGroups   = map[string][]string{}
++)
++
++// v2DisplayNameForNumber resolves a phone number to a stored identity's
++// display name, falling back to the number itself — the same match the
++// synthetic importer uses for senders.
++func v2DisplayNameForNumber(v2Store *sqlite.Store, phone string) string {
++	identities, err := v2Store.ListIdentities("google-primary")
++	if err == nil {
++		for _, identity := range identities {
++			if identity.CanonicalValue == phone || identity.RawValue == phone {
++				if identity.DisplayName != "" {
++					return identity.DisplayName
++				}
++				return phone
++			}
++		}
++	}
++	return phone
++}
++
++// ensureE2EIdentity returns the identity id for a phone number, minting a
++// minimal e164 identity when the fixture never had one.
++func ensureE2EIdentity(v2Store *sqlite.Store, accountID, phone, name string) (string, error) {
++	identity, err := v2Store.GetIdentityByCanonical(accountID, sqlite.IdentityKind("e164"), phone)
++	if err == nil {
++		return identity.IdentityID, nil
++	}
++	now := time.Now().UnixMilli()
++	identity = sqlite.Identity{
++		IdentityID:     v2keys.DeriveID("identity", accountID, "e164\x1f"+phone),
++		AccountID:      accountID,
++		Kind:           sqlite.IdentityKind("e164"),
++		CanonicalValue: phone,
++		RawValue:       phone,
++		DisplayName:    name,
++		MetadataJSON:   "{}",
++		CreatedAtMS:    now,
++		UpdatedAtMS:    now,
++	}
++	if err := v2Store.UpsertIdentity(identity); err != nil {
++		return "", err
++	}
++	return identity.IdentityID, nil
++}
++
++// materializeE2EGroup builds the v2 thread the real ingest would mint from a
++// history snapshot of a newly created group: a group-kind conversation under
++// the remote id, the full roster, and the outgoing "created this group"
++// system message.
++func materializeE2EGroup(v2Store *sqlite.Store, events *web.EventBroker, remoteID string, phones []string) error {
++	accountID := "google-primary"
++	conversationID := v2keys.DeriveID("conversation", accountID, remoteID)
++	now := time.Now().UnixMilli()
++	names := make([]string, 0, len(phones))
++	for _, phone := range phones {
++		names = append(names, v2DisplayNameForNumber(v2Store, phone))
++	}
++	if err := v2Store.UpsertConversation(sqlite.Conversation{
++		ConversationID:       conversationID,
++		AccountID:            accountID,
++		RemoteConversationID: remoteID,
++		Kind:                 sqlite.ConversationKindGroup,
++		Title:                strings.Join(names, ", "),
++		NotificationMode:     sqlite.NotificationModeAll,
++		LastMessageAtMS:      now,
++		MetadataJSON:         "{}",
++		CreatedAtMS:          now,
++		UpdatedAtMS:          now,
++	}); err != nil {
++		return fmt.Errorf("upsert e2e group conversation: %w", err)
++	}
++	roster := make([]string, 0, len(phones)+1)
++	for i, phone := range phones {
++		identityID, err := ensureE2EIdentity(v2Store, accountID, phone, names[i])
++		if err != nil {
++			return fmt.Errorf("ensure identity for %q: %w", phone, err)
++		}
++		roster = append(roster, identityID)
++	}
++	identities, err := v2Store.ListIdentities(accountID)
++	if err != nil {
++		return fmt.Errorf("list identities: %w", err)
++	}
++	for _, identity := range identities {
++		if identity.IsSelf {
++			roster = append(roster, identity.IdentityID)
++			break
++		}
++	}
++	for _, identityID := range roster {
++		if _, err := v2Store.EnsureConversationParticipant(sqlite.ConversationParticipant{
++			AccountID:      accountID,
++			ConversationID: conversationID,
++			IdentityID:     identityID,
++			Role:           sqlite.ParticipantRoleMember,
++			IsActive:       true,
++		}); err != nil {
++			return fmt.Errorf("ensure participant: %w", err)
++		}
++	}
++	repository, err := sqlite.NewMessageRepository(v2Store, time.Now)
++	if err != nil {
++		return err
++	}
++	remoteMessageID := remoteID + "-created"
++	if err := repository.ImportMessage(context.Background(), sqlite.MessageProjection{Message: sqlite.Message{
++		MessageID:      v2keys.DeriveID("message", accountID, remoteID+"\x1f"+remoteMessageID),
++		ConversationID: conversationID,
++		AccountID:      accountID,
++		RemoteMessageID: remoteMessageID,
++		Direction:      sqlite.MessageDirectionOutgoing,
++		Body:           "You created this group MMS with " + strings.Join(names, " and "),
++		State:          sqlite.MessageStateActive,
++		OccurredAtMS:   now,
++	}}); err != nil {
++		return fmt.Errorf("import e2e group creation message: %w", err)
++	}
++	events.PublishConversations()
++	events.PublishMessages(conversationID)
++	return nil
++}
++
+ // withSyntheticReadReceipts adapts the receipt fixture to the v2-primary read
+ // seam. V2 receipt ingest persists a read cursor, while the legacy DTO exposed
+ // to the current UI still carries per-message Status; keep that compatibility
+diff --git a/e2e/ui.spec.js b/e2e/ui.spec.js
+index a890354..f3acbdb 100644
+--- a/e2e/ui.spec.js
++++ b/e2e/ui.spec.js
+@@ -799,6 +799,35 @@ test('requires a country code for new WhatsApp and Signal chats', async ({ page
+   await expect(page.locator('#new-msg-overlay')).toHaveClass(/show/);
+ });
+ 
++test('creates a group MMS with several recipients on SMS', async ({ page }) => {
++  await page.locator('#new-msg-btn').click();
++  await expect(page.locator('#new-msg-overlay')).toHaveClass(/show/);
++
++  // Each recipient commits to a chip; two chips switch the dialog to group mode.
++  // Fresh numbers keep the group's sidebar row from colliding with later
++  // per-contact tests (the store persists across tests within a run).
++  await page.locator('#new-msg-phone').fill('+14155550286');
++  await page.locator('#new-msg-phone').press('Enter');
++  await page.locator('#new-msg-phone').fill('+14155550287');
++  await page.locator('#new-msg-phone').press('Enter');
++  await expect(page.locator('.new-msg-chip')).toHaveCount(2);
++  await expect(page.locator('#new-msg-go')).toHaveText('Start group');
++  await expect(page.locator('#new-msg-helper')).toContainText('group MMS');
++
++  // WhatsApp refuses groups with a clear error; SMS accepts them.
++  await page.locator('.new-msg-platform-chip[data-platform="whatsapp"]').click();
++  await expect(page.locator('#new-msg-helper')).toContainText("aren't available on WhatsApp");
++  await page.locator('#new-msg-go').click();
++  await expect(page.locator('#new-msg-error')).toContainText('Group chats start on SMS');
++  await page.locator('.new-msg-platform-chip[data-platform="sms"]').click();
++
++  await page.locator('#new-msg-go').click();
++
++  await expect(page.locator('#new-msg-overlay')).not.toHaveClass(/show/);
++  await expect(page.locator('#chat-header-name')).toHaveText('+14155550286, +14155550287');
++  await expect(page.locator('#messages-area')).toContainText('You created this group MMS');
++});
++
+ test('searches only within the active thread', async ({ page }) => {
+   await openConversation(page, 'Sarah Chen');
+ 
+diff --git a/internal/ingest/history_stale_binding_test.go b/internal/ingest/history_stale_binding_test.go
+index 50d21b5..05b7f86 100644
+--- a/internal/ingest/history_stale_binding_test.go
++++ b/internal/ingest/history_stale_binding_test.go
+@@ -153,6 +153,47 @@ func TestHistoryKindMismatchOnMessageMintedThreadHealsInPlace(t *testing.T) {
+ 	}
+ }
+ 
++// An app-created group's first frame is the user's own outgoing "created
++// group" message, which mints a thread with an empty roster — no one has
++// spoken yet. The first snapshot still heals it in place: with no stored
++// peers to contradict, the snapshot is pure information.
++func TestHistoryKindMismatchOnEmptyRosterMintHealsInPlace(t *testing.T) {
++	h := newHWTHarness(t, false)
++	h.liveMessage(t, hwtMessage{id: "hp-empty-0", conversation: "hp-empty", body: "You created this group", at: hwtStart.Add(-2 * time.Hour)}.proto())
++	h.pump(t)
++	minted := h.conversation(t, "hp-empty")
++	if got := minted.Kind; got != "direct" {
++		t.Fatalf("fixture: empty-roster mint kind = %q, want direct", got)
++	}
++	if peers := h.peers(t, minted.ConversationID); len(peers) != 0 {
++		t.Fatalf("fixture: empty-roster mint peers = %v", peers)
++	}
++
++	group := hwtConversation("hp-empty", "Weekend", true, hwtKarl, hwtShoshana)
++	h.historyMessage(t, group, hwtMessage{id: "hp-empty-1", conversation: "hp-empty", body: "fetched", from: hwtShoshana, at: hwtStart.Add(-time.Hour)}.proto())
++	h.pump(t)
++	if counts := h.counts(); counts.HistoryImported != 1 || counts.HistorySkipped != 0 || counts.RemoteRebinds != 0 {
++		t.Fatalf("counters = %+v, want the message imported into the healed thread without a rebind", counts)
++	}
++
++	healed := h.conversation(t, "hp-empty")
++	if healed.ConversationID != minted.ConversationID {
++		t.Fatalf("healed thread = %s, want the minted row %s kept", healed.ConversationID, minted.ConversationID)
++	}
++	if healed.Kind != "group" || healed.Title != "Weekend" {
++		t.Fatalf("healed thread kind = %q title = %q, want group \"Weekend\"", healed.Kind, healed.Title)
++	}
++	if sqlite.ConversationMintSource(healed.MetadataJSON) != "" {
++		t.Fatalf("mint marker survived the snapshot refresh")
++	}
++	if peers := h.peers(t, healed.ConversationID); !slices.Equal(peers, []string{hwtKarl, hwtShoshana}) {
++		t.Fatalf("healed roster = %v, want [%s %s]", peers, hwtKarl, hwtShoshana)
++	}
++	if got := h.message(t, "hp-empty", "hp-empty-1").Body; got != "fetched" {
++		t.Fatalf("imported body = %q", got)
++	}
++}
++
+ // A group whose first frames race ahead of its conversation snapshot must not
+ // be split across per-sender 1:1 threads. The thread a bare message minted
+ // keeps its binding when a second distinct sender arrives: the sender joins
+diff --git a/internal/ingest/worker.go b/internal/ingest/worker.go
+index b7df532..a14b623 100644
+--- a/internal/ingest/worker.go
++++ b/internal/ingest/worker.go
+@@ -1212,7 +1212,32 @@ func (w *Worker) applyHistoryConversation(
+ 			} else {
+ 				// History never rewrites a bound thread, except to file it where
+ 				// the transport now does (a folder scan is how existing threads
+-				// learn they are spam, blocked or archived).
++				// learn they are spam, blocked or archived) — and to confirm an
++				// unconfirmed mint. A message-minted thread with no stored peers
++				// cannot contradict a snapshot, but it did guess its kind, and
++				// the snapshot is the authority.
++				unconfirmed := sqlite.ConversationMintSource(bound.MetadataJSON) == sqlite.ConversationMintMessage ||
++					sqlite.ConversationAdoptedBinding(bound.MetadataJSON)
++				eventKind := sqlite.ConversationKindDirect
++				if event.Kind == string(sqlite.ConversationKindGroup) {
++					eventKind = sqlite.ConversationKindGroup
++				}
++				if unconfirmed && eventKind != bound.Kind {
++					healed, healErr := w.healHistoryContradiction(accountID, platform, event, bound)
++					if healErr != nil {
++						return false, healErr
++					}
++					switch healed {
++					case historyHealUpgraded:
++						progress.setConversation(remoteID, true)
++						return false, nil
++					case historyHealMigrated:
++						// The binding moved off the bound row; fall through
++						// to placement as if the remote ID were unbound.
++					default:
++						// Not healable after all; keep the restamp behavior.
++					}
++				}
+ 				return false, w.restampConversationFolder(bound, event.Folder, event.Archived)
+ 			}
+ 		} else if !errors.Is(err, sqlite.ErrNotFound) {
+@@ -1406,7 +1431,11 @@ func (w *Worker) healHistoryContradiction(
+ 	if err != nil {
+ 		return historyHealNone, err
+ 	}
+-	if len(storedPeers) == 0 {
++	minted := sqlite.ConversationMintSource(bound.MetadataJSON) == sqlite.ConversationMintMessage
++	// A thread minted from MY outgoing "created group" frame carries no
++	// peers yet, so an empty roster only disqualifies established threads;
++	// for a message mint the snapshot's roster is pure information.
++	if len(storedPeers) == 0 && !minted {
+ 		return historyHealNone, nil
+ 	}
+ 	eventPeers, err := w.snapshotEventPeers(accountID, platform, event)
+@@ -1416,7 +1445,7 @@ func (w *Worker) healHistoryContradiction(
+ 	if len(eventPeers) == 0 {
+ 		return historyHealNone, nil
+ 	}
+-	overlap := false
++	overlap := len(storedPeers) == 0
+ 	for _, peer := range storedPeers {
+ 		if identitiesContain(eventPeers, peer.IdentityID) {
+ 			overlap = true
+@@ -1427,7 +1456,7 @@ func (w *Worker) healHistoryContradiction(
+ 		return historyHealNone, nil
+ 	}
+ 	remoteID := v2keys.NormalizeRemoteConversationID(string(platform), event.RemoteConversationID)
+-	if sqlite.ConversationMintSource(bound.MetadataJSON) == sqlite.ConversationMintMessage {
++	if minted {
+ 		w.logger.Info().
+ 			Str("account_id", accountID).
+ 			Str("remote_conversation_id", remoteID).
+diff --git a/internal/web/api.go b/internal/web/api.go
+index 49e836f..be5f529 100644
+--- a/internal/web/api.go
++++ b/internal/web/api.go
+@@ -141,6 +141,10 @@ type APIOptions struct {
+ 	// FetchHistory fetches one Google conversation's messages on demand (by
+ 	// its Google ID) and returns how many the phone returned.
+ 	FetchHistory func(string) (int, error)
++	// CreateGoogleConversation creates (or finds) the Google conversation
++	// for the given phone numbers; two or more numbers make an MMS group.
++	// Nil uses the live Google client (GetOrCreateConversation).
++	CreateGoogleConversation func(phones []string) (*gmproto.Conversation, error)
+ 	// SetGoogleArchived archives or unarchives a Google conversation (by its
+ 	// Google ID) on the phone, so a tab move into or out of Archive matches it.
+ 	SetGoogleArchived func(remoteID string, archived bool) error
+@@ -2474,14 +2478,16 @@ func APIHandlerWithOptions(store *db.Store, cli *client.Client, logger zerolog.L
+ 			return
+ 		}
+ 		var req struct {
+-			PhoneNumber string `json:"phone_number"`
+-			Platform    string `json:"platform"`
++			PhoneNumber  string   `json:"phone_number"`
++			PhoneNumbers []string `json:"phone_numbers"`
++			Platform     string   `json:"platform"`
+ 		}
+ 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+ 			httpError(w, "invalid JSON: "+err.Error(), 400)
+ 			return
+ 		}
+-		if req.PhoneNumber == "" {
++		phones := requestedPhoneNumbers(req.PhoneNumbers, req.PhoneNumber)
++		if len(phones) == 0 {
+ 			httpError(w, "phone_number is required", 400)
+ 			return
+ 		}
+@@ -2495,7 +2501,11 @@ func APIHandlerWithOptions(store *db.Store, cli *client.Client, logger zerolog.L
+ 		// being connected; the first send resolves the recipient. SMS goes
+ 		// through Google Messages, which owns conversation creation.
+ 		if platform == "whatsapp" || platform == "signal" {
+-			number, err := normalizeInternationalNumber(req.PhoneNumber)
++			if len(phones) > 1 {
++				httpError(w, "group conversations aren't available on "+platform+" yet — start with a single recipient", 400)
++				return
++			}
++			number, err := normalizeInternationalNumber(phones[0])
+ 			if err != nil {
+ 				httpError(w, err.Error(), 400)
+ 				return
+@@ -2542,15 +2552,25 @@ func APIHandlerWithOptions(store *db.Store, cli *client.Client, logger zerolog.L
+ 			return
+ 		}
+ 
+-		cli := getClient()
+-		if cli == nil {
+-			httpError(w, app.ErrNotConnected, 503)
+-			return
++		createConversation := opts.CreateGoogleConversation
++		if createConversation == nil {
++			cli := getClient()
++			if cli == nil {
++				httpError(w, app.ErrNotConnected, 503)
++				return
++			}
++			createConversation = func(phones []string) (*gmproto.Conversation, error) {
++				resp, err := cli.GM.GetOrCreateConversation(&gmproto.GetOrCreateConversationRequest{
++					Numbers: app.NewContactNumbers(phones),
++				})
++				if err != nil {
++					return nil, err
++				}
++				return resp.GetConversation(), nil
++			}
+ 		}
+ 
+-		convResp, err := cli.GM.GetOrCreateConversation(&gmproto.GetOrCreateConversationRequest{
+-			Numbers: app.NewContactNumbers([]string{req.PhoneNumber}),
+-		})
++		conv, err := createConversation(phones)
+ 		if err != nil {
+ 			if !markGoogleAuthExpired(err) {
+ 				recordGoogleSendError(err)
+@@ -2558,37 +2578,40 @@ func APIHandlerWithOptions(store *db.Store, cli *client.Client, logger zerolog.L
+ 			httpError(w, googleAPIErrorMessage("failed to get/create conversation", err), 502)
+ 			return
+ 		}
+-		conv := convResp.GetConversation()
+ 		if conv == nil {
+ 			httpError(w, "no conversation returned", 502)
+ 			return
+ 		}
+ 
+ 		convoID := conv.GetConversationID()
+-		name := req.PhoneNumber
+-		// Try to get a name from participants
+-		for _, p := range conv.GetParticipants() {
+-			if !p.GetIsMe() {
+-				if fn := p.GetFormattedNumber(); fn != "" {
+-					name = fn
+-				}
+-				if cn := p.GetFullName(); cn != "" {
+-					name = cn
+-				}
+-			}
+-		}
++		name := googleConversationDisplayName(conv, phones)
+ 
+-		// Upsert into local DB so it shows in the sidebar
+-		store.UpsertConversation(&db.Conversation{
+-			ConversationID: convoID,
+-			Name:           name,
+-			LastMessageTS:  time.Now().UnixMilli(),
+-		})
++		// Upsert into the local DB so the thread shows in the sidebar
++		// immediately; the row is a display cache until the next ingest
++		// refresh replaces it with the snapshot's view.
++		if err := store.UpsertConversation(googleConversationRow(convoID, name, conv, phones)); err != nil {
++			httpError(w, "create conversation: "+err.Error(), 500)
++			return
++		}
+ 		publishConversations()
+ 
++		// Ask for a fresh history pull so ingest builds the v2 row (kind,
++		// roster, identities) from a real conversation snapshot — the
++		// authority on group metadata. Fire-and-forget: creating the
++		// conversation must not block on the phone answering.
++		if opts.FetchHistory != nil {
++			convoIDForHistory := convoID
++			go func() {
++				if _, err := opts.FetchHistory(convoIDForHistory); err != nil {
++					logger.Warn().Str("conversation_id", convoIDForHistory).Err(err).Msg("post-create history fetch failed")
++				}
++			}()
++		}
++
+ 		writeJSON(w, map[string]any{
+ 			"conversation_id": convoID,
+ 			"name":            name,
++			"is_group":        len(phones) > 1,
+ 		})
+ 	})
+ 
+@@ -4564,3 +4587,104 @@ func addSilence(
+ 	}
+ 	out["silence_stalled"] = anyStalled
+ }
++
++// requestedPhoneNumbers normalizes the recipient list of a
++// new-conversation request: trim, strip formatting characters, dedupe
++// preserving order. The plural phone_numbers wins; the singular
++// phone_number is the compatibility fallback.
++func requestedPhoneNumbers(numbers []string, fallback string) []string {
++	raw := numbers
++	if len(raw) == 0 && fallback != "" {
++		raw = []string{fallback}
++	}
++	seen := make(map[string]bool, len(raw))
++	out := make([]string, 0, len(raw))
++	for _, n := range raw {
++		n = strings.Map(func(r rune) rune {
++			switch r {
++			case ' ', '-', '(', ')', '\t':
++				return -1
++			}
++			return r
++		}, n)
++		if n == "" || seen[n] {
++			continue
++		}
++		seen[n] = true
++		out = append(out, n)
++	}
++	return out
++}
++
++// googleConversationDisplayName picks the sidebar name for a conversation
++// Google just created: its server-side name, else the non-me participant
++// names (a fresh MMS group is named from its roster), else the raw numbers.
++func googleConversationDisplayName(conv *gmproto.Conversation, phones []string) string {
++	if name := strings.TrimSpace(conv.GetName()); name != "" {
++		return name
++	}
++	var names []string
++	for _, p := range conv.GetParticipants() {
++		if p.GetIsMe() {
++			continue
++		}
++		if cn := strings.TrimSpace(p.GetFullName()); cn != "" {
++			names = append(names, cn)
++			continue
++		}
++		if fn := strings.TrimSpace(p.GetFormattedNumber()); fn != "" {
++			names = append(names, fn)
++		}
++	}
++	if len(names) > 0 {
++		return strings.Join(names, ", ")
++	}
++	return strings.Join(phones, ", ")
++}
++
++// googleConversationRow builds the local display row for a conversation
++// Google just created — single or MMS group.
++func googleConversationRow(convoID, name string, conv *gmproto.Conversation, phones []string) *db.Conversation {
++	row := &db.Conversation{
++		ConversationID: convoID,
++		Name:           name,
++		IsGroup:        conv.GetIsGroupChat(),
++		LastMessageTS:  time.Now().UnixMilli(),
++		SourcePlatform: "sms",
++	}
++	type participantJSON struct {
++		Name   string `json:"name"`
++		Number string `json:"number"`
++		IsMe   bool   `json:"is_me,omitempty"`
++	}
++	known := make(map[string]bool, len(phones))
++	var participants []participantJSON
++	for _, p := range conv.GetParticipants() {
++		if p.GetIsMe() {
++			continue
++		}
++		number := p.GetID().GetNumber()
++		if number == "" {
++			number = p.GetFormattedNumber()
++		}
++		if number != "" {
++			known[number] = true
++		}
++		displayName := p.GetFullName()
++		if displayName == "" {
++			displayName = number
++		}
++		participants = append(participants, participantJSON{Name: displayName, Number: number})
++	}
++	for _, phone := range phones {
++		if !known[phone] {
++			participants = append(participants, participantJSON{Name: phone, Number: phone})
++		}
++	}
++	if len(participants) > 0 {
++		if b, err := json.Marshal(participants); err == nil {
++			row.Participants = string(b)
++		}
++	}
++	return row
++}
+diff --git a/internal/web/api_test.go b/internal/web/api_test.go
+index 70cb605..1dadb67 100644
+--- a/internal/web/api_test.go
++++ b/internal/web/api_test.go
+@@ -4076,6 +4076,8 @@ func TestNewConversationPlatformValidation(t *testing.T) {
+ 		{"garbage number", `{"phone_number":"+not-a-number","platform":"signal"}`, 400, "phone number"},
+ 		{"unsupported platform", `{"phone_number":"+14155550123","platform":"telegram"}`, 400, "unsupported platform"},
+ 		{"sms without google client", `{"phone_number":"4155550123"}`, 503, ""},
++		{"whatsapp rejects groups", `{"phone_numbers":["+14155550123","+14155550124"],"platform":"whatsapp"}`, 400, "single recipient"},
++		{"signal rejects groups", `{"phone_numbers":["+14155550123","+14155550124"],"platform":"signal"}`, 400, "single recipient"},
+ 	}
+ 	for _, tc := range cases {
+ 		t.Run(tc.name, func(t *testing.T) {
+@@ -4098,6 +4100,120 @@ func TestNewConversationPlatformValidation(t *testing.T) {
+ 	}
+ }
+ 
++func TestNewConversationGoogleGroup(t *testing.T) {
++	fetched := make(chan string, 4)
++	ts := newTestServerWithOptions(t, APIOptions{
++		CreateGoogleConversation: func(phones []string) (*gmproto.Conversation, error) {
++			if len(phones) != 2 {
++				t.Errorf("create called with %d phones (%v), want 2 after dedupe", len(phones), phones)
++			}
++			return &gmproto.Conversation{
++				ConversationID: "g-77",
++				IsGroupChat:    true,
++				Participants: []*gmproto.Participant{
++					{FullName: "Luke Burger", FormattedNumber: "+14809394073", ID: &gmproto.SmallInfo{Number: "+14809394073"}},
++					{FullName: "Xavier Ruiz", IsMe: true},
++				},
++			}, nil
++		},
++		FetchHistory: func(convoID string) (int, error) {
++			fetched <- convoID
++			return 1, nil
++		},
++	})
++
++	// The two spellings of Luke's number dedupe to one recipient; the
++	// second number has no participant entry in the fake conversation and
++	// must fall back to the raw phone.
++	body := `{"phone_numbers":["+1 (480) 939-4073","+14809394073","+16232036260"],"platform":"sms"}`
++	resp, err := http.Post(ts.server.URL+"/api/new-conversation", "application/json", strings.NewReader(body))
++	if err != nil {
++		t.Fatal(err)
++	}
++	defer resp.Body.Close()
++	if resp.StatusCode != 200 {
++		t.Fatalf("expected 200, got %d", resp.StatusCode)
++	}
++	var got struct {
++		ConversationID string `json:"conversation_id"`
++		Name           string `json:"name"`
++		IsGroup        bool   `json:"is_group"`
++	}
++	if err := json.NewDecoder(resp.Body).Decode(&got); err != nil {
++		t.Fatal(err)
++	}
++	if got.ConversationID != "g-77" {
++		t.Errorf("conversation_id = %q", got.ConversationID)
++	}
++	if got.Name != "Luke Burger" {
++		t.Errorf("name = %q", got.Name)
++	}
++	if !got.IsGroup {
++		t.Errorf("is_group = false")
++	}
++
++	row, err := ts.store.GetConversation("g-77")
++	if err != nil || row == nil {
++		t.Fatalf("conversation not stored: %v", err)
++	}
++	if !row.IsGroup {
++		t.Errorf("stored row IsGroup = false")
++	}
++	if !strings.Contains(row.Participants, "Luke Burger") || !strings.Contains(row.Participants, "+16232036260") {
++		t.Errorf("participants = %q", row.Participants)
++	}
++	if row.SourcePlatform != "sms" {
++		t.Errorf("source_platform = %q", row.SourcePlatform)
++	}
++
++	// The post-create history fetch is fire-and-forget; it must fire.
++	select {
++	case id := <-fetched:
++		if id != "g-77" {
++			t.Errorf("FetchHistory called for %q", id)
++		}
++	case <-time.After(2 * time.Second):
++		t.Errorf("FetchHistory never called")
++	}
++}
++
++func TestNewConversationSingleViaPhoneNumbers(t *testing.T) {
++	ts := newTestServerWithOptions(t, APIOptions{
++		CreateGoogleConversation: func(phones []string) (*gmproto.Conversation, error) {
++			if len(phones) != 1 {
++				t.Errorf("create called with %v, want one phone", phones)
++			}
++			return &gmproto.Conversation{
++				ConversationID: "d-88",
++				Participants: []*gmproto.Participant{
++					{FullName: "Matt O'Connor", FormattedNumber: "+16232036260", ID: &gmproto.SmallInfo{Number: "+16232036260"}},
++				},
++			}, nil
++		},
++	})
++
++	resp, err := http.Post(ts.server.URL+"/api/new-conversation", "application/json",
++		strings.NewReader(`{"phone_numbers":["+1 (623) 203-6260"]}`))
++	if err != nil {
++		t.Fatal(err)
++	}
++	defer resp.Body.Close()
++	if resp.StatusCode != 200 {
++		t.Fatalf("expected 200, got %d", resp.StatusCode)
++	}
++	var got struct {
++		ConversationID string `json:"conversation_id"`
++		Name           string `json:"name"`
++		IsGroup        bool   `json:"is_group"`
++	}
++	if err := json.NewDecoder(resp.Body).Decode(&got); err != nil {
++		t.Fatal(err)
++	}
++	if got.ConversationID != "d-88" || got.Name != "Matt O'Connor" || got.IsGroup {
++		t.Errorf("got %+v", got)
++	}
++}
++
+ // TestMediaResponseHardening verifies /api/media/ never serves sender-controlled
+ // active content (HTML/SVG, or a payload spoofed as an image) in a way that can
+ // execute script on the API origin. Passive media stays inline. (F5)
+diff --git a/internal/web/static/index.html b/internal/web/static/index.html
+index ba97d0e..f7bb13c 100644
+--- a/internal/web/static/index.html
++++ b/internal/web/static/index.html
+@@ -286,6 +286,58 @@ html, body {
+   border-color: var(--border-accent);
+   box-shadow: 0 0 0 3px var(--accent-dim);
+ }
++/* Recipient picker: the input lives inside a wrapping box that also holds
++   the committed recipient chips (2+ chips on SMS = group MMS). */
++.new-msg-to {
++  display: flex;
++  flex-wrap: wrap;
++  align-items: center;
++  gap: 6px;
++  width: 100%;
++  background: var(--bg-elevated);
++  border: 1px solid var(--border);
++  border-radius: var(--radius-md);
++  padding: 4px 8px;
++  transition: border-color 0.2s, box-shadow 0.2s;
++}
++.new-msg-to:focus-within {
++  border-color: var(--border-accent);
++  box-shadow: 0 0 0 3px var(--accent-dim);
++}
++.new-msg-to .new-msg-phone {
++  flex: 1;
++  min-width: 140px;
++  border: none;
++  background: transparent;
++  box-shadow: none;
++  padding: 8px 8px;
++  margin: 0;
++}
++.new-msg-to .new-msg-phone:focus { border: none; box-shadow: none; }
++.new-msg-chips { display: contents; }
++.new-msg-chip {
++  display: inline-flex;
++  align-items: center;
++  gap: 2px;
++  background: var(--accent-dim);
++  color: var(--text-primary);
++  border-radius: 999px;
++  padding: 3px 4px 3px 10px;
++  font-size: 13px;
++  line-height: 1.4;
++  white-space: nowrap;
++}
++.new-msg-chip button {
++  border: none;
++  background: transparent;
++  color: var(--text-muted);
++  font-size: 15px;
++  line-height: 1;
++  cursor: pointer;
++  padding: 2px 5px;
++  border-radius: 999px;
++}
++.new-msg-chip button:hover { color: var(--text-primary); background: var(--bg-elevated); }
+ .new-msg-platforms {
+   display: flex;
+   gap: 6px;
+@@ -5781,16 +5833,19 @@ body::after {
+       </div>
+       <div class="new-msg-input-area">
+         <label>To</label>
+-        <input
+-          type="text"
+-          class="new-msg-phone"
+-          id="new-msg-phone"
+-          placeholder="Name or phone number"
+-          autocomplete="off"
+-          autocorrect="off"
+-          autocapitalize="off"
+-          spellcheck="false"
+-        >
++        <div class="new-msg-to" id="new-msg-to">
++          <div class="new-msg-chips" id="new-msg-chips" hidden></div>
++          <input
++            type="text"
++            class="new-msg-phone"
++            id="new-msg-phone"
++            placeholder="Name or phone number"
++            autocomplete="off"
++            autocorrect="off"
++            autocapitalize="off"
++            spellcheck="false"
++          >
++        </div>
+         <div class="new-msg-suggestions" id="new-msg-suggestions" role="listbox" hidden></div>
+         <div class="new-msg-platforms" id="new-msg-platforms" role="group" aria-label="Start the conversation on">
+           <button type="button" class="new-msg-platform-chip active" data-platform="sms" aria-pressed="true">SMS</button>
+@@ -15432,15 +15487,27 @@ body::after {
+ 
+   // ─── New Message ───
+   const $newMsgPlatforms = document.getElementById('new-msg-platforms');
++  const $newMsgChips = document.getElementById('new-msg-chips');
+   let newMsgPlatform = 'sms';
++  // Committed recipients. Two or more on SMS starts a group MMS; one starts
++  // (or reopens) a 1:1 thread exactly like the old single-input flow.
++  let newMsgRecipients = [];
+ 
+   function newMessageStartLabel() {
++    if (newMsgRecipients.length > 1 && newMsgPlatform === 'sms') return 'Start group';
+     if (newMsgPlatform === 'whatsapp') return 'Start WhatsApp chat';
+     if (newMsgPlatform === 'signal') return 'Start Signal chat';
+     return 'Start conversation';
+   }
+ 
+   function newMessagePlatformHelperText() {
++    if (newMsgRecipients.length > 1 && newMsgPlatform !== 'sms') {
++      const label = platformMeta(newMsgPlatform).label;
++      return `Group chats aren't available on ${label} yet — switch to SMS to start this group.`;
++    }
++    if (newMsgRecipients.length > 1) {
++      return 'Starts a group MMS on SMS. Everyone in the group sees every reply.';
++    }
+     if (newMsgPlatform === 'whatsapp' || newMsgPlatform === 'signal') {
+       const label = platformMeta(newMsgPlatform).label;
+       const status = newMsgPlatform === 'whatsapp' ? whatsAppStatus : signalStatus;
+@@ -15449,9 +15516,74 @@ body::after {
+         : ` ${label} is not paired yet — the thread opens now and sending works once it is.`;
+       return `Starts a ${label} chat. Include the country code, e.g. +14155551234.${pairedNote}`;
+     }
++    if (newMsgRecipients.length === 1) {
++      return 'Press Enter or the start button for this recipient, or add another to start a group.';
++    }
+     return 'New conversations start on SMS. If this number already exists on another route, choose it explicitly below.';
+   }
+ 
++  function renderNewMsgChips() {
++    if (!$newMsgChips) return;
++    $newMsgChips.innerHTML = '';
++    newMsgRecipients.forEach((recipient, index) => {
++      const chip = document.createElement('span');
++      chip.className = 'new-msg-chip';
++      const label = document.createElement('span');
++      label.textContent = recipient.name && recipient.name !== recipient.number
++        ? `${recipient.name} ${recipient.number}`
++        : recipient.number;
++      const remove = document.createElement('button');
++      remove.type = 'button';
++      remove.setAttribute('aria-label', `Remove ${recipient.number}`);
++      remove.textContent = '×';
++      remove.addEventListener('mousedown', (e) => {
++        // mousedown so the picker never loses focus mid-click.
++        e.preventDefault();
++        newMsgRecipients.splice(index, 1);
++        renderNewMsgChips();
++        updateNewMessageRoutes();
++        $newMsgPhone.focus();
++      });
++      chip.appendChild(label);
++      chip.appendChild(remove);
++      $newMsgChips.appendChild(chip);
++    });
++    $newMsgChips.hidden = newMsgRecipients.length === 0;
++  }
++
++  function commitNewMsgRecipient(recipient) {
++    const number = String(recipient.number || '').trim().replace(/[\s\-()]/g, '');
++    if (!number) return false;
++    if (!newMsgRecipients.some(existing => existing.number === number)) {
++      newMsgRecipients.push({ name: String(recipient.name || '').trim(), number });
++    }
++    $newMsgPhone.value = '';
++    hideSuggestions();
++    renderNewMsgChips();
++    updateNewMessageRoutes();
++    return true;
++  }
++
++  // Commits whatever is typed in the input as a chip: a highlighted contact
++  // suggestion first, then anything that parses as a phone number.
++  function commitTypedNewMsgRecipient() {
++    const raw = $newMsgPhone.value.trim();
++    if (!raw) return false;
++    if (!looksLikePhoneNumber(raw) && $newMsgSuggestions && !$newMsgSuggestions.hidden) {
++      const first = $newMsgSuggestions.querySelector('.new-msg-suggestion');
++      if (first) {
++        first.dispatchEvent(new MouseEvent('mousedown'));
++        return true;
++      }
++    }
++    if (!looksLikePhoneNumber(raw)) {
++      $newMsgError.textContent = 'No matching contact. Type a phone number to add a recipient.';
++      $newMsgError.style.display = 'block';
++      return false;
++    }
++    return commitNewMsgRecipient({ name: '', number: raw.replace(/[\s\-()]/g, '') });
++  }
++
+   function setNewMsgPlatform(platform) {
+     newMsgPlatform = platform === 'whatsapp' || platform === 'signal' ? platform : 'sms';
+     if ($newMsgPlatforms) {
+@@ -15465,7 +15597,16 @@ body::after {
+   }
+ 
+   function updateNewMessageRoutes() {
+-    const phone = $newMsgPhone.value.trim().replace(/[\s\-()]/g, '');
++    // Groups have no per-route reuse; the label/helper reflect the group.
++    if (newMsgRecipients.length > 1) {
++      $newMsgRoutes.classList.remove('active');
++      $newMsgRoutes.innerHTML = '';
++      $newMsgHelper.textContent = newMessagePlatformHelperText();
++      $newMsgGo.textContent = newMessageStartLabel();
++      return;
++    }
++    const solo = newMsgRecipients[0];
++    const phone = solo ? solo.number : $newMsgPhone.value.trim().replace(/[\s\-()]/g, '');
+     const routes = matchingRoutesForPhone(phone);
+     const replyRoute = preferredReplyRoute(routes);
+ 
+@@ -15502,6 +15643,8 @@ body::after {
+ 
+   function openNewMsg(prefillNumber = '', platform = 'sms') {
+     $newMsgOverlay.classList.add('show');
++    newMsgRecipients = [];
++    renderNewMsgChips();
+     $newMsgPhone.value = typeof prefillNumber === 'string' ? prefillNumber : '';
+     $newMsgError.style.display = 'none';
+     $newMsgGo.disabled = false;
+@@ -15562,10 +15705,10 @@ body::after {
+       row.addEventListener('mousedown', (e) => {
+         // mousedown so we fire before the input loses focus
+         e.preventDefault();
+-        const phone = c.number || c.Number || '';
+-        $newMsgPhone.value = phone;
+-        hideSuggestions();
+-        updateNewMessageRoutes();
++        commitNewMsgRecipient({
++          name: c.name || c.Name || '',
++          number: c.number || c.Number || '',
++        });
+         $newMsgPhone.focus();
+       });
+       $newMsgSuggestions.appendChild(row);
+@@ -15630,34 +15773,31 @@ body::after {
+   }
+ 
+   async function startNewConversation() {
+-    const raw = $newMsgPhone.value.trim();
+-    if (!raw) return;
+-
+-    // If they typed a name and there's a suggestion visible, prefer that.
+-    if (!looksLikePhoneNumber(raw) && $newMsgSuggestions && !$newMsgSuggestions.hidden) {
+-      const first = $newMsgSuggestions.querySelector('.new-msg-suggestion');
+-      if (first) { first.dispatchEvent(new MouseEvent('mousedown')); return; }
++    // Anything still typed (and valid) joins the recipient list first.
++    if ($newMsgPhone.value.trim()) {
++      if (!commitTypedNewMsgRecipient()) return;
+     }
++    if (!newMsgRecipients.length) return;
+ 
+-    // If they typed a name with no matching contact, refuse rather than
+-    // sending an unparseable string to the new-conversation endpoint.
+-    if (!looksLikePhoneNumber(raw)) {
+-      $newMsgError.textContent = 'No matching contact. Type a phone number to start a new thread.';
++    const phones = newMsgRecipients.map(recipient => recipient.number);
++    if (phones.length > 1 && newMsgPlatform !== 'sms') {
++      $newMsgError.textContent = 'Group chats start on SMS — choose SMS to send to several recipients.';
+       $newMsgError.style.display = 'block';
+       return;
+     }
+ 
+-    const phone = raw.replace(/[\s\-()]/g, '');
+-    // On an explicit WhatsApp/Signal pick, only reuse a same-platform route;
+-    // otherwise keep the SMS default of preferring any existing reply route.
+-    const matchingRoutes = matchingRoutesForPhone(phone);
+-    const existingReplyRoute = newMsgPlatform === 'sms'
+-      ? preferredReplyRoute(matchingRoutes)
+-      : matchingRoutes.find(route => sourcePlatformOf(route) === newMsgPlatform) || null;
+-    if (existingReplyRoute) {
+-      closeNewMsg();
+-      await revealAndSelectConversation(existingReplyRoute);
+-      return;
++    if (phones.length === 1) {
++      // On an explicit WhatsApp/Signal pick, only reuse a same-platform route;
++      // otherwise keep the SMS default of preferring any existing reply route.
++      const matchingRoutes = matchingRoutesForPhone(phones[0]);
++      const existingReplyRoute = newMsgPlatform === 'sms'
++        ? preferredReplyRoute(matchingRoutes)
++        : matchingRoutes.find(route => sourcePlatformOf(route) === newMsgPlatform) || null;
++      if (existingReplyRoute) {
++        closeNewMsg();
++        await revealAndSelectConversation(existingReplyRoute);
++        return;
++      }
+     }
+     if (browserIsOffline()) {
+       $newMsgError.textContent = offlineFeedbackMessage('start-conversation');
+@@ -15679,7 +15819,7 @@ body::after {
+       const resp = await fetch(API + '/api/new-conversation', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+-        body: JSON.stringify({ phone_number: phone, platform: newMsgPlatform }),
++        body: JSON.stringify({ phone_numbers: phones, platform: newMsgPlatform }),
+         signal: controller.signal,
+       });
+       if (!resp.ok) {
+@@ -15696,7 +15836,8 @@ body::after {
+         // Conversation might not be in the list yet, create a minimal one
+         revealAndSelectConversation({
+           ConversationID: data.conversation_id,
+-          Name: data.name || phone,
++          Name: data.name || phones.join(', '),
++          IsGroup: phones.length > 1,
+         });
+       }
+     } catch (err) {
+@@ -15759,16 +15900,20 @@ body::after {
+   $newMsgPhone.addEventListener('keydown', (e) => {
+     if (e.key === 'Enter') {
+       e.preventDefault();
+-      // If suggestions are visible, pick the first one
+-      const firstSuggestion = $newMsgSuggestions && !$newMsgSuggestions.hidden
+-        ? $newMsgSuggestions.querySelector('.new-msg-suggestion')
+-        : null;
+-      if (firstSuggestion) {
+-        firstSuggestion.dispatchEvent(new MouseEvent('mousedown'));
++      // Typed text commits as a recipient chip first (a visible suggestion
++      // wins); only an empty field means "go".
++      if ($newMsgPhone.value.trim()) {
++        commitTypedNewMsgRecipient();
+         return;
+       }
+       startNewConversation();
+     }
++    if (e.key === 'Backspace' && !$newMsgPhone.value && newMsgRecipients.length) {
++      e.preventDefault();
++      newMsgRecipients.pop();
++      renderNewMsgChips();
++      updateNewMessageRoutes();
++    }
+     if (e.key === 'Escape') {
+       e.preventDefault();
+       // Don't let the global Escape stack also fire — one press, one action.

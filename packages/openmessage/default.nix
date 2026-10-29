@@ -100,6 +100,14 @@ let
       # adopted) threads now grow their roster on new senders and are
       # healed in place (or migrated) by the first group snapshot.
       ./incipient-group-heal.patch
+      # Create group chats from the app: /api/new-conversation accepts
+      # phone_numbers[], two or more on SMS ask the phone for an MMS group,
+      # and the new-message To: field is a chip picker (Enter/comma or a
+      # suggestion commits a recipient; two-plus chips on SMS switch the
+      # button to "Start group"). The history fetch that follows creation
+      # is what builds the v2 row, and empty-roster message mints heal to
+      # the first group snapshot instead of staying direct-kind guesses.
+      ./create-group-chats.patch
     ];
     subPackages = [ "." ];
     env.CGO_ENABLED = 0;
