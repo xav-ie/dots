@@ -158,7 +158,7 @@ rec {
   jitfix = pkgs.callPackage ./jitfix { };
   menubar-reveal = pkgs.callPackage ./menubar-reveal { };
   move-pip = pkgs.callPackage ./move-pip { };
-  openmessage = pkgs.callPackage ./openmessage { inherit jitfix; };
+  openmessage = pkgs.callPackage ./openmessage { };
   polish-recording = pkgs.callPackage ./polish-recording { };
   sketchybar-battery = pkgs.callPackage ./sketchybar-battery { inherit writeNuApplication; };
   sketchybar-hover = pkgs.callPackage ./sketchybar-hover { };
