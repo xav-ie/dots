@@ -2035,11 +2035,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792644341,
-        "narHash": "sha256-mAHOD2SPNRvpcIH+LrQrMpgrUd9rd0z8EYbhieqe6t8=",
+        "lastModified": 1793132195,
+        "narHash": "sha256-x2HVtICL7QXU9B1+Jc0m/6ytc6/RaCyyg2jVkGrXbvw=",
         "ref": "refs/heads/main",
-        "rev": "36a79f0022ce57d175b5275f38d6b4ec00b2d28a",
-        "revCount": 159,
+        "rev": "7e7944fb2b3694bab98a16482b32698b538ba0b4",
+        "revCount": 165,
         "type": "git",
         "url": "ssh://git@github.com/xav-ie/scribe"
       },
