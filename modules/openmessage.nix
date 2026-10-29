@@ -84,9 +84,9 @@ _: {
 
         launchd.user.agents = {
           # The environment the app's own launcher gives its backend, plus the
-          # MCP transport, the jitfix-wrapped signal-cli and the v2 store
-          # (migrated with `openmessage migrate`), where upstream pairs
-          # sent-message echoes; the legacy store shows every send twice.
+          # MCP transport and the v2 store (migrated with `openmessage
+          # migrate`), where upstream pairs sent-message echoes; the legacy
+          # store shows every send twice.
           openmessage-backend.serviceConfig = {
             ProgramArguments = [
               "/bin/sh"
@@ -101,7 +101,6 @@ _: {
               OPENMESSAGES_LOG_LEVEL = "info";
               OPENMESSAGES_MACOS_NOTIFICATIONS = "0";
               OPENMESSAGES_PORT = "7007";
-              OPENMESSAGES_SIGNAL_CLI = "${pkgs.pkgs-mine.openmessage.signal-cli}";
               OPENMESSAGES_V2_PRIMARY = "1";
               PATH = "/usr/bin:/bin";
             };

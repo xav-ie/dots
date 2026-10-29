@@ -45,6 +45,8 @@
   mcp-atlassian-src,
   muscat-pkg,
   protonmail-mcp-src,
+  rcsd-src,
+  rcsd-web-src,
   simulstreaming-src,
   slack-mcp-server-src,
   workspace-mcp-src,
@@ -58,6 +60,7 @@ let
   notify = pkgs.callPackage ./notify {
     inherit generate-kaomoji ssh-client-host writeNuApplication;
   };
+  rcsd = pkgs.callPackage ./rcsd { src = rcsd-src; };
   ssh-client-host = pkgs.callPackage ./ssh-client-host { inherit writeNuApplication; };
   uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
 in
@@ -65,6 +68,7 @@ rec {
   inherit
     is-sshed
     notify
+    rcsd
     ssh-client-host
     uair-toggle-and-notify
     ;
@@ -123,6 +127,7 @@ rec {
   prettier-with-toml = pkgs.callPackage ./prettier-with-toml { inherit prettier-plugin-toml; };
   proton-drive-cli = pkgs.callPackage ./proton-drive-cli { };
   protonmail-mcp = pkgs.callPackage ./protonmail-mcp { src = protonmail-mcp-src; };
+  rcsd-web = pkgs.callPackage ./rcsd-web { src = rcsd-web-src; };
   nu_plugin_prompt = pkgs.callPackage ./nu_plugin_prompt { inherit pkgs-bleeding; };
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
   secrets-diff = pkgs.callPackage ./secrets-diff { };
@@ -158,7 +163,7 @@ rec {
   jitfix = pkgs.callPackage ./jitfix { };
   menubar-reveal = pkgs.callPackage ./menubar-reveal { };
   move-pip = pkgs.callPackage ./move-pip { };
-  openmessage = pkgs.callPackage ./openmessage { inherit jitfix; };
+  openmessage = pkgs.callPackage ./openmessage { inherit rcsd; };
   polish-recording = pkgs.callPackage ./polish-recording { };
   sketchybar-battery = pkgs.callPackage ./sketchybar-battery { inherit writeNuApplication; };
   sketchybar-hover = pkgs.callPackage ./sketchybar-hover { };

@@ -194,6 +194,13 @@
     workspace-mcp-src.flake = false;
     zerobrew-src.url = "github:lucasgelfond/zerobrew";
     zerobrew-src.flake = false;
+    # Private fork of maxghenis/openmessage, stripped to Google Messages
+    # (SMS/RCS). Fetched over ssh with the invoking user's key.
+    rcsd-src.url = "git+ssh://git@github.com/xav-ie/rcsd.git";
+    rcsd-src.flake = false;
+    # rcsd's web client; local only until it has a remote.
+    rcsd-web-src.url = "git+file:///home/x/Projects/rcsd-web";
+    rcsd-web-src.flake = false;
 
     # no way around this :/
     alacritty-theme.inputs.flake-parts.follows = "flake-parts";
