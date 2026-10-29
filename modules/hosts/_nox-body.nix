@@ -161,6 +161,15 @@ in
           ];
         }
         {
+          # The Claude Code CLI is its own responsible process for TCC (not the
+          # terminal it runs in), so screen captures it runs need their own
+          # grant. TCC knows it by the path of the binary the wrapper execs,
+          # which moves with every claude-code update; a session started before
+          # a rebuild keeps the old path until it's restarted.
+          path = "${pkgs.claude-code}/bin/..claude-wrapped-wrapped";
+          services = [ "ScreenCapture" ];
+        }
+        {
           bundleId = "us.zoom.xos";
           services = [
             "Camera"
