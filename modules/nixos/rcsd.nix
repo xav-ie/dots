@@ -109,12 +109,8 @@
 
         webRoot = lib.mkOption {
           type = lib.types.package;
-          default = pkgs.writeTextDir "index.html" ''
-            <!doctype html>
-            <title>rcsd</title>
-            <p>rcsd-web is not deployed yet.</p>
-          '';
-          defaultText = lib.literalMD "a placeholder page";
+          default = pkgs.pkgs-mine.rcsd-web;
+          defaultText = lib.literalExpression "pkgs.pkgs-mine.rcsd-web";
           description = ''
             Built rcsd-web static site to serve at the domain root: the Astro
             dist/ directory, index.html plus hashed /_astro/* assets.

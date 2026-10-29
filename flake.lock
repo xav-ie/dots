@@ -1917,6 +1917,22 @@
         "url": "ssh://git@github.com/xav-ie/rcsd.git"
       }
     },
+    "rcsd-web-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793292799,
+        "narHash": "sha256-EDmikOYEIMZsjzf/e5vRdC0RGhzb5AhCIcDcPDsA91E=",
+        "ref": "refs/heads/main",
+        "rev": "ff8caa40c883714a040f6a68f4c8989e588a85c8",
+        "revCount": 6,
+        "type": "git",
+        "url": "file:///home/x/Projects/rcsd-web"
+      },
+      "original": {
+        "type": "git",
+        "url": "file:///home/x/Projects/rcsd-web"
+      }
+    },
     "root": {
       "inputs": {
         "ags": "ags",
@@ -1986,6 +2002,7 @@
         "pyproject-nix": "pyproject-nix_2",
         "quadlet-nix": "quadlet-nix",
         "rcsd-src": "rcsd-src",
+        "rcsd-web-src": "rcsd-web-src",
         "rust-analyzer-src": "rust-analyzer-src",
         "rust-overlay": "rust-overlay",
         "scribe": "scribe",

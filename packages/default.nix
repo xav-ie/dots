@@ -46,6 +46,7 @@
   muscat-pkg,
   protonmail-mcp-src,
   rcsd-src,
+  rcsd-web-src,
   simulstreaming-src,
   slack-mcp-server-src,
   workspace-mcp-src,
@@ -126,6 +127,7 @@ rec {
   prettier-with-toml = pkgs.callPackage ./prettier-with-toml { inherit prettier-plugin-toml; };
   proton-drive-cli = pkgs.callPackage ./proton-drive-cli { };
   protonmail-mcp = pkgs.callPackage ./protonmail-mcp { src = protonmail-mcp-src; };
+  rcsd-web = pkgs.callPackage ./rcsd-web { src = rcsd-web-src; };
   nu_plugin_prompt = pkgs.callPackage ./nu_plugin_prompt { inherit pkgs-bleeding; };
   searcher = pkgs.callPackage ./searcher { inherit writeNuApplication; };
   secrets-diff = pkgs.callPackage ./secrets-diff { };
