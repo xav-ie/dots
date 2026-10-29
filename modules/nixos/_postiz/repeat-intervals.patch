@@ -1,0 +1,25 @@
+diff --git a/apps/frontend/src/components/launches/repeat.component.tsx b/apps/frontend/src/components/launches/repeat.component.tsx
+index ad263bb0..62db7f70 100644
+--- a/apps/frontend/src/components/launches/repeat.component.tsx
++++ b/apps/frontend/src/components/launches/repeat.component.tsx
+@@ -44,6 +44,20 @@ const getList = (t: (key: string, fallback: string) => string) => [
+     value: 30,
+     label: t('month', 'Month'),
+   },
++  // Repeats are stored in days. Whole weeks keep the post on the same
++  // weekday; a year drifts one weekday per repeat.
++  {
++    value: 91,
++    label: t('quarter', 'Quarter'),
++  },
++  {
++    value: 182,
++    label: t('six_months', 'Six Months'),
++  },
++  {
++    value: 365,
++    label: t('year', 'Year'),
++  },
+   {
+     value: null,
+     label: t('cancel', 'Cancel'),

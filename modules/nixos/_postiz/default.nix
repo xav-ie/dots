@@ -17,6 +17,8 @@ let
     src = inputs.postiz-src;
     patches = [
       ./pm2-quiet.patch
+      ./quicktime-upload.patch
+      ./repeat-intervals.patch
       ./worker-allowlist.patch
     ];
     phases = [
@@ -71,7 +73,13 @@ in
       # Providers with a connected integration (from the DB). postiz-b is left
       # at the default (all workers) until its accounts are set up.
       workerProviders = "bluesky,discord,linkedin,mastodon,slack,x";
-      enableSocialProviders = true;
+      socialProviders = [
+        "discord"
+        "linkedin"
+        "mastodon"
+        "slack"
+        "x"
+      ];
       nginxConf = patchedNginxConf;
     })
 
@@ -81,10 +89,9 @@ in
       hostName = "social.aztecahome.com";
       local = false;
       cpuset = "4-7";
-      # No social accounts connected yet — run only the 'main' worker.
-      # Enabling a provider here later is part of the same change that adds its
-      # sops OAuth secrets + enableSocialProviders.
-      workerProviders = "";
+      # A provider is enabled together with its sops OAuth secrets.
+      workerProviders = "facebook,instagram";
+      socialProviders = [ "facebook" ];
       nginxConf = patchedNginxConf;
     })
   ];

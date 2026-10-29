@@ -27,9 +27,10 @@
   # value — including "" — runs only the listed providers plus 'main', trimming
   # ~2 idle threads per dropped provider.
   workerProviders ? null,
-  # Whether to wire up the social-provider OAuth secrets + env. Only the
-  # original instance has these configured today.
-  enableSocialProviders ? false,
+  # Social providers whose OAuth credentials this instance carries (keys of
+  # `providerEnv` below). Each needs its secrets in sops under
+  # `<name>/<provider>/`.
+  socialProviders ? [ ],
   # Patched copy of the app image's nginx.conf, mounted over the baked one so
   # its `proxy_pass` upstreams use 127.0.0.1 instead of `localhost` (which the
   # pod resolves to IPv6 `::1`, where the IPv4-only node backends aren't
@@ -193,32 +194,46 @@ let
         constraints: {}
   '';
 
-  socialEnv =
-    lib.optionalString enableSocialProviders # sh
-      ''
+  # Per provider: env var → sops key under `<name>/<provider>/`.
+  providerEnv = {
+    discord = {
+      DISCORD_BOT_TOKEN_ID = "bot_token";
+      DISCORD_CLIENT_ID = "client_id";
+      DISCORD_CLIENT_SECRET = "client_secret";
+    };
+    # Also backs the Facebook-linked Instagram provider.
+    facebook = {
+      FACEBOOK_APP_ID = "app_id";
+      FACEBOOK_APP_SECRET = "app_secret";
+    };
+    linkedin = {
+      LINKEDIN_CLIENT_ID = "client_id";
+      LINKEDIN_CLIENT_SECRET = "client_secret";
+    };
+    mastodon = {
+      MASTODON_CLIENT_ID = "client_id";
+      MASTODON_CLIENT_SECRET = "client_secret";
+    };
+    slack = {
+      SLACK_ID = "client_id";
+      SLACK_SECRET = "client_secret";
+    };
+    x = {
+      X_API_KEY = "api_key";
+      X_API_SECRET = "api_key_secret";
+    };
+  };
 
-        # mastodon
-        MASTODON_CLIENT_ID=${cfgSecret."${name}/mastodon/client_id"}
-        MASTODON_CLIENT_SECRET=${cfgSecret."${name}/mastodon/client_secret"}
-        MASTODON_URL=https://mastodon.social
-
-        # linkedin
-        LINKEDIN_CLIENT_ID=${cfgSecret."${name}/linkedin/client_id"}
-        LINKEDIN_CLIENT_SECRET=${cfgSecret."${name}/linkedin/client_secret"}
-
-        # x
-        X_API_KEY=${cfgSecret."${name}/x/api_key"}
-        X_API_SECRET=${cfgSecret."${name}/x/api_key_secret"}
-
-        # discord
-        DISCORD_CLIENT_ID=${cfgSecret."${name}/discord/client_id"}
-        DISCORD_CLIENT_SECRET=${cfgSecret."${name}/discord/client_secret"}
-        DISCORD_BOT_TOKEN_ID=${cfgSecret."${name}/discord/bot_token"}
-
-        # slack
-        SLACK_ID=${cfgSecret."${name}/slack/client_id"}
-        SLACK_SECRET=${cfgSecret."${name}/slack/client_secret"}
-      '';
+  socialEnv = lib.concatMapStrings (
+    provider:
+    "\n# ${provider}\n"
+    + lib.concatStrings (
+      lib.mapAttrsToList (
+        var: key: "${var}=${cfgSecret."${name}/${provider}/${key}"}\n"
+      ) providerEnv.${provider}
+    )
+    + lib.optionalString (provider == "mastodon") "MASTODON_URL=https://mastodon.social\n"
+  ) socialProviders;
 in
 {
   config = {
@@ -240,28 +255,14 @@ in
         "${name}/internal/jwt_secret" = { };
         "${name}/internal/postgres_password" = { };
       }
-      // lib.optionalAttrs enableSocialProviders {
-        # linkedin
-        "${name}/linkedin/client_id" = { };
-        "${name}/linkedin/client_secret" = { };
-
-        # mastodon
-        "${name}/mastodon/client_id" = { };
-        "${name}/mastodon/client_secret" = { };
-
-        # x
-        "${name}/x/api_key" = { };
-        "${name}/x/api_key_secret" = { };
-
-        # discord
-        "${name}/discord/client_id" = { };
-        "${name}/discord/client_secret" = { };
-        "${name}/discord/bot_token" = { };
-
-        # slack
-        "${name}/slack/client_id" = { };
-        "${name}/slack/client_secret" = { };
-      };
+      // lib.listToAttrs (
+        lib.concatMap (
+          provider:
+          map (key: lib.nameValuePair "${name}/${provider}/${key}" { }) (
+            lib.attrValues providerEnv.${provider}
+          )
+        ) socialProviders
+      );
       templates."${name}.env" = {
         mode = "0440";
         content =

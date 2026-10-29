@@ -1,0 +1,262 @@
+diff --git a/Dockerfile.dev b/Dockerfile.dev
+index 01ad14d6..982fda3b 100644
+--- a/Dockerfile.dev
++++ b/Dockerfile.dev
+@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
+     python3-pip \
+     bash \
+     nginx \
++    ffmpeg \
+ && rm -rf /var/lib/apt/lists/*
+ 
+ RUN addgroup --system www \
+diff --git a/apps/backend/src/public-api/routes/v1/public.integrations.controller.ts b/apps/backend/src/public-api/routes/v1/public.integrations.controller.ts
+index 5cb53b90..09535908 100644
+--- a/apps/backend/src/public-api/routes/v1/public.integrations.controller.ts
++++ b/apps/backend/src/public-api/routes/v1/public.integrations.controller.ts
+@@ -38,8 +38,7 @@ import { NotificationService } from '@gitroom/nestjs-libraries/database/prisma/n
+ import { GetNotificationsDto } from '@gitroom/nestjs-libraries/dtos/notifications/get.notifications.dto';
+ import { Readable } from 'stream';
+ import { ssrfSafeDispatcher } from '@gitroom/nestjs-libraries/dtos/webhooks/ssrf.safe.dispatcher';
+-// eslint-disable-next-line @typescript-eslint/no-var-requires
+-const { fromBuffer } = require('file-type');
++import { sniffUpload } from '@gitroom/nestjs-libraries/upload/sniff.upload';
+ 
+ const PUBLIC_API_ALLOWED_MIME = new Set<string>([
+   'image/jpeg',
+@@ -129,7 +128,7 @@ export class PublicIntegrationsController {
+     }
+ 
+     const buffer = Buffer.from(await response.arrayBuffer());
+-    const detected = await fromBuffer(buffer);
++    const detected = await sniffUpload(buffer);
+     if (!detected || !PUBLIC_API_ALLOWED_MIME.has(detected.mime)) {
+       throw new HttpException({ msg: 'Unsupported file type.' }, 400);
+     }
+diff --git a/apps/frontend/src/components/media/new.uploader.tsx b/apps/frontend/src/components/media/new.uploader.tsx
+index cde95e73..02b6f91a 100644
+--- a/apps/frontend/src/components/media/new.uploader.tsx
++++ b/apps/frontend/src/components/media/new.uploader.tsx
+@@ -87,6 +87,10 @@ export function useUppyUploader(props: {
+           if (type === 'video/mp4' && transloadit && transloadit.length > 0) {
+             return ['video/mp4', 'video/mpeg', 'video/quicktime'];
+           }
++          // The backend stores QuickTime uploads as MP4 (see sniff.upload.ts).
++          if (type === 'video/mp4') {
++            return ['video/mp4', 'video/quicktime'];
++          }
+           return [type];
+         });
+ 
+diff --git a/libraries/nestjs-libraries/src/chat/tools/upload.from.url.tool.ts b/libraries/nestjs-libraries/src/chat/tools/upload.from.url.tool.ts
+index 5875e74e..0c4cb3e8 100644
+--- a/libraries/nestjs-libraries/src/chat/tools/upload.from.url.tool.ts
++++ b/libraries/nestjs-libraries/src/chat/tools/upload.from.url.tool.ts
+@@ -8,8 +8,7 @@ import { getMaxSize } from '@gitroom/nestjs-libraries/upload/custom.upload.valid
+ import { checkAuth } from '@gitroom/nestjs-libraries/chat/auth.context';
+ import { ssrfSafeDispatcher } from '@gitroom/nestjs-libraries/dtos/webhooks/ssrf.safe.dispatcher';
+ import { Readable } from 'stream';
+-// eslint-disable-next-line @typescript-eslint/no-var-requires
+-const { fromBuffer } = require('file-type');
++import { sniffUpload } from '@gitroom/nestjs-libraries/upload/sniff.upload';
+ 
+ // Same allow-list as the public API /upload-from-url route.
+ const ALLOWED_MIME = new Set<string>([
+@@ -90,7 +89,7 @@ so the attachment passes the upload-domain validation. Returns the hosted media
+           }
+ 
+           const buffer = Buffer.from(await response.arrayBuffer());
+-          const detected = await fromBuffer(buffer);
++          const detected = await sniffUpload(buffer);
+           if (!detected || !ALLOWED_MIME.has(detected.mime)) {
+             return { error: 'Unsupported file type.' };
+           }
+diff --git a/libraries/nestjs-libraries/src/upload/cloudflare.storage.ts b/libraries/nestjs-libraries/src/upload/cloudflare.storage.ts
+index 218d40ee..a3ebf796 100644
+--- a/libraries/nestjs-libraries/src/upload/cloudflare.storage.ts
++++ b/libraries/nestjs-libraries/src/upload/cloudflare.storage.ts
+@@ -9,8 +9,10 @@ import axios from 'axios';
+ import { isSafePublicHttpsUrl } from '@gitroom/nestjs-libraries/dtos/webhooks/webhook.url.validator';
+ import { ssrfSafeDispatcher } from '@gitroom/nestjs-libraries/dtos/webhooks/ssrf.safe.dispatcher';
+ import { parseDataUrl } from '@gitroom/nestjs-libraries/upload/data.url';
+-// eslint-disable-next-line @typescript-eslint/no-var-requires
+-const { fromBuffer } = require('file-type');
++import {
++  remuxQuickTime,
++  sniffUpload,
++} from '@gitroom/nestjs-libraries/upload/sniff.upload';
+ 
+ const ALLOWED_MIME_TYPES = new Set<string>([
+   'image/jpeg',
+@@ -93,7 +95,8 @@ class CloudflareStorage implements IUploadProvider {
+       });
+       body = Buffer.from(await loadImage.arrayBuffer());
+     }
+-    const detected = await fromBuffer(body);
++    body = await remuxQuickTime(body);
++    const detected = await sniffUpload(body);
+     if (!detected || !ALLOWED_MIME_TYPES.has(detected.mime)) {
+       throw new Error('Unsupported file type.');
+     }
+@@ -117,7 +120,9 @@ class CloudflareStorage implements IUploadProvider {
+ 
+   async uploadFile(file: Express.Multer.File): Promise<any> {
+     try {
+-      const detected = await fromBuffer(file.buffer);
++      file.buffer = await remuxQuickTime(file.buffer);
++      file.size = file.buffer.length;
++      const detected = await sniffUpload(file.buffer);
+       if (!detected || !ALLOWED_MIME_TYPES.has(detected.mime)) {
+         throw new Error('Unsupported file type.');
+       }
+diff --git a/libraries/nestjs-libraries/src/upload/custom.upload.validation.ts b/libraries/nestjs-libraries/src/upload/custom.upload.validation.ts
+index 49c414be..8025e842 100644
+--- a/libraries/nestjs-libraries/src/upload/custom.upload.validation.ts
++++ b/libraries/nestjs-libraries/src/upload/custom.upload.validation.ts
+@@ -3,8 +3,7 @@ import {
+   Injectable,
+   PipeTransform,
+ } from '@nestjs/common';
+-// eslint-disable-next-line @typescript-eslint/no-var-requires
+-const { fromBuffer } = require('file-type');
++import { sniffUpload } from '@gitroom/nestjs-libraries/upload/sniff.upload';
+ 
+ const ALLOWED_MIME_TYPES = new Set<string>([
+   'image/jpeg',
+@@ -33,7 +32,7 @@ export class CustomFileValidationPipe implements PipeTransform {
+       throw new BadRequestException('Invalid file upload.');
+     }
+ 
+-    const detected = await fromBuffer(value.buffer);
++    const detected = await sniffUpload(value.buffer);
+     if (!detected || !ALLOWED_MIME_TYPES.has(detected.mime)) {
+       throw new BadRequestException('Unsupported file type.');
+     }
+diff --git a/libraries/nestjs-libraries/src/upload/local.storage.ts b/libraries/nestjs-libraries/src/upload/local.storage.ts
+index b237aaf7..e7659ec5 100644
+--- a/libraries/nestjs-libraries/src/upload/local.storage.ts
++++ b/libraries/nestjs-libraries/src/upload/local.storage.ts
+@@ -3,8 +3,10 @@ import { mkdirSync, unlink, writeFileSync } from 'fs';
+ import { isSafePublicHttpsUrl } from '@gitroom/nestjs-libraries/dtos/webhooks/webhook.url.validator';
+ import { ssrfSafeDispatcher } from '@gitroom/nestjs-libraries/dtos/webhooks/ssrf.safe.dispatcher';
+ import { parseDataUrl } from '@gitroom/nestjs-libraries/upload/data.url';
+-// eslint-disable-next-line @typescript-eslint/no-var-requires
+-const { fromBuffer } = require('file-type');
++import {
++  remuxQuickTime,
++  sniffUpload,
++} from '@gitroom/nestjs-libraries/upload/sniff.upload';
+ 
+ const LOCAL_STORAGE_ALLOWED_MIME = new Set<string>([
+   'image/jpeg',
+@@ -45,7 +47,8 @@ export class LocalStorage implements IUploadProvider {
+     // only accept the allow-list, otherwise an attacker could write an
+     // arbitrary file (e.g. .html/.svg with embedded script) into the
+     // publicly served uploads directory on the app's own origin.
+-    const detected = await fromBuffer(body);
++    body = await remuxQuickTime(body);
++    const detected = await sniffUpload(body);
+     if (!detected || !LOCAL_STORAGE_ALLOWED_MIME.has(detected.mime)) {
+       throw new Error('Unsupported file type.');
+     }
+@@ -75,7 +78,9 @@ export class LocalStorage implements IUploadProvider {
+ 
+   async uploadFile(file: Express.Multer.File): Promise<any> {
+     try {
+-      const detected = await fromBuffer(file.buffer);
++      file.buffer = await remuxQuickTime(file.buffer);
++      file.size = file.buffer.length;
++      const detected = await sniffUpload(file.buffer);
+       if (!detected || !LOCAL_STORAGE_ALLOWED_MIME.has(detected.mime)) {
+         throw new Error('Unsupported file type.');
+       }
+diff --git a/libraries/nestjs-libraries/src/upload/r2.uploader.ts b/libraries/nestjs-libraries/src/upload/r2.uploader.ts
+index a0ba2250..f299a83b 100644
+--- a/libraries/nestjs-libraries/src/upload/r2.uploader.ts
++++ b/libraries/nestjs-libraries/src/upload/r2.uploader.ts
+@@ -14,8 +14,7 @@ import { Request, Response } from 'express';
+ import crypto from 'crypto';
+ import path from 'path';
+ import { makeId } from '@gitroom/nestjs-libraries/services/make.is';
+-// eslint-disable-next-line @typescript-eslint/no-var-requires
+-const { fromBuffer } = require('file-type');
++import { sniffUpload } from '@gitroom/nestjs-libraries/upload/sniff.upload';
+ 
+ const ALLOWED_EXT_TO_MIME: Record<string, string> = {
+   '.jpg': 'image/jpeg',
+@@ -84,7 +83,7 @@ export async function simpleUpload(
+   originalFilename: string,
+   _contentType: string
+ ) {
+-  const detected = await fromBuffer(data);
++  const detected = await sniffUpload(data);
+   if (!detected || !Object.values(ALLOWED_EXT_TO_MIME).includes(detected.mime)) {
+     throw new Error('Unsupported file type.');
+   }
+@@ -220,7 +219,7 @@ export async function completeMultipartUpload(req: Request, res: Response) {
+       chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+     }
+     const prefix = Buffer.concat(chunks);
+-    const detected = await fromBuffer(prefix);
++    const detected = await sniffUpload(prefix);
+ 
+     if (!detected || detected.mime !== expectedMime) {
+       await R2.send(
+diff --git a/libraries/nestjs-libraries/src/upload/sniff.upload.ts b/libraries/nestjs-libraries/src/upload/sniff.upload.ts
+new file mode 100644
+index 00000000..ec59f79a
+--- /dev/null
++++ b/libraries/nestjs-libraries/src/upload/sniff.upload.ts
+@@ -0,0 +1,52 @@
++import { execFile } from 'child_process';
++import { mkdtemp, readFile, rm, writeFile } from 'fs/promises';
++import { tmpdir } from 'os';
++import { join } from 'path';
++import { promisify } from 'util';
++// eslint-disable-next-line @typescript-eslint/no-var-requires
++const { fromBuffer } = require('file-type');
++
++// Sniffs an upload's real type from its bytes. QuickTime (.mov, what phones
++// record) is reported as MP4: it shares MP4's ISO base media layout and the
++// social platforms accept it, while Postiz decides whether media is a video
++// by finding "mp4" in its path, so a .mov path would be posted as an image.
++export const sniffUpload = async (buffer: Buffer | Uint8Array) => {
++  const detected = await fromBuffer(buffer);
++  if (detected?.mime === 'video/quicktime') {
++    return { ext: 'mp4', mime: 'video/mp4' };
++  }
++  return detected;
++};
++
++// Rewraps a QuickTime upload into a real MP4 container without re-encoding,
++// so browsers that can't open .mov (e.g. on Windows) can still play it.
++// Anything else, or a .mov ffmpeg can't remux, is returned unchanged.
++export const remuxQuickTime = async (buffer: Buffer): Promise<Buffer> => {
++  const detected = await fromBuffer(buffer);
++  if (detected?.mime !== 'video/quicktime') {
++    return buffer;
++  }
++
++  const dir = await mkdtemp(join(tmpdir(), 'remux-'));
++  try {
++    const input = join(dir, 'in.mov');
++    const output = join(dir, 'out.mp4');
++    await writeFile(input, buffer);
++    // Video and audio only: phones add metadata tracks the MP4 muxer rejects.
++    await promisify(execFile)('ffmpeg', [
++      '-v', 'error',
++      '-i', input,
++      '-map', '0:v',
++      '-map', '0:a?',
++      '-c', 'copy',
++      '-movflags', '+faststart',
++      output,
++    ]);
++    return await readFile(output);
++  } catch (err) {
++    console.error('QuickTime remux failed, storing the original:', err);
++    return buffer;
++  } finally {
++    await rm(dir, { recursive: true, force: true });
++  }
++};
