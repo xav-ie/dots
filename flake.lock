@@ -223,11 +223,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793315063,
-        "narHash": "sha256-uo5T+RpuuUV7pPM359gwX9iCoGJ/zzpXz0tINZKEfmA=",
+        "lastModified": 1793316485,
+        "narHash": "sha256-0ItqEpcREfxBH+H06oOiGXWLGQ+OW7RbT6krXqsqiws=",
         "ref": "feat/jev-selectors",
-        "rev": "4f0682bc6e4f39e6f69194f72f6ea0ca0b078823",
-        "revCount": 88,
+        "rev": "6fccfb9f06f4fc0b0813e8c6661a22d4b552247e",
+        "revCount": 89,
         "type": "git",
         "url": "file:/home/x/Projects/browser-session-mcp"
       },
