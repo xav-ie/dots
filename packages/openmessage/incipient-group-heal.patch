@@ -1,0 +1,627 @@
+diff --git a/internal/ingest/history_stale_binding_test.go b/internal/ingest/history_stale_binding_test.go
+index 7637a99..50d21b5 100644
+--- a/internal/ingest/history_stale_binding_test.go
++++ b/internal/ingest/history_stale_binding_test.go
+@@ -4,9 +4,12 @@ import (
+ 	"context"
+ 	"database/sql"
+ 	"path/filepath"
++	"slices"
+ 	"sync"
+ 	"testing"
+ 	"time"
++
++	"github.com/maxghenis/openmessage/internal/storage/sqlite"
+ )
+ 
+ // Second-round review of PR #200: history must not trust a binding the
+@@ -108,36 +111,154 @@ func TestHistoryConsistentSnapshotStillImports(t *testing.T) {
+ }
+ 
+ // A thread v2 knows only from a live message frame is stored as direct with
+-// the sender as its peer, a default the live conversation event corrects
+-// later. A group snapshot contradicts it, so history waits: the frame is
+-// skipped, and once the live event has corrected the thread, fetching the
+-// same history again files the message.
+-func TestHistoryKindMismatchWaitsForTheLiveCorrection(t *testing.T) {
++// the sender as its peer, a default the conversation snapshot corrects. The
++// snapshot riding a fetched message used to be skipped as a kind
++// contradiction until a live conversation event arrived — but Google only
++// delivers ConversationEvents during list syncs, which take the history path,
++// so the correction never came and the thread stayed a mislabeled 1:1
++// forever (the split-group regression). A message-minted thread is now
++// upgraded in place: the snapshot refreshes kind, roster and title, clears
++// the mint marker, and the fetched message files into the healed thread.
++func TestHistoryKindMismatchOnMessageMintedThreadHealsInPlace(t *testing.T) {
+ 	h := newHWTHarness(t, false)
+ 	h.liveMessage(t, hwtMessage{id: "hp-kind-0", conversation: "hp-kind", body: "first", from: hwtKarl, at: hwtStart.Add(-2 * time.Hour)}.proto())
+ 	h.pump(t)
+-	if got := h.conversation(t, "hp-kind").Kind; got != "direct" {
++	minted := h.conversation(t, "hp-kind")
++	if got := minted.Kind; got != "direct" {
+ 		t.Fatalf("fixture: message-minted thread kind = %q, want direct", got)
+ 	}
+ 
+ 	group := hwtConversation("hp-kind", "Weekend", true, hwtKarl, hwtShoshana)
+-	record := h.historyMessage(t, group, hwtMessage{id: "hp-kind-1", conversation: "hp-kind", body: "fetched", from: hwtShoshana, at: hwtStart.Add(-time.Hour)}.proto())
++	h.historyMessage(t, group, hwtMessage{id: "hp-kind-1", conversation: "hp-kind", body: "fetched", from: hwtShoshana, at: hwtStart.Add(-time.Hour)}.proto())
+ 	h.pump(t)
+-	if counts := h.counts(); counts.HistoryImported != 0 || counts.HistorySkipped != 2 {
+-		t.Fatalf("counters = %+v, want the frame skipped", counts)
++	if counts := h.counts(); counts.HistoryImported != 1 || counts.HistorySkipped != 0 || counts.RemoteRebinds != 0 {
++		t.Fatalf("counters = %+v, want the message imported into the healed thread without a rebind", counts)
+ 	}
+ 
+-	h.liveConversation(t, group)
++	healed := h.conversation(t, "hp-kind")
++	if healed.ConversationID != minted.ConversationID {
++		t.Fatalf("healed thread = %s, want the message-minted row %s kept", healed.ConversationID, minted.ConversationID)
++	}
++	if healed.Kind != "group" || healed.Title != "Weekend" {
++		t.Fatalf("healed thread kind = %q title = %q, want group \"Weekend\"", healed.Kind, healed.Title)
++	}
++	if sqlite.ConversationMintSource(healed.MetadataJSON) != "" {
++		t.Fatalf("mint marker %q survived the snapshot refresh", sqlite.ConversationMintSource(healed.MetadataJSON))
++	}
++	if peers := h.peers(t, healed.ConversationID); !slices.Equal(peers, []string{hwtKarl, hwtShoshana}) {
++		t.Fatalf("healed roster = %v, want [%s %s]", peers, hwtKarl, hwtShoshana)
++	}
++	if got := h.message(t, "hp-kind", "hp-kind-1").Body; got != "fetched" {
++		t.Fatalf("imported body = %q", got)
++	}
++}
++
++// A group whose first frames race ahead of its conversation snapshot must not
++// be split across per-sender 1:1 threads. The thread a bare message minted
++// keeps its binding when a second distinct sender arrives: the sender joins
++// the incipient group's thread instead of the binding being stolen for their
++// existing 1:1, and the group's snapshot later confirms the kind in place.
++func TestIncipientGroupSecondSenderJoinsMessageMintedThread(t *testing.T) {
++	h := newHWTHarness(t, false)
++	h.liveConversation(t, hwtConversation("s-1", "Shoshana", false, hwtShoshana))
+ 	h.pump(t)
+-	record.ReceivedAt = h.tick()
+-	h.appendHistory(t, record)
++	shoshanaOneOnOne := h.conversation(t, "s-1")
++
++	h.liveMessage(t, hwtMessage{id: "g2-0", conversation: "g-2", body: "group created", at: hwtStart.Add(-2 * time.Hour)}.proto())
++	h.liveMessage(t, hwtMessage{id: "g2-1", conversation: "g-2", body: "karl here", from: hwtKarl, at: hwtStart.Add(-90 * time.Minute)}.proto())
+ 	h.pump(t)
+-	if counts := h.counts(); counts.HistoryImported != 1 {
+-		t.Fatalf("counters after the live correction and a re-fetch = %+v, want the message imported", counts)
++	minted := h.conversation(t, "g-2")
++	if minted.Kind != "direct" || sqlite.ConversationMintSource(minted.MetadataJSON) != sqlite.ConversationMintMessage {
++		t.Fatalf("fixture: minted thread kind = %q mint = %q", minted.Kind, sqlite.ConversationMintSource(minted.MetadataJSON))
+ 	}
+-	if got := h.message(t, "hp-kind", "hp-kind-1").Body; got != "fetched" {
++
++	// Shoshana has a 1:1; her group message must join the minted thread
++	// rather than rebinding g-2 onto her 1:1.
++	h.liveMessage(t, hwtMessage{id: "g2-2", conversation: "g-2", body: "shoshana too", from: hwtShoshana, at: hwtStart.Add(-time.Hour)}.proto())
++	h.pump(t)
++	if counts := h.counts(); counts.RemoteRebinds != 0 {
++		t.Fatalf("remote rebinds = %d, want the incipient group kept whole", counts.RemoteRebinds)
++	}
++	joined := h.conversation(t, "g-2")
++	if joined.ConversationID != minted.ConversationID {
++		t.Fatalf("g-2 moved to %s, want it kept on the minted thread %s", joined.ConversationID, minted.ConversationID)
++	}
++	if peers := h.peers(t, joined.ConversationID); !slices.Equal(peers, []string{hwtKarl, hwtShoshana}) {
++		t.Fatalf("incipient group roster = %v, want both senders", peers)
++	}
++	if one, err := h.store.GetConversation(shoshanaOneOnOne.ConversationID); err != nil || one.RemoteConversationID != shoshanaOneOnOne.RemoteConversationID {
++		t.Fatalf("Shoshana's 1:1 was disturbed: %+v (%v)", one, err)
++	}
++
++	// The snapshot confirms the group in place and the thread stops being
++	// unconfirmed.
++	h.historyMessage(t, hwtConversation("g-2", "", true, hwtKarl, hwtShoshana), hwtMessage{id: "g2-3", conversation: "g-2", body: "confirmed", from: hwtKarl, at: hwtStart.Add(-30 * time.Minute)}.proto())
++	h.pump(t)
++	confirmed := h.conversation(t, "g-2")
++	if confirmed.ConversationID != minted.ConversationID || confirmed.Kind != "group" {
++		t.Fatalf("confirmed thread = %s kind %q, want the minted row upgraded to group", confirmed.ConversationID, confirmed.Kind)
++	}
++	if sqlite.ConversationMintSource(confirmed.MetadataJSON) != "" {
++		t.Fatalf("mint marker survived the confirming snapshot")
++	}
++	if got := h.message(t, "g-2", "g2-2").Body; got != "shoshana too" {
++		t.Fatalf("group message body = %q", got)
++	}
++}
++
++// A group another participant creates reaches v2 first through their incoming
++// message, which attaches the group's remote ID to the sender's existing 1:1.
++// The group's own snapshot then migrates the binding: the 1:1 keeps its rows
++// and re-acquires its true binding on its next sync, and the group mints
++// fresh under its remote ID.
++func TestIncipientGroupAdoptedBindingMigratesToSnapshotThread(t *testing.T) {
++	h := newHWTHarness(t, false)
++	h.liveConversation(t, hwtConversation("ada-9", "Ada", false, hwtAda))
++	h.pump(t)
++	adaBefore := h.conversation(t, "ada-9")
++
++	h.liveMessage(t, hwtMessage{id: "g1-0", conversation: "g-1", body: "ada created a group", from: hwtAda, at: hwtStart.Add(-2 * time.Hour)}.proto())
++	h.pump(t)
++	attached := h.conversation(t, "g-1")
++	if attached.ConversationID != adaBefore.ConversationID {
++		t.Fatalf("fixture: g-1 attached to %s, want Ada's 1:1 %s", attached.ConversationID, adaBefore.ConversationID)
++	}
++	if !sqlite.ConversationAdoptedBinding(attached.MetadataJSON) {
++		t.Fatalf("fixture: the bare-message attach left no adopted-binding marker")
++	}
++
++	group := hwtConversation("g-1", "Climbing", true, hwtAda, hwtBea)
++	h.historyMessage(t, group, hwtMessage{id: "g1-1", conversation: "g-1", body: "first group message", from: hwtBea, at: hwtStart.Add(-time.Hour)}.proto())
++	h.pump(t)
++
++	minted := h.conversation(t, "g-1")
++	if minted.ConversationID == adaBefore.ConversationID || minted.Kind != "group" || minted.Title != "Climbing" {
++		t.Fatalf("g-1 = %s kind %q title %q, want a fresh group thread", minted.ConversationID, minted.Kind, minted.Title)
++	}
++	if peers := h.peers(t, minted.ConversationID); !slices.Equal(peers, []string{hwtBea, hwtAda}) {
++		t.Fatalf("group roster = %v, want [Bea Ada]", peers)
++	}
++	if got := h.message(t, "g-1", "g1-1").Body; got != "first group message" {
+ 		t.Fatalf("imported body = %q", got)
+ 	}
++
++	ada, err := h.store.GetConversation(adaBefore.ConversationID)
++	if err != nil {
++		t.Fatalf("GetConversation(Ada): %v", err)
++	}
++	if ada.Kind != "direct" || ada.RemoteConversationID == "g-1" {
++		t.Fatalf("Ada's 1:1 = kind %q binding %q, want direct with the adopted binding displaced", ada.Kind, ada.RemoteConversationID)
++	}
++	if sqlite.ConversationAdoptedBinding(ada.MetadataJSON) {
++		t.Fatalf("adopted-binding marker survived the migration")
++	}
++
++	// Her 1:1 re-binds on its own next sync.
++	h.liveConversation(t, hwtConversation("ada-9", "Ada", false, hwtAda))
++	h.pump(t)
++	if rebound := h.conversation(t, "ada-9"); rebound.ConversationID != adaBefore.ConversationID {
++		t.Fatalf("ada-9 re-bound to %s, want Ada's original row %s", rebound.ConversationID, adaBefore.ConversationID)
++	}
+ }
+ 
+ // A skipped outgoing message never reaches the outbox echo observer: the echo
+diff --git a/internal/ingest/idspace.go b/internal/ingest/idspace.go
+index bb9938c..07d1986 100644
+--- a/internal/ingest/idspace.go
++++ b/internal/ingest/idspace.go
+@@ -49,6 +49,23 @@ func (w *Worker) googleIncomingConversation(
+ 		if len(peers) == 0 || identitiesContain(peers, sender.IdentityID) {
+ 			return conversation, remoteID, nil
+ 		}
++		if sqlite.ConversationMintSource(conversation.MetadataJSON) == sqlite.ConversationMintMessage {
++			// The binding was minted from a bare message frame and no
++			// snapshot has confirmed it yet. A second distinct sender is
++			// then an incipient Google group — its first messages race
++			// ahead of the conversation snapshot — so the sender joins
++			// this thread (the caller ensures the participant) instead
++			// of the binding being stolen for the sender's 1:1. A
++			// re-keyed 1:1 is an established thread without the marker
++			// and keeps the reroute below.
++			w.logger.Info().
++				Str("account_id", accountID).
++				Str("remote_conversation_id", remoteID).
++				Str("conversation_id", conversation.ConversationID).
++				Str("sender", sender.CanonicalValue).
++				Msg("ingest: second sender joined message-minted thread; awaiting snapshot confirmation")
++			return conversation, remoteID, nil
++		}
+ 		target, rerouteErr := w.rerouteGoogleDirect(accountID, remoteID, sender, occurredAtMS)
+ 		if rerouteErr != nil {
+ 			return sqlite.Conversation{}, "", rerouteErr
+@@ -64,6 +81,9 @@ func (w *Worker) googleIncomingConversation(
+ 		if bindErr := w.bindRemoteConversationID(accountID, remoteID, &target); bindErr != nil {
+ 			return sqlite.Conversation{}, "", bindErr
+ 		}
++		if markErr := w.markAdoptedBinding(&target); markErr != nil {
++			return sqlite.Conversation{}, "", markErr
++		}
+ 		return target, remoteID, nil
+ 	}
+ 	if !errors.Is(findErr, sqlite.ErrNotFound) {
+@@ -91,6 +111,9 @@ func (w *Worker) rerouteGoogleDirect(
+ 		if bindErr := w.bindRemoteConversationID(accountID, remoteID, &target); bindErr != nil {
+ 			return sqlite.Conversation{}, bindErr
+ 		}
++		if markErr := w.markAdoptedBinding(&target); markErr != nil {
++			return sqlite.Conversation{}, markErr
++		}
+ 		return target, nil
+ 	}
+ 	if !errors.Is(err, sqlite.ErrNotFound) {
+@@ -108,6 +131,12 @@ func (w *Worker) rerouteGoogleDirect(
+ 	if err != nil {
+ 		return sqlite.Conversation{}, err
+ 	}
++	// Message-frame mint: the direct kind is a guess until a snapshot
++	// confirms it (see ensureMessageConversation).
++	metadataJSON, _, err := sqlite.WithConversationMintSource("{}", sqlite.ConversationMintMessage)
++	if err != nil {
++		return sqlite.Conversation{}, err
++	}
+ 	conversation := sqlite.Conversation{
+ 		ConversationID:       conversationID,
+ 		AccountID:            accountID,
+@@ -115,7 +144,7 @@ func (w *Worker) rerouteGoogleDirect(
+ 		Kind:                 sqlite.ConversationKindDirect,
+ 		NotificationMode:     sqlite.NotificationModeAll,
+ 		LastMessageAtMS:      occurredAtMS,
+-		MetadataJSON:         "{}",
++		MetadataJSON:         metadataJSON,
+ 		CreatedAtMS:          occurredAtMS,
+ 		UpdatedAtMS:          occurredAtMS,
+ 	}
+@@ -358,6 +387,23 @@ func (w *Worker) bindRemoteConversationID(
+ 	return nil
+ }
+ 
++// markAdoptedBinding records on a conversation row that its remote ID
++// binding was adopted from a bare incoming message (sender matched an
++// existing direct thread) rather than from a conversation snapshot, so a
++// later contradicting snapshot may move the binding off instead of skipping
++// the thread forever.
++func (w *Worker) markAdoptedBinding(conversation *sqlite.Conversation) error {
++	metadata, changed, err := sqlite.WithConversationAdoptedBinding(conversation.MetadataJSON, true)
++	if err != nil {
++		return err
++	}
++	if !changed {
++		return nil
++	}
++	conversation.MetadataJSON = metadata
++	return w.store.UpsertConversation(*conversation)
++}
++
+ // mintConversationID derives a new conversation primary key for a remote ID,
+ // stepping past keys still owned by displaced former holders of the same ID.
+ func (w *Worker) mintConversationID(accountID, remoteID string) (string, error) {
+diff --git a/internal/ingest/worker.go b/internal/ingest/worker.go
+index 777f07c..b7df532 100644
+--- a/internal/ingest/worker.go
++++ b/internal/ingest/worker.go
+@@ -1020,6 +1020,16 @@ func (w *Worker) refreshConversation(
+ 	if err != nil {
+ 		return sqlite.Conversation{}, err
+ 	}
++	// A snapshot refreshing the row confirms both its kind and its current
++	// binding; the message-frame provenance markers come off.
++	conversation.MetadataJSON, _, err = sqlite.WithConversationMintSource(conversation.MetadataJSON, "")
++	if err != nil {
++		return sqlite.Conversation{}, err
++	}
++	conversation.MetadataJSON, _, err = sqlite.WithConversationAdoptedBinding(conversation.MetadataJSON, false)
++	if err != nil {
++		return sqlite.Conversation{}, err
++	}
+ 	applyConversationArchived(&conversation, event.Archived, nowMS)
+ 	if err := w.store.UpsertConversation(conversation); err != nil {
+ 		return sqlite.Conversation{}, err
+@@ -1111,6 +1121,13 @@ func (w *Worker) ensureMessageConversation(
+ 	if err != nil {
+ 		return sqlite.Conversation{}, "", err
+ 	}
++	// The kind is a message-frame guess, not a snapshot's word: mark the
++	// thread unconfirmed so a second distinct sender is treated as an
++	// incipient group rather than a stale binding (see googleIncomingConversation).
++	metadataJSON, _, err := sqlite.WithConversationMintSource("{}", sqlite.ConversationMintMessage)
++	if err != nil {
++		return sqlite.Conversation{}, "", err
++	}
+ 	conversation = sqlite.Conversation{
+ 		ConversationID:       conversationID,
+ 		AccountID:            accountID,
+@@ -1118,7 +1135,7 @@ func (w *Worker) ensureMessageConversation(
+ 		Kind:                 kind,
+ 		NotificationMode:     sqlite.NotificationModeAll,
+ 		LastMessageAtMS:      occurredAtMS,
+-		MetadataJSON:         "{}",
++		MetadataJSON:         metadataJSON,
+ 		CreatedAtMS:          occurredAtMS,
+ 		UpdatedAtMS:          occurredAtMS,
+ 	}
+@@ -1173,19 +1190,32 @@ func (w *Worker) applyHistoryConversation(
+ 	if !started {
+ 		bound, _, err := w.existingConversation(accountID, platform, event.RemoteConversationID)
+ 		if err == nil {
+-			contradicts, err := w.historySnapshotContradicts(accountID, platform, event, bound)
+-			if err != nil {
+-				return false, err
++			contradicts, contradictErr := w.historySnapshotContradicts(accountID, platform, event, bound)
++			if contradictErr != nil {
++				return false, contradictErr
+ 			}
+ 			if contradicts {
+-				return false, errHistoryContradicted
++				healed, healErr := w.healHistoryContradiction(accountID, platform, event, bound)
++				if healErr != nil {
++					return false, healErr
++				}
++				switch healed {
++				case historyHealUpgraded:
++					progress.setConversation(remoteID, true)
++					return false, nil
++				case historyHealMigrated:
++					// The binding moved off the bound row; fall through
++					// to placement as if the remote ID were unbound.
++				default:
++					return false, errHistoryContradicted
++				}
++			} else {
++				// History never rewrites a bound thread, except to file it where
++				// the transport now does (a folder scan is how existing threads
++				// learn they are spam, blocked or archived).
++				return false, w.restampConversationFolder(bound, event.Folder, event.Archived)
+ 			}
+-			// History never rewrites a bound thread, except to file it where
+-			// the transport now does (a folder scan is how existing threads
+-			// learn they are spam, blocked or archived).
+-			return false, w.restampConversationFolder(bound, event.Folder, event.Archived)
+-		}
+-		if !errors.Is(err, sqlite.ErrNotFound) {
++		} else if !errors.Is(err, sqlite.ErrNotFound) {
+ 			return false, err
+ 		}
+ 		peers, err := w.resolveEventPeers(accountID, platform, event, true)
+@@ -1284,6 +1314,24 @@ func (w *Worker) historySnapshotContradicts(
+ 	if kind != bound.Kind {
+ 		return true, nil
+ 	}
++	eventPeers, err := w.snapshotEventPeers(accountID, platform, event)
++	if err != nil {
++		return false, err
++	}
++	if len(eventPeers) == 0 {
++		return false, nil
++	}
++	return !rostersConsistent(kind == sqlite.ConversationKindDirect, eventPeers, storedPeers), nil
++}
++
++// snapshotEventPeers resolves a conversation snapshot's non-self participants
++// to identities without creating any: a participant with no stored identity
++// still proves roster membership through its derived key.
++func (w *Worker) snapshotEventPeers(
++	accountID string,
++	platform bridge.Platform,
++	event bridge.ConversationEvent,
++) ([]sqlite.Identity, error) {
+ 	eventPeers := make([]sqlite.Identity, 0, len(event.Participants))
+ 	seen := make(map[string]struct{}, len(event.Participants))
+ 	for _, participant := range event.Participants {
+@@ -1292,7 +1340,7 @@ func (w *Worker) historySnapshotContradicts(
+ 		}
+ 		key, err := v2keys.IdentityKey(accountID, string(platform), identityRaw(participant.Identity))
+ 		if err != nil {
+-			return false, err
++			return nil, err
+ 		}
+ 		identityID := v2keys.DeriveID("identity", accountID, key.Kind+"\x1f"+key.Canonical)
+ 		identity, err := w.store.GetIdentityByCanonical(accountID, sqlite.IdentityKind(key.Kind), key.Canonical)
+@@ -1303,7 +1351,7 @@ func (w *Worker) historySnapshotContradicts(
+ 			}
+ 			identityID = identity.IdentityID
+ 		case !errors.Is(err, sqlite.ErrNotFound):
+-			return false, err
++			return nil, err
+ 		}
+ 		if _, duplicate := seen[identityID]; duplicate {
+ 			continue
+@@ -1311,10 +1359,115 @@ func (w *Worker) historySnapshotContradicts(
+ 		seen[identityID] = struct{}{}
+ 		eventPeers = append(eventPeers, sqlite.Identity{IdentityID: identityID})
+ 	}
++	return eventPeers, nil
++}
++
++// historyHealOutcome classifies how a contradicting snapshot was resolved.
++type historyHealOutcome int
++
++const (
++	// historyHealNone leaves the contradiction skipped (errHistoryContradicted).
++	historyHealNone historyHealOutcome = iota
++	// historyHealUpgraded refreshed the bound thread in place.
++	historyHealUpgraded
++	// historyHealMigrated moved the binding off the bound row so placement
++	// can mint or find the thread the snapshot names.
++	historyHealMigrated
++)
++
++// healHistoryContradiction resolves a snapshot that contradicts its bound
++// thread when the contradiction is an unconfirmed group birth rather than a
++// stale binding:
++//
++//   - A thread minted from a message frame (kind guessed direct) that the
++//     snapshot reveals as a group whose roster includes a stored peer is
++//     upgraded in place: the snapshot refreshes its kind, roster and title.
++//   - An established thread whose remote ID binding was adopted from a bare
++//     incoming message (an incipient group's first frame matched its
++//     sender's 1:1) gives the binding up: the row is displaced and placement
++//     mints or finds the group thread the snapshot names; the displaced
++//     thread re-acquires its true binding on a later sync.
++//
++// Any other contradiction is a genuine stale binding after a phone swap or
++// restore and stays skipped (#176).
++func (w *Worker) healHistoryContradiction(
++	accountID string,
++	platform bridge.Platform,
++	event bridge.ConversationEvent,
++	bound sqlite.Conversation,
++) (historyHealOutcome, error) {
++	if bound.Kind != sqlite.ConversationKindDirect {
++		return historyHealNone, nil
++	}
++	if event.Kind != string(sqlite.ConversationKindGroup) {
++		return historyHealNone, nil
++	}
++	storedPeers, err := w.store.ListConversationPeerIdentities(accountID, bound.ConversationID)
++	if err != nil {
++		return historyHealNone, err
++	}
++	if len(storedPeers) == 0 {
++		return historyHealNone, nil
++	}
++	eventPeers, err := w.snapshotEventPeers(accountID, platform, event)
++	if err != nil {
++		return historyHealNone, err
++	}
+ 	if len(eventPeers) == 0 {
+-		return false, nil
++		return historyHealNone, nil
+ 	}
+-	return !rostersConsistent(kind == sqlite.ConversationKindDirect, eventPeers, storedPeers), nil
++	overlap := false
++	for _, peer := range storedPeers {
++		if identitiesContain(eventPeers, peer.IdentityID) {
++			overlap = true
++			break
++		}
++	}
++	if !overlap {
++		return historyHealNone, nil
++	}
++	remoteID := v2keys.NormalizeRemoteConversationID(string(platform), event.RemoteConversationID)
++	if sqlite.ConversationMintSource(bound.MetadataJSON) == sqlite.ConversationMintMessage {
++		w.logger.Info().
++			Str("account_id", accountID).
++			Str("remote_conversation_id", remoteID).
++			Str("conversation_id", bound.ConversationID).
++			Msg("ingest: snapshot confirmed message-minted thread as a group; upgrading in place")
++		if _, err := w.refreshConversation(accountID, platform, event, false); err != nil {
++			return historyHealNone, err
++		}
++		return historyHealUpgraded, nil
++	}
++	if !sqlite.ConversationAdoptedBinding(bound.MetadataJSON) {
++		return historyHealNone, nil
++	}
++	nowMS, err := w.nowMS()
++	if err != nil {
++		return historyHealNone, err
++	}
++	w.logger.Info().
++		Str("account_id", accountID).
++		Str("remote_conversation_id", remoteID).
++		Str("conversation_id", bound.ConversationID).
++		Msg("ingest: snapshot contradicts message-adopted binding; displacing it so the group thread can be placed")
++	if _, err := w.store.DisplaceConversationRemoteID(accountID, remoteID, nowMS); err != nil {
++		return historyHealNone, err
++	}
++	stored, getErr := w.store.GetConversation(bound.ConversationID)
++	if getErr != nil {
++		return historyHealNone, getErr
++	}
++	metadata, changed, metaErr := sqlite.WithConversationAdoptedBinding(stored.MetadataJSON, false)
++	if metaErr != nil {
++		return historyHealNone, metaErr
++	}
++	if changed {
++		stored.MetadataJSON = metadata
++		if upErr := w.store.UpsertConversation(stored); upErr != nil {
++			return historyHealNone, upErr
++		}
++	}
++	return historyHealMigrated, nil
+ }
+ 
+ // historyMessage places and inserts one fetched message under the history
+diff --git a/internal/storage/sqlite/conversation_mint.go b/internal/storage/sqlite/conversation_mint.go
+new file mode 100644
+index 0000000..b98361a
+--- /dev/null
++++ b/internal/storage/sqlite/conversation_mint.go
+@@ -0,0 +1,92 @@
++package sqlite
++
++import (
++	"encoding/json"
++	"fmt"
++	"strings"
++)
++
++// conversationMintKey holds, in a conversation's metadata_json, that its kind
++// was recorded from a bare message frame rather than a conversation snapshot.
++// Message events carry no conversation kind, so a minted thread defaults to
++// direct; a Google group MMS born ahead of its conversation snapshot takes
++// that shape. The first snapshot that refreshes the row clears the key.
++const conversationMintKey = "mint"
++
++// ConversationMintMessage marks a thread whose kind came from a message frame.
++const ConversationMintMessage = "message"
++
++// conversationAdoptedKey holds, in a conversation's metadata_json, that the
++// row's current remote conversation ID binding was adopted from a bare
++// incoming message (sender matched an existing direct thread) rather than
++// from a conversation snapshot. A snapshot that contradicts an adopted
++// binding may move it off; a snapshot refresh clears the key.
++const conversationAdoptedKey = "adopted"
++
++// ConversationMintSource returns the mint source stored in a conversation's
++// metadata_json, or "" when the kind was snapshot-born or has since been
++// confirmed by a snapshot.
++func ConversationMintSource(metadataJSON string) string {
++	var metadata map[string]any
++	if json.Unmarshal([]byte(metadataJSON), &metadata) != nil {
++		return ""
++	}
++	mint, _ := metadata[conversationMintKey].(string)
++	return mint
++}
++
++// ConversationAdoptedBinding reports whether the conversation's current
++// remote ID binding was adopted from a bare message frame.
++func ConversationAdoptedBinding(metadataJSON string) bool {
++	var metadata map[string]any
++	if json.Unmarshal([]byte(metadataJSON), &metadata) != nil {
++		return false
++	}
++	adopted, _ := metadata[conversationAdoptedKey].(string)
++	return adopted == ConversationMintMessage
++}
++
++// WithConversationMintSource returns metadataJSON with its mint source set
++// ("" removes the key), and whether it changed.
++func WithConversationMintSource(metadataJSON, mint string) (string, bool, error) {
++	return withConversationMetadataKey(metadataJSON, conversationMintKey, mint)
++}
++
++// WithConversationAdoptedBinding returns metadataJSON with the adopted-binding
++// marker set (false removes the key), and whether it changed.
++func WithConversationAdoptedBinding(metadataJSON string, adopted bool) (string, bool, error) {
++	value := ""
++	if adopted {
++		value = ConversationMintMessage
++	}
++	return withConversationMetadataKey(metadataJSON, conversationAdoptedKey, value)
++}
++
++// withConversationMetadataKey sets key to value ("" removes the key) in a
++// conversation's metadata_json, preserving unrelated keys, and reports whether
++// anything changed.
++func withConversationMetadataKey(metadataJSON, key, value string) (string, bool, error) {
++	metadata := map[string]any{}
++	if strings.TrimSpace(metadataJSON) != "" {
++		if err := json.Unmarshal([]byte(metadataJSON), &metadata); err != nil {
++			return "", false, fmt.Errorf("conversation metadata: %w", err)
++		}
++		if metadata == nil {
++			metadata = map[string]any{}
++		}
++	}
++	current, _ := metadata[key].(string)
++	if current == value {
++		return metadataJSON, false, nil
++	}
++	if value == "" {
++		delete(metadata, key)
++	} else {
++		metadata[key] = value
++	}
++	encoded, err := json.Marshal(metadata)
++	if err != nil {
++		return "", false, fmt.Errorf("conversation metadata: %w", err)
++	}
++	return string(encoded), true, nil
++}

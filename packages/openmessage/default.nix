@@ -91,6 +91,15 @@ let
       # Positioning now owns the whole open: no sticking, scroll preserved,
       # and programmatic scrolls fenced from the listener and read-marker.
       ./unread-anchor-positioning.patch
+      # Group MMSes born mid-session split across threads: the first
+      # message frame minted a direct-kind thread (no snapshot rides live
+      # messages), so the second sender looked like a re-keyed 1:1 — its
+      # messages rerouted into that sender's 1:1 and the group's remote id
+      # was stolen; every later sync saw kind=group "contradict" the stored
+      # direct binding and skipped forever. Unconfirmed (message-minted or
+      # adopted) threads now grow their roster on new senders and are
+      # healed in place (or migrated) by the first group snapshot.
+      ./incipient-group-heal.patch
     ];
     subPackages = [ "." ];
     env.CGO_ENABLED = 0;
