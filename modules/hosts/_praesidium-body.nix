@@ -45,6 +45,7 @@ in
     # the OTEL_* env that switches the (forked) cursortab daemon's telemetry on.
     # See modules/nixos/cursortab-observability/.
     services.cursortab-observability.enable = true;
+    services.rcsd.enable = true;
 
     # CUDA is NOT enabled host-wide. `cudaSupport` is a global rebuild switch:
     # it turns on CUDA for every package that can take it, which drags firefox,
