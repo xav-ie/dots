@@ -223,17 +223,18 @@
         ]
       },
       "locked": {
-        "lastModified": 1792347704,
-        "narHash": "sha256-9nOHZSRtrkb2L+g8oq6psg+TUg2ycMZrv4pkQwaPaxA=",
-        "owner": "xav-ie",
-        "repo": "browser-session-mcp",
-        "rev": "181024d109b4b17f00834ab1ccab8fb2ec35bf8c",
-        "type": "github"
+        "lastModified": 1793313144,
+        "narHash": "sha256-xwWom92BvWGp/Bq2FOHFAzSSBW5PzVigUnKy3+lTS6A=",
+        "ref": "feat/jev-selectors",
+        "rev": "304a21378d391dc6a8c76a6d079b1f52c3b7e7b5",
+        "revCount": 87,
+        "type": "git",
+        "url": "file:/home/x/Projects/browser-session-mcp"
       },
       "original": {
-        "owner": "xav-ie",
-        "repo": "browser-session-mcp",
-        "type": "github"
+        "ref": "feat/jev-selectors",
+        "type": "git",
+        "url": "file:/home/x/Projects/browser-session-mcp"
       }
     },
     "bun-demincer-src": {
@@ -1915,11 +1916,11 @@
     "rcsd-web-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1793314231,
-        "narHash": "sha256-Xtxvcrknm0Fmsxz9K8xn3EUOlUzYxYZ8lmModCD7A8s=",
+        "lastModified": 1793315005,
+        "narHash": "sha256-UcZf+okMmGz7LHl9QNzlz157LtQrao24nQBQN2XjKVs=",
         "ref": "refs/heads/main",
-        "rev": "8ba71eee61b9fc7a19ffbf506fb0f395d6cd64a8",
-        "revCount": 18,
+        "rev": "fc09c8d568da9f3b3429d74695509d314f38de83",
+        "revCount": 21,
         "type": "git",
         "url": "ssh://git@github.com/xav-ie/rcsd-web.git"
       },
