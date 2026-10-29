@@ -46,6 +46,9 @@
   protonmail-mcp-src,
   rcsd-src,
   rcsd-web-src,
+  # screenshare-ui (its main flake has no packages output; callPackage its
+  # derivations); darwin-only.
+  screenshare-ui-src,
   simulstreaming-src,
   slack-mcp-server-src,
   workspace-mcp-src,
@@ -155,14 +158,15 @@ rec {
   confirm-open = pkgs.callPackage ./confirm-open { };
   fix-yabai = pkgs.callPackage ./fix-yabai { inherit writeNuApplication; };
   focus-daemon = pkgs.callPackage ./focus-daemon { };
-  hidewin-bar = pkgs.callPackage ./hidewin-bar { };
   firefox-pip-mover = pkgs.callPackage ./firefox-pip-mover { };
-  hidewin = pkgs.callPackage ./hidewin { };
   jitfix = pkgs.callPackage ./jitfix { };
   menubar-reveal = pkgs.callPackage ./menubar-reveal { };
   move-pip = pkgs.callPackage ./move-pip { };
   openmessage = pkgs.callPackage ./openmessage { inherit rcsd; };
   polish-recording = pkgs.callPackage ./polish-recording { };
+  screenshare-ui = pkgs.callPackage "${screenshare-ui-src}/default.nix" { };
+  screenshare-ui-dock-hooks = pkgs.callPackage "${screenshare-ui-src}/dock-hooks.nix" { };
+  screenshare-ui-hide-windows = pkgs.callPackage "${screenshare-ui-src}/hide-windows.nix" { };
   sketchybar-battery = pkgs.callPackage ./sketchybar-battery { inherit writeNuApplication; };
   sketchybar-hover = pkgs.callPackage ./sketchybar-hover { };
   sketchybar-icons = sketchybar-icons-pkg;

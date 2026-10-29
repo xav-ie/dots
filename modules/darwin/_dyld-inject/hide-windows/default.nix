@@ -1,17 +1,17 @@
-# hide-windows: the macOS answer to Invisiwind. Windows are VISIBLE by
-# default (so continuous recorders like Dayflow work); the hidewin menubar
-# app's "Screenshare Mode" (packages/hidewin-bar) hides everything from
-# capture for a meeting, and you reveal the apps you want to present.
+# hide-windows: inject screenshare-ui's per-app hiding library
+# (ScreenshareUIHideWindows.dylib, from inputs.screenshare-ui) into every GUI
+# app. Windows are VISIBLE by default (so continuous recorders like Dayflow
+# work); screenshare-ui's Screenshare Mode hides everything from capture for a
+# meeting, and you reveal the apps you want to present.
 #
 # An NSWindow is excluded from window-level capture (ScreenCaptureKit,
 # CGWindowListCreateImage, all browser getDisplayMedia sharing incl.
 # Zoom-in-a-tab) when its sharingType is NSWindowSharingNone — but that
-# flag only works when set by the process that OWNS the window. So this
-# rides the shared services.dyldInject.libraries inject to run inside
-# every GUI process and flips the flag from the inside. See
-# ./pkgs/hide-windows/HideWindows.m for the mechanism and its ceiling
-# (native Zoom's default display-buffer capture bypasses it; browser
-# sharing honors it).
+# flag only works when set by the process that OWNS the window. So the library
+# rides the shared services.dyldInject.libraries inject to run inside every GUI
+# process and flips the flag from the inside (mechanism and ceiling:
+# hide-windows/HideWindows.m in screenshare-ui; native Zoom's default
+# display-buffer capture bypasses it; browser sharing honors it).
 #
 # The sharing flag is per-window, honored by ALL window-level capturers —
 # there's no "hide from Meet but show to Dayflow" exception. That's why
@@ -31,7 +31,7 @@
 }:
 let
   cfg = config.services.dyldInject.hideWindows;
-  hide-windows = pkgs.callPackage ./pkgs/hide-windows { };
+  hide-windows = pkgs.pkgs-mine.screenshare-ui-hide-windows;
 in
 {
   options.services.dyldInject.hideWindows = {
@@ -41,8 +41,8 @@ in
       description = ''
         Inject a dylib into every GUI app that can flip its windows to
         NSWindowSharingNone (excluded from screen capture). Windows are
-        visible by default; the hidewin menubar's Screenshare Mode hides
-        them for a meeting, and you reveal apps to present.
+        visible by default; screenshare-ui's Screenshare Mode hides them
+        for a meeting, and you reveal apps to present.
       '';
     };
 
@@ -68,7 +68,7 @@ in
 
   config = lib.mkIf cfg.enable {
     services.dyldInject.libraries = [
-      "${hide-windows}/lib/HideWindows.dylib"
+      "${hide-windows}/lib/ScreenshareUIHideWindows.dylib"
     ];
 
     # Grants only what's missing (one DB read), so a rebuild costs nothing once

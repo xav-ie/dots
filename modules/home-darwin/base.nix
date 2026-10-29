@@ -7,9 +7,10 @@
         home = {
           packages = with pkgs.pkgs-mine; [
             fix-yabai
-            hidewin
             move-pip
             polish-recording
+            # The app binary is also the CLI: `screenshare-ui show|hide|panel`.
+            screenshare-ui
             sketchybar-battery
           ];
         };

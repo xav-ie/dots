@@ -216,12 +216,13 @@ sb-cluster volume right 24 61 (
   "click_script=menubar-reveal $HOME/.config/sketchybar/open_volume_control.scpt"
 ]
 
-# hidewin — single icon (sb-icon-item, icon_only). Screen-capture hiding toggle
-# (packages/hidewin-bar), placed to the LEFT of the volume icon (right items add
+# hidewin — single icon (sb-icon-item, icon_only). screenshare-ui's Screenshare
+# Mode toggle, placed to the LEFT of the volume icon (right items add
 # right-to-left). Its plugin owns the icon image (white = Normal, orange =
-# Screenshare Mode); `hidewin_mode` is bound to the com.x.hidewin.mode-changed
-# notification the agent posts. mouse.clicked opens the panel.
-(sketchybar --add event hidewin_mode com.x.hidewin.mode-changed)
+# Screenshare Mode, red = a window still capturable); `hidewin_mode` is bound to
+# the com.x.screenshare-ui.mode-changed notification. mouse.clicked opens the
+# panel.
+(sketchybar --add event hidewin_mode com.x.screenshare-ui.mode-changed)
 (sb-icon-item
   hidewin
   right
