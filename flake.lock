@@ -382,26 +382,6 @@
         "type": "github"
       }
     },
-    "cmdtab": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1793150710,
-        "narHash": "sha256-eQPqLUcdvIv8/U3CHkMvJpV3ty8cXU0hrdKI50Bd+/w=",
-        "ref": "refs/heads/main",
-        "rev": "b77b1a58f258bfe600131be3437ab211fa7f985f",
-        "revCount": 1,
-        "type": "git",
-        "url": "ssh://git@github.com/xav-ie/cmdtab"
-      },
-      "original": {
-        "type": "git",
-        "url": "ssh://git@github.com/xav-ie/cmdtab"
-      }
-    },
     "collie": {
       "inputs": {
         "nixpkgs": [
@@ -1935,7 +1915,6 @@
         "claude-marketplace-ponytail": "claude-marketplace-ponytail",
         "claude-marketplace-runpod": "claude-marketplace-runpod",
         "claude-marketplace-wakatime": "claude-marketplace-wakatime",
-        "cmdtab": "cmdtab",
         "collie": "collie",
         "crane": "crane",
         "ctpv": "ctpv",
@@ -1987,6 +1966,7 @@
         "quadlet-nix": "quadlet-nix",
         "rust-analyzer-src": "rust-analyzer-src",
         "rust-overlay": "rust-overlay",
+        "screenshare-ui": "screenshare-ui",
         "scribe": "scribe",
         "scribe-desktop": "scribe-desktop",
         "simulstreaming-src": "simulstreaming-src",
@@ -2042,6 +2022,21 @@
         "owner": "oxalica",
         "repo": "rust-overlay",
         "type": "github"
+      }
+    },
+    "screenshare-ui": {
+      "locked": {
+        "lastModified": 1793251197,
+        "narHash": "sha256-InCYJGOW2q4NUXWb6nJ5CZ8/LVLGI0AmuuppCXZXht8=",
+        "ref": "refs/heads/main",
+        "rev": "474ab23f6387cf91db57fa5676e43588de831c74",
+        "revCount": 5,
+        "type": "git",
+        "url": "ssh://git@github.com/xav-ie/screenshare-ui"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/xav-ie/screenshare-ui"
       }
     },
     "scribe": {
