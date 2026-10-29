@@ -1,0 +1,54 @@
+diff --git a/apps/frontend/public/manifest.webmanifest b/apps/frontend/public/manifest.webmanifest
+new file mode 100644
+index 00000000..ce62bf42
+--- /dev/null
++++ b/apps/frontend/public/manifest.webmanifest
+@@ -0,0 +1,23 @@
++{
++  "name": "Postiz",
++  "short_name": "Postiz",
++  "start_url": "/",
++  "scope": "/",
++  "display": "standalone",
++  "background_color": "#0e0e0e",
++  "theme_color": "#0e0e0e",
++  "icons": [
++    {
++      "src": "/pwa/icon-192.png",
++      "sizes": "192x192",
++      "type": "image/png",
++      "purpose": "any maskable"
++    },
++    {
++      "src": "/pwa/icon-512.png",
++      "sizes": "512x512",
++      "type": "image/png",
++      "purpose": "any maskable"
++    }
++  ]
++}
+diff --git a/apps/frontend/src/app/(app)/layout.tsx b/apps/frontend/src/app/(app)/layout.tsx
+index e264b0d6..d749526f 100644
+--- a/apps/frontend/src/app/(app)/layout.tsx
++++ b/apps/frontend/src/app/(app)/layout.tsx
+@@ -34,6 +34,20 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
+     <html>
+       <head>
+         <link rel="icon" href="/favicon.ico" sizes="any" />
++        {/* Installable app. use-credentials so the manifest fetch carries
++            cookies past an auth proxy in front of the instance. The icons
++            under /pwa are rendered from postiz.svg at build time. */}
++        <link
++          rel="manifest"
++          href="/manifest.webmanifest"
++          crossOrigin="use-credentials"
++        />
++        <link rel="apple-touch-icon" href="/pwa/apple-touch-icon.png" />
++        <meta name="theme-color" content="#0e0e0e" />
++        <meta name="apple-mobile-web-app-title" content="Postiz" />
++        <meta name="mobile-web-app-capable" content="yes" />
++        <meta name="apple-mobile-web-app-capable" content="yes" />
++        <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+         {!!process.env.DATAFAST_WEBSITE_ID && (
+           <Script
+             data-website-id={process.env.DATAFAST_WEBSITE_ID}

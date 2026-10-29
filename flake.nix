@@ -127,7 +127,7 @@
     # change. Revert to `github:gitroomhq/postiz-app/v2.21.6` (or
     # whatever release ships the fix) once it lands upstream.
     postiz-src.flake = false;
-    postiz-src.url = "github:xav-ie/postiz-app/fix/skip-db-push-on-restart";
+    postiz-src.url = "github:xav-ie/postiz-app/fix/mastra-schema-v2.25.3";
     rust-analyzer-src.url = "github:rust-lang/rust-analyzer/nightly";
     rust-analyzer-src.flake = false;
     rust-overlay.url = "github:oxalica/rust-overlay";

@@ -1747,16 +1747,16 @@
     "postiz-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1785612950,
-        "narHash": "sha256-TRLqWSPv7jmQCG0dXclxsTsFjrtPYJxX3mLyxpYCMWI=",
+        "lastModified": 1793297363,
+        "narHash": "sha256-KFZSNV2pJh21imN0BFVuOSp4d3eFcRBH8220RXMhcGE=",
         "owner": "xav-ie",
         "repo": "postiz-app",
-        "rev": "01a9f6276cdbe8f828f92fb16899e1d6debb1ee1",
+        "rev": "ff01c50480f65379d25f0c626a41a3406f35886e",
         "type": "github"
       },
       "original": {
         "owner": "xav-ie",
-        "ref": "fix/skip-db-push-on-restart",
+        "ref": "fix/mastra-schema-v2.25.3",
         "repo": "postiz-app",
         "type": "github"
       }

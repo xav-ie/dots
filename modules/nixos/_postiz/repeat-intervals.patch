@@ -1,5 +1,5 @@
 diff --git a/apps/frontend/src/components/launches/repeat.component.tsx b/apps/frontend/src/components/launches/repeat.component.tsx
-index ad263bb0..62db7f70 100644
+index 0d571e70..9bc9a4fe 100644
 --- a/apps/frontend/src/components/launches/repeat.component.tsx
 +++ b/apps/frontend/src/components/launches/repeat.component.tsx
 @@ -44,6 +44,20 @@ const getList = (t: (key: string, fallback: string) => string) => [

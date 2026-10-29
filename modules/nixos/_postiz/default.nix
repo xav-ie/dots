@@ -7,20 +7,40 @@
 let
   # Fetch and patch the Postiz source.
   #
-  # Source comes from the `postiz-src` flake input, currently pointed at
-  # a local clone (~/Projects/postiz-app) while we test the
-  # `fix(mastra): use dedicated postgres schema` change. Once upstream
-  # accepts the fix and ships a release, swap the input back to a github
-  # ref in flake.nix.
+  # Source comes from the `postiz-src` flake input: a fork branch carrying
+  # `fix(mastra): use dedicated postgres schema` on top of an upstream
+  # release. Once upstream accepts the fix, point the input back at an
+  # upstream tag in flake.nix.
   postizSrc = pkgs.stdenv.mkDerivation {
     name = "postiz-src-patched";
     src = inputs.postiz-src;
     patches = [
       ./pm2-quiet.patch
+      ./pwa.patch
       ./quicktime-upload.patch
       ./repeat-intervals.patch
       ./worker-allowlist.patch
     ];
+    nativeBuildInputs = with pkgs; [
+      imagemagick
+      librsvg
+    ];
+    # Home-screen icons for pwa.patch's manifest: the logo at 60% on the
+    # dark background, inside the safe zone of a maskable icon.
+    postPatch = ''
+      # Podman here resolves no short image names; qualify the base image.
+      substituteInPlace Dockerfile.dev --replace-fail 'FROM node:' 'FROM docker.io/library/node:'
+
+      mkdir -p apps/frontend/public/pwa
+      for spec in icon-192:192 icon-512:512 apple-touch-icon:180; do
+        name=''${spec%:*} size=''${spec#*:} logo=$(( ''${spec#*:} * 60 / 100 ))
+        rsvg-convert -w $logo -h $logo --keep-aspect-ratio \
+          apps/frontend/public/postiz.svg -o logo.png
+        magick -size ''${size}x''${size} xc:'#0e0e0e' logo.png \
+          -gravity center -composite apps/frontend/public/pwa/$name.png
+      done
+      rm logo.png
+    '';
     phases = [
       "unpackPhase"
       "patchPhase"
