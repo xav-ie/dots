@@ -111,8 +111,8 @@
                 # battery_icon.nu / wifi.nu plugins (replaces the screen-recording
                 # Control Center aliases).
                 pkgs.pkgs-mine.sketchybar-icons
-                # The `hidewin` item's click_script runs `hidewin panel`.
-                pkgs.pkgs-mine.hidewin
+                # The `hidewin` item's click_script runs `screenshare-ui panel`.
+                pkgs.pkgs-mine.screenshare-ui
                 # The `virtual_headset` item's clicks run `virtual-headset panel|toggle-mute`.
                 pkgs.pkgs-mine.virtual-headset
                 # Control Center click_scripts skip the menu bar slide-down.

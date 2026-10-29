@@ -1,23 +1,24 @@
-# screenshare-ui (~/Projects/screenshare-ui): macOS UI that leaks into screen
+# screenshare-ui (inputs.screenshare-ui): macOS UI that leaks into screen
 # shares, redrawn in panels hidden from capture — the ⌘-Tab switcher, a
-# stand-in Dock while hidewin's Screenshare Mode is on, and Mission Control /
-# Dock / App Exposé hover UI. Dock's own windows ignore NSWindowSharingNone, so
-# its Dock-side hooks (a dylib injected into Dock through the shared
-# services.dyldInject list; it does nothing in any other process) stop Dock
-# drawing those and report them, and in Screenshare Mode move the real Dock bar
-# off screen and blank the Spaces bar's window miniatures.
+# stand-in Dock, and Mission Control / Dock / App Exposé hover UI — plus
+# Screenshare Mode (hide every app from capture for a meeting; the sketchybar
+# `hidewin` item shows it and opens its panel with `screenshare-ui panel`).
+# Dock's own windows ignore NSWindowSharingNone, so its Dock-side hooks (a dylib
+# injected into Dock through the shared services.dyldInject list; it does
+# nothing in any other process) stop Dock drawing those and report them, keep
+# the real Dock bar off screen while the stand-in is up, and in Screenshare Mode
+# blank the Spaces bar's window miniatures. The per-app hiding library is
+# injected by ./_dyld-inject/hide-windows.
 #
 # The switcher's event tap needs Accessibility. The bundle is ad-hoc signed as
 # com.x.screenshare-ui at build time, so the grant pins the store bundle's
-# cdhash and the agent runs that same bundle. Per-process runtime icons (each
-# Firefox profile's badge) are published by the hide-windows dylib; see
-# ./_dyld-inject/hide-windows.
+# cdhash and the agent runs that same bundle.
 {
   flake.modules.darwin.macos =
-    { inputs, pkgs, ... }:
+    { pkgs, ... }:
     let
-      app = pkgs.callPackage "${inputs.screenshare-ui}/default.nix" { };
-      hooks = pkgs.callPackage "${inputs.screenshare-ui}/dock-hooks.nix" { };
+      app = pkgs.pkgs-mine.screenshare-ui;
+      hooks = pkgs.pkgs-mine.screenshare-ui-dock-hooks;
     in
     {
       # SCREENSHARE_UI_PKG flips the launchd config hash so it restarts when

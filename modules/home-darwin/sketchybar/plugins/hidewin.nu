@@ -5,19 +5,21 @@
 # Mirrors control_center.nu (an icon-only image button): renders the round
 # iris/pupil glyph (`record.circle` — a ring + centre dot, no eye outline) via
 # `sketchybar-icons`, white in Normal mode, orange when Screenshare Mode is
-# active (every app hidden from capture, for a meeting), and red when the
-# agent's leak audit finds a window still capturable. Sized to MATCH the
+# active (every app hidden from capture, for a meeting), and red when
+# screenshare-ui's leak audit finds a window still capturable. Sized to MATCH the
 # neighbouring control_center icon (POINT_SIZE 14 in a MIN_WIDTH canvas, drawn
 # at background.image.scale 0.5), with the same zeroed paddings so it doesn't
 # overlap the volume icon. Hover highlight is painted by sketchybar-hoverd onto
 # icon.background.color (its `hidewin -> icon_only` map entry).
 #
-# The hidewin-bar agent only PUBLISHES state: it writes ~/.cache/hidewin/mode
-# and posts com.x.hidewin.mode-changed, which sketchybarrc binds to the
-# `hidewin_mode` event this item subscribes to. Clicking runs `hidewin panel
-# <x>` so the agent opens the manager panel just below this item.
+# screenshare-ui only PUBLISHES state: it writes ~/.cache/screenshare-ui/mode
+# and posts com.x.screenshare-ui.mode-changed, which sketchybarrc binds to the
+# `hidewin_mode` event this item subscribes to. Clicking runs `screenshare-ui
+# panel <x>` so it opens its Screenshare Mode panel just below this item.
 
-const CACHE = "~/.cache/hidewin" | path expand
+const MODE_FILE = "~/.cache/screenshare-ui/mode" | path expand
+# Rendered icon PNGs, one per mode.
+const CACHE = "~/.cache/sketchybar/hidewin" | path expand
 const POINT_SIZE = 14
 const MIN_WIDTH = 26
 
@@ -46,7 +48,7 @@ def main [] {
       let x = (try {
         sketchybar --query $env.NAME | from json | get bounding_rects | values | first | get origin.0
       } catch { null })
-      if $x == null { hidewin panel } else { hidewin panel $"($x)" }
+      if $x == null { screenshare-ui panel } else { screenshare-ui panel $"($x)" }
     }
     _ => {
       # forced (startup) / hidewin_mode (state change): (re)render the icon.
@@ -55,7 +57,7 @@ def main [] {
       # render errors; here we only set the mode-dependent image.
       let mode = (
         try {
-          open $"($CACHE)/mode" | str trim
+          open $MODE_FILE | str trim
         } catch { "off" }
       )
       let out = (render $mode)
