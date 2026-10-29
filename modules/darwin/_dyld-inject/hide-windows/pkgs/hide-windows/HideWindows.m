@@ -249,14 +249,15 @@ static void swizzled_orderWindow(id self, SEL _cmd, NSInteger place,
     orig_orderWindow(self, _cmd, place, relativeTo);
 }
 
-// ⌘-Tab icons (screenshare-ui's switcher). An app's runtime Dock icon — e.g. each
-// Firefox profile's badge — goes only to Dock; NSRunningApplication.icon
-// returns the bundle icon (verified). Firefox draws its badge in a custom
-// NSDockTile contentView (applicationIconImage stays the plain icon), so
-// whenever an app pushes its tile (-[NSDockTile display]) or sets its icon, we
-// render what Dock gets to ~/.cache/cmdtab/icons/<pid>.png and post
-// com.x.cmdtab.icon-changed (object = pid). Setting a nil icon with no tile
-// view deletes the file; the switcher drops it when the process quits.
+// Per-process icons (screenshare-ui's switcher and Dock). An app's runtime
+// Dock icon — e.g. each Firefox profile's badge — goes only to Dock;
+// NSRunningApplication.icon returns the bundle icon (verified). Firefox draws
+// its badge in a custom NSDockTile contentView (applicationIconImage stays the
+// plain icon), so whenever an app pushes its tile (-[NSDockTile display]) or
+// sets its icon, we render what Dock gets to
+// ~/.cache/screenshare-ui/icons/<pid>.png and post
+// com.x.screenshare-ui.icon-changed (object = pid). Setting a nil icon with no
+// tile view deletes the file; screenshare-ui drops it when the process quits.
 static IMP orig_setIcon = NULL, orig_tileDisplay = NULL;
 static BOOL g_iconPending = NO;
 
@@ -292,7 +293,7 @@ static NSBitmapImageRep *renderTile(void) {
 }
 
 static void publishIcon(void) {
-  NSString *dir = [@"~/.cache/cmdtab/icons" stringByExpandingTildeInPath];
+  NSString *dir = [@"~/.cache/screenshare-ui/icons" stringByExpandingTildeInPath];
   NSString *path = [dir stringByAppendingFormat:@"/%@.png", g_pid];
   NSBitmapImageRep *rep = renderTile();
   if (rep) {
@@ -307,7 +308,7 @@ static void publishIcon(void) {
     [[NSFileManager defaultManager] removeItemAtPath:path error:NULL];
   }
   [[NSDistributedNotificationCenter defaultCenter]
-      postNotificationName:@"com.x.cmdtab.icon-changed"
+      postNotificationName:@"com.x.screenshare-ui.icon-changed"
                     object:g_pid
                   userInfo:nil
         deliverImmediately:YES];
