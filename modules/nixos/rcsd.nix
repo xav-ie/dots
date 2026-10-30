@@ -74,8 +74,9 @@
           (toString webPort)
           "--index"
           "index.html"
-          # One route (state lives in the URL hash), so no SPA fallback, and
-          # no directory listings either.
+          # The client routes by path (/c/<id>), so unknown paths get
+          # index.html; no directory listings.
+          "--spa"
           "--disable-indexing"
           "${cfg.webRoot}"
         ];
