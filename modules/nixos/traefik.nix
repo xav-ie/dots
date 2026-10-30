@@ -18,7 +18,6 @@
       # and the config stayed valid.
 
       # Shared between the router that references it and the spec that defines it.
-      chromeLocalhostHost = "chrome-localhost-host";
       compress = "compress";
       snippetsStripPrefix = "snippets-strip-prefix";
 
@@ -63,7 +62,6 @@
           };
           inherit (proxied) services;
           middlewares = {
-            ${chromeLocalhostHost}.headers.customRequestHeaders.Host = "localhost";
             ${compress}.compress = { };
             ${snippetsStripPrefix}.stripPrefix.prefixes = [ "/snippets" ];
           };
