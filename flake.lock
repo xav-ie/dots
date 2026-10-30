@@ -1899,11 +1899,11 @@
     "rcsd-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1793318072,
-        "narHash": "sha256-DAa3ZCOwzxp6IMGbRVIKThL0qZ1+R6UzKLSCA3SjVAk=",
+        "lastModified": 1793336832,
+        "narHash": "sha256-g4vejzCm1bEJskDr77dC2gmLjpqyYCift/fRGH19RgQ=",
         "ref": "refs/heads/main",
-        "rev": "18a6399f079e55b8ce1f8e4a4e1eecacf530532f",
-        "revCount": 309,
+        "rev": "286b0793c2b9d66bd76fd29a06c9a921fce5fc49",
+        "revCount": 310,
         "type": "git",
         "url": "ssh://git@github.com/xav-ie/rcsd.git"
       },
@@ -1915,11 +1915,11 @@
     "rcsd-web-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1793336355,
-        "narHash": "sha256-Ck63mD5sM7dMX6zZzDtwikEu9y1VKjE0WXPNhgNY4DQ=",
+        "lastModified": 1793336891,
+        "narHash": "sha256-pTUDRyPbMinQuWDllpG0vhR66XkLwO5MBX8Mr00pyws=",
         "ref": "refs/heads/main",
-        "rev": "5a7d0a786e071f9651af5247b60d5bb70f1955ce",
-        "revCount": 36,
+        "rev": "3faa7a644a7f7754029562ae8bb4e48b10e7eb32",
+        "revCount": 37,
         "type": "git",
         "url": "ssh://git@github.com/xav-ie/rcsd-web.git"
       },
