@@ -14,9 +14,7 @@
     atuin.inputs.flake-parts.follows = "flake-parts";
     atuin.inputs.nixpkgs.follows = "nixpkgs";
     beads.url = "github:steveyegge/beads";
-    # TEMP: local branch, pre-push testing of `jev:` selectors.
-    # Revert to "github:xav-ie/browser-session-mcp" after the PR merges.
-    browser-session-mcp.url = "git+file:/home/x/Projects/browser-session-mcp?ref=feat/jev-selectors";
+    browser-session-mcp.url = "github:xav-ie/browser-session-mcp";
     browser-session-mcp.inputs.nixpkgs.follows = "nixpkgs";
     browser-session-mcp.inputs.crane.follows = "crane";
     browser-session-mcp.inputs.flake-parts.follows = "flake-parts";
