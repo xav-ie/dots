@@ -55,11 +55,20 @@
     in
     {
       sops = {
-        secrets."browser-session/typesafe_api_key" = { };
-        # Powers `jev:` selectors (click/type/press_key): the Jev decision
-        # model picks the element.
+        secrets = {
+          # The MCP port is reachable from the host and every container, so it
+          # requires this bearer token, which only Executor's browser-session
+          # app holds.
+          "browser-session/mcp_token" = { };
+          "browser-session/typesafe_api_key" = { };
+        };
+        # TYPESAFE_API_KEY powers `jev:` selectors (click/type/press_key): the
+        # Jev decision model picks the element.
         templates."browser-session-env" = {
-          content = "TYPESAFE_API_KEY=${config.sops.placeholder."browser-session/typesafe_api_key"}";
+          content = ''
+            MCP_HTTP_TOKEN=${config.sops.placeholder."browser-session/mcp_token"}
+            TYPESAFE_API_KEY=${config.sops.placeholder."browser-session/typesafe_api_key"}
+          '';
           mode = "0400";
           restartUnits = [ "podman-${name}.service" ];
         };
