@@ -296,7 +296,11 @@ in
             ${py}/bin/python3 ${freeze} "$light" "$out/InterTabular.ttf" "Inter Tabular" "Regular"
           '';
       beads = inputs.beads.packages.${final.stdenv.hostPlatform.system}.default;
-      collie = inputs.collie.packages.${final.stdenv.hostPlatform.system}.default;
+      # The flake input supplies only the derivation; which release it wraps is
+      # pinned here and moved by `just collie-bump`.
+      collie = inputs.collie.packages.${final.stdenv.hostPlatform.system}.default.override {
+        sources = final.lib.importJSON ./collie-sources.json;
+      };
       herdr = inputs.herdr.packages.${final.stdenv.hostPlatform.system}.default;
       neverest = inputs.neverest.packages.${final.stdenv.hostPlatform.system}.default;
       zjstatus = inputs.zjstatus.packages.${final.stdenv.hostPlatform.system}.default;

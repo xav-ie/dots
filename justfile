@@ -287,3 +287,24 @@ collie-vapid:
     sudo sops set secrets/main.yaml '["collie"]["vapid_public"]' ($keys.PUBLIC | to json)
     sudo sops set secrets/main.yaml '["collie"]["vapid_private"]' ($keys.PRIVATE | to json)
     print "Stored Collie VAPID keys in secrets/main.yaml. Run `just` to apply."
+
+# Upstream's packaging/nix/sources.json trails its releases by a separate PR,
+# so the overlay reads overlays/collie-sources.json, written here from the
+# release's own manifest the way upstream's scripts/refresh-packages.ts does.
+
+# point Collie at a release's binaries (latest stable by default); run `just` after
+collie-bump tag="":
+    #!/usr/bin/env nu
+    let repo = "AltanS/collie"
+    let tag = if "{{ tag }}" == "" { gh release view -R $repo --json tagName | from json | get tagName } else { "{{ tag }}" }
+    let manifest = gh release download $tag -R $repo -p 'collie-*.manifest.json' -O - | from json
+    let platforms = [[key platform]; [linux-x64 linux-x64] [linux-arm64 linux-arm64] [darwin-arm64 macos-arm64]]
+        | each {|row|
+            let artifact = $manifest.artifacts | where platform == $row.platform | first
+            [$row.key { url: $"https://github.com/($repo)/releases/download/($tag)/($artifact.name)", sha256: $artifact.sha256 }]
+        }
+        | into record
+    { version: $manifest.version, platforms: $platforms } | to json --indent 2 | $in + "\n" | save -f overlays/collie-sources.json
+    let built = nix eval --raw .#nixosConfigurations.praesidium.pkgs.collie.version
+    if $built != $manifest.version { error make { msg: $"collie evaluates to ($built), not ($manifest.version)" } }
+    print $"Collie now packages ($tag). Run `just` to apply."
