@@ -1915,11 +1915,11 @@
     "rcsd-web-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1793372871,
-        "narHash": "sha256-hJMModJpEw4iCF86JA2UmMf1wInE88jWW7buT4+AtSs=",
+        "lastModified": 1793373903,
+        "narHash": "sha256-c9RDsy4yn2Ua6c+06Y6PZiFGCHrMWQSHNUvGVg0Oapc=",
         "ref": "refs/heads/main",
-        "rev": "74278b5138172d0fdbe5dcc1819323c199e3e9fd",
-        "revCount": 59,
+        "rev": "434f1a9fe715b55c04328d373bf4a9ea51e33189",
+        "revCount": 60,
         "type": "git",
         "url": "ssh://git@github.com/xav-ie/rcsd-web.git"
       },
