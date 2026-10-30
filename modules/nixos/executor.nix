@@ -62,19 +62,31 @@
               error make {msg: "executor-refresh-tools: executor did not list its apps"}
             }
 
-            def refresh [api: string, headers: record] {
-              for app in (list-apps $api $headers) {
+            # One shot is not enough right after a container start: a backend
+            # MCP server can lag the proxy port, and a failed read would leave
+            # that app's tool rows stale for the whole 11-min window. Poll each
+            # app until its tools actually answer (5s x tries per app).
+            def refresh-app [api: string, headers: record, app: record, tries: int] {
+              for _ in 1..$tries {
                 let status = try {
                   http get --full --allow-errors --max-time 60sec --headers $headers $"($api)/v1/tools?app=($app.id)&limit=1" | get status
                 } catch { "no answer" }
-                if $status != 200 { print -e $"executor-refresh-tools: ($app.slug) answered ($status)" }
+                if $status == 200 { return }
+                sleep 5sec
+              }
+              print -e $"executor-refresh-tools: ($app.slug) never answered 200; its rows stay stale until the next pass"
+            }
+
+            def refresh [api: string, headers: record, tries: int] {
+              for app in (list-apps $api $headers) {
+                refresh-app $api $headers $app $tries
               }
             }
 
             ^${waitForMcpProxy}
-            refresh $api $headers
+            refresh $api $headers 60
             sleep 11min
-            refresh $api $headers
+            refresh $api $headers 12
           '';
       };
 
