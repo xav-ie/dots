@@ -48,7 +48,25 @@ let count = (
   yabai -m query --windows
   | from json
   | get id
-  | each {|id| try { yabai -m window $id --sub-layer normal } }
+  | where {|id| (yabai -m window $id --sub-layer normal | complete).exit_code == 0 }
   | length
 )
-print $"Reset sub-layer on ($count) windows. Done."
+print $"Reset sub-layer on ($count) windows."
+
+# Restart skhd too. macOS's daily periodic job deletes /tmp files untouched
+# for 3 days, which takes skhd's pid file with it and breaks `skhd --reload`;
+# a fresh instance recreates it. kickstart returns before the new instance
+# writes that file, so poll until `skhd --reload` can reach it.
+launchctl kickstart -k $"gui/($uid)/org.nixos.skhd"
+mut skhd_ready = false
+for _ in 0..40 {
+  if (skhd --reload | complete).exit_code == 0 {
+    $skhd_ready = true
+    break
+  }
+  sleep 250ms
+}
+if not $skhd_ready {
+  error make --unspanned {msg: "skhd did not come back up after kickstart."}
+}
+print "Restarted skhd. Done."
