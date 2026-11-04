@@ -64,7 +64,11 @@ tell application "System Events" to tell process "zoom.us"
 end tell'
 
 def cached [file: string, fallback: string] {
-  try { open $"($CACHE)/($file)" | str trim } catch { $fallback }
+  try {
+    open $"($CACHE)/($file)" | str trim
+  } catch {
+    $fallback
+  }
 }
 
 # Skip the osascript round trip when Zoom desktop isn't even running.
@@ -79,7 +83,13 @@ def call-state [] {
   if $zoom != "none" { $zoom } else { cached call none }
 }
 
-def glyph [symbol: string, size: int, color: string, key: string, --x-shift: float = 0.0] {
+def glyph [
+  symbol: string
+  size: int
+  color: string
+  key: string
+  --x-shift: float = 0.0
+] {
   let out = $"($CACHE)/bar-($key)-($size)-w($MIN_WIDTH).png"
   if not ($out | path exists) {
     mkdir $CACHE
@@ -94,15 +104,16 @@ def glyph [symbol: string, size: int, color: string, key: string, --x-shift: flo
 
 def render [call: string, state: string] {
   match [$call $state] {
-    [muted _] => (glyph mic.slash.fill $POINT_SIZE "0xffffffff" call-muted --x-shift $X_SHIFT)
-    [unmuted on] | [unmuted raw] => (glyph mic.fill $POINT_SIZE "0xffff453a" call-live --x-shift $X_SHIFT)
-    [unmuted _] => (glyph mic.fill $POINT_SIZE "0xffffa000" call-live-broken --x-shift $X_SHIFT)
-    [_ error] => (glyph mic $POINT_SIZE "0xffffa000" idle-error --x-shift $X_SHIFT)
+    [muted, _] => (glyph mic.slash.fill $POINT_SIZE "0xffffffff" call-muted --x-shift $X_SHIFT)
+    [unmuted, on] | [unmuted, raw] => (glyph mic.fill $POINT_SIZE "0xffff453a" call-live --x-shift $X_SHIFT)
+    [unmuted, _] => (glyph mic.fill $POINT_SIZE "0xffffa000" call-live-broken --x-shift $X_SHIFT)
+    [_, error] => (glyph mic $POINT_SIZE "0xffffa000" idle-error --x-shift $X_SHIFT)
     _ => (glyph mic $POINT_SIZE "0xffffffff" idle --x-shift $X_SHIFT)
   }
 }
 
 def sync [] {
+
   # A mute press with no call to mute: flash before settling on the real state.
   let nudge = $"($CACHE)/nudge"
   if ($nudge | path exists) {
@@ -116,8 +127,11 @@ def sync [] {
 }
 
 def main [] {
-  match [$env.SENDER ($env.BUTTON? | default left)] {
-    ["mouse.clicked" right] => {
+  match [
+    $env.SENDER
+    ($env.BUTTON? | default left)
+  ] {
+    ["mouse.clicked", right] => {
       if (zoom-desktop $ZOOM_TOGGLE_OSA) == "none" and (cached call none) != "none" {
         virtual-headset toggle-mute
       }
@@ -126,7 +140,7 @@ def main [] {
       sleep 300ms
       sync
     }
-    ["mouse.clicked" _] => {
+    ["mouse.clicked", _] => {
       let x = (try {
         sketchybar --query $env.NAME | from json | get bounding_rects | values | first | get origin.0
       } catch { null })

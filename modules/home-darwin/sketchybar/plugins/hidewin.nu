@@ -25,7 +25,7 @@ const MIN_WIDTH = 26
 
 def render [mode: string] {
   let color = match $mode {
-    "on" => "0xffffa000"
+    on => "0xffffa000"
     "on-leak" => "0xffff453a"
     _ => "0xffffffff"
   }

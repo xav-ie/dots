@@ -280,110 +280,110 @@
         ];
         text = # sh
           ''
-            repo=${userHome}/Projects/dots
-            stamp_state=${userHome}/.local/state/executor-v2-state.sha256
-            stamp_payload=${userHome}/.local/state/executor-v2-deployments.sha256
-            [ -d "$repo/secrets" ] || exit 0
-            [ -e ${dataDir}/executor.pglite ] || exit 0
+                        repo=${userHome}/Projects/dots
+                        stamp_state=${userHome}/.local/state/executor-v2-state.sha256
+                        stamp_payload=${userHome}/.local/state/executor-v2-deployments.sha256
+                        [ -d "$repo/secrets" ] || exit 0
+                        [ -e ${dataDir}/executor.pglite ] || exit 0
 
-            snapshot=/.snapshots/executor-backup
-            tmp=""
-            # A snapshot is a subvolume: rm -rf can't remove it (read-only) and
-            # walks all of /home trying. Always delete it as a subvolume.
-            drop_snapshot() {
-              if [ -e "$snapshot" ]; then btrfs subvolume delete "$snapshot" >/dev/null; fi
-            }
-            drop_snapshot
-            tarsrc=${dataDir}
-            cleanup() { drop_snapshot || true; if [ -n "$tmp" ]; then rm -rf "$tmp"; fi; }
-            if btrfs subvolume snapshot -r /home "$snapshot" >/dev/null 2>&1; then
-              tarsrc="$snapshot/${dataDirRelativeToHome}"
-            else
-              echo "warning: /home is not a btrfs subvolume; backing up the live data dir without a snapshot" >&2
-            fi
-            trap cleanup EXIT
+                        snapshot=/.snapshots/executor-backup
+                        tmp=""
+                        # A snapshot is a subvolume: rm -rf can't remove it (read-only) and
+                        # walks all of /home trying. Always delete it as a subvolume.
+                        drop_snapshot() {
+                          if [ -e "$snapshot" ]; then btrfs subvolume delete "$snapshot" >/dev/null; fi
+                        }
+                        drop_snapshot
+                        tarsrc=${dataDir}
+                        cleanup() { drop_snapshot || true; if [ -n "$tmp" ]; then rm -rf "$tmp"; fi; }
+                        if btrfs subvolume snapshot -r /home "$snapshot" >/dev/null 2>&1; then
+                          tarsrc="$snapshot/${dataDirRelativeToHome}"
+                        else
+                          echo "warning: /home is not a btrfs subvolume; backing up the live data dir without a snapshot" >&2
+                        fi
+                        trap cleanup EXIT
 
-            tmp=$(mktemp -d)
-            # PGlite has to write to open a database, so dump from copies.
-            mkdir "$tmp/db" "$tmp/state" "$tmp/payload"
-            for db in executor mcp-auth; do
-              [ -e "$tarsrc/$db.pglite" ] || continue
-              cp -a "$tarsrc/$db.pglite" "$tmp/db/"
-              rm -f "$tmp/db/$db.pglite/postmaster.pid"
-              node ${dumpTables} ${pglite} "$tmp/db/$db.pglite" "$tmp/state/$db"
+                        tmp=$(mktemp -d)
+                        # PGlite has to write to open a database, so dump from copies.
+                        mkdir "$tmp/db" "$tmp/state" "$tmp/payload"
+                        for db in executor mcp-auth; do
+                          [ -e "$tarsrc/$db.pglite" ] || continue
+                          cp -a "$tarsrc/$db.pglite" "$tmp/db/"
+                          rm -f "$tmp/db/$db.pglite/postmaster.pid"
+                          node ${dumpTables} ${pglite} "$tmp/db/$db.pglite" "$tmp/state/$db"
+                        done
+                        cp -a "$tarsrc/installation.json" "$tmp/state/"
+                        cp -a "$tarsrc/repositories" "$tarsrc/builds" "$tmp/payload/"
+                        drop_snapshot
+                        cd "$repo"
+                        # Staging files from an interrupted run are harmless (gitignored),
+                        # but clear them so failed runs never leave droppings behind.
+                        rm -f secrets/.executor-state.tmp.json secrets/.executor-deployments.tmp.json
+
+                        # Each update stages a temp inside secrets/ and renames it into
+                        # place: same filesystem, so mv is an atomic rename(2) and a crash
+                        # can never truncate the committed secret (sops itself writes in
+                        # place, and a cross-device mv from $tmp would silently degrade to
+                        # copy+unlink). The two updates are also independent — one failing
+                        # must not block the other — while rc still marks the unit failed.
+                        backup_state() {
+                          state_sum=$(
+                            cd "$tmp/state" &&
+                              find . -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum | cut -d' ' -f1
+                          ) || return 1
+                          [ "$state_sum" != "$(cat "$stamp_state" 2>/dev/null || true)" ] || return 0
+                          # `sops -e` would re-encrypt the whole document every run; the
+                          # EDITOR path instead rebuilds it and sops keeps the ciphertext
+                          # of unchanged leaves (verified against sops 3.13).
+                          cat > "$tmp/update-state" <<'EDITOR'
+            #!/bin/sh
+            # sops invokes: $EDITOR <decrypted document>. Rebuild it from $STATEDIR;
+            # sops reuses the old ciphertext for leaves whose value did not change.
+            f=$1
+            printf '{}\n' > "$f"
+            find "$STATEDIR" -type f | LC_ALL=C sort | while IFS= read -r p; do
+              k=''${p#"$STATEDIR"/}
+              jq --arg k "$k" --rawfile v "$p" '.[$k] = $v' "$f" > "$f.new" && mv "$f.new" "$f"
             done
-            cp -a "$tarsrc/installation.json" "$tmp/state/"
-            cp -a "$tarsrc/repositories" "$tarsrc/builds" "$tmp/payload/"
-            drop_snapshot
-            cd "$repo"
-            # Staging files from an interrupted run are harmless (gitignored),
-            # but clear them so failed runs never leave droppings behind.
-            rm -f secrets/.executor-state.tmp.json secrets/.executor-deployments.tmp.json
+            EDITOR
+                          chmod +x "$tmp/update-state" || return 1
+                          # Edit a copy: a crash mid-write can then only ever damage the
+                          # staging file, and the committed one stays parseable.
+                          if [ -f secrets/executor-state.json ]; then
+                            cp -p secrets/executor-state.json secrets/.executor-state.tmp.json || return 1
+                          fi
+                          STATEDIR="$tmp/state" EDITOR="$tmp/update-state" sops secrets/.executor-state.tmp.json </dev/null || return 1
+                          mv -f secrets/.executor-state.tmp.json secrets/executor-state.json || return 1
+                          chown ${defaultUser}:users secrets/executor-state.json || return 1
+                          mkdir -p "$(dirname "$stamp_state")" || return 1
+                          echo "$state_sum" > "$stamp_state" || return 1
+                          chown ${defaultUser}:users "$stamp_state" || return 1
+                          echo "wrote $repo/secrets/executor-state.json"
+                        }
 
-            # Each update stages a temp inside secrets/ and renames it into
-            # place: same filesystem, so mv is an atomic rename(2) and a crash
-            # can never truncate the committed secret (sops itself writes in
-            # place, and a cross-device mv from $tmp would silently degrade to
-            # copy+unlink). The two updates are also independent — one failing
-            # must not block the other — while rc still marks the unit failed.
-            backup_state() {
-              state_sum=$(
-                cd "$tmp/state" &&
-                  find . -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum | cut -d' ' -f1
-              ) || return 1
-              [ "$state_sum" != "$(cat "$stamp_state" 2>/dev/null || true)" ] || return 0
-              # `sops -e` would re-encrypt the whole document every run; the
-              # EDITOR path instead rebuilds it and sops keeps the ciphertext
-              # of unchanged leaves (verified against sops 3.13).
-              cat > "$tmp/update-state" <<'EDITOR'
-#!/bin/sh
-# sops invokes: $EDITOR <decrypted document>. Rebuild it from $STATEDIR;
-# sops reuses the old ciphertext for leaves whose value did not change.
-f=$1
-printf '{}\n' > "$f"
-find "$STATEDIR" -type f | LC_ALL=C sort | while IFS= read -r p; do
-  k=''${p#"$STATEDIR"/}
-  jq --arg k "$k" --rawfile v "$p" '.[$k] = $v' "$f" > "$f.new" && mv "$f.new" "$f"
-done
-EDITOR
-              chmod +x "$tmp/update-state" || return 1
-              # Edit a copy: a crash mid-write can then only ever damage the
-              # staging file, and the committed one stays parseable.
-              if [ -f secrets/executor-state.json ]; then
-                cp -p secrets/executor-state.json secrets/.executor-state.tmp.json || return 1
-              fi
-              STATEDIR="$tmp/state" EDITOR="$tmp/update-state" sops secrets/.executor-state.tmp.json </dev/null || return 1
-              mv -f secrets/.executor-state.tmp.json secrets/executor-state.json || return 1
-              chown ${defaultUser}:users secrets/executor-state.json || return 1
-              mkdir -p "$(dirname "$stamp_state")" || return 1
-              echo "$state_sum" > "$stamp_state" || return 1
-              chown ${defaultUser}:users "$stamp_state" || return 1
-              echo "wrote $repo/secrets/executor-state.json"
-            }
+                        backup_payload() {
+                          # Reproducible tar, so unchanged contents hash the same and
+                          # are skipped.
+                          tar -C "$tmp/payload" --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -cf - . \
+                            | zstd -q -19 -T0 > "$tmp/payload.tar.zst" || return 1
+                          payload_sum=$(sha256sum "$tmp/payload.tar.zst" | cut -d' ' -f1) || return 1
+                          [ "$payload_sum" != "$(cat "$stamp_payload" 2>/dev/null || true)" ] || return 0
+                          sops -e --input-type binary --output-type json --filename-override secrets/executor-deployments.json "$tmp/payload.tar.zst" > secrets/.executor-deployments.tmp.json || return 1
+                          mv -f secrets/.executor-deployments.tmp.json secrets/executor-deployments.json || return 1
+                          chown ${defaultUser}:users secrets/executor-deployments.json || return 1
+                          mkdir -p "$(dirname "$stamp_payload")" || return 1
+                          echo "$payload_sum" > "$stamp_payload" || return 1
+                          chown ${defaultUser}:users "$stamp_payload" || return 1
+                          echo "wrote $repo/secrets/executor-deployments.json"
+                        }
 
-            backup_payload() {
-              # Reproducible tar, so unchanged contents hash the same and
-              # are skipped.
-              tar -C "$tmp/payload" --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -cf - . \
-                | zstd -q -19 -T0 > "$tmp/payload.tar.zst" || return 1
-              payload_sum=$(sha256sum "$tmp/payload.tar.zst" | cut -d' ' -f1) || return 1
-              [ "$payload_sum" != "$(cat "$stamp_payload" 2>/dev/null || true)" ] || return 0
-              sops -e --input-type binary --output-type json --filename-override secrets/executor-deployments.json "$tmp/payload.tar.zst" > secrets/.executor-deployments.tmp.json || return 1
-              mv -f secrets/.executor-deployments.tmp.json secrets/executor-deployments.json || return 1
-              chown ${defaultUser}:users secrets/executor-deployments.json || return 1
-              mkdir -p "$(dirname "$stamp_payload")" || return 1
-              echo "$payload_sum" > "$stamp_payload" || return 1
-              chown ${defaultUser}:users "$stamp_payload" || return 1
-              echo "wrote $repo/secrets/executor-deployments.json"
-            }
-
-            rc=0
-            backup_state || rc=1
-            backup_payload || rc=1
-            # The last command sets the unit's exit status. An explicit
-            # `exit $rc` here makes shellcheck 0.11 flag the trap-only
-            # cleanup() as never invoked (SC2329) and fail the build.
-            [ "$rc" -eq 0 ]
+                        rc=0
+                        backup_state || rc=1
+                        backup_payload || rc=1
+                        # The last command sets the unit's exit status. An explicit
+                        # `exit $rc` here makes shellcheck 0.11 flag the trap-only
+                        # cleanup() as never invoked (SC2329) and fail the build.
+                        [ "$rc" -eq 0 ]
           '';
       };
 

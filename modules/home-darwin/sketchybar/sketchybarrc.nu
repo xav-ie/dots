@@ -237,7 +237,9 @@ sb-cluster volume right 24 61 (
 # `virtual_headset_changed` is bound to the agent's com.github.virtual-headset.changed and
 # front_app_switched catches Zoom desktop meetings. Left click opens the agent's
 # panel, right click toggles mute.
-(sketchybar --add event virtual_headset_changed com.github.virtual-headset.changed)
+(
+  sketchybar --add event virtual_headset_changed com.github.virtual-headset.changed
+)
 (sb-icon-item
   virtual_headset
   right
