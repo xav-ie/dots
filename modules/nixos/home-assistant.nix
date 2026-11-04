@@ -127,6 +127,8 @@
                 "zha"
               ];
           };
+
+          matter-server.enable = true;
         };
 
         systemd = {
