@@ -151,6 +151,7 @@
                 lib.makeBinPath [
                   pkgs.git
                   pkgs.herdr
+                  pkgs.python3
                 ]
               }"
             ];
