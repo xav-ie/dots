@@ -1899,11 +1899,11 @@
     "rcsd-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1793648240,
-        "narHash": "sha256-/lp+wzpC/BCQj/o8x4+9gJO798KlThtnqf3HRFuLPA4=",
+        "lastModified": 1793770070,
+        "narHash": "sha256-u8iF7EIvgbikBQc/JT4tJPmi7EJX0pPn8AAbi5tIsvc=",
         "ref": "refs/heads/main",
-        "rev": "5b9266b9c5e191423cc5eb93737e27c3f4e22c3f",
-        "revCount": 317,
+        "rev": "c6b891b20dd31af8bdba7801973604322d96a487",
+        "revCount": 318,
         "type": "git",
         "url": "ssh://git@github.com/xav-ie/rcsd.git"
       },
