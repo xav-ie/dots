@@ -260,10 +260,10 @@ esphome device="colorshadowrgb":
     let dir = ($env.HOME | path join ".cache" "esphome")
     mkdir $dir
     chmod 700 $dir
-    # Reuse the NetworkManager PSK (modules/nixos/wifi-failover.nix) so there is one copy.
-    let psk = (sudo sops -d --extract '["wifi"]["env"]' secrets/main.yaml
-      | lines | parse "{k}={v}" | where k == "VERIZON_JKST69_PSK" | get v.0 | str trim -c '"')
-    sudo sops -d secrets/esphome.yaml | from yaml | merge { wifi_password: $psk }
+    # Reuse the NetworkManager SSID and PSK (modules/nixos/wifi-failover.nix) so there is one copy.
+    let wifi = (sudo sops -d --extract '["wifi"]["home"]' --output-type json secrets/main.yaml | from json)
+    sudo sops -d secrets/esphome.yaml | from yaml
+      | merge { wifi_ssid: $wifi.ssid, wifi_password: $wifi.psk }
       | to yaml | save -f ($dir | path join "secrets.yaml")
     cp -f "esphome/{{ device }}.yaml" $dir
     # In the official container: nixpkgs' esphome can't compile, because PlatformIO

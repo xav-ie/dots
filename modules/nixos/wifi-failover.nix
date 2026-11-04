@@ -14,45 +14,43 @@
         # declared from sops (system-owned, never agent-owned) and a timer
         # re-checks that the fallback actually carried.
 
-        sops.secrets."wifi/env" = { };
+        sops = {
+          secrets = {
+            "wifi/home/psk" = { };
+            "wifi/home/ssid" = { };
+          };
+          # Single quotes keep systemd's EnvironmentFile parser from touching
+          # spaces or backslashes in the values.
+          templates."wifi.env".content = ''
+            WIFI_HOME_PSK='${config.sops.placeholder."wifi/home/psk"}'
+            WIFI_HOME_SSID='${config.sops.placeholder."wifi/home/ssid"}'
+          '';
+        };
 
         networking.networkmanager.ensureProfiles = {
-          environmentFiles = [ config.sops.secrets."wifi/env".path ];
+          environmentFiles = [ config.sops.templates."wifi.env".path ];
 
-          # Add a block per network. The env var name is the SSID uppercased
-          # with every run of non-alphanumerics collapsed to "_".
-          profiles.verizon-jkst69 = {
+          # Add a block per network. envsubst runs over every field, so the
+          # SSID stays out of the repo along with the PSK.
+          profiles.home = {
             connection = {
-              id = "Verizon_JKST69";
+              id = "$WIFI_HOME_SSID";
               type = "wifi";
               autoconnect = true;
-              # Only orders wifi profiles against each other. Ethernet wins
-              # over wifi on route metric, not on this.
               autoconnect-priority = 100;
             };
             wifi = {
-              ssid = "Verizon_JKST69";
+              ssid = "$WIFI_HOME_SSID";
               mode = "infrastructure";
             };
             wifi-security = {
               key-mgmt = "wpa-psk";
-              psk = "$VERIZON_JKST69_PSK";
+              psk = "$WIFI_HOME_PSK";
             };
             ipv4.method = "auto";
             ipv6.method = "auto";
           };
         };
-
-        # ensureProfiles writes to /run/NetworkManager/system-connections and
-        # never touches /etc, so the GUI-made Verizon_JKST69.nmconnection in
-        # /etc is not overwritten by the profile above — NetworkManager reads
-        # both directories and ends up with two profiles for one SSID, one of
-        # them carrying the PSK that is the suspect here. Nothing declarative
-        # will ever clean that up, so say it should not exist. No "!": that
-        # would restrict it to boot, and this should also apply on a switch.
-        systemd.tmpfiles.rules = [
-          "r /etc/NetworkManager/system-connections/Verizon_JKST69.nmconnection"
-        ];
 
         networking.networkmanager.dispatcherScripts = [
           {
