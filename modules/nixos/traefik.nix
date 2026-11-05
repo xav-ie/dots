@@ -61,7 +61,7 @@
             };
           };
           inherit (proxied) services;
-          middlewares = {
+          middlewares = config.services.local-networking.middlewares // {
             ${compress}.compress = { };
             ${snippetsStripPrefix}.stripPrefix.prefixes = [ "/snippets" ];
           };
@@ -145,6 +145,12 @@
             default = [ ];
             example = ''[ "dashboard" "media" ]'';
             description = "A list of subdomains to configure under the base domain for services and certificates.";
+          };
+          middlewares = lib.mkOption {
+            type = lib.types.attrsOf lib.types.attrs;
+            default = { };
+            example = lib.literalExpression ''{ my-auth.forwardAuth.address = "http://127.0.0.1:8080"; }'';
+            description = "Traefik middlewares contributed by the module whose proxies use them.";
           };
           proxies = lib.mkOption {
             default = { };
