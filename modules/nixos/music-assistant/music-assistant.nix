@@ -14,8 +14,19 @@
       });
     in
     {
-      # The module puts pkgs.airplay-cli on PATH; put the matching version ahead of it.
-      systemd.services.music-assistant.path = lib.mkBefore [ airplay-cli ];
+      systemd.services.music-assistant = {
+        # The module puts pkgs.airplay-cli on PATH; put the matching version ahead of it.
+        path = lib.mkBefore [ airplay-cli ];
+
+        # The hass provider connects once at startup and gives up if Home Assistant is
+        # down, so restart with Home Assistant and wait until its API answers.
+        after = [ "home-assistant.service" ];
+        partOf = [ "home-assistant.service" ];
+        serviceConfig = {
+          ExecStartPre = "-${lib.getExe pkgs.curl} -so /dev/null --retry 100 --retry-delay 3 --retry-connrefused http://127.0.0.1:8123/";
+          TimeoutStartSec = "6min";
+        };
+      };
 
       services.local-networking.proxies.music-assistant = {
         subdomain = "music";
