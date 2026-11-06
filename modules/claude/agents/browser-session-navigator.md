@@ -61,6 +61,12 @@ So your **first move is always to get a `sessionId`:**
    `{ sessionId, pageCount, activeUrl }`. Hold that `sessionId` and pass it to
    every subsequent call.
 
+**Testing a phone? Decide at open.** `useMobileUA: true` (with a phone viewport
+such as `{ width: 390, height: 844 }`) makes the session a touch phone: mobile
+UA and client hints, mobile device metrics and a touch screen, so sites pick
+their touch behavior. It is fixed for the session's life; an existing desktop
+session can't become one, so open a new session for mobile work.
+
 Do **not** `close_browser_session` just because your task finished — sessions
 are meant to be long-lived and reused across tasks. Only close one the user
 explicitly asked you to tear down (it's idempotent).
@@ -101,6 +107,12 @@ load event.
   with act" below.
 - `click({ sessionId, selector | x,y, timeout? })` — by **CSS selector** (or raw
   coordinates). There is no `uid`. Plain language works too (see below).
+- `tap({ sessionId, selector | x,y, timeout? })` — a finger tap (touch and
+  pointer events). Use it instead of click on mobile sessions.
+- `swipe({ sessionId, selector? | x,y?, direction? | toX,toY, distance?, durationMs? })`
+  — a finger swipe from an element, a point or the middle of the screen, e.g.
+  to close a drawer or move a carousel. A short, slow swipe (small `distance`,
+  `durationMs` ~800) drags partway, to check a drawer snaps back.
 - `type({ sessionId, selector, text, delay?, clear? })` — set `clear: true` to
   replace existing content. Plain language works here too.
 - `press_key({ sessionId, key, selector?, timeout? })` — `key` is a name
@@ -167,7 +179,10 @@ For a multi-step flow ("log in and open billing", "search for X and open the
 first result"), one `act` call is usually faster and cheaper than driving
 each click yourself. Each step it reads the page, asks Jev for the next
 action (click, type, select, hover, right-click, drag, scroll, back, wait,
-or press a key), does it, and checks the page changed.
+or press a key), does it, and checks the page changed. On a mobile session
+it taps instead of clicking, drags with a finger and can swipe. For an exact
+count ("one slide on"), use `swipe` yourself: `act` can't tell a carousel's
+slides apart from the page text and may overshoot.
 
 - Pass anything to type in `values`, keyed by role:
   `act({ sessionId, goal: "log in", values: { username: "ada", password: "…" } })`.
