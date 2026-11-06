@@ -39,6 +39,48 @@
         '';
       };
 
+      # Executor's browser-session app lists the tools its deployment saw, so a
+      # new server release (new tools, new arguments) stays invisible until
+      # the app is deployed again; reading its tools doesn't refresh them. When
+      # the container (re)starts, wait for the server to answer, then redeploy
+      # the app at the commit it already runs.
+      executorPort = toString config.services.executor.port;
+      refreshExecutorApp = pkgs.writeNuApplication {
+        name = "browser-session-executor-refresh";
+        text = # nu
+          ''
+            let api = "http://127.0.0.1:${executorPort}"
+            let token = open /run/secrets/shell-env | lines | where $it starts-with "EXECUTOR_AUTH_TOKEN=" | first | str replace "EXECUTOR_AUTH_TOKEN=" ""
+            let headers = {Authorization: $"Bearer ($token)"}
+
+            # Without its token the server answers 401 once it is up; 5xx or no
+            # answer means it (or traefik's route to it) isn't yet.
+            def wait-for-server [url: string] {
+              for _ in 1..90 {
+                let status = try { http get --full --allow-errors --max-time 5sec $url | get status } catch { 0 }
+                if $status > 0 and $status < 500 { return }
+                sleep 2sec
+              }
+              error make {msg: "browser-session-executor-refresh: the server never answered"}
+            }
+
+            def list-apps [api: string, headers: record] {
+              for _ in 1..90 {
+                try { return (http get --max-time 10sec --headers $headers $"($api)/v1/apps") }
+                sleep 2sec
+              }
+              error make {msg: "browser-session-executor-refresh: executor did not list its apps"}
+            }
+
+            wait-for-server "https://${mcpHost}/servers/${name}/mcp/"
+            let apps = list-apps $api $headers
+            let app = $apps | where slug == "${name}" | first
+            let commit = http get --headers $headers $"($api)/v1/apps/($app.id)/version" | get sourceCommit
+            let deployed = http post --content-type application/json --headers $headers $"($api)/v1/apps/deploy" {owner: $app.owner, app: $app.id, commit: $commit}
+            print $"browser-session-executor-refresh: redeployed ($app.slug) at ($commit) as ($deployed.app.activeDeployment)"
+          '';
+      };
+
       server-image = pkgs.dockerTools.buildLayeredImage {
         name = "localhost/${name}";
         tag = "latest";
@@ -127,6 +169,23 @@
         requires = [ "browser-session-pod.service" ];
         wants = [ "podman-browser-session-chrome.service" ];
         partOf = [ "browser-session-pod.service" ];
+      };
+
+      # wantedBy starts it with the container; partOf runs it again whenever
+      # the container restarts (a new release).
+      systemd.services.browser-session-executor-refresh = lib.mkIf config.services.executor.enable {
+        description = "Redeploy Executor's browser-session app so it lists the server's tools";
+        after = [
+          "podman-${name}.service"
+          "executor-web.service"
+        ];
+        partOf = [ "podman-${name}.service" ];
+        wantedBy = [ "podman-${name}.service" ];
+        serviceConfig = {
+          Type = "oneshot";
+          User = config.defaultUser;
+          ExecStart = lib.getExe refreshExecutorApp;
+        };
       };
 
       # Same schedule as the upstream timer, run inside the container so it
