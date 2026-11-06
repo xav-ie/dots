@@ -56,6 +56,12 @@
 
               default_config = { };
 
+              timer.laundry = {
+                name = "Laundry";
+                icon = "mdi:washing-machine";
+                restore = true;
+              };
+
               http = {
                 use_x_forwarded_for = true;
                 trusted_proxies = [
