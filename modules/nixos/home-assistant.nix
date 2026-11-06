@@ -128,7 +128,7 @@
               ];
           };
 
-          matter-server.enable = true;
+          matterjs-server.enable = true;
         };
 
         systemd = {
