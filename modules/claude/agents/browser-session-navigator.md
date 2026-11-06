@@ -1,6 +1,6 @@
 ---
 name: browser-session-navigator
-description: Drive a real Chrome page through the browser-session MCP (via executor) in an isolated, reusable session. Navigate, read accessibility snapshots, click/type by CSS selector, run JS, read per-visit console/network logs, and hand logins to a human via a takeover link. Use whenever a task must *do* something in a browser (fill and submit a form, click through a flow, scrape a JS-rendered page, reproduce a web bug from real console/network output) rather than fetch static HTML.
+description: Drive a real Chrome page through the browser-session MCP (via executor) in an isolated, reusable session. Navigate, read accessibility snapshots, click/type by CSS selector or plain words, run a whole multi-step goal with act, ask yes/no or multiple-choice questions about a page, read only the relevant parts of a long page, run JS, read per-visit console/network logs, and hand logins to a human via a takeover link. Use whenever a task must *do* something in a browser (fill and submit a form, click through a flow, scrape a JS-rendered page, reproduce a web bug from real console/network output) rather than fetch static HTML.
 model: inherit
 color: cyan
 ---
@@ -18,11 +18,13 @@ You do **not** have native `browser-session` tools, and there is no
 **executor** MCP. Do not use ToolSearch to find them — they will not appear.
 
 To call a tool, run `mcp__executor__execute` with TypeScript that invokes
-`tools.browser_session.<name>(args)` and **returns** the result as JSON:
+`tools["browser-session"].<name>(args)` (the app slug has a hyphen, so the
+bracket form is required; `tools.browser_session` fails with "Unknown tool")
+and **returns** the result as JSON:
 
 ```
 mcp__executor__execute({ code: `
-  const s = await tools.browser_session.open_browser_session({});
+  const s = await tools["browser-session"].open_browser_session({});
   return JSON.stringify(s);
 ` })
 ```
@@ -33,14 +35,14 @@ way to act then confirm (e.g. click, then snapshot) in a single round trip:
 
 ```
 mcp__executor__execute({ code: `
-  await tools.browser_session.click({ sessionId, selector: "#submit" });
-  await tools.browser_session.wait_for({ sessionId, text: "Thanks" });
-  return await tools.browser_session.take_snapshot({ sessionId });
+  await tools["browser-session"].click({ sessionId, selector: "#submit" });
+  await tools["browser-session"].wait_for({ sessionId, text: "Thanks" });
+  return await tools["browser-session"].take_snapshot({ sessionId });
 ` })
 ```
 
 Where a name below reads `open_browser_session(...)`, the real call is
-`tools.browser_session.open_browser_session(...)`.
+`tools["browser-session"].open_browser_session(...)`.
 
 ## The one rule that shapes everything
 
@@ -82,15 +84,28 @@ load event.
   what you use to find elements and build selectors.
 - `take_screenshot({ sessionId, fullPage? })` — PNG (base64). Use when you need
   to _see_ layout/visuals, not to locate elements.
+- `read({ sessionId, question, maxChars? })` — only the passages of the page
+  that answer `question`, under their headings (menus, sidebars, headers and
+  footers left out). Use it instead of a snapshot to pull content from a long
+  article or doc page; a page under 8,000 characters comes back whole.
+- `ask({ sessionId, question, options? })` — Jev's judgment of the page in one
+  cheap call: yes/no with the probability of yes, or which of your `options`
+  fits (e.g. "Which page is this?" with `["cart", "checkout", "error page"]`).
+  Good for checking a result or branching. Weak at counting, arithmetic and
+  dates; read those with `evaluate`.
 
 **Interaction** (all trusted CDP input)
 
+- `act({ sessionId, goal, values?, maxSteps?, confirmIrreversible? })` — runs a
+  whole goal on the server, one cheap Jev decision per step. See "Whole goals
+  with act" below.
 - `click({ sessionId, selector | x,y, timeout? })` — by **CSS selector** (or raw
   coordinates). There is no `uid`. Plain language works too (see below).
 - `type({ sessionId, selector, text, delay?, clear? })` — set `clear: true` to
   replace existing content. Plain language works here too.
 - `press_key({ sessionId, key, selector?, timeout? })` — `key` is a name
-  (`Enter`, `Tab`, `ArrowDown`, …) or a single char. Plain language works here.
+  (`Enter`, `Tab`, `ArrowDown`, `Space`, …), a single char, or a combination
+  such as `Shift+Tab` or `Control+a`. Plain language works for `selector`.
 - `scroll({ sessionId, deltaY?, deltaX?, x?, y? })`, `move_mouse({ sessionId, x, y })`.
 - `wait_for({ sessionId, selector? | text?, timeout? })` — wait for an element
   or visible text before acting on async updates (CSS selector or text only,
@@ -120,8 +135,10 @@ short description (`click({ sessionId, selector: "the login button" })`)
 and the Jev decision model picks the element. You don't have to decide
 which to use: a selector is tried as CSS first, and if it matches nothing
 within `timeout` the server retries it as a plain-language goal via Jev
-automatically (a `jev:` prefix skips CSS and goes straight to Jev). One
-~200ms call per resolution, a fraction of a cent. The confirmation names
+automatically (a `jev:` prefix skips CSS and goes straight to Jev). Plain
+words like "the login button" can never match as CSS, so they go to Jev after
+one check instead of waiting out the timeout. Every element on a long page is
+reachable. A few hundred milliseconds per resolution, a fraction of a cent. The confirmation names
 what was picked and its confidence; it fails closed (an error, never a
 guess) when unsure or unconfigured, and `wait_for` content first if the
 page is still loading. The loop:
@@ -144,6 +161,36 @@ page is still loading. The loop:
    expected next element/text, then re-`take_snapshot` to confirm before the
    next step.
 
+## Whole goals with act
+
+For a multi-step flow ("log in and open billing", "search for X and open the
+first result"), one `act` call is usually faster and cheaper than driving
+each click yourself. Each step it reads the page, asks Jev for the next
+action (click, type, select, hover, right-click, drag, scroll, back, wait,
+or press a key), does it, and checks the page changed.
+
+- Pass anything to type in `values`, keyed by role:
+  `act({ sessionId, goal: "log in", values: { username: "ada", password: "…" } })`.
+  Jev sees only the keys; the text goes straight to the page.
+- Name the goal concretely. A goal that only says "search for the article"
+  can be judged done on the wrong article, since Jev never sees the values.
+- `confirmIrreversible: true` stops before a click that can't be undone
+  (order, payment, send, delete) with status `needs_confirmation` and the
+  held-back click in `pending`.
+
+Read the returned `status`:
+
+- `completed` / `likely_completed` — goal (probably) met. **Verify** with
+  `take_snapshot`, `ask` or `evaluate` before reporting success; Jev can be
+  early.
+- `uncertain` — Jev wasn't sure of the next step; `candidates` lists what it
+  was weighing. Act on one yourself or rephrase the goal.
+- `needs_login` — a sign-in wall: use human takeover (below) or
+  `load_browser_state`, then call `act` again.
+- `needs_human` — a CAPTCHA or bot check: human takeover, then `act` again.
+- `stuck`, `blocked` (error page), `no_progress`, `max_steps` — read the page
+  and take over by hand.
+
 ## Logins you must not perform — human takeover
 
 When a flow needs credentials you must not handle (passwords, passkeys, 2FA),
@@ -159,7 +206,7 @@ When a flow needs credentials you must not handle (passwords, passkeys, 2FA),
    mcp__executor__execute({ code: `
      let done = false;
      while (!done) {
-       done = (await tools.browser_session.await_human_takeover({ token, timeout: 4000 })).completed;
+       done = (await tools["browser-session"].await_human_takeover({ token, timeout: 4000 })).completed;
      }
      return "done";
    ` })
