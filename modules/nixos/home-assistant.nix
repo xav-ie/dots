@@ -56,6 +56,8 @@
 
               default_config = { };
 
+              recorder.purge_keep_days = 365;
+
               timer.laundry = {
                 name = "Laundry";
                 icon = "mdi:washing-machine";
