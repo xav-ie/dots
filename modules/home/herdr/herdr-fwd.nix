@@ -7,12 +7,9 @@
 #   nox (darwin)       — the connecting machine, runs `hfwd`, which owns the ssh
 #                        forwards and the dashboard.
 #
-# Upstream registers the plugin with `herdr plugin install`, which mutates
-# ~/.config/herdr/plugins.json and curls a binary into the checkout. That file is
-# a plain JSON array, so we generate it instead and point plugin_root at the
-# store. Consequence: plugins.json is a read-only symlink, so `herdr plugin
-# install|link|enable|disable` will fail — plugins are declared here or not at
-# all. (config.toml is already managed the same way, in herdr.nix.)
+# Upstream registers the plugin with `herdr plugin install`, which curls a
+# binary into the checkout; here it goes through programs.herdr.plugins
+# (plugins.nix) with plugin_root pointed at the store instead.
 {
   flake.modules.homeManager = {
     # The connecting side. `hfwd` is what you actually run: `hfwd praesidium`.
@@ -32,11 +29,10 @@
       {
         home.packages = [ fwd ];
 
-        # Mirrors what `herdr plugin link` writes, with source.kind = "local"
-        # because the store path is not a checkout herdr may update. Fields are
-        # copied from herdr-plugin.toml; a mismatch only shows as wrong metadata
-        # in `herdr plugin list`, since herdr re-reads the manifest at run time.
-        xdg.configFile."herdr/plugins.json".text = builtins.toJSON [
+        # Fields are copied from herdr-plugin.toml; a mismatch only shows as wrong
+        # metadata in `herdr plugin list`, since herdr re-reads the manifest at
+        # run time.
+        programs.herdr.plugins = [
           {
             plugin_id = "herdr.fwd";
             name = "Herdr Fwd";
