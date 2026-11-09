@@ -31,6 +31,26 @@ let
   # Add `{ name = "…"; args = "-e 's|…|…|g'"; }` entries to modify the CLI. Empty
   # means the tarball binary is installed as-is, skipping extract + splice.
   patches = [
+    # Markdown text runs through a no-op hook right before the `owner/repo#123`
+    # issue linker:
+    #   function Yt(e,t,n=uw(),r){return e}function Jt(e,t,n=uw()){…c+dw(`https://…
+    # Fill it in to link scheme-less `host.tld/path` text as https. Unlinked,
+    # the terminal sees a relative file path, and Ghostty refuses to `open` it.
+    # A path segment is required so filenames like `npm.nix` stay plain, and
+    # text naming an existing path under the cwd is left alone. The link helper
+    # (`dw`) is minified, so it is captured from the issue linker.
+    {
+      name = "bare-domain-links";
+      args = ''-e 's#function \([A-Za-z_$][A-Za-z0-9_$]*\)(\([A-Za-z_$][A-Za-z0-9_$]*\),\([A-Za-z_$][A-Za-z0-9_$]*\),\([A-Za-z_$][A-Za-z0-9_$]*\)=\([A-Za-z_$][A-Za-z0-9_$]*\)(),[A-Za-z_$][A-Za-z0-9_$]*){return \2}\(function [A-Za-z_$][A-Za-z0-9_$]*([^{]*{[^`]*+\)\([A-Za-z_$][A-Za-z0-9_$]*\)(`https:#function \1(\2,\3,\4=\5()){if(!\4)return \2;return \2.replace(/(^|[\\s(\\[<"\\x27])((?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}\\/[^\\s<>"\\x27`)\\]]*[^\\s<>"\\x27`)\\].,;:!?])/g,(m,p,h)=>process.getBuiltinModule("fs").existsSync(h)?m:p+\7("https://"+h,h,{themeName:\3,supportsHyperlinks:\4}))}\6\7(`https:#g' '';
+    }
+    # OSC 8 hyperlinks are only emitted for an allowlist of TERM_PROGRAMs, and
+    # herdr sets its own. herdr re-emits OSC 8 to the outer terminal, so allow
+    # it: a long URL wrapped onto several lines then stays one clickable link.
+    # Patched rather than FORCE_HYPERLINK, which Bash tool children would inherit.
+    {
+      name = "herdr-hyperlinks";
+      args = ''-e 's#=\["ghostty","Hyper","kitty"#=["herdr","ghostty","Hyper","kitty"#g' '';
+    }
     # The vim mode indicator renders as a dim ink Text node:
     #   Vsc=mao?rs.jsxs(_,{dimColor:!0,children:["-- ",E_t," --"]},"vim-indicator"):null
     # Swap dimColor for a per-mode color. Done here rather than in the statusline
