@@ -301,7 +301,17 @@ in
       collie = inputs.collie.packages.${final.stdenv.hostPlatform.system}.default.override {
         sources = final.lib.importJSON ./collie-sources.json;
       };
-      herdr = inputs.herdr.packages.${final.stdenv.hostPlatform.system}.default;
+      herdr = inputs.herdr.packages.${final.stdenv.hostPlatform.system}.default.overrideAttrs (old: {
+        # Link handling, generated with `git diff <locked rev>` in ~/Projects/herdr:
+        # - keep native OSC 8 links on macOS under mouse capture (upstream strips
+        #   them to guard Ctrl-click, which macOS terminals don't use for links),
+        #   so Ghostty's Cmd-hover previews the real target
+        # - Ctrl-hover shows the destination in a status bar, red with `≠` when
+        #   address-like link text names a different host
+        # - Ctrl-click on an existing path copies it (absolute, `:line` kept)
+        #   with the clipboard toast; scheme-less `host.tld/path` opens as https
+        patches = (old.patches or [ ]) ++ [ ./herdr-links.patch ];
+      });
       neverest = inputs.neverest.packages.${final.stdenv.hostPlatform.system}.default;
       zjstatus = inputs.zjstatus.packages.${final.stdenv.hostPlatform.system}.default;
       atuin = inputs.atuin.packages.${final.stdenv.hostPlatform.system}.default.overrideAttrs (old: {

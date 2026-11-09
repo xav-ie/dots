@@ -1,0 +1,884 @@
+diff --git a/docs/next/api/herdr-api.schema.json b/docs/next/api/herdr-api.schema.json
+index e2553f75..6608d2d5 100644
+--- a/docs/next/api/herdr-api.schema.json
++++ b/docs/next/api/herdr-api.schema.json
+@@ -10252,6 +10252,12 @@
+             },
+             {
+               "properties": {
++                "path": {
++                  "type": [
++                    "string",
++                    "null"
++                  ]
++                },
+                 "regions": {
+                   "items": {
+                     "$ref": "#/schemas/success_response/$defs/PaneLinkRegion"
+@@ -10261,6 +10267,12 @@
+                 "type": {
+                   "const": "pane_link_resolved",
+                   "type": "string"
++                },
++                "url": {
++                  "type": [
++                    "string",
++                    "null"
++                  ]
+                 }
+               },
+               "required": [
+@@ -10274,6 +10286,12 @@
+                 "handled": {
+                   "type": "boolean"
+                 },
++                "path": {
++                  "type": [
++                    "string",
++                    "null"
++                  ]
++                },
+                 "type": {
+                   "const": "pane_link_activated",
+                   "type": "string"
+diff --git a/src/api/schema/response.rs b/src/api/schema/response.rs
+index e92e4952..c8833b37 100644
+--- a/src/api/schema/response.rs
++++ b/src/api/schema/response.rs
+@@ -249,11 +249,17 @@ pub enum ResponseResult {
+     },
+     PaneLinkResolved {
+         regions: Vec<super::panes::PaneLinkRegion>,
++        #[serde(default, skip_serializing_if = "Option::is_none")]
++        url: Option<String>,
++        #[serde(default, skip_serializing_if = "Option::is_none")]
++        path: Option<String>,
+     },
+     PaneLinkActivated {
+         #[serde(default, skip_serializing_if = "Option::is_none")]
+         url: Option<String>,
+         handled: bool,
++        #[serde(default, skip_serializing_if = "Option::is_none")]
++        path: Option<String>,
+     },
+     PluginLogList {
+         logs: Vec<PluginCommandLogInfo>,
+diff --git a/src/api/schema/tests.rs b/src/api/schema/tests.rs
+index 3b43133b..36c15b14 100644
+--- a/src/api/schema/tests.rs
++++ b/src/api/schema/tests.rs
+@@ -1344,6 +1344,7 @@ fn pane_link_activate_round_trips() {
+     let response = ResponseResult::PaneLinkActivated {
+         url: Some("https://example.test".into()),
+         handled: false,
++        path: None,
+     };
+     let json = serde_json::to_string(&response).unwrap();
+     let restored: ResponseResult = serde_json::from_str(&json).unwrap();
+@@ -1450,10 +1451,13 @@ fn pane_link_resolve_round_trips() {
+             start_col: 3,
+             end_col: 9,
+         }],
++        url: Some("https://example.com".into()),
++        path: None,
+     };
+     let json = serde_json::to_value(&result).unwrap();
+     assert_eq!(json["type"], "pane_link_resolved");
+     assert_eq!(json["regions"][0]["end_col"], 9);
++    assert_eq!(json["url"], "https://example.com");
+     assert_eq!(
+         serde_json::from_value::<ResponseResult>(json).unwrap(),
+         result
+diff --git a/src/app/actions.rs b/src/app/actions.rs
+index f01dd05b..8345de58 100644
+--- a/src/app/actions.rs
++++ b/src/app/actions.rs
+@@ -1050,6 +1050,110 @@ pub(super) fn url_from_link_target(target: crate::ghostty::LinkTarget) -> Option
+     }
+ }
+ 
++/// A plain-text link that is not a visible `http(s)://` URL.
++#[derive(Debug, Clone, PartialEq, Eq)]
++pub(crate) enum TextLink {
++    /// A scheme-less `host.tld/path`, completed to `https://`.
++    Url(String),
++    /// An existing file or directory, made absolute. Any `:line[:col]` suffix
++    /// is kept so the copied text still points at the same spot.
++    Path(String),
++}
++
++/// Byte range of the whitespace-delimited token under `clicked_byte`, minus
++/// wrapping quotes and brackets and trailing sentence punctuation.
++pub(super) fn token_byte_range(text: &str, clicked_byte: usize) -> Option<std::ops::Range<usize>> {
++    if text.get(clicked_byte..)?.chars().next()?.is_whitespace() {
++        return None;
++    }
++    let start = text[..clicked_byte]
++        .rfind(char::is_whitespace)
++        .map_or(0, |index| {
++            index + text[index..].chars().next().map_or(1, char::len_utf8)
++        });
++    let end = text[clicked_byte..]
++        .find(char::is_whitespace)
++        .map_or(text.len(), |index| clicked_byte + index);
++    let token = &text[start..end];
++    let leading = token.len()
++        - token
++            .trim_start_matches(['"', '\'', '`', '(', '[', '<', '{'])
++            .len();
++    let trimmed = token.trim_end_matches([
++        '"', '\'', '`', ')', ']', '>', '}', '.', ',', ';', '!', '?', ':',
++    ]);
++    let range = start + leading..start + trimmed.len().max(leading);
++    (range.start < range.end && range.contains(&clicked_byte)).then_some(range)
++}
++
++/// Splits a trailing `:line` or `:line:col` off a path token.
++fn split_line_suffix(token: &str) -> (&str, &str) {
++    let mut path = token;
++    for _ in 0..2 {
++        match path.rsplit_once(':') {
++            Some((head, digits))
++                if !head.is_empty()
++                    && !digits.is_empty()
++                    && digits.chars().all(|ch| ch.is_ascii_digit()) =>
++            {
++                path = head;
++            }
++            _ => break,
++        }
++    }
++    (path, &token[path.len()..])
++}
++
++/// `https://` form of a scheme-less `host.tld/path` token.
++fn bare_web_url(token: &str) -> Option<String> {
++    let (host, path) = token.split_once('/')?;
++    let labels: Vec<&str> = host.split('.').collect();
++    let tld = labels.last()?;
++    let domain_shaped = labels.len() >= 2
++        && labels.iter().all(|label| {
++            !label.is_empty()
++                && label.starts_with(|ch: char| ch.is_ascii_alphanumeric())
++                && label.ends_with(|ch: char| ch.is_ascii_alphanumeric())
++                && label
++                    .chars()
++                    .all(|ch| ch.is_ascii_alphanumeric() || ch == '-')
++        })
++        && tld.len() >= 2
++        && tld.chars().all(|ch| ch.is_ascii_alphabetic());
++    (domain_shaped && !path.is_empty()).then(|| format!("https://{token}"))
++}
++
++/// Classifies the token under a click that is not a visible web URL: an
++/// existing path wins over a domain-shaped one, so `lib.rs/foo` on disk is
++/// copied rather than opened. Relative paths resolve against `cwd`, falling
++/// back to the server's own working directory.
++pub(crate) fn text_link_at(
++    text: &str,
++    clicked_byte: usize,
++    cwd: Option<&std::path::Path>,
++) -> Option<TextLink> {
++    let token = text.get(token_byte_range(text, clicked_byte)?)?;
++    let (path, suffix) = split_line_suffix(token);
++    if path.contains(['/', '.']) || path.starts_with('~') {
++        let resolved = if let Some(rest) = path.strip_prefix("~/") {
++            std::env::var_os("HOME").map(|home| std::path::Path::new(&home).join(rest))
++        } else if path == "~" {
++            std::env::var_os("HOME").map(std::path::PathBuf::from)
++        } else if std::path::Path::new(path).is_absolute() {
++            Some(std::path::PathBuf::from(path))
++        } else {
++            cwd.map(std::path::Path::to_path_buf)
++                .or_else(|| std::env::current_dir().ok())
++                .map(|base| base.join(path))
++        };
++        if let Some(resolved) = resolved.filter(|resolved| resolved.exists()) {
++            let absolute = std::path::absolute(&resolved).unwrap_or(resolved);
++            return Some(TextLink::Path(format!("{}{suffix}", absolute.display())));
++        }
++    }
++    bare_web_url(token).map(TextLink::Url)
++}
++
+ pub(crate) fn safe_web_url(url: &str) -> Option<&str> {
+     (url.starts_with("http://") || url.starts_with("https://")).then_some(url)
+ }
+@@ -2550,6 +2654,45 @@ mod tests {
+         }
+     }
+ 
++    #[test]
++    fn text_links_prefer_existing_paths_over_domain_shaped_ones() {
++        let dir = std::env::temp_dir().join(format!("herdr-text-links-{}", std::process::id()));
++        std::fs::create_dir_all(dir.join("lib.rs")).unwrap();
++        std::fs::write(dir.join("lib.rs/foo"), "").unwrap();
++        std::fs::write(dir.join("main.rs"), "").unwrap();
++        let cwd = Some(dir.as_path());
++        let at = |row: &str, click: &str| text_link_at(row, row.find(click).unwrap(), cwd);
++        let path = |rel: &str| {
++            std::path::absolute(dir.join(rel))
++                .unwrap()
++                .display()
++                .to_string()
++        };
++
++        assert_eq!(
++            at("wrote lib.rs/foo, done", "foo"),
++            Some(TextLink::Path(path("lib.rs/foo")))
++        );
++        assert_eq!(
++            at("  --> main.rs:569:9", "main"),
++            Some(TextLink::Path(format!("{}:569:9", path("main.rs"))))
++        );
++        assert_eq!(
++            at("see (docs.rs/serde).", "serde"),
++            Some(TextLink::Url("https://docs.rs/serde".into()))
++        );
++        assert_eq!(
++            at("form 3bn.attn.tv/p/Y1u/landing-page, now dead", "attn"),
++            Some(TextLink::Url(
++                "https://3bn.attn.tv/p/Y1u/landing-page".into()
++            ))
++        );
++        assert_eq!(at("missing.rs and words", "missing"), None);
++        assert_eq!(at("see example.com for details", "example"), None);
++        assert_eq!(at("ping 192.168.1.10/24", "192"), None);
++        std::fs::remove_dir_all(&dir).unwrap();
++    }
++
+     #[test]
+     fn url_at_byte_returns_safe_visible_url_only() {
+         assert_eq!(
+diff --git a/src/app/api/plugins/mod.rs b/src/app/api/plugins/mod.rs
+index daafc839..a3ad43d0 100644
+--- a/src/app/api/plugins/mod.rs
++++ b/src/app/api/plugins/mod.rs
+@@ -18,6 +18,21 @@ use manifest::{
+     effective_platforms, ensure_platform_supported, normalize_action_id, normalize_plugin_source,
+ };
+ 
++/// Plain-text link (existing path or scheme-less domain) under a pane cell,
++/// resolving relative paths against the pane's foreground working directory.
++fn text_link_at(
++    runtime: &crate::terminal::TerminalRuntime,
++    col: u16,
++    row: u16,
++) -> Option<crate::app::actions::TextLink> {
++    let crate::ghostty::LinkTarget::Text { text, clicked_byte } =
++        runtime.link_target_at(col, row)?
++    else {
++        return None;
++    };
++    crate::app::actions::text_link_at(&text, clicked_byte, runtime.foreground_cwd().as_deref())
++}
++
+ #[cfg(test)]
+ use crate::api::schema::{PluginCommandStatus, PluginInvocationContext};
+ pub(crate) use manifest::load_plugin_manifest;
+@@ -319,9 +334,24 @@ impl App {
+         params: PaneLinkActivateParams,
+     ) -> String {
+         match self.read_checked_pane_link(&id, &params, "resolution", |runtime, col, row| {
+-            runtime.link_regions_at(col, row, crate::app::actions::url_byte_range)
++            let regions = runtime.link_regions_at(col, row, crate::app::actions::url_byte_range);
++            if !regions.is_empty() {
++                let url = runtime
++                    .link_target_at(col, row)
++                    .and_then(crate::app::actions::url_from_link_target);
++                return (regions, url, None);
++            }
++            let (url, path) = match text_link_at(runtime, col, row) {
++                Some(crate::app::actions::TextLink::Url(url)) => (Some(url), None),
++                Some(crate::app::actions::TextLink::Path(path)) => (None, Some(path)),
++                None => return (Vec::new(), None, None),
++            };
++            let regions = runtime.link_regions_at(col, row, crate::app::actions::token_byte_range);
++            (regions, url, path)
+         }) {
+-            Ok((_, regions)) => encode_success(id, ResponseResult::PaneLinkResolved { regions }),
++            Ok((_, (regions, url, path))) => {
++                encode_success(id, ResponseResult::PaneLinkResolved { regions, url, path })
++            }
+             Err(error) => error,
+         }
+     }
+@@ -331,11 +361,19 @@ impl App {
+         id: String,
+         params: PaneLinkActivateParams,
+     ) -> String {
+-        let (pane_id, url) =
++        let (pane_id, (url, path)) =
+             match self.read_checked_pane_link(&id, &params, "activation", |runtime, col, row| {
+-                runtime
++                let url = runtime
+                     .link_target_at(col, row)
+-                    .and_then(crate::app::actions::url_from_link_target)
++                    .and_then(crate::app::actions::url_from_link_target);
++                if url.is_some() {
++                    return (url, None);
++                }
++                match text_link_at(runtime, col, row) {
++                    Some(crate::app::actions::TextLink::Url(url)) => (Some(url), None),
++                    Some(crate::app::actions::TextLink::Path(path)) => (None, Some(path)),
++                    None => (None, None),
++                }
+             }) {
+                 Ok(value) => value,
+                 Err(error) => return error,
+@@ -350,7 +388,7 @@ impl App {
+             },
+             None => false,
+         };
+-        encode_success(id, ResponseResult::PaneLinkActivated { url, handled })
++        encode_success(id, ResponseResult::PaneLinkActivated { url, handled, path })
+     }
+ 
+     pub(crate) fn invoke_plugin_link_handler_for_url(
+@@ -840,7 +878,7 @@ mod tests {
+             method: Method::PaneLinkResolve(params.clone()),
+         });
+         assert!(
+-            matches!(response_result(&response), ResponseResult::PaneLinkResolved { regions } if regions.len() == 1)
++            matches!(response_result(&response), ResponseResult::PaneLinkResolved { regions, .. } if regions.len() == 1)
+         );
+         assert!(
+             rx.try_recv().is_err(),
+diff --git a/src/client/shell/actions.rs b/src/client/shell/actions.rs
+index 83819b0d..e225d11a 100644
+--- a/src/client/shell/actions.rs
++++ b/src/client/shell/actions.rs
+@@ -696,9 +696,21 @@ impl ClientShellState {
+                         self.url_click_consumes_until_up = completed_before_release;
+                         (false, Vec::new())
+                     }
++                    Ok(crate::api::schema::ResponseResult::PaneLinkActivated {
++                        path: Some(path),
++                        ..
++                    }) if replay.is_some() => {
++                        self.url_click_consumes_until_up = completed_before_release;
++                        let repaint = self.show_copy_feedback(std::time::Instant::now());
++                        (
++                            repaint,
++                            vec![ClientShellAction::ClipboardWrite(path.into_bytes())],
++                        )
++                    }
+                     Ok(crate::api::schema::ResponseResult::PaneLinkActivated {
+                         url: Some(url),
+                         handled: false,
++                        ..
+                     }) if crate::app::actions::safe_web_url(&url).is_some() && replay.is_some() => {
+                         self.url_click_consumes_until_up = completed_before_release;
+                         (false, vec![ClientShellAction::OpenSafeWebUrl(url)])
+diff --git a/src/client/shell/link_hover.rs b/src/client/shell/link_hover.rs
+index efbc0ee4..aa13ad7f 100644
+--- a/src/client/shell/link_hover.rs
++++ b/src/client/shell/link_hover.rs
+@@ -27,6 +27,8 @@ impl LinkHoverTarget {
+ pub(super) struct LinkHover {
+     target: LinkHoverTarget,
+     pub(super) regions: Vec<PaneLinkRegion>,
++    url: Option<String>,
++    path: Option<String>,
+     resolved: bool,
+ }
+ 
+@@ -131,11 +133,13 @@ impl ClientShellState {
+         outcome.repaint |= self.clear_link_hover();
+         let explicit = self.explicit_link_regions(&target);
+         let resolved = explicit.is_some();
+-        let regions = explicit.unwrap_or_default();
++        let (regions, url) = explicit.unwrap_or_default();
+         outcome.repaint |= !regions.is_empty();
+         self.link_hover = Some(LinkHover {
+             target,
+             regions,
++            url,
++            path: None,
+             resolved,
+         });
+         self.request_link_hover(outcome);
+@@ -199,8 +203,8 @@ impl ClientShellState {
+                 .as_ref()
+                 .is_some_and(|hover| hover.target == target)
+         {
+-            let regions = match result {
+-                Ok(crate::api::schema::ResponseResult::PaneLinkResolved { regions })
++            let (regions, url, path) = match result {
++                Ok(crate::api::schema::ResponseResult::PaneLinkResolved { regions, url, path })
+                     if regions.len() <= usize::from(target.inner_rect.height)
+                         && regions.iter().all(|region| {
+                             region.row < target.inner_rect.height
+@@ -211,14 +215,16 @@ impl ClientShellState {
+                             .iter()
+                             .any(|region| region_contains(region, target.col, target.row)) =>
+                 {
+-                    regions
++                    (regions, url, path)
+                 }
+-                _ => Vec::new(),
++                _ => (Vec::new(), None, None),
+             };
+             outcome.repaint = !regions.is_empty();
+             self.link_hover = Some(LinkHover {
+                 target,
+                 regions,
++                url,
++                path,
+                 resolved: true,
+             });
+         }
+@@ -228,7 +234,10 @@ impl ClientShellState {
+         (outcome.repaint, outcome.actions)
+     }
+ 
+-    fn explicit_link_regions(&self, target: &LinkHoverTarget) -> Option<Vec<PaneLinkRegion>> {
++    fn explicit_link_regions(
++        &self,
++        target: &LinkHoverTarget,
++    ) -> Option<(Vec<PaneLinkRegion>, Option<String>)> {
+         let surface = self.pane_surface.as_ref()?;
+         let rect = target.source_rect;
+         let cell = |col: u16, row: u16| {
+@@ -258,11 +267,11 @@ impl ClientShellState {
+         let hyperlink = hyperlink_at(target.col, target.row)?;
+         let uri = surface.frame.hyperlinks.get(hyperlink as usize)?;
+         if crate::app::actions::safe_web_url(uri).is_none() {
+-            return Some(Vec::new());
++            return Some((Vec::new(), None));
+         }
+         let width = usize::from(rect.width);
+         if width == 0 {
+-            return Some(Vec::new());
++            return Some((Vec::new(), None));
+         }
+         let clicked = usize::from(target.row) * width + usize::from(target.col);
+         let mut start = clicked;
+@@ -275,14 +284,14 @@ impl ClientShellState {
+         let mut remaining = 8191usize;
+         while start > 0 && matches(start - 1) {
+             if remaining == 0 {
+-                return Some(Vec::new());
++                return Some((Vec::new(), None));
+             }
+             remaining -= 1;
+             start -= 1;
+         }
+         while end + 1 < width * usize::from(rect.height) && matches(end + 1) {
+             if remaining == 0 {
+-                return Some(Vec::new());
++                return Some((Vec::new(), None));
+             }
+             remaining -= 1;
+             end += 1;
+@@ -302,7 +311,7 @@ impl ClientShellState {
+                 },
+             })
+             .collect();
+-        Some(regions)
++        Some((regions, Some(uri.clone())))
+     }
+ 
+     pub(super) fn link_hover_blocks_patch(
+@@ -331,6 +340,20 @@ impl ClientShellState {
+             return;
+         };
+         let rect = hover.target.inner_rect;
++        let width = usize::from(frame.width);
++        let cells = &frame.cells;
++        let text: String = hover
++            .regions
++            .iter()
++            .flat_map(|region| {
++                let row = usize::from(rect.y.saturating_add(region.row));
++                (region.start_col..=region.end_col).filter_map(move |col| {
++                    let col = usize::from(rect.x.saturating_add(col));
++                    (col < width).then_some(row * width + col)
++                })
++            })
++            .filter_map(|index| cells.get(index).map(|cell| cell.symbol.as_str()))
++            .collect();
+         for region in &hover.regions {
+             let row = rect.y.saturating_add(region.row);
+             if row >= frame.height {
+@@ -361,9 +384,176 @@ impl ClientShellState {
+                 }
+             }
+         }
++        if hover.regions.is_empty() {
++            return;
++        }
++        if let Some(url) = hover.url.as_deref() {
++            let mismatch = link_text_misleads(&text, url);
++            render_link_preview(
++                frame,
++                occlusion,
++                rect,
++                &hover.regions,
++                url,
++                mismatch.then_some(self.config.palette.red),
++            );
++        } else if let Some(path) = hover.path.as_deref() {
++            render_link_preview(
++                frame,
++                occlusion,
++                rect,
++                &hover.regions,
++                &format!("copy {path}"),
++                None,
++            );
++        }
++    }
++}
++
++/// Host of text that reads as a web address, lowercased and without `www.`.
++/// Bare `name.ext` only counts with a common web TLD, so filenames such as
++/// `README.md` stay plain text rather than addresses.
++fn domain_host(text: &str) -> Option<String> {
++    const WEB_TLDS: &[&str] = &[
++        "com", "org", "net", "io", "dev", "app", "ai", "co", "gov", "edu", "me", "sh",
++    ];
++    let text = text.trim();
++    let (rest, has_scheme) = match text
++        .strip_prefix("https://")
++        .or_else(|| text.strip_prefix("http://"))
++    {
++        Some(rest) => (rest, true),
++        None => (text, false),
++    };
++    let host_end = rest.find(['/', '?', '#', ':']).unwrap_or(rest.len());
++    let host = rest[..host_end].to_ascii_lowercase();
++    let labels: Vec<&str> = host.split('.').collect();
++    let tld = *labels.last()?;
++    let domain_shaped = labels.len() >= 2
++        && labels.iter().all(|label| {
++            !label.is_empty()
++                && label
++                    .chars()
++                    .all(|ch| ch.is_ascii_alphanumeric() || ch == '-')
++        })
++        && tld.len() >= 2
++        && tld.chars().all(|ch| ch.is_ascii_alphabetic());
++    let address_like = has_scheme
++        || host.starts_with("www.")
++        || rest[host_end..].starts_with('/')
++        || WEB_TLDS.contains(&tld);
++    (domain_shaped && address_like).then(|| host.strip_prefix("www.").unwrap_or(&host).to_owned())
++}
++
++/// True when OSC 8 link text reads like an address but points at another host,
++/// e.g. text `github.com/org` whose destination is `https://example.net/`.
++fn link_text_misleads(text: &str, url: &str) -> bool {
++    domain_host(text).is_some_and(|shown| domain_host(url).is_none_or(|real| real != shown))
++}
++
++/// Shows the hovered link's destination in the pane's bottom-left corner, like a
++/// browser status bar. It moves to the top row when the link itself sits on the
++/// bottom one, and is skipped when the link covers both. A `warning` color marks
++/// links whose text names a different host, prefixing the destination with `≠`.
++fn render_link_preview(
++    frame: &mut FrameData,
++    occlusion: &mut crate::kitty_graphics::surface::Occlusion,
++    rect: Rect,
++    regions: &[PaneLinkRegion],
++    url: &str,
++    warning: Option<ratatui::style::Color>,
++) {
++    let width = usize::from(rect.width.min(frame.width.saturating_sub(rect.x)));
++    if width < 4 || rect.height < 2 {
++        return;
++    }
++    let Some(row) = [rect.height - 1, 0]
++        .into_iter()
++        .find(|row| regions.iter().all(|region| region.row != *row))
++        .map(|row| rect.y + row)
++        .filter(|row| *row < frame.height)
++    else {
++        return;
++    };
++    let shown = match warning {
++        Some(_) => format!("≠ {url}"),
++        None => url.to_owned(),
++    };
++    let mut text: Vec<char> = shown
++        .chars()
++        .map(|ch| match unicode_width::UnicodeWidthChar::width(ch) {
++            Some(1) => ch,
++            _ => '?',
++        })
++        .collect();
++    let room = width - 2;
++    if text.len() > room {
++        text.truncate(room - 1);
++        text.push('…');
++    }
++    let label: Vec<char> = std::iter::once(' ')
++        .chain(text)
++        .chain(std::iter::once(' '))
++        .collect();
++    occlusion.cover(Rect::new(rect.x, row, label.len() as u16, 1));
++    let blank = crate::protocol::CellData::from_ratatui_cell(&ratatui::buffer::Cell::new(" "));
++    let mut base = ratatui::buffer::Cell::new(" ");
++    if let Some(color) = warning {
++        base.set_fg(color);
++    }
++    let base = crate::protocol::CellData::from_ratatui_cell(&base);
++    let start = usize::from(row) * usize::from(frame.width) + usize::from(rect.x);
++    for (offset, ch) in label.iter().enumerate() {
++        if let Some(cell) = frame.cells.get_mut(start + offset) {
++            *cell = crate::protocol::CellData {
++                symbol: ch.to_string(),
++                modifier: Modifier::REVERSED.bits(),
++                ..base.clone()
++            };
++        }
++    }
++    // A wide glyph cut by the label's right edge would leave its spacer orphaned.
++    if let Some(cell) = frame
++        .cells
++        .get_mut(start + label.len())
++        .filter(|cell| cell.skip)
++    {
++        *cell = blank;
+     }
+ }
+ 
+ fn region_contains(region: &PaneLinkRegion, col: u16, row: u16) -> bool {
+     region.row == row && col >= region.start_col && col <= region.end_col
+ }
++
++#[cfg(test)]
++mod mismatch_tests {
++    use super::link_text_misleads;
++
++    #[test]
++    fn address_like_text_must_name_the_destination_host() {
++        assert!(!link_text_misleads("the docs", "https://ghostty.org/docs"));
++        assert!(!link_text_misleads(
++            "3bn.attn.tv/p/Y1u/landing-page",
++            "https://3bn.attn.tv/p/Y1u/landing-page"
++        ));
++        assert!(!link_text_misleads(
++            "www.GitHub.com/x",
++            "https://github.com/x"
++        ));
++        assert!(!link_text_misleads(
++            "README.md",
++            "https://example.com/readme"
++        ));
++        assert!(link_text_misleads(
++            "github.com/xav-ie/dots",
++            "https://example.net/"
++        ));
++        assert!(link_text_misleads(
++            "https://github.com",
++            "https://github.com.evil.net/"
++        ));
++        assert!(link_text_misleads("paypal.com", "file:///etc/passwd"));
++        assert!(link_text_misleads("paypal.com", "https://paypa1.com/login"));
++    }
++}
+diff --git a/src/client/shell/tests/input.rs b/src/client/shell/tests/input.rs
+index 8b817d0a..84e427b3 100644
+--- a/src/client/shell/tests/input.rs
++++ b/src/client/shell/tests/input.rs
+@@ -280,6 +280,7 @@ fn delayed_link_fallback_does_not_replay_against_changed_geometry() {
+                 Ok(crate::api::schema::ResponseResult::PaneLinkActivated {
+                     url: url.map(str::to_owned),
+                     handled: false,
++                    path: None,
+                 }),
+             );
+             assert!(
+@@ -924,7 +925,7 @@ fn styled_client_composition_preserves_pane_hyperlinks() {
+                 terminal.write(&output);
+                 assert_eq!(
+                     terminal.viewport_hyperlink_uri(x, u32::from(y)).unwrap(),
+-                    (!capture).then_some(uri.to_owned()),
++                    (!capture || cfg!(target_os = "macos")).then_some(uri.to_owned()),
+                     "host link ownership must follow configured capture for {uri}"
+                 );
+                 let (_, label) = terminal.screen_cell(x, u32::from(y)).unwrap();
+diff --git a/src/client/shell/tests/input_conformance.rs b/src/client/shell/tests/input_conformance.rs
+index 5053a616..2a02588b 100644
+--- a/src/client/shell/tests/input_conformance.rs
++++ b/src/client/shell/tests/input_conformance.rs
+@@ -355,6 +355,7 @@ impl HerdrPath {
+                         Ok(crate::api::schema::ResponseResult::PaneLinkActivated {
+                             url: None,
+                             handled: false,
++                            path: None,
+                         }),
+                     );
+                     for action in actions {
+diff --git a/src/client/shell/tests/link_hover.rs b/src/client/shell/tests/link_hover.rs
+index 40173fdc..f768d2f9 100644
+--- a/src/client/shell/tests/link_hover.rs
++++ b/src/client/shell/tests/link_hover.rs
+@@ -47,6 +47,8 @@ fn resolve_hover(state: &mut ClientShellState, id: &str) -> bool {
+                     end_col: 2,
+                 },
+             ],
++            url: Some("https://example.com/hovered".into()),
++            path: None,
+         }),
+     );
+     assert!(
+@@ -84,6 +86,53 @@ fn ctrl_hover_underlines_wrapped_segments_and_caches_the_link() {
+     assert!(state.selection.is_none());
+ }
+ 
++#[test]
++fn ctrl_hover_previews_the_destination_off_the_link_rows() {
++    let mut state = hover_state();
++    let mouse = hover_mouse(&state, 1, 0);
++    let id = hover_request(&state.handle_raw_events(vec![RawInputEvent::Mouse(mouse)]));
++    let (repaint, _) = state.handle_endpoint_result(
++        "boot-1",
++        &id,
++        Ok(crate::api::schema::ResponseResult::PaneLinkResolved {
++            regions: vec![crate::api::schema::PaneLinkRegion {
++                row: 0,
++                start_col: 1,
++                end_col: 3,
++            }],
++            url: Some("https://example.com/hovered".into()),
++            path: None,
++        }),
++    );
++    assert!(repaint);
++    let frame = state.compose(106, 20).unwrap();
++    let pane = &state.hits.panes[0];
++    let bottom = pane.inner_rect.y + pane.inner_rect.height - 1;
++    let cell = |col: u16| {
++        &frame.cells
++            [usize::from(bottom) * usize::from(frame.width) + usize::from(pane.inner_rect.x + col)]
++    };
++    // The fixture pane is four columns wide, so the URL is cut to fit.
++    let preview: String = (0..4).map(|col| cell(col).symbol.clone()).collect();
++    assert_eq!(preview, " h… ");
++    assert_ne!(cell(0).modifier & Modifier::REVERSED.bits(), 0);
++    assert_eq!(cell(0).hyperlink, None);
++}
++
++#[test]
++fn ctrl_hover_skips_the_preview_when_the_link_fills_every_row() {
++    let mut state = hover_state();
++    let mouse = hover_mouse(&state, 1, 0);
++    let id = hover_request(&state.handle_raw_events(vec![RawInputEvent::Mouse(mouse)]));
++    assert!(resolve_hover(&mut state, &id));
++    let frame = state.compose(106, 20).unwrap();
++    let pane = &state.hits.panes[0];
++    let bottom = pane.inner_rect.y + pane.inner_rect.height - 1;
++    let first = &frame.cells
++        [usize::from(bottom) * usize::from(frame.width) + usize::from(pane.inner_rect.x)];
++    assert_eq!(first.modifier & Modifier::REVERSED.bits(), 0);
++}
++
+ #[test]
+ fn ctrl_hover_pending_request_does_not_block_another_endpoint_with_the_same_boot_id() {
+     use crate::client::endpoint::{
+@@ -135,7 +184,11 @@ fn ctrl_hover_coalesces_motion_and_ignores_old_replies() {
+     let (repaint, actions) = state.handle_endpoint_result(
+         "boot-1",
+         &id,
+-        Ok(crate::api::schema::ResponseResult::PaneLinkResolved { regions: vec![] }),
++        Ok(crate::api::schema::ResponseResult::PaneLinkResolved {
++            regions: vec![],
++            url: None,
++            path: None,
++        }),
+     );
+     assert!(!repaint);
+     assert!(
+diff --git a/src/client/shell/tests/mouse_selection.rs b/src/client/shell/tests/mouse_selection.rs
+index eced2347..f5ff4921 100644
+--- a/src/client/shell/tests/mouse_selection.rs
++++ b/src/client/shell/tests/mouse_selection.rs
+@@ -69,6 +69,47 @@ fn selection_release_copies_latest_position_before_deferred_paint() {
+     assert!(state.selection_repaint_deadline.is_none());
+ }
+ 
++#[test]
++fn ctrl_click_on_a_path_copies_it_and_shows_copy_feedback() {
++    let mut state = ClientShellState::new(ClientShellConfig::from_config(&Config::default()));
++    state.set_snapshot(Box::new(snapshot()));
++    state.set_pane_surface(surface());
++    state.compose(106, 20).expect("pane frame");
++    let pane = state.hits.panes[0].clone();
++    let down = MouseEvent {
++        kind: MouseEventKind::Down(MouseButton::Left),
++        column: pane.inner_rect.x + 2,
++        row: pane.inner_rect.y + 1,
++        modifiers: KeyModifiers::CONTROL,
++    };
++    let activate = state.handle_raw_events(vec![RawInputEvent::Mouse(down)]);
++    let [ClientShellAction::Endpoint { request, .. }] = &activate.actions[..] else {
++        panic!("expected link activation request");
++    };
++    let request_id = request.id.clone();
++    let (repaint, actions) = state.handle_endpoint_result(
++        "boot-1",
++        &request_id,
++        Ok(crate::api::schema::ResponseResult::PaneLinkActivated {
++            url: None,
++            handled: false,
++            path: Some("/home/me/src/main.rs:12".to_owned()),
++        }),
++    );
++    assert!(repaint);
++    assert!(matches!(
++        &actions[..],
++        [ClientShellAction::ClipboardWrite(bytes)] if bytes == b"/home/me/src/main.rs:12"
++    ));
++    assert_eq!(
++        state
++            .copy_feedback
++            .as_ref()
++            .map(|feedback| feedback.message.as_str()),
++        Some("copied to clipboard")
++    );
++}
++
+ #[test]
+ fn ctrl_click_routes_link_activation_through_endpoint_then_client_host() {
+     let mut state = ClientShellState::new(ClientShellConfig::from_config(&Config::default()));
+@@ -105,6 +146,7 @@ fn ctrl_click_routes_link_activation_through_endpoint_then_client_host() {
+         Ok(crate::api::schema::ResponseResult::PaneLinkActivated {
+             url: Some("https://example.test".to_owned()),
+             handled: false,
++            path: None,
+         }),
+     );
+     assert!(matches!(
+@@ -126,6 +168,7 @@ fn ctrl_click_routes_link_activation_through_endpoint_then_client_host() {
+                 Ok(crate::api::schema::ResponseResult::PaneLinkActivated {
+                     url: Some(url.into()),
+                     handled,
++                    path: None,
+                 }),
+             )
+             .1
+@@ -209,6 +252,7 @@ fn ctrl_click_without_a_link_replays_the_original_gesture() {
+         Ok(crate::api::schema::ResponseResult::PaneLinkActivated {
+             url: None,
+             handled: false,
++            path: None,
+         }),
+     );
+     assert!(matches!(
+diff --git a/src/client/state.rs b/src/client/state.rs
+index 312c65ca..671b18ba 100644
+--- a/src/client/state.rs
++++ b/src/client/state.rs
+@@ -567,7 +567,9 @@ impl ClientState {
+         } = frame_data.into();
+         // With capture enabled, host OSC 8 can intercept Ctrl-click before plugins.
+         // Keep semantic links internally and restore native links when capture is off.
+-        if self.shell_mouse_capture_preference {
++        // macOS terminals open links on Cmd-click, which never collides with Ctrl-click,
++        // so native links stay there and keep the host's hover preview.
++        if self.shell_mouse_capture_preference && !cfg!(target_os = "macos") {
+             frame_data.hyperlinks.clear();
+         }
+         let frame_data = if self.draw_host_cursor {
