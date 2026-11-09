@@ -82,7 +82,6 @@
     sketchybar-icons.url = "github:xav-ie/sketchybar-icons";
     sketchybar-icons.inputs.nixpkgs.follows = "nixpkgs";
     sketchybar-icons.inputs.flake-parts.follows = "flake-parts";
-    sketchybar-icons.inputs.nufmt.follows = "nufmt";
     sketchybar-icons.inputs.treefmt-nix.follows = "treefmt-nix";
     sketchybar-src.url = "github:FelixKratz/SketchyBar/v2.24.1";
     sketchybar-src.flake = false;

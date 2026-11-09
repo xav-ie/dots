@@ -28,10 +28,16 @@ const MIN_WIDTH = 26
 # arcs, [0.66,1]=3 arcs, so values must land clearly inside a band. 0 = no arcs
 # (the dimmed "searching" glyph).
 const SIGNAL_VALUES = [0.0 0.2 0.5 1.0]
+# The white Apple draws the `wifi` glyph's unfilled arcs in (30%), for dimming
+# glyphs that have no variable value.
+const DIM = "0x4dffffff"
 
-# Parse `power=on associated=yes level=3 rssi=-56 fraction=0.83` into a record.
+# Parse `power=on associated=yes ip=yes internet=online level=3 ...` into a
+# record. `wifi_change` carries the daemon's line in $WIFI_STATE; otherwise
+# read it fresh.
 def read-wifi [] {
-  sketchybar-icons wifi
+  $env.WIFI_STATE?
+  | default { sketchybar-icons wifi }
   | str trim
   | split row " "
   | reduce --fold {} {|it, acc|
@@ -60,38 +66,53 @@ def is-hotspot [wifi: record] {
 # derived from the appearance so sketchybar reloads on change and skips
 # re-rendering when unchanged.
 def render [] {
-  let color = "0xffffffff"
-
   let state = (read-wifi)
-  # Hotspot takes priority (works even if Wi-Fi is off and it's USB/BT tethered).
-  let spec = if (is-hotspot $state) {
+  let associated = ($state.associated? | default "no") == "yes"
+  # A missing `ip` field means a sketchybar-icons that doesn't report it, so it
+  # counts as present.
+  let has_ip = ($state.ip? | default "yes") == "yes"
+  # Problems on a joined network come first, so a dead hotspot doesn't show the
+  # working-hotspot glyph.
+  let spec = if $associated and not $has_ip and (is-hotspot $state) {
+    # Connecting to a hotspot: its glyph at the dimmed arcs' 30% white.
+    {sym: "personalhotspot", value: null, key: "hotspot-pending", color: $DIM}
+  } else if $associated and not $has_ip {
+    # Still connecting: joined, but DHCP hasn't produced an address. Control
+    # Center draws the plain wifi glyph with its arcs unfilled — variableValue
+    # 0 dims them exactly that way.
+    {sym: "wifi", value: 0.0, key: "pending"}
+  } else if $associated and $state.internet? == "captive" {
+    # A captive portal is waiting for login: full arcs with a lock badge.
+    {sym: "wifi", value: 1.0, badge: "lock.fill", key: "captive"}
+  } else if $associated and $state.internet? == "offline" {
+    # Joined with an address, but connections don't get past the access point.
+    {sym: "wifi.exclamationmark", value: null, key: "nointernet"}
+  } else if (is-hotspot $state) {
+    # Works even if Wi-Fi is off and it's USB/BT tethered.
     {sym: "personalhotspot", value: null, key: "hotspot"}
+  } else if ($state.power? | default "on") != "on" {
+    {sym: "wifi.slash", value: null, key: "off"}
+  } else if not $associated {
+    # Radio on but not joined yet: macOS is still trying, so this is the same
+    # connecting glyph.
+    {sym: "wifi", value: 0.0, key: "pending"}
   } else {
-    if ($state.power? | default "on") != "on" {
-      {sym: "wifi.slash", value: null, key: "off"}
-    } else if ($state.associated? | default "no") != "yes" {
-      # Radio on but no association: macOS is still trying, so this is the
-      # PENDING state, not an error. Control Center draws the plain wifi glyph
-      # with its arcs unfilled — variableValue 0 dims them exactly that way.
-      # (wifi.exclamationmark, the old choice here, is macOS's "connected but no
-      # internet" glyph — wrong for "not connected yet".)
-      {sym: "wifi", value: 0.0, key: "pending"}
-    } else {
-      let v = $SIGNAL_VALUES | get ($state.level | into int)
-      {
-        sym: "wifi"
-        value: $v
-        key: $"on-($v)"
-      }
+    let v = $SIGNAL_VALUES | get ($state.level | into int)
+    {
+      sym: "wifi"
+      value: $v
+      key: $"on-($v)"
     }
   }
 
+  let color = $spec.color? | default "0xffffffff"
   let out = $"($CACHE_DIR)/wifi-($spec.key)-($POINT_SIZE)-w($MIN_WIDTH).png"
   if not ($out | path exists) {
+    let badge = if $spec.badge? != null { [--badge $spec.badge] } else { [] }
     if $spec.value == null {
       sketchybar-icons symbol --symbol $spec.sym --point-size $POINT_SIZE --scale 2 --min-width $MIN_WIDTH --color $color --out $out
     } else {
-      sketchybar-icons symbol --symbol $spec.sym --value $spec.value --point-size $POINT_SIZE --scale 2 --min-width $MIN_WIDTH --color $color --out $out
+      sketchybar-icons symbol --symbol $spec.sym --value $spec.value ...$badge --point-size $POINT_SIZE --scale 2 --min-width $MIN_WIDTH --color $color --out $out
     }
   }
   $out
@@ -107,6 +128,9 @@ def main [] {
     "forced" => {
       let out = (render)
       sketchybar --set $"($env.NAME)" $"icon.background.image=($out)"
+      # The one-shot read can't see the daemon's path-based verdict, so ask the
+      # daemon to re-send its line; it arrives as a wifi_change.
+      sketchybar-icons wifi --refresh
     }
     "wifi_change" | "routine" => {
       let out = (render)
