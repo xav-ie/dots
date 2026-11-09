@@ -15,5 +15,9 @@ user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);
 // killing both problems while the fullscreen button keeps working as expected.
 user_pref("full-screen-api.macos-native-full-screen", false);
 
+// Fingerprinting protection limits pages to base system fonts; exempt GitHub
+// so Stylus's Maple Mono override can load.
+user_pref("privacy.fingerprintingProtection.granularOverrides", '[{"firstPartyDomain":"github.com","overrides":"-FontVisibilityBaseSystem,-FontVisibilityLangPack"}]');
+
 // Kill the floating "You are sharing your entire screen." indicator window.
 user_pref("privacy.webrtc.hideGlobalIndicator", true);
