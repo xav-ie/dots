@@ -40,6 +40,12 @@ type = "plugin_action"
 command = "herdr.fwd.open-dashboard-popup"
 description = "Open port-forward dashboard"
 
+[[keys.command]]
+key = "prefix+f"
+type = "plugin_action"
+command = "nathan-poncet.herdr-fingers.start"
+description = "Copy, paste or open anything on screen by hint"
+
 [ui]
 show_agent_labels_on_pane_borders = true
 agent_panel_sort = "spaces"
