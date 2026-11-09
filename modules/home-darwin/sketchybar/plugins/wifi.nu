@@ -31,6 +31,13 @@ const SIGNAL_VALUES = [0.0 0.2 0.5 1.0]
 # The white Apple draws the `wifi` glyph's unfilled arcs in (30%), for dimming
 # glyphs that have no variable value.
 const DIM = "0x4dffffff"
+# While joining (associated, waiting for an address) the icon animates: the
+# arcs light up one by one, or the hotspot link brightens in three steps, from
+# the dimmed glyph. `sketchybar-icons animate` swaps the frames and gives up
+# after ANIMATION_SECONDS, so a join that never finishes can't keep the Mac
+# awake; ANIMATION records its PID and which state it animates.
+const ANIMATION = $"($CACHE_DIR)/wifi-animation.nuon"
+const ANIMATION_SECONDS = 20
 
 # Parse `power=on associated=yes ip=yes internet=online level=3 ...` into a
 # record. `wifi_change` carries the daemon's line in $WIFI_STATE; otherwise
@@ -62,10 +69,9 @@ def is-hotspot [wifi: record] {
     | str contains "gateway: 172.20.10.1")
 }
 
-# Render (or reuse) the PNG for the current state; return its path. Filename is
-# derived from the appearance so sketchybar reloads on change and skips
-# re-rendering when unchanged.
-def render [] {
+# The appearance for the current state: what to draw, a cache key, and for the
+# joining states the animation frames (the first is the static glyph).
+def state-spec [] {
   let state = (read-wifi)
   let associated = ($state.associated? | default "no") == "yes"
   # A missing `ip` field means a sketchybar-icons that doesn't report it, so it
@@ -73,17 +79,29 @@ def render [] {
   let has_ip = ($state.ip? | default "yes") == "yes"
   # Problems on a joined network come first, so a dead hotspot doesn't show the
   # working-hotspot glyph.
-  let spec = if $associated and not $has_ip and (is-hotspot $state) {
-    # Connecting to a hotspot: its glyph at the dimmed arcs' 30% white.
-    {sym: "personalhotspot", value: null, key: "hotspot-pending", color: $DIM}
+  if $associated and not $has_ip and (is-hotspot $state) {
+    # Connecting to a hotspot: its glyph at the dimmed arcs' 30% white,
+    # brightening in three steps.
+    let frames = [$DIM "0x88ffffff" "0xc4ffffff" "0xffffffff"] | enumerate | each {|f|
+      {sym: "personalhotspot", value: null, key: $"hotspot-joining-($f.index)", color: $f.item}
+    }
+    $frames.0 | insert frames $frames
   } else if $associated and not $has_ip {
     # Still connecting: joined, but DHCP hasn't produced an address. Control
     # Center draws the plain wifi glyph with its arcs unfilled — variableValue
-    # 0 dims them exactly that way.
-    {sym: "wifi", value: 0.0, key: "pending"}
+    # 0 dims them exactly that way — then lights them one by one.
+    let frames = $SIGNAL_VALUES | enumerate | each {|f|
+      {sym: "wifi", value: $f.item, key: $"joining-($f.index)"}
+    }
+    $frames.0 | insert frames $frames
   } else if $associated and $state.internet? == "captive" {
     # A captive portal is waiting for login: full arcs with a lock badge.
-    {sym: "wifi", value: 1.0, badge: "lock.fill", key: "captive"}
+    {
+      sym: "wifi"
+      value: 1.0
+      badge: "lock.fill"
+      key: "captive"
+    }
   } else if $associated and $state.internet? == "offline" {
     # Joined with an address, but connections don't get past the access point.
     {sym: "wifi.exclamationmark", value: null, key: "nointernet"}
@@ -93,8 +111,8 @@ def render [] {
   } else if ($state.power? | default "on") != "on" {
     {sym: "wifi.slash", value: null, key: "off"}
   } else if not $associated {
-    # Radio on but not joined yet: macOS is still trying, so this is the same
-    # connecting glyph.
+    # Radio on but not joined yet: macOS is still trying. Same dimmed glyph as
+    # joining, but static: this can last indefinitely.
     {sym: "wifi", value: 0.0, key: "pending"}
   } else {
     let v = $SIGNAL_VALUES | get ($state.level | into int)
@@ -104,18 +122,58 @@ def render [] {
       key: $"on-($v)"
     }
   }
+}
 
-  let color = $spec.color? | default "0xffffffff"
+# Render (or reuse) the PNG for a spec; return its path. Filename is derived
+# from the appearance so sketchybar reloads on change and skips re-rendering
+# when unchanged.
+def render [spec: record] {
   let out = $"($CACHE_DIR)/wifi-($spec.key)-($POINT_SIZE)-w($MIN_WIDTH).png"
   if not ($out | path exists) {
+    let value = if $spec.value != null { [--value $spec.value] } else { [] }
     let badge = if $spec.badge? != null { [--badge $spec.badge] } else { [] }
-    if $spec.value == null {
-      sketchybar-icons symbol --symbol $spec.sym --point-size $POINT_SIZE --scale 2 --min-width $MIN_WIDTH --color $color --out $out
-    } else {
-      sketchybar-icons symbol --symbol $spec.sym --value $spec.value ...$badge --point-size $POINT_SIZE --scale 2 --min-width $MIN_WIDTH --color $color --out $out
-    }
+    let color = $spec.color? | default "0xffffffff"
+    sketchybar-icons symbol --symbol $spec.sym ...$value ...$badge --point-size $POINT_SIZE --scale 2 --min-width $MIN_WIDTH --color $color --out $out
   }
   $out
+}
+
+# Stop the running animation, if it's still ours: the PID is checked against
+# the process's command line first, since it may have exited (after its time
+# limit) and the PID been reused. Waits for it to exit so it can't set a frame
+# after the caller draws the next state.
+def stop-animation [] {
+  if not ($ANIMATION | path exists) { return }
+  let pid = open $ANIMATION | get pid
+  rm -f $ANIMATION
+  let command = do -i { ^ps -p $pid -o command= } | complete | get stdout
+  if not ($command | str contains "sketchybar-icons animate") { return }
+  do -i { ^kill $pid }
+  for _ in 1..20 {
+    if (do -i { ^kill -0 $pid } | complete | get exit_code) != 0 { break }
+    sleep 50ms
+  }
+}
+
+# Run the animation for `spec` if it has frames, else none; true if one is
+# running, so the caller leaves the image to it. Leaves a running animation for
+# the same state alone (and one that already hit its time limit stopped), so
+# repeated events don't restart it.
+def sync-animation [spec: record] {
+  let state = $spec.key | str replace --regex '-0$' ""
+  let current = if ($ANIMATION | path exists) { open $ANIMATION } else { null }
+  if $current != null and $current.state == $state {
+    return ((do -i { ^kill -0 $current.pid } | complete | get exit_code) == 0)
+  }
+  stop-animation
+  if ($spec.frames? | is-empty) { return false }
+  let frames = $spec.frames | each {|f| render $f } | str join ","
+  let pid = ^sh -c 'sketchybar-icons animate --item "$1" --frames "$2" --interval 0.4 --for "$3" >/dev/null 2>&1 & echo $!' sh $env.NAME $frames $ANIMATION_SECONDS | str trim | into int
+  {pid: $pid, state: $state} | save -f $ANIMATION
+  # An animator that failed to start (e.g. a sketchybar-icons without
+  # `animate`) leaves the caller to draw the static glyph.
+  sleep 100ms
+  (do -i { ^kill -0 $pid } | complete | get exit_code) == 0
 }
 
 def main [] {
@@ -126,15 +184,19 @@ def main [] {
   # x-shift nudge is needed once the footprint tiles cleanly.
   match $env.SENDER {
     "forced" => {
-      let out = (render)
-      sketchybar --set $"($env.NAME)" $"icon.background.image=($out)"
+      let spec = (state-spec)
+      if not (sync-animation $spec) {
+        sketchybar --set $"($env.NAME)" $"icon.background.image=(render $spec)"
+      }
       # The one-shot read can't see the daemon's path-based verdict, so ask the
       # daemon to re-send its line; it arrives as a wifi_change.
       sketchybar-icons wifi --refresh
     }
     "wifi_change" | "routine" => {
-      let out = (render)
-      sketchybar --set $"($env.NAME)" $"icon.background.image=($out)"
+      let spec = (state-spec)
+      if not (sync-animation $spec) {
+        sketchybar --set $"($env.NAME)" $"icon.background.image=(render $spec)"
+      }
     }
     _ => {
       print $"wifi: ignoring event ($env.SENDER)"

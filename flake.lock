@@ -2145,11 +2145,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794254401,
-        "narHash": "sha256-7XEKwxFpZeCOlI7dtg1eU7jle8hJ+0sslw0XjFaOwQU=",
+        "lastModified": 1794259988,
+        "narHash": "sha256-Xh1a1nN2uUz7k+BeWj4ywXEDOV0pCJYHEfubLmtb5AU=",
         "owner": "xav-ie",
         "repo": "sketchybar-icons",
-        "rev": "0520495382cd6903e2f55f01c4de3a5c31e02d3b",
+        "rev": "069a99892ac0d5ac124936f83d25dc4508eb5d0f",
         "type": "github"
       },
       "original": {
