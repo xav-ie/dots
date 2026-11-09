@@ -46,6 +46,7 @@
     "update-now": "user-invocable-only"
   },
   "skipDangerousModePermissionPrompt": true,
+  "theme": "dark",
   "tui": "fullscreen",
   "voice": {
     "enabled": true,
