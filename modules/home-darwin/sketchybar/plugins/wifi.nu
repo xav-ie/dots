@@ -38,13 +38,15 @@ const DIM = "0x4dffffff"
 # awake; ANIMATION records its PID and which state it animates.
 const ANIMATION = $"($CACHE_DIR)/wifi-animation.nuon"
 const ANIMATION_SECONDS = 20
+# sketchybar runs plugin scripts concurrently, and joining a network fires a
+# burst of events; one run at a time decides the icon and the animation, or two
+# runs both start an animator.
+const LOCK = $"($CACHE_DIR)/wifi.lock"
 
 # Parse `power=on associated=yes ip=yes internet=online level=3 ...` into a
-# record. `wifi_change` carries the daemon's line in $WIFI_STATE; otherwise
-# read it fresh.
-def read-wifi [] {
-  $env.WIFI_STATE?
-  | default { sketchybar-icons wifi }
+# record.
+def parse-wifi [line: string] {
+  $line
   | str trim
   | split row " "
   | reduce --fold {} {|it, acc|
@@ -69,10 +71,9 @@ def is-hotspot [wifi: record] {
     | str contains "gateway: 172.20.10.1")
 }
 
-# The appearance for the current state: what to draw, a cache key, and for the
-# joining states the animation frames (the first is the static glyph).
-def state-spec [] {
-  let state = (read-wifi)
+# The appearance for a state: what to draw, a cache key, and for the joining
+# states the animation frames (the first is the static glyph).
+def state-spec [state: record] {
   let associated = ($state.associated? | default "no") == "yes"
   # A missing `ip` field means a sketchybar-icons that doesn't report it, so it
   # counts as present.
@@ -176,6 +177,28 @@ def sync-animation [spec: record] {
   (do -i { ^kill -0 $pid } | complete | get exit_code) == 0
 }
 
+# Run `body` holding LOCK. A lock older than a few seconds was left by a run
+# that died, so it's taken over rather than waited on forever.
+def locked [body: closure] {
+  for _ in 1..100 {
+    if (do -i { ^mkdir $LOCK } | complete | get exit_code) == 0 { break }
+    if ((date now) - (ls -D $LOCK | get 0.modified)) > 5sec { rm -rf $LOCK }
+    sleep 50ms
+  }
+  try { do $body } catch {|e| print -e $"wifi: ($e.msg)" }
+  rm -rf $LOCK
+}
+
+# Draw the icon for `line`, the daemon's state line or a fresh read, starting or
+# stopping the joining animation to match.
+def update [line: string] {
+  let state = parse-wifi $line
+  let spec = state-spec $state
+  if not (sync-animation $spec) {
+    sketchybar --set $env.NAME $"icon.background.image=(render $spec)"
+  }
+}
+
 def main [] {
 
   # Geometry (icon.width=26, the bg_only highlight background) is owned by the
@@ -184,18 +207,21 @@ def main [] {
   # x-shift nudge is needed once the footprint tiles cleanly.
   match $env.SENDER {
     "forced" => {
-      let spec = (state-spec)
-      if not (sync-animation $spec) {
-        sketchybar --set $"($env.NAME)" $"icon.background.image=(render $spec)"
-      }
+      locked { update (sketchybar-icons wifi) }
       # The one-shot read can't see the daemon's path-based verdict, so ask the
       # daemon to re-send its line; it arrives as a wifi_change.
       sketchybar-icons wifi --refresh
     }
     "wifi_change" | "routine" => {
-      let spec = (state-spec)
-      if not (sync-animation $spec) {
-        sketchybar --set $"($env.NAME)" $"icon.background.image=(render $spec)"
+      locked {
+        let line = $env.WIFI_STATE? | default { sketchybar-icons wifi }
+        # Concurrent runs can take the lock out of order. If the joined/address
+        # state has moved on since this event, a newer event draws it.
+        let fresh = parse-wifi (sketchybar-icons wifi)
+        let event = parse-wifi $line
+        if $event.associated? == $fresh.associated? and $event.ip? == $fresh.ip? {
+          update $line
+        }
       }
     }
     _ => {
