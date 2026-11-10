@@ -3,6 +3,22 @@
 # drops sidebar rows whose tokens resolve to nothing, so a `$space_header` row
 # plus a tagger service produces the same result — see packages/herdr-space-headers.
 {
+  flake.modules.homeManager.darwin =
+    { pkgs, lib, ... }:
+    {
+      launchd.agents.herdr-space-headers = {
+        enable = true;
+        config = {
+          Program = lib.getExe pkgs.pkgs-mine.herdr-space-headers;
+          EnvironmentVariables.PATH = lib.makeBinPath [ pkgs.herdr ];
+          KeepAlive = true;
+          RunAtLoad = true;
+          StandardOutPath = "/tmp/herdr-space-headers.log";
+          StandardErrorPath = "/tmp/herdr-space-headers.err";
+        };
+      };
+    };
+
   flake.modules.homeManager.linux =
     { pkgs, lib, ... }:
     {
