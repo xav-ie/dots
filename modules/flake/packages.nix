@@ -75,7 +75,6 @@
           ];
         };
         inherit writeNuApplication;
-        muscat-pkg = inputs.muscat.packages.${system}.muscat;
         inherit (inputs)
           bun-demincer-src
           executor-src

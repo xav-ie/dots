@@ -43,9 +43,6 @@
     morrow.inputs.nixpkgs.follows = "nixpkgs";
     morrow.inputs.ags.follows = "ags";
     morrow.inputs.treefmt-nix.follows = "treefmt-nix";
-    muscat.url = "github:xav-ie/Muscat";
-    muscat.inputs.nixpkgs.follows = "nixpkgs";
-    muscat.inputs.flake-utils.follows = "flake-utils";
     neverest.url = "github:pimalaya/neverest";
     neverest.inputs.fenix.follows = "fenix";
     neverest.inputs.nixpkgs.follows = "nixpkgs";

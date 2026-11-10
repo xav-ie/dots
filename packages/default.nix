@@ -42,7 +42,6 @@
   executor-src,
   generate-kaomoji,
   mcp-atlassian-src,
-  muscat-pkg,
   protonmail-mcp-src,
   rcsd-src,
   rcsd-web-src,
@@ -213,7 +212,6 @@ rec {
     fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
     monoFont = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "mono";
   };
-  muscat = muscat-pkg;
   notification-center = pkgs.callPackage ./notification-center {
     inherit agsPackages;
     fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
