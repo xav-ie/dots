@@ -111,7 +111,6 @@ rec {
   grw = pkgs.callPackage ./grw { inherit browse writeNuApplication; };
   herdr-edit = pkgs.callPackage ./herdr-edit { inherit writeNuApplication; };
   herdr-fingers = pkgs.callPackage ./herdr-fingers { };
-  herdr-fwd = pkgs.callPackage ./herdr-fwd { };
   herdr-space-headers = pkgs.callPackage ./herdr-space-headers { inherit writeNuApplication; };
   lint-staged = pkgs.callPackage ./lint-staged { inherit writeNuApplication; };
   linux-voice-assistant = pkgs.callPackage ./linux-voice-assistant { };

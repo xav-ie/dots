@@ -23,8 +23,8 @@ rustPlatform.buildRustPackage {
     hash = "sha256-bQoNLqkeNyxwa8Gxx4lUsby2ahrHwigBG24wJsm07nU=";
   };
 
-  # importCargoLock rather than cargoHash for the same reason as herdr-fwd:
-  # fetchCargoVendor's User-Agent gets 403 from crates.io. Re-copy Cargo.lock
+  # importCargoLock rather than cargoHash: fetchCargoVendor's User-Agent gets
+  # 403 from crates.io. Re-copy Cargo.lock
   # from the tag when bumping version.
   cargoDeps = rustPlatform.importCargoLock { lockFile = ./Cargo.lock; };
 
