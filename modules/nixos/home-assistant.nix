@@ -132,6 +132,7 @@
                 "thread"
                 "wyoming"
                 "xiaomi_aqara"
+                "yolink"
                 "zha"
               ];
           };
