@@ -58,6 +58,7 @@
 let
   optionalAttrs = bool: attrSet: if bool then attrSet else { };
 
+  firefox-router = pkgs.callPackage ./firefox-router { };
   is-sshed = pkgs.callPackage ./is-sshed { inherit writeNuApplication; };
   notify = pkgs.callPackage ./notify {
     inherit generate-kaomoji ssh-client-host writeNuApplication;
@@ -68,6 +69,7 @@ let
 in
 rec {
   inherit
+    firefox-router
     is-sshed
     notify
     rcsd
@@ -93,7 +95,6 @@ rec {
   };
   claude-resume = pkgs.callPackage ./claude-resume { inherit writeNuApplication; };
   ff = pkgs.callPackage ./ff { };
-  firefox-router = pkgs.callPackage ./firefox-router { };
   flint = pkgs.callPackage ./flint { inherit format-staged lint-staged writeNuApplication; };
   format-staged = pkgs.callPackage ./format-staged { inherit writeNuApplication; };
   gh-stack = pkgs-bleeding.callPackage ./gh-stack { };
@@ -160,6 +161,7 @@ rec {
   fix-yabai = pkgs.callPackage ./fix-yabai { inherit writeNuApplication; };
   focus-daemon = pkgs.callPackage ./focus-daemon { };
   firefox-pip-mover = pkgs.callPackage ./firefox-pip-mover { };
+  firefox-router-app = pkgs.callPackage ./firefox-router-app { inherit firefox-router; };
   jitfix = pkgs.callPackage ./jitfix { };
   menubar-reveal = pkgs.callPackage ./menubar-reveal { };
   move-pip = pkgs.callPackage ./move-pip { };
