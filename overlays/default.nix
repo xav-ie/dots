@@ -313,7 +313,15 @@ in
         # - `herdr terminal open-url` opens on the attached client's machine, and
         #   `pane.links` lists the viewport's links as Ctrl-hover classifies them
         #   (both for herdr-fingers, which runs on the server)
-        patches = (old.patches or [ ]) ++ [ ./herdr-links.patch ];
+        # Zoom arrows, generated on top of the links patch: a zoomed tab's icon
+        # points toward the panes the zoom hides (󰞘 when zoomed into a left pane,
+        # 󰞙 into a bottom one, 󰡎 into a middle column, 󰁌 when hidden on 3+
+        # sides). Adds a field to the client/server wire format, so a patched
+        # client can't attach to an unpatched server or vice versa.
+        patches = (old.patches or [ ]) ++ [
+          ./herdr-links.patch
+          ./herdr-zoom-arrows.patch
+        ];
       });
       neverest = inputs.neverest.packages.${final.stdenv.hostPlatform.system}.default;
       zjstatus = inputs.zjstatus.packages.${final.stdenv.hostPlatform.system}.default;

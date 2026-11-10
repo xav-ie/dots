@@ -1,0 +1,228 @@
+diff --git a/src/client/shell/tabs.rs b/src/client/shell/tabs.rs
+index 30ef50fa..f5aaf12a 100644
+--- a/src/client/shell/tabs.rs
++++ b/src/client/shell/tabs.rs
+@@ -373,12 +373,35 @@ fn max_tab_scroll(widths: &[u16], available: u16) -> usize {
+ 
+ fn tab_label(tab: &ClientShellTab) -> String {
+     if tab.zoomed {
+-        format!("{} 󰁌", tab.label)
++        format!("{} {}", tab.label, zoom_glyph(tab.zoom_sides))
+     } else {
+         tab.label.clone()
+     }
+ }
+ 
++/// Points toward the panes the zoom is hiding.
++fn zoom_glyph(sides: crate::protocol::ClientShellZoomSides) -> &'static str {
++    let crate::protocol::ClientShellZoomSides {
++        left,
++        right,
++        up,
++        down,
++    } = sides;
++    match (left, right, up, down) {
++        (true, false, false, false) => "󰞗",
++        (false, true, false, false) => "󰞘",
++        (false, false, true, false) => "󰞙",
++        (false, false, false, true) => "󰞖",
++        (true, true, false, false) => "󰡎",
++        (false, false, true, true) => "󰡏",
++        (true, false, true, false) => "󰁛",
++        (false, true, true, false) => "󰁜",
++        (true, false, false, true) => "󰁂",
++        (false, true, false, true) => "󰁃",
++        _ => "󰁌",
++    }
++}
++
+ #[cfg(test)]
+ mod tests {
+     use super::max_tab_scroll;
+diff --git a/src/client/shell/tests/chrome_context.rs b/src/client/shell/tests/chrome_context.rs
+index 1ef98798..ac3b28e5 100644
+--- a/src/client/shell/tests/chrome_context.rs
++++ b/src/client/shell/tests/chrome_context.rs
+@@ -10,6 +10,7 @@ fn tab_overflow_controls_scroll_the_client_owned_tab_bar() {
+         label: number.to_string(),
+         custom_label: false,
+         zoomed: false,
++        zoom_sides: Default::default(),
+         focused: false,
+         agent_status: AgentStatus::Idle,
+     }));
+@@ -69,6 +70,7 @@ fn focused_last_overflow_tab_shows_its_full_label() {
+             label: (*label).into(),
+             custom_label: index > 0,
+             zoomed: false,
++            zoom_sides: Default::default(),
+             focused: index == 7,
+             agent_status: AgentStatus::Idle,
+         })
+diff --git a/src/client/shell/tests/keybindings_settings.rs b/src/client/shell/tests/keybindings_settings.rs
+index fd3301db..a8f797d0 100644
+--- a/src/client/shell/tests/keybindings_settings.rs
++++ b/src/client/shell/tests/keybindings_settings.rs
+@@ -261,6 +261,7 @@ fn tab_bar_renders_endpoint_status_ellipses_and_clamps_to_useful_scroll() {
+             label: number.to_string(),
+             custom_label: false,
+             zoomed: false,
++            zoom_sides: Default::default(),
+             focused: false,
+             agent_status: AgentStatus::Idle,
+         });
+@@ -313,6 +314,7 @@ fn inactive_auto_named_tab_label_does_not_stack_terminal_faint() {
+         label: "beta".into(),
+         custom_label: false,
+         zoomed: false,
++        zoom_sides: Default::default(),
+         focused: false,
+         agent_status: AgentStatus::Idle,
+     });
+diff --git a/src/client/shell/tests/mobile.rs b/src/client/shell/tests/mobile.rs
+index 4dac5490..a7b8d2d1 100644
+--- a/src/client/shell/tests/mobile.rs
++++ b/src/client/shell/tests/mobile.rs
+@@ -356,6 +356,7 @@ fn mobile_background_workspace_uses_its_own_active_tab_status() {
+         label: "logs".into(),
+         custom_label: true,
+         zoomed: false,
++        zoom_sides: Default::default(),
+         focused: false,
+         agent_status: AgentStatus::Idle,
+     });
+@@ -381,6 +382,7 @@ fn mobile_background_workspace_uses_its_own_active_tab_status() {
+             label: label.into(),
+             custom_label: true,
+             zoomed: false,
++            zoom_sides: Default::default(),
+             focused: false,
+             agent_status: AgentStatus::Idle,
+         });
+diff --git a/src/client/shell/tests/mod.rs b/src/client/shell/tests/mod.rs
+index 05bfc263..557cc58c 100644
+--- a/src/client/shell/tests/mod.rs
++++ b/src/client/shell/tests/mod.rs
+@@ -48,6 +48,7 @@ pub(super) fn snapshot() -> ClientShellSnapshot {
+             label: "1".into(),
+             custom_label: false,
+             zoomed: false,
++            zoom_sides: Default::default(),
+             focused: true,
+             agent_status: AgentStatus::Idle,
+         }],
+diff --git a/src/protocol/wire.rs b/src/protocol/wire.rs
+index ead2ddd7..c0657b1b 100644
+--- a/src/protocol/wire.rs
++++ b/src/protocol/wire.rs
+@@ -1049,11 +1049,21 @@ pub struct ClientShellTab {
+     pub label: String,
+     pub custom_label: bool,
+     pub zoomed: bool,
++    pub zoom_sides: ClientShellZoomSides,
+     pub focused: bool,
+     #[serde(deserialize_with = "deserialize_client_shell_agent_status")]
+     pub agent_status: crate::api::schema::AgentStatus,
+ }
+ 
++/// Sides of a zoomed tab's focused pane that have panes hidden beyond them.
++#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
++pub struct ClientShellZoomSides {
++    pub left: bool,
++    pub right: bool,
++    pub up: bool,
++    pub down: bool,
++}
++
+ #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+ pub struct ClientShellPane {
+     pub pane_id: String,
+@@ -2838,6 +2848,7 @@ mod tests {
+                 label: "main".into(),
+                 custom_label: true,
+                 zoomed: false,
++                zoom_sides: Default::default(),
+                 focused: true,
+                 agent_status: crate::api::schema::AgentStatus::Idle,
+             }],
+diff --git a/src/server/client_shell.rs b/src/server/client_shell.rs
+index 0a98da09..34f4f930 100644
+--- a/src/server/client_shell.rs
++++ b/src/server/client_shell.rs
+@@ -3,6 +3,28 @@ use ratatui::layout::Rect;
+ use crate::app;
+ use crate::protocol::{self, FrameData};
+ 
++/// Which sides of a zoomed tab's focused pane border other panes. Measured on a
++/// fixed area: split ratios alone decide the arrangement, and the tab's real
++/// size may be empty while no client is attached.
++fn zoom_sides(tab: &crate::workspace::Tab) -> protocol::ClientShellZoomSides {
++    if !tab.zoomed {
++        return protocol::ClientShellZoomSides::default();
++    }
++    let area = Rect::new(0, 0, 1000, 1000);
++    let focused = tab.layout.focused();
++    tab.layout
++        .panes(area)
++        .into_iter()
++        .find(|info| info.id == focused)
++        .map(|info| protocol::ClientShellZoomSides {
++            left: info.rect.x > area.x,
++            right: info.rect.right() < area.right(),
++            up: info.rect.y > area.y,
++            down: info.rect.bottom() < area.bottom(),
++        })
++        .unwrap_or_default()
++}
++
+ #[cfg(test)]
+ pub(super) fn snapshot(
+     app: &app::App,
+@@ -117,6 +139,7 @@ pub(super) fn snapshot_with_completions(
+                 label: tab.label,
+                 custom_label: !state.is_auto_named(),
+                 zoomed: state.zoomed,
++                zoom_sides: zoom_sides(state),
+                 agent_status: tab.agent_status,
+             }
+         })
+@@ -629,6 +652,39 @@ fn split_hit_rect(
+ mod tests {
+     use super::*;
+ 
++    #[test]
++    fn zoom_sides_point_at_the_hidden_panes() {
++        use ratatui::layout::Direction::{Horizontal, Vertical};
++        let sides = |left, right, up, down| protocol::ClientShellZoomSides {
++            left,
++            right,
++            up,
++            down,
++        };
++        let mut tab = crate::workspace::Workspace::test_new("zoom").tabs.remove(0);
++        let first = tab.layout.focused();
++        assert_eq!(zoom_sides(&tab), sides(false, false, false, false));
++        tab.zoomed = true;
++
++        let second = tab.layout.split_pane(first, Horizontal, 0.5).unwrap();
++        assert_eq!(zoom_sides(&tab), sides(false, true, false, false));
++
++        let third = tab.layout.split_pane(second, Horizontal, 0.5).unwrap();
++        tab.layout.focus_pane(third);
++        assert_eq!(zoom_sides(&tab), sides(true, false, false, false));
++        tab.layout.focus_pane(second);
++        assert_eq!(zoom_sides(&tab), sides(true, true, false, false));
++
++        let below = tab.layout.split_pane(first, Vertical, 0.5).unwrap();
++        tab.layout.focus_pane(first);
++        assert_eq!(zoom_sides(&tab), sides(false, true, false, true));
++        tab.layout.focus_pane(below);
++        assert_eq!(zoom_sides(&tab), sides(false, true, true, false));
++
++        tab.zoomed = false;
++        assert_eq!(zoom_sides(&tab), sides(false, false, false, false));
++    }
++
+     #[tokio::test(flavor = "current_thread")]
+     async fn snapshot_metadata_skips_scroll_reads_and_preserves_public_session_data() {
+         let (_api_tx, api_rx) = tokio::sync::mpsc::unbounded_channel();
