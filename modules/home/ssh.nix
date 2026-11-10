@@ -25,6 +25,8 @@
             # parallel; whichever transport first proves reachable wins.
             # See packages/ssh-praesidium-route/ for the full racing logic.
             "praesidium" = {
+              # Carries the YubiKey to praesidium's sudo (modules/nixos/sudo-yubikey.nix).
+              ForwardAgent = true;
               ProxyCommand = "${pkgs.pkgs-mine.ssh-praesidium-route}/bin/ssh-praesidium-route";
             };
             "*" = {
