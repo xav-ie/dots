@@ -1,0 +1,324 @@
+diff --git a/src/adapters/config.rs b/src/adapters/config.rs
+index 89faed4..12c4096 100644
+--- a/src/adapters/config.rs
++++ b/src/adapters/config.rs
+@@ -7,7 +7,9 @@ use thiserror::Error;
+ 
+ use crate::domain::alphabet::{Alphabet, AlphabetError};
+ use crate::domain::patterns::{self, PatternError, PatternSet, PatternSpec};
+-use crate::domain::settings::{Action, Actions, ClipboardMode, HintPosition, Settings, Theme};
++use crate::domain::settings::{
++    Action, Actions, ClipboardMode, HerdrLinks, HintPosition, Settings, Theme,
++};
+ use crate::domain::style::{Color, ColorParseError, TextStyle};
+ 
+ /// The commented default configuration, written on first run.
+@@ -53,6 +55,7 @@ struct FileConfig {
+     clipboard_command: Vec<String>,
+     show_copied_notification: Option<bool>,
+     multi_separator: Option<String>,
++    herdr_links: Option<String>,
+     #[serde(default)]
+     style: StyleConfig,
+ }
+@@ -179,6 +182,17 @@ pub fn parse(text: &str) -> Result<Settings, ConfigError> {
+         }
+     };
+ 
++    let herdr_links = match file.herdr_links.as_deref().map(str::trim) {
++        None | Some("off") => HerdrLinks::Off,
++        Some("all") => HerdrLinks::All,
++        Some("urls") => HerdrLinks::Urls,
++        Some(other) => {
++            return Err(ConfigError::Invalid(format!(
++                "herdr_links must be \"off\", \"all\" or \"urls\", got \"{other}\""
++            )));
++        }
++    };
++
+     let default_theme = Theme::default();
+     let style =
+         |entry: &Option<StyleEntry>, fallback: TextStyle| -> Result<TextStyle, ConfigError> {
+@@ -227,6 +241,7 @@ pub fn parse(text: &str) -> Result<Settings, ConfigError> {
+             .show_copied_notification
+             .unwrap_or(defaults.notify_on_copy),
+         multi_separator: file.multi_separator.unwrap_or(defaults.multi_separator),
++        herdr_links,
+     })
+ }
+ 
+diff --git a/src/adapters/herdr.rs b/src/adapters/herdr.rs
+index b0531a4..49475f6 100644
+--- a/src/adapters/herdr.rs
++++ b/src/adapters/herdr.rs
+@@ -11,6 +11,8 @@ use serde_json::{Value, json};
+ use thiserror::Error;
+ 
+ use crate::domain::geometry::{Layout, PanePlacement, Rect};
++use crate::domain::matcher::Candidate;
++use crate::domain::screen::Segment;
+ use crate::usecases::ports::{PaneHost, PortError};
+ 
+ #[derive(Debug, Error)]
+@@ -177,6 +179,13 @@ impl HerdrClient {
+             })
+     }
+ 
++    /// Herdr's own link detection over the pane's viewport (`pane.links`).
++    pub fn links(&self, pane_id: &str) -> Result<Vec<Candidate>, HerdrError> {
++        let result = self.call("pane.links", json!({ "pane_id": pane_id }))?;
++        let links = result["links"].as_array().cloned().unwrap_or_default();
++        Ok(links.iter().filter_map(candidate_from_link).collect())
++    }
++
+     fn pane_info(&self, pane_id: &str) -> Result<Value, HerdrError> {
+         let result = self.call("pane.get", json!({ "pane_id": pane_id }))?;
+         Ok(result.get("pane").cloned().unwrap_or(result))
+@@ -263,6 +272,10 @@ impl PaneHost for HerdrClient {
+         Ok(HerdrClient::pane_cwd(self, pane_id)?)
+     }
+ 
++    fn links(&self, pane_id: &str) -> Result<Vec<Candidate>, PortError> {
++        Ok(HerdrClient::links(self, pane_id)?)
++    }
++
+     fn open_overlay(
+         &self,
+         plugin_id: &str,
+@@ -312,9 +325,70 @@ pub fn parse_layout(value: &Value) -> Option<Layout> {
+     })
+ }
+ 
++/// One `pane.links` entry as a candidate: `url` links copy their destination,
++/// `path` links the absolute path Herdr resolved.
++fn candidate_from_link(link: &Value) -> Option<Candidate> {
++    let (text, pattern) = match (link["url"].as_str(), link["path"].as_str()) {
++        (Some(url), _) => (url, "url"),
++        (None, Some(path)) => (path, "path"),
++        (None, None) => return None,
++    };
++    let segments: Vec<Segment> = link["regions"]
++        .as_array()?
++        .iter()
++        .filter_map(|region| {
++            let row = usize::try_from(region["row"].as_u64()?).ok()?;
++            let start = u16::try_from(region["start_col"].as_u64()?).ok()?;
++            let end = u16::try_from(region["end_col"].as_u64()?).ok()?;
++            (end >= start).then_some(Segment {
++                row,
++                col: start,
++                width: end - start + 1,
++            })
++        })
++        .collect();
++    (!segments.is_empty()).then(|| Candidate {
++        text: text.to_string(),
++        pattern: pattern.to_string(),
++        segments,
++    })
++}
++
+ #[cfg(test)]
+ mod tests {
+     use super::*;
++
++    #[test]
++    fn pane_links_become_candidates_with_their_destination_as_text() {
++        let link = json!({
++            "regions": [
++                {"row": 4, "start_col": 2, "end_col": 9},
++                {"row": 5, "start_col": 2, "end_col": 4}
++            ],
++            "url": "https://example.com/full"
++        });
++        let candidate = candidate_from_link(&link).unwrap();
++        assert_eq!(candidate.text, "https://example.com/full");
++        assert_eq!(candidate.pattern, "url");
++        assert_eq!(
++            candidate.segments,
++            vec![
++                Segment {
++                    row: 4,
++                    col: 2,
++                    width: 8
++                },
++                Segment {
++                    row: 5,
++                    col: 2,
++                    width: 3
++                }
++            ]
++        );
++        let path = json!({"regions": [{"row": 0, "start_col": 0, "end_col": 3}], "path": "/a/b"});
++        assert_eq!(candidate_from_link(&path).unwrap().pattern, "path");
++        assert!(candidate_from_link(&json!({"regions": []})).is_none());
++    }
+     use std::os::unix::net::UnixListener;
+ 
+     /// A one-shot fake Herdr: answers `responses` in order, records requests.
+diff --git a/src/domain/settings.rs b/src/domain/settings.rs
+index 4f324e9..8818481 100644
+--- a/src/domain/settings.rs
++++ b/src/domain/settings.rs
+@@ -72,6 +72,19 @@ pub enum ClipboardMode {
+     Both,
+ }
+ 
++/// Whether hints also come from Herdr's own link detection (`pane.links`): it
++/// sees OSC 8 destinations and app-wrapped URLs that plain text cannot show,
++/// and only reports paths that exist.
++#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
++pub enum HerdrLinks {
++    #[default]
++    Off,
++    /// Web URLs and existing paths.
++    All,
++    /// Web URLs only.
++    Urls,
++}
++
+ #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+ pub enum HintPosition {
+     #[default]
+@@ -121,6 +134,7 @@ pub struct Settings {
+     pub clipboard_command: Vec<String>,
+     pub notify_on_copy: bool,
+     pub multi_separator: String,
++    pub herdr_links: HerdrLinks,
+ }
+ 
+ impl Default for Settings {
+@@ -134,6 +148,7 @@ impl Default for Settings {
+             clipboard_command: Vec::new(),
+             notify_on_copy: false,
+             multi_separator: " ".to_string(),
++            herdr_links: HerdrLinks::default(),
+         }
+     }
+ }
+diff --git a/src/usecases/pick.rs b/src/usecases/pick.rs
+index d12a760..241d18c 100644
+--- a/src/usecases/pick.rs
++++ b/src/usecases/pick.rs
+@@ -6,10 +6,10 @@ use thiserror::Error;
+ 
+ use super::ports::{Clipboard, Launcher, PaneHost, PickView, Picker, PortError};
+ use crate::domain::geometry::OverlayGeometry;
+-use crate::domain::matcher::find_candidates;
++use crate::domain::matcher::{Candidate, find_candidates};
+ use crate::domain::screen::Screen;
+ use crate::domain::session::{Outcome, Selection, Session};
+-use crate::domain::settings::{Action, Settings};
++use crate::domain::settings::{Action, HerdrLinks, Settings};
+ 
+ /// What one run of the overlay works on.
+ pub struct PickRequest<'a> {
+@@ -58,7 +58,13 @@ pub fn pick(request: &PickRequest<'_>, deps: &mut Deps<'_>) -> Result<Picked, Pi
+             .map_or(0, |p| p.rect.width),
+     };
+     let screen = Screen::from_ansi(&deps.host.read_visible(request.pane_id)?, width);
+-    let candidates = find_candidates(&screen, &request.settings.patterns);
++    let mut candidates = find_candidates(&screen, &request.settings.patterns);
++    if request.settings.herdr_links != HerdrLinks::Off {
++        // An older Herdr without `pane.links` leaves the regex matches alone.
++        if let Ok(links) = deps.host.links(request.pane_id) {
++            candidates = merge_herdr_links(candidates, links, request.settings.herdr_links);
++        }
++    }
+     let mut session = Session::new(candidates, &request.settings.alphabet);
+     let view = PickView {
+         screen: &screen,
+@@ -128,9 +134,69 @@ pub fn preview(text: &str) -> String {
+     shortened
+ }
+ 
++/// Herdr's links win: a regex match touching any cell of one is dropped, so an
++/// app-wrapped URL gets one hint for the whole destination rather than a hint
++/// per row (or a number hint inside its tail).
++fn merge_herdr_links(
++    candidates: Vec<Candidate>,
++    links: Vec<Candidate>,
++    mode: HerdrLinks,
++) -> Vec<Candidate> {
++    let links: Vec<Candidate> = links
++        .into_iter()
++        .filter(|link| mode == HerdrLinks::All || link.pattern == "url")
++        .collect();
++    let overlaps = |a: &Candidate, b: &Candidate| {
++        a.segments.iter().any(|x| {
++            b.segments
++                .iter()
++                .any(|y| x.row == y.row && x.col < y.col + y.width && y.col < x.col + x.width)
++        })
++    };
++    let mut merged: Vec<Candidate> = candidates
++        .into_iter()
++        .filter(|candidate| !links.iter().any(|link| overlaps(candidate, link)))
++        .collect();
++    merged.extend(links);
++    merged.sort_by_key(|c| (c.first_row(), c.first_col()));
++    merged
++}
++
+ #[cfg(test)]
+ mod tests {
+     use super::*;
++
++    fn candidate(text: &str, pattern: &str, segments: &[(usize, u16, u16)]) -> Candidate {
++        Candidate {
++            text: text.to_string(),
++            pattern: pattern.to_string(),
++            segments: segments
++                .iter()
++                .map(|&(row, col, width)| crate::domain::screen::Segment { row, col, width })
++                .collect(),
++        }
++    }
++
++    #[test]
++    fn herdr_links_replace_overlapping_regex_matches() {
++        let wrapped = "https://example.com/long?ref=1234567890";
++        let regex = vec![
++            candidate("https://example.com/long?ref=", "url", &[(0, 2, 28)]),
++            candidate("1234567890", "digit", &[(1, 6, 10)]),
++            candidate("72c2fd5f", "sha", &[(3, 0, 8)]),
++        ];
++        let links = vec![
++            candidate(wrapped, "url", &[(0, 2, 28), (1, 2, 14)]),
++            candidate("/abs/src/main.rs", "path", &[(2, 0, 11)]),
++        ];
++        let all = merge_herdr_links(regex.clone(), links.clone(), HerdrLinks::All);
++        let texts: Vec<&str> = all.iter().map(|c| c.text.as_str()).collect();
++        assert_eq!(texts, vec![wrapped, "/abs/src/main.rs", "72c2fd5f"]);
++
++        let urls = merge_herdr_links(regex, links, HerdrLinks::Urls);
++        let texts: Vec<&str> = urls.iter().map(|c| c.text.as_str()).collect();
++        assert_eq!(texts, vec![wrapped, "72c2fd5f"]);
++    }
+     use crate::domain::alphabet::Alphabet;
+     use crate::domain::geometry::Rect;
+     use crate::domain::session::{Key, Modifier};
+diff --git a/src/usecases/ports.rs b/src/usecases/ports.rs
+index 61a7a67..22c39d8 100644
+--- a/src/usecases/ports.rs
++++ b/src/usecases/ports.rs
+@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
+ use thiserror::Error;
+ 
+ use crate::domain::geometry::{Layout, OverlayGeometry};
++use crate::domain::matcher::Candidate;
+ use crate::domain::screen::Screen;
+ use crate::domain::session::{Outcome, Session};
+ use crate::domain::settings::Theme;
+@@ -42,6 +43,11 @@ pub trait PaneHost {
+     fn send_text(&self, pane_id: &str, text: &str) -> Result<(), PortError>;
+     /// Shows a toast.
+     fn notify(&self, title: &str, body: &str) -> Result<(), PortError>;
++    /// The links Herdr itself detects on the pane's viewport, as candidates
++    /// whose text is the destination (URL or absolute path).
++    fn links(&self, _pane_id: &str) -> Result<Vec<Candidate>, PortError> {
++        Ok(Vec::new())
++    }
+ }
+ 
+ /// Where `:copy:` puts the text.

@@ -35,16 +35,22 @@ prefix = "ctrl+space"
 # by temp+rename, which replaces home-manager's symlink with a real file and
 # fails the next activation.
 [[keys.command]]
-key = "prefix+shift+f"
+key = "prefix+t"
 type = "plugin_action"
 command = "herdr.fwd.open-dashboard-popup"
-description = "Open port-forward dashboard"
+description = "Open port-forward (tunnel) dashboard"
 
 [[keys.command]]
 key = "prefix+f"
 type = "plugin_action"
 command = "nathan-poncet.herdr-fingers.start"
-description = "Copy, paste or open anything on screen by hint"
+description = "Copy anything on screen by hint"
+
+[[keys.command]]
+key = "prefix+shift+f"
+type = "plugin_action"
+command = "nathan-poncet.herdr-fingers-open.start"
+description = "Open a link on screen by hint"
 
 [ui]
 show_agent_labels_on_pane_borders = true

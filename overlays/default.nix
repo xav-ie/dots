@@ -310,6 +310,9 @@ in
         #   address-like link text names a different host
         # - Ctrl-click on an existing path copies it (absolute, `:line` kept)
         #   with the clipboard toast; scheme-less `host.tld/path` opens as https
+        # - `herdr terminal open-url` opens on the attached client's machine, and
+        #   `pane.links` lists the viewport's links as Ctrl-hover classifies them
+        #   (both for herdr-fingers, which runs on the server)
         patches = (old.patches or [ ]) ++ [ ./herdr-links.patch ];
       });
       neverest = inputs.neverest.packages.${final.stdenv.hostPlatform.system}.default;

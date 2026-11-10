@@ -1,8 +1,119 @@
 diff --git a/docs/next/api/herdr-api.schema.json b/docs/next/api/herdr-api.schema.json
-index e2553f75..6608d2d5 100644
+index e2553f75..04ffcfe8 100644
 --- a/docs/next/api/herdr-api.schema.json
 +++ b/docs/next/api/herdr-api.schema.json
-@@ -10252,6 +10252,12 @@
+@@ -1695,6 +1695,18 @@
+           ],
+           "type": "object"
+         },
++        "ClientOpenUrlParams": {
++          "description": "Opens an `http(s)` URL with the foreground client's system opener, i.e. on\nthe machine the user is attached from rather than the server's host.",
++          "properties": {
++            "url": {
++              "type": "string"
++            }
++          },
++          "required": [
++            "url"
++          ],
++          "type": "object"
++        },
+         "ClientShellSurfaceSetParams": {
+           "description": "Updates whether the requesting client shell receives and controls pane presentation.",
+           "properties": {
+@@ -2665,6 +2677,17 @@
+           ],
+           "type": "object"
+         },
++        "PaneLinksParams": {
++          "properties": {
++            "pane_id": {
++              "type": "string"
++            }
++          },
++          "required": [
++            "pane_id"
++          ],
++          "type": "object"
++        },
+         "PaneListParams": {
+           "properties": {
+             "workspace_id": {
+@@ -6312,6 +6335,38 @@
+             "params"
+           ],
+           "type": "object"
++        },
++        {
++          "properties": {
++            "method": {
++              "const": "client.open_url",
++              "type": "string"
++            },
++            "params": {
++              "$ref": "#/schemas/request/$defs/ClientOpenUrlParams"
++            }
++          },
++          "required": [
++            "method",
++            "params"
++          ],
++          "type": "object"
++        },
++        {
++          "properties": {
++            "method": {
++              "const": "pane.links",
++              "type": "string"
++            },
++            "params": {
++              "$ref": "#/schemas/request/$defs/PaneLinksParams"
++            }
++          },
++          "required": [
++            "method",
++            "params"
++          ],
++          "type": "object"
+         }
+       ],
+       "properties": {
+@@ -8111,6 +8166,34 @@
+           ],
+           "type": "object"
+         },
++        "PaneLinkInfo": {
++          "description": "One link on a pane's viewport, classified the way Ctrl-hover classifies it:\na web destination (`url`) or an existing file or directory (`path`).",
++          "properties": {
++            "path": {
++              "type": [
++                "string",
++                "null"
++              ]
++            },
++            "regions": {
++              "description": "Display segments in reading order; a wrapped link has one per row.",
++              "items": {
++                "$ref": "#/schemas/success_response/$defs/PaneLinkRegion"
++              },
++              "type": "array"
++            },
++            "url": {
++              "type": [
++                "string",
++                "null"
++              ]
++            }
++          },
++          "required": [
++            "regions"
++          ],
++          "type": "object"
++        },
+         "PaneLinkRegion": {
+           "description": "Inclusive display-cell columns on a pane's current viewport.",
+           "properties": {
+@@ -10252,6 +10335,12 @@
              },
              {
                "properties": {
@@ -15,7 +126,7 @@ index e2553f75..6608d2d5 100644
                  "regions": {
                    "items": {
                      "$ref": "#/schemas/success_response/$defs/PaneLinkRegion"
-@@ -10261,6 +10267,12 @@
+@@ -10261,6 +10350,12 @@
                  "type": {
                    "const": "pane_link_resolved",
                    "type": "string"
@@ -28,7 +139,7 @@ index e2553f75..6608d2d5 100644
                  }
                },
                "required": [
-@@ -10274,6 +10286,12 @@
+@@ -10274,6 +10369,12 @@
                  "handled": {
                    "type": "boolean"
                  },
@@ -41,8 +152,111 @@ index e2553f75..6608d2d5 100644
                  "type": {
                    "const": "pane_link_activated",
                    "type": "string"
+@@ -10415,6 +10516,41 @@
+                 "type"
+               ],
+               "type": "object"
++            },
++            {
++              "properties": {
++                "sent": {
++                  "type": "boolean"
++                },
++                "type": {
++                  "const": "client_open_url",
++                  "type": "string"
++                }
++              },
++              "required": [
++                "type",
++                "sent"
++              ],
++              "type": "object"
++            },
++            {
++              "properties": {
++                "links": {
++                  "items": {
++                    "$ref": "#/schemas/success_response/$defs/PaneLinkInfo"
++                  },
++                  "type": "array"
++                },
++                "type": {
++                  "const": "pane_links",
++                  "type": "string"
++                }
++              },
++              "required": [
++                "type",
++                "links"
++              ],
++              "type": "object"
+             }
+           ]
+         },
+diff --git a/src/api/schema.rs b/src/api/schema.rs
+index 439ed331..716b45b5 100644
+--- a/src/api/schema.rs
++++ b/src/api/schema.rs
+@@ -249,6 +249,10 @@ pub enum Method {
+     PluginPaneFocus(PluginPaneFocusParams),
+     #[serde(rename = "plugin.pane.close")]
+     PluginPaneClose(PluginPaneCloseParams),
++    #[serde(rename = "client.open_url")]
++    ClientOpenUrl(ClientOpenUrlParams),
++    #[serde(rename = "pane.links")]
++    PaneLinks(PaneLinksParams),
+ }
+ 
+ #[cfg(test)]
+diff --git a/src/api/schema/common.rs b/src/api/schema/common.rs
+index bf0d7caf..662b3ddb 100644
+--- a/src/api/schema/common.rs
++++ b/src/api/schema/common.rs
+@@ -61,6 +61,13 @@ pub struct ClientWindowTitleSetParams {
+     pub title: String,
+ }
+ 
++/// Opens an `http(s)` URL with the foreground client's system opener, i.e. on
++/// the machine the user is attached from rather than the server's host.
++#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
++pub struct ClientOpenUrlParams {
++    pub url: String,
++}
++
+ /// Updates whether the requesting client shell receives and controls pane presentation.
+ #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
+ pub struct ClientShellSurfaceSetParams {
+diff --git a/src/api/schema/panes.rs b/src/api/schema/panes.rs
+index 9dbe0221..17edbd61 100644
+--- a/src/api/schema/panes.rs
++++ b/src/api/schema/panes.rs
+@@ -687,6 +687,23 @@ pub struct PaneReadResult {
+     pub truncated: bool,
+ }
+ 
++#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
++pub struct PaneLinksParams {
++    pub pane_id: String,
++}
++
++/// One link on a pane's viewport, classified the way Ctrl-hover classifies it:
++/// a web destination (`url`) or an existing file or directory (`path`).
++#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
++pub struct PaneLinkInfo {
++    /// Display segments in reading order; a wrapped link has one per row.
++    pub regions: Vec<PaneLinkRegion>,
++    #[serde(default, skip_serializing_if = "Option::is_none")]
++    pub url: Option<String>,
++    #[serde(default, skip_serializing_if = "Option::is_none")]
++    pub path: Option<String>,
++}
++
+ /// Inclusive display-cell columns on a pane's current viewport.
+ #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
+ pub struct PaneLinkRegion {
 diff --git a/src/api/schema/response.rs b/src/api/schema/response.rs
-index e92e4952..c8833b37 100644
+index e92e4952..e6f235b0 100644
 --- a/src/api/schema/response.rs
 +++ b/src/api/schema/response.rs
 @@ -249,11 +249,17 @@ pub enum ResponseResult {
@@ -63,8 +277,21 @@ index e92e4952..c8833b37 100644
      },
      PluginLogList {
          logs: Vec<PluginCommandLogInfo>,
+@@ -278,6 +284,12 @@ pub enum ResponseResult {
+         projection_revision: u64,
+     },
+     Ok {},
++    ClientOpenUrl {
++        sent: bool,
++    },
++    PaneLinks {
++        links: Vec<super::panes::PaneLinkInfo>,
++    },
+ }
+ 
+ #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
 diff --git a/src/api/schema/tests.rs b/src/api/schema/tests.rs
-index 3b43133b..36c15b14 100644
+index 3b43133b..56158d1e 100644
 --- a/src/api/schema/tests.rs
 +++ b/src/api/schema/tests.rs
 @@ -1344,6 +1344,7 @@ fn pane_link_activate_round_trips() {
@@ -75,7 +302,30 @@ index 3b43133b..36c15b14 100644
      };
      let json = serde_json::to_string(&response).unwrap();
      let restored: ResponseResult = serde_json::from_str(&json).unwrap();
-@@ -1450,10 +1451,13 @@ fn pane_link_resolve_round_trips() {
+@@ -1436,6 +1437,22 @@ fn popup_close_request_round_trips() {
+     assert_eq!(json["params"], serde_json::json!({}));
+ }
+ 
++#[test]
++fn client_open_url_round_trips() {
++    let request: Request = serde_json::from_value(serde_json::json!({
++        "id": "open", "method": "client.open_url",
++        "params": {"url": "https://example.com"}
++    }))
++    .unwrap();
++    assert!(matches!(
++        &request.method,
++        Method::ClientOpenUrl(params) if params.url == "https://example.com"
++    ));
++    let json = serde_json::to_value(ResponseResult::ClientOpenUrl { sent: true }).unwrap();
++    assert_eq!(json["type"], "client_open_url");
++    assert_eq!(json["sent"], true);
++}
++
+ #[test]
+ fn pane_link_resolve_round_trips() {
+     let request: Request = serde_json::from_value(serde_json::json!({
+@@ -1450,10 +1467,13 @@ fn pane_link_resolve_round_trips() {
              start_col: 3,
              end_col: 9,
          }],
@@ -89,11 +339,24 @@ index 3b43133b..36c15b14 100644
      assert_eq!(
          serde_json::from_value::<ResponseResult>(json).unwrap(),
          result
+diff --git a/src/api/server.rs b/src/api/server.rs
+index 0a4cfa66..80a0ab1d 100644
+--- a/src/api/server.rs
++++ b/src/api/server.rs
+@@ -616,6 +616,8 @@ pub(crate) fn api_method_name(method: &Method) -> &'static str {
+         Method::CommandInvoke(_) => "command.invoke",
+         Method::ClientWindowTitleSet(_) => "client.window_title.set",
+         Method::ClientWindowTitleClear(_) => "client.window_title.clear",
++        Method::ClientOpenUrl(_) => "client.open_url",
++        Method::PaneLinks(_) => "pane.links",
+         Method::ClientShellSurfaceSet(_) => "client_shell.surface.set",
+         Method::SessionSnapshot(_) => "session.snapshot",
+         Method::WorkspaceCreate(_) => "workspace.create",
 diff --git a/src/app/actions.rs b/src/app/actions.rs
-index f01dd05b..8345de58 100644
+index f01dd05b..456295e2 100644
 --- a/src/app/actions.rs
 +++ b/src/app/actions.rs
-@@ -1050,6 +1050,110 @@ pub(super) fn url_from_link_target(target: crate::ghostty::LinkTarget) -> Option
+@@ -1050,8 +1050,116 @@ pub(super) fn url_from_link_target(target: crate::ghostty::LinkTarget) -> Option
      }
  }
  
@@ -202,9 +465,39 @@ index f01dd05b..8345de58 100644
 +}
 +
  pub(crate) fn safe_web_url(url: &str) -> Option<&str> {
-     (url.starts_with("http://") || url.starts_with("https://")).then_some(url)
+-    (url.starts_with("http://") || url.starts_with("https://")).then_some(url)
++    let rest = url
++        .strip_prefix("https://")
++        .or_else(|| url.strip_prefix("http://"))?;
++    // A bare scheme (e.g. prose ending in "https://") has nowhere to go.
++    (!rest.is_empty() && !rest.starts_with('/')).then_some(url)
  }
-@@ -2550,6 +2654,45 @@ mod tests {
+ 
+ #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+@@ -1152,6 +1260,22 @@ fn text_cells(row: &str) -> Vec<TextCell> {
+         .collect()
+ }
+ 
++/// The character drawn at each display column of `row`; the second column of a
++/// wide character holds `'\0'`.
++pub(crate) fn row_columns(row: &str) -> Vec<char> {
++    let mut columns = Vec::new();
++    for cell in text_cells(row) {
++        let col = usize::from(cell.start_col);
++        if col < columns.len() {
++            continue;
++        }
++        columns.resize(col, ' ');
++        columns.push(cell.ch);
++        columns.resize(usize::from(cell.end_col) + 1, '\0');
++    }
++    columns
++}
++
+ fn cell_index_at_column(cells: &[TextCell], col: u16) -> Option<usize> {
+     cells
+         .iter()
+@@ -2550,6 +2674,45 @@ mod tests {
          }
      }
  
@@ -250,14 +543,169 @@ index f01dd05b..8345de58 100644
      #[test]
      fn url_at_byte_returns_safe_visible_url_only() {
          assert_eq!(
+@@ -2565,6 +2728,7 @@ mod tests {
+             None
+         );
+         assert_eq!(selected_url("open file:///tmp/report", "file"), None);
++        assert_eq!(selected_url("open as https://", "https"), None);
+     }
+ 
+     #[test]
+diff --git a/src/app/api.rs b/src/app/api.rs
+index dd87c508..1bda4883 100644
+--- a/src/app/api.rs
++++ b/src/app/api.rs
+@@ -1058,6 +1058,12 @@ impl App {
+                     },
+                 );
+             }
++            Method::ClientOpenUrl(_) => {
++                return responses::encode_success(
++                    request.id,
++                    ResponseResult::ClientOpenUrl { sent: false },
++                );
++            }
+             Method::SessionSnapshot(_) => return self.handle_session_snapshot(request.id),
+             Method::WorkspaceList(_) => return self.handle_workspace_list(request.id),
+             Method::WorkspaceGet(target) => return self.handle_workspace_get(request.id, target),
+@@ -1184,6 +1190,7 @@ impl App {
+             Method::PaneLinkActivate(params) => {
+                 return self.handle_pane_link_activate(request.id, params);
+             }
++            Method::PaneLinks(params) => return self.handle_pane_links(request.id, params),
+             Method::PaneRename(params) => return self.handle_pane_rename(request.id, params),
+             Method::PaneRead(params) => return self.handle_pane_read(request.id, params),
+             Method::PaneReportAgent(params) => {
 diff --git a/src/app/api/plugins/mod.rs b/src/app/api/plugins/mod.rs
-index daafc839..a3ad43d0 100644
+index daafc839..a27aa794 100644
 --- a/src/app/api/plugins/mod.rs
 +++ b/src/app/api/plugins/mod.rs
-@@ -18,6 +18,21 @@ use manifest::{
+@@ -18,6 +18,143 @@ use manifest::{
      effective_platforms, ensure_platform_supported, normalize_action_id, normalize_plugin_source,
  };
  
++/// Every link on the viewport, as Ctrl-hover would classify the cell under the
++/// pointer. OSC 8 links group by destination in reading order, and a run of
++/// blank cells between two cells of one destination (an app's own wrap indent)
++/// does not split it. Plain text is probed at each word start.
++fn visible_links(
++    runtime: &crate::terminal::TerminalRuntime,
++) -> Vec<crate::api::schema::PaneLinkInfo> {
++    use crate::api::schema::{PaneLinkInfo, PaneLinkRegion};
++
++    let (rows, cols) = runtime.current_size();
++    let text = runtime.visible_text();
++    let grid: Vec<Vec<char>> = (0..rows)
++        .map(|row| {
++            text.lines()
++                .nth(usize::from(row))
++                .map(crate::app::actions::row_columns)
++                .unwrap_or_default()
++        })
++        .collect();
++    let blank = |row: u16, col: u16| {
++        grid.get(usize::from(row))
++            .and_then(|columns| columns.get(usize::from(col)))
++            .is_none_or(|ch| ch.is_whitespace())
++    };
++    let mut links: Vec<PaneLinkInfo> = Vec::new();
++    let mut covered = std::collections::HashSet::new();
++
++    let mut cells = runtime.visible_hyperlinks(ratatui::layout::Rect::new(0, 0, cols, rows));
++    cells.sort_by_key(|((x, y), _, _)| (*y, *x));
++    let mut last: Option<(u16, u16)> = None;
++    for ((x, y), _, uri) in cells {
++        covered.insert((y, x));
++        if crate::app::actions::safe_web_url(&uri).is_none() {
++            last = None;
++            continue;
++        }
++        let only_blanks_between = last.is_some_and(|(last_y, last_x)| {
++            let mut row = last_y;
++            let mut col = last_x + 1;
++            while (row, col) < (y, x) {
++                if col >= cols {
++                    row += 1;
++                    col = 0;
++                    continue;
++                }
++                if !blank(row, col) {
++                    return false;
++                }
++                col += 1;
++            }
++            true
++        });
++        match links.last_mut() {
++            Some(link) if only_blanks_between && link.url.as_deref() == Some(uri.as_str()) => {
++                match link.regions.last_mut() {
++                    Some(region) if region.row == y && region.end_col + 1 == x => {
++                        region.end_col = x;
++                    }
++                    _ => link.regions.push(PaneLinkRegion {
++                        row: y,
++                        start_col: x,
++                        end_col: x,
++                    }),
++                }
++            }
++            _ => links.push(PaneLinkInfo {
++                regions: vec![PaneLinkRegion {
++                    row: y,
++                    start_col: x,
++                    end_col: x,
++                }],
++                url: Some(uri),
++                path: None,
++            }),
++        }
++        last = Some((y, x));
++    }
++
++    for row in 0..rows {
++        let Some(columns) = grid.get(usize::from(row)) else {
++            continue;
++        };
++        for (col, ch) in columns.iter().enumerate() {
++            let col = col as u16;
++            let word_start = col == 0 || !columns[usize::from(col) - 1].is_alphanumeric();
++            if !word_start
++                || !(ch.is_alphanumeric() || matches!(ch, '~' | '.' | '/'))
++                || covered.contains(&(row, col))
++            {
++                continue;
++            }
++            let url_regions =
++                runtime.link_regions_at(col, row, crate::app::actions::url_byte_range);
++            let (regions, url, path) = if url_regions.is_empty() {
++                let (url, path) = match text_link_at(runtime, col, row) {
++                    Some(crate::app::actions::TextLink::Url(url)) => (Some(url), None),
++                    Some(crate::app::actions::TextLink::Path(path)) => (None, Some(path)),
++                    None => continue,
++                };
++                let regions =
++                    runtime.link_regions_at(col, row, crate::app::actions::token_byte_range);
++                (regions, url, path)
++            } else {
++                let url = runtime
++                    .link_target_at(col, row)
++                    .and_then(crate::app::actions::url_from_link_target);
++                (url_regions, url, None)
++            };
++            if regions.is_empty() || (url.is_none() && path.is_none()) {
++                continue;
++            }
++            for region in &regions {
++                for x in region.start_col..=region.end_col {
++                    covered.insert((region.row, x));
++                }
++            }
++            links.push(PaneLinkInfo { regions, url, path });
++        }
++    }
++    links
++}
++
 +/// Plain-text link (existing path or scheme-less domain) under a pane cell,
 +/// resolving relative paths against the pane's foreground working directory.
 +fn text_link_at(
@@ -276,7 +724,7 @@ index daafc839..a3ad43d0 100644
  #[cfg(test)]
  use crate::api::schema::{PluginCommandStatus, PluginInvocationContext};
  pub(crate) use manifest::load_plugin_manifest;
-@@ -319,9 +334,24 @@ impl App {
+@@ -319,23 +456,68 @@ impl App {
          params: PaneLinkActivateParams,
      ) -> String {
          match self.read_checked_pane_link(&id, &params, "resolution", |runtime, col, row| {
@@ -303,7 +751,31 @@ index daafc839..a3ad43d0 100644
              Err(error) => error,
          }
      }
-@@ -331,11 +361,19 @@ impl App {
+ 
++    pub(super) fn handle_pane_links(
++        &mut self,
++        id: String,
++        params: crate::api::schema::PaneLinksParams,
++    ) -> String {
++        let Some((ws_idx, pane_id)) = self.parse_pane_id(&params.pane_id) else {
++            return encode_error(id, "pane_not_found", "pane not found");
++        };
++        let Some(runtime) =
++            self.state
++                .runtime_for_pane_in_workspace(&self.terminal_runtimes, ws_idx, pane_id)
++        else {
++            return encode_error(id, "pane_not_found", "pane runtime not found");
++        };
++        encode_success(
++            id,
++            ResponseResult::PaneLinks {
++                links: visible_links(runtime),
++            },
++        )
++    }
++
+     pub(super) fn handle_pane_link_activate(
+         &mut self,
          id: String,
          params: PaneLinkActivateParams,
      ) -> String {
@@ -326,7 +798,7 @@ index daafc839..a3ad43d0 100644
              }) {
                  Ok(value) => value,
                  Err(error) => return error,
-@@ -350,7 +388,7 @@ impl App {
+@@ -350,7 +532,7 @@ impl App {
              },
              None => false,
          };
@@ -335,7 +807,7 @@ index daafc839..a3ad43d0 100644
      }
  
      pub(crate) fn invoke_plugin_link_handler_for_url(
-@@ -840,7 +878,7 @@ mod tests {
+@@ -840,7 +1022,7 @@ mod tests {
              method: Method::PaneLinkResolve(params.clone()),
          });
          assert!(
@@ -344,6 +816,186 @@ index daafc839..a3ad43d0 100644
          );
          assert!(
              rx.try_recv().is_err(),
+diff --git a/src/cli.rs b/src/cli.rs
+index 3dbdceaf..9d843605 100644
+--- a/src/cli.rs
++++ b/src/cli.rs
+@@ -411,6 +411,7 @@ fn run_terminal_command(args: &[String]) -> std::io::Result<i32> {
+         "attach" => terminal_attach(&args[1..]),
+         "session" => terminal_session(&args[1..]),
+         "title" => terminal_title(&args[1..]),
++        "open-url" => terminal_open_url(&args[1..]),
+         "help" | "--help" | "-h" => {
+             print_terminal_help();
+             Ok(0)
+@@ -683,6 +684,21 @@ fn parse_terminal_dimension(raw: &str, flag: &str) -> std::io::Result<u16> {
+     Ok(parsed)
+ }
+ 
++fn terminal_open_url(args: &[String]) -> std::io::Result<i32> {
++    let [url] = args else {
++        eprintln!("usage: herdr terminal open-url <url>");
++        return Ok(2);
++    };
++    if matches!(url.as_str(), "help" | "--help" | "-h") {
++        eprintln!("usage: herdr terminal open-url <url>");
++        return Ok(0);
++    }
++    print_response(&send_request(&Request {
++        id: "cli:terminal:open-url".into(),
++        method: Method::ClientOpenUrl(crate::api::schema::ClientOpenUrlParams { url: url.clone() }),
++    })?)
++}
++
+ fn terminal_title(args: &[String]) -> std::io::Result<i32> {
+     match args.first().map(|arg| arg.as_str()) {
+         Some("set") => {
+@@ -1040,6 +1056,7 @@ fn print_terminal_help() {
+     eprintln!("  herdr terminal session observe <target> [--cols N] [--rows N]");
+     eprintln!("  herdr terminal title set <title>");
+     eprintln!("  herdr terminal title clear");
++    eprintln!("  herdr terminal open-url <url>");
+     eprintln!("  detach from direct attach with ctrl+b q; send literal ctrl+b with ctrl+b ctrl+b");
+ }
+ 
+diff --git a/src/cli/pane.rs b/src/cli/pane.rs
+index 33583ee4..3b52be99 100644
+--- a/src/cli/pane.rs
++++ b/src/cli/pane.rs
+@@ -27,6 +27,7 @@ pub(super) fn run_pane_command(args: &[String]) -> std::io::Result<i32> {
+         "resize" => pane_resize(&args[1..]),
+         "zoom" => pane_zoom(&args[1..]),
+         "read" => pane_read(&args[1..]),
++        "links" => pane_links(&args[1..]),
+         "rename" => pane_rename(&args[1..]),
+         "input" => pane_input(&args[1..]),
+         "split" => pane_split(&args[1..]),
+@@ -448,6 +449,19 @@ fn pane_rename(args: &[String]) -> std::io::Result<i32> {
+     })
+ }
+ 
++fn pane_links(args: &[String]) -> std::io::Result<i32> {
++    let [pane_id] = args else {
++        eprintln!("usage: herdr pane links <pane_id>");
++        return Ok(2);
++    };
++    super::print_response(&super::send_request(&Request {
++        id: "cli:pane:links".into(),
++        method: Method::PaneLinks(crate::api::schema::PaneLinksParams {
++            pane_id: pane_id.clone(),
++        }),
++    })?)
++}
++
+ fn pane_read(args: &[String]) -> std::io::Result<i32> {
+     let params = match parse_pane_read_args(args) {
+         Ok(params) => params,
+@@ -1674,6 +1688,7 @@ fn print_pane_help() {
+     eprintln!("  herdr pane list [--workspace <workspace_id>]");
+     eprintln!("  herdr pane current [--pane ID|--current]");
+     eprintln!("  herdr pane get <pane_id>");
++    eprintln!("  herdr pane links <pane_id>");
+     eprintln!("  herdr pane layout [--pane ID|--current]");
+     eprintln!("  herdr pane process-info [--pane ID|--current]");
+     eprintln!("  herdr pane neighbor --direction left|right|up|down [--pane ID|--current]");
+diff --git a/src/cli/spec.rs b/src/cli/spec.rs
+index 7c50b0f6..e995fc7b 100644
+--- a/src/cli/spec.rs
++++ b/src/cli/spec.rs
+@@ -518,6 +518,11 @@ fn pane_command() -> Command {
+                 .arg(flag("on"))
+                 .arg(flag("off")),
+         )
++        .subcommand(
++            Command::new("links")
++                .about("List the links on a pane's viewport, as Ctrl-hover sees them")
++                .arg(required("pane_id", "PANE_ID")),
++        )
+         .subcommand(
+             Command::new("read")
+                 .about("Read pane terminal output")
+@@ -742,6 +747,11 @@ fn terminal_command() -> Command {
+                 )
+                 .subcommand(Command::new("clear").about("Clear the outer terminal title")),
+         )
++        .subcommand(
++            Command::new("open-url")
++                .about("Open an http(s) URL on the machine the foreground client runs on")
++                .arg(required("url", "URL")),
++        )
+ }
+ 
+ fn session_command() -> Command {
+diff --git a/src/client/endpoint/control.rs b/src/client/endpoint/control.rs
+index f2fe1b76..cb16874f 100644
+--- a/src/client/endpoint/control.rs
++++ b/src/client/endpoint/control.rs
+@@ -11,6 +11,7 @@ pub(crate) enum EndpointControlMessage {
+     AgentViewProjection(DecodedAgentViewProjection),
+     AgentCompletions(crate::protocol::endpoint::EndpointAgentCompletions),
+     Snapshot(Box<crate::protocol::ClientShellSnapshot>),
++    OpenUrl(String),
+     Ignored,
+ }
+ 
+@@ -21,6 +22,11 @@ pub(crate) fn decode_endpoint_control(
+     if kind == crate::protocol::endpoint::HEALTH_PONG_KIND {
+         return Ok(EndpointControlMessage::HealthPong);
+     }
++    if kind == crate::protocol::endpoint::OPEN_URL_KIND {
++        return Ok(crate::app::actions::safe_web_url(data)
++            .map(|url| EndpointControlMessage::OpenUrl(url.to_owned()))
++            .unwrap_or(EndpointControlMessage::Ignored));
++    }
+     if kind == crate::protocol::endpoint::AGENT_COMPLETIONS_KIND {
+         return Ok(serde_json::from_str(data)
+             .map(EndpointControlMessage::AgentCompletions)
+@@ -75,6 +81,25 @@ mod tests {
+     use super::*;
+     use crate::client::endpoint::ProfileId;
+ 
++    #[test]
++    fn open_url_control_accepts_only_web_urls() {
++        let kind = crate::protocol::endpoint::OPEN_URL_KIND;
++        assert!(matches!(
++            decode_endpoint_control(kind, "https://example.com/a?b=c").unwrap(),
++            EndpointControlMessage::OpenUrl(url) if url == "https://example.com/a?b=c"
++        ));
++        for unsafe_url in [
++            "file:///etc/passwd",
++            "javascript:alert(1)",
++            "/Applications/X.app",
++        ] {
++            assert!(matches!(
++                decode_endpoint_control(kind, unsafe_url).unwrap(),
++                EndpointControlMessage::Ignored
++            ));
++        }
++    }
++
+     #[test]
+     fn unknown_optional_controls_are_ignored() {
+         assert!(matches!(
+diff --git a/src/client/mod.rs b/src/client/mod.rs
+index f55db195..36233b59 100644
+--- a/src/client/mod.rs
++++ b/src/client/mod.rs
+@@ -2113,6 +2113,15 @@ async fn run_client_loop(
+                                 }
+                                 continue;
+                             }
++                            Ok(endpoint::EndpointControlMessage::OpenUrl(url)) => {
++                                // Only the endpoint on screen may open things on this machine.
++                                if endpoint_active {
++                                    if let Err(error) = crate::platform::open_url(&url) {
++                                        warn!(%error, "failed to open URL from server");
++                                    }
++                                }
++                                continue;
++                            }
+                             Ok(endpoint::EndpointControlMessage::Ignored) => {
+                                 debug!(%kind, "ignoring unknown endpoint control message");
+                                 continue;
 diff --git a/src/client/shell/actions.rs b/src/client/shell/actions.rs
 index 83819b0d..e225d11a 100644
 --- a/src/client/shell/actions.rs
@@ -882,3 +1534,61 @@ index 312c65ca..671b18ba 100644
              frame_data.hyperlinks.clear();
          }
          let frame_data = if self.draw_host_cursor {
+diff --git a/src/protocol/endpoint.rs b/src/protocol/endpoint.rs
+index d1e577c4..59b8264d 100644
+--- a/src/protocol/endpoint.rs
++++ b/src/protocol/endpoint.rs
+@@ -31,6 +31,8 @@ pub const AGENT_VIEW_PROJECTION_CAPABILITY: &str = "agent_view_projection";
+ pub const AGENT_VIEW_PROJECTION_KIND: &str = "endpoint.agent-view.v1";
+ pub const AGENT_COMPLETIONS_CAPABILITY: &str = "agent_completions";
+ pub const AGENT_COMPLETIONS_KIND: &str = "endpoint.agent-completions.v1";
++/// Server-initiated `http(s)` URL for the foreground client to open locally.
++pub const OPEN_URL_KIND: &str = "client.open-url.v1";
+ 
+ #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+ pub struct EndpointAgentCompletions {
+diff --git a/src/server/headless.rs b/src/server/headless.rs
+index cb2c6196..630be149 100644
+--- a/src/server/headless.rs
++++ b/src/server/headless.rs
+@@ -1555,6 +1555,28 @@ impl HeadlessServer {
+         .unwrap_or_else(|_| "{}".to_string())
+     }
+ 
++    fn handle_client_open_url_api(&mut self, id: String, url: &str) -> String {
++        if crate::app::actions::safe_web_url(url).is_none() {
++            return serde_json::to_string(&api::schema::ErrorResponse {
++                id,
++                error: api::schema::ErrorBody {
++                    code: "invalid_params".into(),
++                    message: "only http:// and https:// URLs can be opened".into(),
++                },
++            })
++            .unwrap_or_else(|_| "{}".to_string());
++        }
++        let sent = self.send_to_foreground_client(ServerMessage::EndpointControl {
++            kind: crate::protocol::endpoint::OPEN_URL_KIND.into(),
++            data: url.to_owned(),
++        });
++        serde_json::to_string(&api::schema::SuccessResponse {
++            id,
++            result: api::schema::ResponseResult::ClientOpenUrl { sent },
++        })
++        .unwrap_or_else(|_| "{}".to_string())
++    }
++
+     fn drain_client_config_reload_request(&mut self) {
+         if !self.app.state.request_client_config_reload {
+             return;
+@@ -2974,6 +2996,11 @@ impl HeadlessServer {
+                 let _ = msg.respond_to.send(response);
+                 return true;
+             }
++            api::schema::Method::ClientOpenUrl(params) => {
++                let response = self.handle_client_open_url_api(msg.request.id.clone(), &params.url);
++                let _ = msg.respond_to.send(response);
++                return true;
++            }
+             _ => {}
+         }
+ 
