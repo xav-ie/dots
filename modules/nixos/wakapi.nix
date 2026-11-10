@@ -5,10 +5,9 @@
 # whatever `api_url` sits in ~/.wakatime.cfg. Point that at this instance and
 # the coding stats stay on our own hardware instead of wakatime.com.
 #
-# Runs as a hardened OCI container (like modules/nixos/llama-server.nix) rather
-# than a host service, so an /api exploit stays in a throwaway namespace, not
-# the host. The container drops all capabilities, runs read-only as a non-root
-# uid, and only its /data volume is writable.
+# Runs as a hardened OCI container rather than a host service, so an /api
+# exploit stays in a throwaway namespace, not the host. The container drops all
+# capabilities, runs read-only as a non-root uid, and only its /data volume is writable.
 #
 # Traefik fronts it: praesidium's traefik (a host service with `group = podman`)
 # discovers the container over the podman socket via the `traefik.enable` labels

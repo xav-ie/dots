@@ -85,7 +85,7 @@ in
         # services.xserver.enable is true; this is a Wayland-only host (greetd +
         # Hyprland, no X), so load them explicitly or the GPU driver never binds
         # (blank simpledrm, Hyprland aborts in initServer). nvidia_uvm is for CUDA
-        # (scribe/llama/whisperx containers).
+        # (scribe/whisperx containers).
         "nvidia"
         "nvidia_modeset"
         "nvidia_drm"
@@ -346,26 +346,8 @@ in
       };
 
       # Host values for this machine's single-GPU workloads; definitions live in
-      # nixos/{nginx,llama-server}.nix.
+      # nixos/nginx.nix.
       reverse-proxy.enable = false;
-
-      # llama.cpp server for local AI code completion (cursortab).
-      # Accessible at https://llama.lalala.casa via traefik. Sweep ships
-      # only as GGUF, which llama.cpp loads natively (vLLM cannot).
-      # Disabled: cursortab now uses Featherless.ai's hosted sweep-next-edit-v2-7B
-      # ($10/mo, no local GPU). Flip to `true` + repoint cursortab to self-host.
-      llama-server = {
-        enable = false;
-        model = "sweepai/sweep-next-edit-1.5B";
-        contextSize = 8192;
-        flashAttention = "on";
-        cacheReuse = 256;
-        kvCacheType = "q8_0";
-        speculation = {
-          enable = true;
-          type = "ngram-simple";
-        };
-      };
 
       # WhisperX batch transcription + diarization, https://whisperx.lalala.casa.
       # Disabled: the scribe streaming service + extension-side active-speaker

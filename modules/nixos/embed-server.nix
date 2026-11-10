@@ -48,9 +48,8 @@
           extraOptions = [
             "--device=nvidia.com/gpu=all"
             "--security-opt=label=disable"
-            # Same reasoning as llama-server.nix: the first healthcheck fires
-            # while the model is still loading, so a live llama-server process
-            # counts as healthy.
+            # The first healthcheck fires while the model is still loading,
+            # so a live llama-server process counts as healthy.
             "--health-cmd"
             ''curl -fs --max-time 5 http://localhost:${containerPort |> toString}/health || [ "$(cat /proc/1/comm)" = llama-server ]''
           ];
