@@ -41,6 +41,8 @@ const ANIMATION_SECONDS = 20
 # sketchybar runs plugin scripts concurrently, and joining a network fires a
 # burst of events; one run at a time decides the icon and the animation, or two
 # runs both start an animator.
+# System tools are called by full path: the launchd agent's PATH has only the
+# nix packages sketchybar needs, not /bin.
 const LOCK = $"($CACHE_DIR)/wifi.lock"
 
 # Parse `power=on associated=yes ip=yes internet=online level=3 ...` into a
@@ -65,9 +67,9 @@ def parse-wifi [line: string] {
 # /sbin or /usr/sbin.
 def is-hotspot [wifi: record] {
   let expensive = ($wifi.associated? == "yes") and (
-    do -i { /usr/sbin/ipconfig getsummary en0 } | complete | get stdout | default ""
+    ^/usr/sbin/ipconfig getsummary en0 | complete | get stdout | default ""
     | str contains "IsExpensive : TRUE")
-  $expensive or (do -i { /sbin/route -n get default } | complete | get stdout | default ""
+  $expensive or (^/sbin/route -n get default | complete | get stdout | default ""
     | str contains "gateway: 172.20.10.1")
 }
 
@@ -147,11 +149,11 @@ def stop-animation [] {
   if not ($ANIMATION | path exists) { return }
   let pid = open $ANIMATION | get pid
   rm -f $ANIMATION
-  let command = do -i { ^ps -p $pid -o command= } | complete | get stdout
+  let command = ^/bin/ps -p $pid -o command= | complete | get stdout
   if not ($command | str contains "sketchybar-icons animate") { return }
-  do -i { ^kill $pid }
+  do -i { ^/bin/kill $pid }
   for _ in 1..20 {
-    if (do -i { ^kill -0 $pid } | complete | get exit_code) != 0 { break }
+    if (^/bin/kill -0 $pid | complete | get exit_code) != 0 { break }
     sleep 50ms
   }
 }
@@ -164,25 +166,26 @@ def sync-animation [spec: record] {
   let state = $spec.key | str replace --regex '-0$' ""
   let current = if ($ANIMATION | path exists) { open $ANIMATION } else { null }
   if $current != null and $current.state == $state {
-    return ((do -i { ^kill -0 $current.pid } | complete | get exit_code) == 0)
+    return ((^/bin/kill -0 $current.pid | complete | get exit_code) == 0)
   }
   stop-animation
   if ($spec.frames? | is-empty) { return false }
   let frames = $spec.frames | each {|f| render $f } | str join ","
-  let pid = ^sh -c 'sketchybar-icons animate --item "$1" --frames "$2" --interval 0.4 --for "$3" >/dev/null 2>&1 & echo $!' sh $env.NAME $frames $ANIMATION_SECONDS | str trim | into int
+  let pid = ^/bin/sh -c 'sketchybar-icons animate --item "$1" --frames "$2" --interval 0.4 --for "$3" >/dev/null 2>&1 & echo $!' sh $env.NAME $frames $ANIMATION_SECONDS | str trim | into int
   {pid: $pid, state: $state} | save -f $ANIMATION
   # An animator that failed to start (e.g. a sketchybar-icons without
   # `animate`) leaves the caller to draw the static glyph.
   sleep 100ms
-  (do -i { ^kill -0 $pid } | complete | get exit_code) == 0
+  (^/bin/kill -0 $pid | complete | get exit_code) == 0
 }
 
 # Run `body` holding LOCK. A lock older than a few seconds was left by a run
 # that died, so it's taken over rather than waited on forever.
 def locked [body: closure] {
   for _ in 1..100 {
-    if (do -i { ^mkdir $LOCK } | complete | get exit_code) == 0 { break }
-    if ((date now) - (ls -D $LOCK | get 0.modified)) > 5sec { rm -rf $LOCK }
+    if (^/bin/mkdir $LOCK | complete | get exit_code) == 0 { break }
+    # The lock may vanish between the mkdir and this check.
+    try { if ((date now) - (ls -D $LOCK | get 0.modified)) > 5sec { rm -rf $LOCK } }
     sleep 50ms
   }
   try { do $body } catch {|e| print -e $"wifi: ($e.msg)" }
