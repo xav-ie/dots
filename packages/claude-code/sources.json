@@ -1,44 +1,44 @@
 {
   "native": {
-    "version": "2.1.308",
+    "version": "2.1.311",
     "gcs_bucket": "https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases",
     "sources": {
       "aarch64-darwin": {
         "platform": "darwin-arm64",
-        "hash": "sha256-ypI8hqyEswV0qCMxoFtuBmwnR3qSbOr/5GqEWjPk3Tc="
-      },
-      "x86_64-linux": {
-        "platform": "linux-x64",
-        "hash": "sha256-NWcz8YX6mI5r86qaVVJp/dFnmCouKoDTyKeAN7uSrVg="
+        "hash": "sha256-hdjAhwf8/R54/6AgTu+8bsnk/iLzdfsnZ++F2VftMWE="
       },
       "aarch64-linux": {
         "platform": "linux-arm64",
-        "hash": "sha256-/dIubLtzTVgPVmTEjfQpTu7IUCGP8H8Yb5rzBCY5buE="
+        "hash": "sha256-LiSWyagGXfk6yw/KLTQfWaa4d3ZJsuAlq4ybzV7vYfM="
       },
       "x86_64-darwin": {
         "platform": "darwin-x64",
-        "hash": "sha256-mgvBQPX7BuY2ZiTXcDce8pDmcx0ehMTe9dr035RtG1k="
+        "hash": "sha256-004cuCAVsFBHGpdXSqbqb2mOzzqXphyYCWH0Otn4OPU="
+      },
+      "x86_64-linux": {
+        "platform": "linux-x64",
+        "hash": "sha256-htwfzGlJgVnq8V9EZhPoRwEPkDa/u9/9TEk1C+hImto="
       }
     }
   },
   "npm": {
-    "version": "2.1.308",
+    "version": "2.1.322",
     "sources": {
       "aarch64-darwin": {
         "platform": "darwin-arm64",
-        "hash": "sha256-ZD7vZCYpWtCmaSN8Urqoej2VkbL31k5LscmNgOoJV5c="
+        "hash": "sha256-kGvelALf4NKjjpMfWCt8gxrd7zGwK036W/BQRwdfR2g="
       },
       "x86_64-linux": {
         "platform": "linux-x64",
-        "hash": "sha256-8yl0j+sWmhvN21ePAZWvgQoaUofr9ilyhGSCFJCwQzM="
+        "hash": "sha256-PMF12CmAwgq2YFfTRb0tkTJE+M8XkdEHIqEiUhS1chk="
       },
       "x86_64-darwin": {
         "platform": "darwin-x64",
-        "hash": "sha256-puzhAYgWMfXPVULj+ELKpB6dAV6oniPHWRNYk+v8f0Y="
+        "hash": "sha256-rFw5COC5EEiRExD+gtQRN4m0SRney9hIR/1zD8Qma3o="
       },
       "aarch64-linux": {
         "platform": "linux-arm64",
-        "hash": "sha256-6Tn/REW5lC/gSvDyiS5wUrSMCWCbGzQM56xHyH24YZ8="
+        "hash": "sha256-dNoqwfMYczqXY5CkhIZ1btj9mdzEvbC0hOPP1j9hrlw="
       }
     }
   }
