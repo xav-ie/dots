@@ -176,8 +176,13 @@ rec {
   yubikey-touch-prompt = pkgs.callPackage ./yubikey-touch-prompt { };
 })
 // (optionalAttrs isLinux rec {
+  at-computer = pkgs.callPackage ./at-computer { inherit writeNuApplication; };
   askpass = pkgs.callPackage ./askpass {
-    inherit agsPackages is-sshed;
+    inherit agsPackages at-computer;
+    fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
+  };
+  yubikey-touch-popup = pkgs.callPackage ./yubikey-touch-popup {
+    inherit agsPackages;
     fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";
   };
   bar = pkgs.callPackage ./bar {

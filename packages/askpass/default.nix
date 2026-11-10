@@ -9,7 +9,7 @@
   gobject-introspection,
   gjs,
   agsPackages,
-  is-sshed,
+  at-computer,
   writeShellScript,
   # System UI font, threaded in from lib/fonts.nix so the prompt tracks the same
   # `sans` font as the rest of the GTK config (@FONT@ in style.scss).
@@ -17,8 +17,9 @@
 }:
 let
   # sudo hands the prompt in argv[1]. Two things to settle before the GUI runs:
-  #   - over ssh there is no Wayland session, so the layer-shell window never
-  #     maps and sudo blocks on it; read from the tty instead.
+  #   - nobody at the computer (at-computer), e.g. sudo over ssh or from
+  #     collie: the window would map unseen and sudo would block on it, so read
+  #     from the tty instead.
   #   - wrapGAppsHook *prefixes* GI_TYPELIB_PATH, so an ambient one wins over
   #     ours (this repo's devshell exports a bleeding GTK/glibc set) and gjs
   #     loads typelibs from a different glibc than the binary, which segfaults.
@@ -29,7 +30,7 @@ let
   #     and the prompt maps as a tiled toplevel. This has to happen before gjs
   #     starts; the bundle's imports open the display before app code runs.
   dispatch = writeShellScript "askpass-dispatch" ''
-    if [ "$(${is-sshed}/bin/is-sshed)" = true ]; then
+    if ! ${at-computer}/bin/at-computer >/dev/null; then
       printf '%s' "$1" > /dev/tty
       read -rs password < /dev/tty
       printf '\n' > /dev/tty

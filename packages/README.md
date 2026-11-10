@@ -31,6 +31,12 @@ takes a long time to generate.
 
 fzf files on command line.
 
+### [at-computer](./at-computer)
+
+Check if someone is sitting at this computer right now (desktop session with
+keyboard or mouse input in the last minute). Decides whether a prompt shows on
+screen or in the terminal.
+
 ### [is-sshed](./is-sshed)
 
 Check if there is someone currently ssh-ed into system. Useful for

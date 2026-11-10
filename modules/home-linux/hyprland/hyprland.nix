@@ -271,6 +271,18 @@
 
               listener = [
                 {
+                  # Read by at-computer (packages/at-computer): the stamp exists
+                  # after a minute without keyboard or mouse input, so a prompt
+                  # from nox or collie isn't mistaken for one typed here.
+                  timeout = 60;
+                  on-timeout = "${pkgs.writeShellScript "seat-away" ''
+                    ${pkgs.coreutils}/bin/touch "$XDG_RUNTIME_DIR/seat-away"
+                  ''}";
+                  on-resume = "${pkgs.writeShellScript "seat-back" ''
+                    ${pkgs.coreutils}/bin/rm -f "$XDG_RUNTIME_DIR/seat-away"
+                  ''}";
+                }
+                {
                   timeout = 900;
                   on-timeout = "loginctl lock-session";
                 }

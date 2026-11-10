@@ -1,0 +1,38 @@
+// Same tokens as askpass's panel, so the two read as one family. @FONT@ is
+// substituted with the system `sans` font at build time (see default.nix).
+$bg: #1a1726; // purple-tinted near-black
+$fg: #f2eefb;
+$accent: #bb9af7; // lavender purple
+$dim: rgba(#f2eefb, 0.6);
+$border-width: 4px;
+$border-color: rgba($accent, 0.45);
+$font: "@FONT@", sans-serif;
+
+window#yubikey-touch-popup {
+  background: transparent;
+  font-family: $font;
+  font-weight: 300;
+}
+
+.panel {
+  background-color: rgba($bg, 0.92);
+  border: $border-width solid $border-color;
+  border-radius: 16px;
+  padding: 16px 24px;
+  color: $fg;
+  min-width: 300px;
+
+  image {
+    color: $accent;
+  }
+
+  .title {
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .detail {
+    font-size: 12px;
+    color: $dim;
+  }
+}
