@@ -316,8 +316,8 @@ in
         # Zoom arrows, generated on top of the links patch: a zoomed tab's icon
         # points toward the panes the zoom hides (󰞘 when zoomed into a left pane,
         # 󰞙 into a bottom one, 󰡎 into a middle column, 󰁌 when hidden on 3+
-        # sides). Adds a field to the client/server wire format, so a patched
-        # client can't attach to an unpatched server or vice versa.
+        # sides). The new snapshot field defaults when absent, so patched and
+        # unpatched clients and servers still attach to each other.
         patches = (old.patches or [ ]) ++ [
           ./herdr-links.patch
           ./herdr-zoom-arrows.patch

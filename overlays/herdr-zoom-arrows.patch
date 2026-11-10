@@ -112,13 +112,14 @@ index 05bfc263..557cc58c 100644
              agent_status: AgentStatus::Idle,
          }],
 diff --git a/src/protocol/wire.rs b/src/protocol/wire.rs
-index ead2ddd7..c0657b1b 100644
+index ead2ddd7..d914a72c 100644
 --- a/src/protocol/wire.rs
 +++ b/src/protocol/wire.rs
-@@ -1049,11 +1049,21 @@ pub struct ClientShellTab {
+@@ -1049,11 +1049,22 @@ pub struct ClientShellTab {
      pub label: String,
      pub custom_label: bool,
      pub zoomed: bool,
++    #[serde(default)]
 +    pub zoom_sides: ClientShellZoomSides,
      pub focused: bool,
      #[serde(deserialize_with = "deserialize_client_shell_agent_status")]
@@ -137,7 +138,7 @@ index ead2ddd7..c0657b1b 100644
  #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
  pub struct ClientShellPane {
      pub pane_id: String,
-@@ -2838,6 +2848,7 @@ mod tests {
+@@ -2838,6 +2849,7 @@ mod tests {
                  label: "main".into(),
                  custom_label: true,
                  zoomed: false,
