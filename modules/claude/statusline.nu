@@ -46,6 +46,11 @@ def hash-color [s: string] {
   $palette | get ($h mod ($palette | length))
 }
 
+# "2.1.311" -> 2001311, so release versions compare as integers.
+def ver-num [v: string] {
+  $v | split row '.' | each { into int } | reduce --fold 0 {|part, acc| $acc * 1000 + $part }
+}
+
 def paint [code: int] {
   let s = $in
   $"(ansi -e $'38;5;($code)m')($s)(ansi reset)"
@@ -100,11 +105,16 @@ def main [] {
   # and the pieces below are appended with no separator.
   let prompt = prompt-render
 
+  # The cache is only rewritten by the daily update check, so after a manual
+  # bump it can name a version at or below the one running; hide it then.
+  let running = $input | get -o version
   let pending = try {
     let raw = open ("~/.cache/claude-code-pending" | path expand) | str trim
     if ($raw | is-empty) { null } else {
       let target = $raw | split row " -> " | last
-      $"↑($target)" | paint 221
+      if $running == null or (ver-num $target) > (ver-num $running) {
+        $"↑($target)" | paint 221
+      }
     }
   } catch { null }
 
