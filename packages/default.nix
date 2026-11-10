@@ -173,6 +173,7 @@ rec {
   sketchybar-icons = sketchybar-icons-pkg;
   zerobrew = pkgs.callPackage ./zerobrew { src = zerobrew-src; };
   virtual-headset = virtual-headset-pkg;
+  yubikey-touch-prompt = pkgs.callPackage ./yubikey-touch-prompt { };
 })
 // (optionalAttrs isLinux rec {
   askpass = pkgs.callPackage ./askpass {
