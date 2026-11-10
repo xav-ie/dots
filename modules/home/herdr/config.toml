@@ -29,7 +29,9 @@ yellow = "#FFD242"  # base0C
 default_shell = "nu"
 
 [keys]
+next_agent = "prefix+down"
 prefix = "ctrl+space"
+previous_agent = "prefix+up"
 
 [[keys.command]]
 key = "prefix+f"
