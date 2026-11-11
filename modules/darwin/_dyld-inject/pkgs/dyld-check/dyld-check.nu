@@ -39,8 +39,10 @@ def get_rebuild_time [] { bsd_stat_mtime "/run/current-system" }
 # stat-based mtime of any file; used to filter crash reports.
 def file_mtime [path: string] { bsd_stat_mtime $path }
 
-# Read DYLD_INSERT_LIBRARIES value from the dyld-inject agent's plist.
-# Returns null if the plist does not exist or has unexpected shape.
+# Read the DYLD_INSERT_LIBRARIES value the dyld-inject agent sets: its
+# plist runs `/bin/sh -c "… exec <login-script>"`, and that script's
+# first `launchctl setenv` line carries the value. Returns null if the
+# plist or script is missing or has unexpected shape.
 def get_configured_value [] {
   let path = $AGENT_PLIST | path expand
   if not ($path | path exists) {
@@ -49,16 +51,22 @@ def get_configured_value [] {
   let json = (^plutil -convert json -o - $path | from json)
   let args = $json | get --optional ProgramArguments
   if $args == null { return null }
-  if ($args | length) < 4 { return null }
-  if $args.0 != "/bin/launchctl" { return null }
-  if $args.1 != "setenv" { return null }
-  if $args.2 != "DYLD_INSERT_LIBRARIES" { return null }
-  $args.3
+  let script = $args | last | parse --regex 'exec (?<s>\S+)' | get --optional 0.s
+  if $script == null or not ($script | path exists) { return null }
+  open --raw $script
+  | lines
+  | parse --regex "^/bin/launchctl setenv DYLD_INSERT_LIBRARIES '?(?<v>[^']+)'?$"
+  | get --optional 0.v
 }
 
+# Read the gui domain's environment rather than `launchctl getenv`, which
+# answers from the caller's own launchd sub-domain (a terminal spawned by
+# an agent sees an empty value even when the gui domain has it).
 def get_runtime_value [] {
-  let v = (^launchctl getenv DYLD_INSERT_LIBRARIES | str trim)
-  if ($v | is-empty) { null } else { $v }
+  ^launchctl print $"gui/(^id -u | str trim)"
+  | lines
+  | parse --regex '^\s*DYLD_INSERT_LIBRARIES => (?<v>.+)$'
+  | get --optional 0.v
 }
 
 # Section 1: env var sanity. Returns the configured paths list (or null)
@@ -140,8 +148,7 @@ def section_crashes [rebuild_time: datetime, configured_paths] {
   }
 
   let dylib_names = (
-    if $configured_paths == null { [] }
-    else { $configured_paths | each {|p| $p | path basename | str replace -r '\.dylib$' '' } }
+    if $configured_paths == null { [] } else { $configured_paths | each {|p| $p | path basename | str replace -r '\.dylib$' '' } }
   )
 
   let by_process = (
@@ -150,8 +157,7 @@ def section_crashes [rebuild_time: datetime, configured_paths] {
         $r.path | path basename | str replace -r '-\d{4}-\d{2}-\d{2}.*$' ''
       }
     | insert injected_dylib { |r|
-        if ($dylib_names | is-empty) { false }
-        else { crash_mentions_names $r.path $dylib_names }
+        if ($dylib_names | is-empty) { false } else { crash_mentions_names $r.path $dylib_names }
       }
     | group-by process_name
     | transpose process records
