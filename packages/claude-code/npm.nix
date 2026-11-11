@@ -28,7 +28,13 @@ let
 
   splicer = ./splice.nu;
 
-  # Add `{ name = "…"; args = "-e 's|…|…|g'"; }` entries to modify the CLI. Empty
+  # Patches are sed scripts against minified JS. `ident` matches one minified
+  # identifier; `capture` also records it as the next \N group.
+  ident = "[A-Za-z_$][A-Za-z0-9_$]*";
+  capture = "\\(${ident}\\)";
+  sed = script: "-e '${script}'";
+
+  # Add `{ name = "…"; args = sed ''s|…|…|g''; }` entries to modify the CLI. Empty
   # means the tarball binary is installed as-is, skipping extract + splice.
   patches = [
     # Markdown text runs through a no-op hook right before the `owner/repo#123`
@@ -41,7 +47,17 @@ let
     # (`dw`) is minified, so it is captured from the issue linker.
     {
       name = "bare-domain-links";
-      args = ''-e 's#function \([A-Za-z_$][A-Za-z0-9_$]*\)(\([A-Za-z_$][A-Za-z0-9_$]*\),\([A-Za-z_$][A-Za-z0-9_$]*\),\([A-Za-z_$][A-Za-z0-9_$]*\)=\([A-Za-z_$][A-Za-z0-9_$]*\)(),[A-Za-z_$][A-Za-z0-9_$]*){return \2}\(function [A-Za-z_$][A-Za-z0-9_$]*([^{]*{[^`]*+\)\([A-Za-z_$][A-Za-z0-9_$]*\)(`https:#function \1(\2,\3,\4=\5()){if(!\4)return \2;return \2.replace(/(^|[\\s(\\[<"\\x27])((?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}\\/[^\\s<>"\\x27`)\\]]*[^\\s<>"\\x27`)\\].,;:!?])/g,(m,p,h)=>process.getBuiltinModule("fs").existsSync(h)?m:p+\7("https://"+h,h,{themeName:\3,supportsHyperlinks:\4}))}\6\7(`https:#g' '';
+      args = sed ''s#function ${capture}(${capture},${capture},${capture}=${capture}(),${ident}){return \2}\(function ${ident}([^{]*{[^`]*+\)${capture}(`https:#function \1(\2,\3,\4=\5()){if(!\4)return \2;return \2.replace(/(^|[\\s(\\[<"\\x27])((?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}\\/[^\\s<>"\\x27`)\\]]*[^\\s<>"\\x27`)\\].,;:!?])/g,(m,p,h)=>process.getBuiltinModule("fs").existsSync(h)?m:p+\7("https://"+h,h,{themeName:\3,supportsHyperlinks:\4}))}\6\7(`https:#g'';
+    }
+    # A fenced code block holding only a URL renders as plain code, so the
+    # terminal gets no OSC 8 target, and Claude's own hard wrap splits a long
+    # URL into rows nothing can rejoin. Inline code already links a lone URL;
+    # do the same for fenced blocks, keeping the code color. The link helper
+    # and link capability are minified, so they are captured from the codespan
+    # case that follows.
+    {
+      name = "code-block-links";
+      args = sed ''s@\(case"code":{let ${ident}=${capture}\.lang??"";\)\(if(!${ident}&&\2\.codeBlockStyle!=="indented")return \2\.text\.replace(/\\S(?:\.\*\\S)?/g,${capture}("permission",${capture}))+${capture}\)\([^@]*case"codespan":[^@]*if(${capture}&&![^@]*URL\.canParse([^)]*))return ${capture}(\)@\1if(\8\&\&/^https?:\\/\\/\\S+$/.test(\2.text.trim())\&\&URL.canParse(\2.text.trim()))return \9(\2.text.trim(),\4("permission",\5)(\2.text.trim()),{themeName:\5,supportsHyperlinks:!0})+\6;\3\7@g'';
     }
     # OSC 8 hyperlinks are only emitted for an allowlist of TERM_PROGRAMs, and
     # herdr sets its own. herdr re-emits OSC 8 to the outer terminal, so allow
@@ -49,7 +65,17 @@ let
     # Patched rather than FORCE_HYPERLINK, which Bash tool children would inherit.
     {
       name = "herdr-hyperlinks";
-      args = ''-e 's#=\["ghostty","Hyper","kitty"#=["herdr","ghostty","Hyper","kitty"#g' '';
+      args = sed ''s#=\["ghostty","Hyper","kitty"#=["herdr","ghostty","Hyper","kitty"#g'';
+    }
+    # Prompts render through a markdown lexer with the link, autolink and url
+    # tokenizers stubbed out:
+    #   …lheading(){return},link(){return},autolink(){return},url(){return},escape(){return}…
+    # so a URL the user pasted stays plain text that Claude hard-wraps into rows
+    # nothing can rejoin. Restore the url tokenizer alone: bare URLs become
+    # OSC 8 links, while `[text](url)` and `<url>` still show as typed.
+    {
+      name = "prompt-url-links";
+      args = sed ''s#\(,link(){return},autolink(){return}\),url(){return}\(,escape(){return}\)#\1\2#g'';
     }
     # The vim mode indicator renders as a dim ink Text node:
     #   Vsc=mao?rs.jsxs(_,{dimColor:!0,children:["-- ",E_t," --"]},"vim-indicator"):null
@@ -62,7 +88,7 @@ let
     # unknown name like "green" silently falls back to default white.
     {
       name = "vim-mode-colors";
-      args = ''-e 's#{dimColor:!0,children:\["-- ",\([A-Za-z_$][A-Za-z0-9_$]*\)," --"\]}#{color:(\1==="INSERT"?"success":\1==="VISUAL"||\1==="VISUAL LINE"?"autoAccept":\1==="REPLACE"?"error":"suggestion"),children:["-- ",\1," --"]}#g' '';
+      args = sed ''s#{dimColor:!0,children:\["-- ",${capture}," --"\]}#{color:(\1==="INSERT"?"success":\1==="VISUAL"||\1==="VISUAL LINE"?"autoAccept":\1==="REPLACE"?"error":"suggestion"),children:["-- ",\1," --"]}#g'';
     }
   ];
 
