@@ -1369,11 +1369,11 @@
     },
     "nix-darwin-tcc": {
       "locked": {
-        "lastModified": 1793294691,
-        "narHash": "sha256-czKTfBr16iOlH39d77b6WswjzG0cpYGT1xRRH4N1hJo=",
+        "lastModified": 1794417766,
+        "narHash": "sha256-u+B4mhPUnsAJNbKcQ4tq1Tl25jkfNDfY9o2uGaReH3U=",
         "ref": "refs/heads/main",
-        "rev": "0671950956146ddba7957c98532afd00ac322524",
-        "revCount": 5,
+        "rev": "9866c673a80ab365f90a0fe9453133db61d3224f",
+        "revCount": 6,
         "type": "git",
         "url": "ssh://git@github.com/xav-ie/nix-darwin-tcc"
       },
