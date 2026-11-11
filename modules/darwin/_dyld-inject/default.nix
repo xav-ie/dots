@@ -92,6 +92,10 @@ let
       /bin/sleep 0.1
     done
 
+    # Dock, Finder and WindowManager start before this agent's setenv
+    # lands, so they come up uninjected; all relaunch themselves when killed.
+    /usr/bin/killall Dock Finder WindowManager 2>/dev/null || true
+
     ${lib.concatMapStringsSep "\n" (app: ''
       /usr/bin/open -g -a ${lib.escapeShellArg app} || echo "dyld-inject: could not open ${app}" >&2
     '') cfg.startupApps}

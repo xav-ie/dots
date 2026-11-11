@@ -7,7 +7,7 @@
 #      A small dylib injected into every AppKit process via the shared
 #      services.dyldInject.libraries mechanism (see ../default.nix).
 #      It swizzles NSThemeFrame's `_cornerRadius` /
-#      `_getCachedWindowCornerRadius` / `_topCornerSize` /
+#      `_getCachedDefaultWindowCornerRadius` / `_topCornerSize` /
 #      `_bottomCornerSize` to return the configured radius (default 0).
 #      AppKit asks NSThemeFrame "what corner should I round to?" and
 #      our swizzled getters answer 0.
@@ -115,7 +115,7 @@ in
         System Settings (Wi-Fi toggle, Software Update button, all the
         panes' remote views) rendered fine and was completely unclickable,
         while the same Wi-Fi toggle in Control Center worked. Bisected to
-        _cornerRadius and _getCachedWindowCornerRadius; both break clicks
+        _cornerRadius and the cached-radius getter; both break clicks
         at 0.0 and both are needed for squareness, so the radius value —
         not the hook set — is the knob. Was fine before 26.5.x.
       '';

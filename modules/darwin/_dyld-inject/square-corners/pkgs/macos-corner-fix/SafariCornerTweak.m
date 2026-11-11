@@ -63,7 +63,7 @@ __attribute__((constructor)) static void init(void) {
     if (themeFrame) {
       hookIfPresent(themeFrame, @selector(_cornerRadius),
                     (IMP)swizzled_cornerRadius);
-      hookIfPresent(themeFrame, @selector(_getCachedWindowCornerRadius),
+      hookIfPresent(themeFrame, @selector(_getCachedDefaultWindowCornerRadius),
                     (IMP)swizzled_getCachedCornerRadius);
       hookIfPresent(themeFrame, @selector(_topCornerSize),
                     (IMP)swizzled_topCornerSize);
