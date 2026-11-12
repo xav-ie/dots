@@ -223,11 +223,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794002562,
-        "narHash": "sha256-W4ArhwoszGddnAmY0l6p8v18qP9VXkdCTx2m71zd4Mk=",
+        "lastModified": 1794458116,
+        "narHash": "sha256-6pNjalzdaQKURCzyLnyj54ACmZ8+r5YQJMlzA4DukPM=",
         "owner": "xav-ie",
         "repo": "browser-session-mcp",
-        "rev": "f514a0894e61f09f86b0242b7154d27036cd5c64",
+        "rev": "ad7d7cf567c7bf8c3a08ab8e7424d8653db9c579",
         "type": "github"
       },
       "original": {

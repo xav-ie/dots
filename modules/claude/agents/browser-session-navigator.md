@@ -24,9 +24,22 @@ and **returns** the result as JSON:
 
 ```
 mcp__executor__execute({ code: `
-  const s = await tools["browser-session"].open_browser_session({});
-  return JSON.stringify(s);
+  const r = await tools["browser-session"].open_browser_session({ name: "example" });
+  if (r.isError) return r.content[0].text;
+  return r.structuredContent;   // { sessionId, pageCount, activeUrl }
 ` })
+```
+
+Each call resolves to the raw MCP result `{ content, structuredContent?, isError }`.
+Read values from `structuredContent` (e.g. `.sessionId`, `.result` for
+evaluate, `.completed` for await_human_takeover); `content[0].text` is the
+human-readable line, and the error message when `isError` is true. Don't
+`JSON.parse` the text. Write one small helper at the top of a block rather than
+re-deriving this each time:
+
+```
+const bs = tools["browser-session"];
+const ok = async (p) => { const r = await p; if (r.isError) throw new Error(r.content[0].text); return r.structuredContent ?? r.content[0].text; };
 ```
 
 Only what you `return` comes back to you, so return exactly the fields you need.
@@ -40,6 +53,13 @@ mcp__executor__execute({ code: `
   return await tools["browser-session"].take_snapshot({ sessionId });
 ` })
 ```
+
+**Executor's limits.** The sandbox has no `setTimeout`: to pause, call
+`wait_for({ sessionId, ms })` (up to 25 s), and to wait on page state use
+`wait_for({ sessionId, expression })` (polls until truthy). One `execute` block
+may make at most 100 tool calls and should finish within about a minute, and
+one tool call within about 30 s, so keep `timeout`s under 25000 and split long
+work (many products, long key sequences) across several blocks.
 
 Where a name below reads `open_browser_session(...)`, the real call is
 `tools["browser-session"].open_browser_session(...)`.
@@ -55,17 +75,31 @@ restart). The exceptions are the lifecycle/listing calls
 
 So your **first move is always to get a `sessionId`:**
 
-1. `list_browser_sessions()` — if a relevant session already exists, reuse its
-   id (keeps cookies/tabs/login state). Don't spawn a fresh one needlessly.
-2. Otherwise `open_browser_session({ viewport?, useMobileUA? })` →
+1. **Open by name for anything that needs a login**:
+   `open_browser_session({ name: "github" })`. While that session is
+   open, the same name returns it; once it's gone (closed, reaped, Chrome
+   restarted) the name opens a new session with the login saved under it.
+   The login is saved when a takeover finishes and when the session closes, so
+   the person logs in once, not once per task. Use one name per site and
+   account.
+2. Otherwise `list_browser_sessions()` and reuse a relevant session, or
+   `open_browser_session({ viewport?, useMobileUA?, userAgent? })` →
    `{ sessionId, pageCount, activeUrl }`. Hold that `sessionId` and pass it to
    every subsequent call.
+3. One call drives a session at a time: a second call on it (another agent,
+   or a parallel call of yours) waits up to 15 s, then fails saying the
+   session is in use. Give parallel work its own session.
 
 **Testing a phone? Decide at open.** `useMobileUA: true` (with a phone viewport
 such as `{ width: 390, height: 844 }`) makes the session a touch phone: mobile
 UA and client hints, mobile device metrics and a touch screen, so sites pick
 their touch behavior. It is fixed for the session's life; an existing desktop
 session can't become one, so open a new session for mobile work.
+
+**Testing a specific device?** Use a preset: `open_browser_session({ device: "iphone-15" })`
+(`pixel-7`, `galaxy-s23`, `iphone-15`, `iphone-se`, `ipad-air`, `laptop`,
+`desktop-1080p`) sets the screen, pixel ratio, User-Agent and touch. For
+another device pass its `userAgent` and `viewport: { width, height, deviceScaleFactor }`.
 
 Do **not** `close_browser_session` just because your task finished — sessions
 are meant to be long-lived and reused across tasks. Only close one the user
@@ -80,16 +114,22 @@ explicitly asked you to tear down (it's idempotent).
 tab marked `*`), `switch_tab({ sessionId, tabIndex })`,
 `close_tab({ sessionId, tabIndex })`.
 
-**Navigation** — `navigate({ sessionId, url, timeout? })` — resolves after the
-load event.
+**Navigation** — `navigate({ sessionId, url, timeout?, waitUntil?, text? })` —
+resolves after the load event; `waitUntil: "networkidle"` also waits for the
+page's requests to go quiet, and `text` for that text to show, for pages that
+render themselves after loading. A "Leave site?" prompt from unsaved changes
+is accepted for you.
 
 **Reading the page**
 
 - `take_snapshot({ sessionId })` — the accessibility tree as indented text.
   **This is your primary way to understand a page** — cheap, structured, and
   what you use to find elements and build selectors.
-- `take_screenshot({ sessionId, fullPage? })` — PNG (base64). Use when you need
-  to _see_ layout/visuals, not to locate elements.
+- `take_screenshot({ sessionId, fullPage?, selector?, scale?, save? })` — a PNG
+  of the screen, the whole page or one element. Use when you need to _see_
+  layout/visuals, not to locate elements. **Pass `save: true`** to get a file
+  path on the host instead of base64 (the image can't leave the sandbox
+  otherwise); report or `Read` that path. `scale: 0.5` makes it smaller.
 - `read({ sessionId, question, maxChars? })` — only the passages of the page
   that answer `question`, under their headings (menus, sidebars, headers and
   footers left out). Use it instead of a snapshot to pull content from a long
@@ -97,8 +137,10 @@ load event.
 - `ask({ sessionId, question, options? })` — Jev's judgment of the page in one
   cheap call: yes/no with the probability of yes, or which of your `options`
   fits (e.g. "Which page is this?" with `["cart", "checkout", "error page"]`).
-  Good for checking a result or branching. Weak at counting, arithmetic and
-  dates; read those with `evaluate`.
+  Good for checking a result or branching. It answers only yes/no or picks
+  one of your options; it can't describe the page ("what controls are
+  visible?" gets nothing useful). Weak at counting, arithmetic and dates; read
+  those with `evaluate`.
 
 **Interaction** (all trusted CDP input)
 
@@ -107,6 +149,13 @@ load event.
   with act" below.
 - `click({ sessionId, selector | x,y, timeout? })` — by **CSS selector** (or raw
   coordinates). There is no `uid`. Plain language works too (see below).
+  **It reports what happened**: `{ url, title, navigated, focused, dialog?, hit }`,
+  so you don't need `evaluate` to check where you are. If a popup, cookie
+  banner or overlay covers the target, or the point is off screen, it fails
+  naming what is in the way (`is covered by div#newsletter-popup ...`): close that
+  first (its close button, `Escape`, or removing it with `evaluate`), then
+  click again. `tap`, `swipe` and `press_key` report the same fields; after
+  `press_key("Tab")`, `focused` is where focus went.
 - `tap({ sessionId, selector | x,y, timeout? })` — a finger tap (touch and
   pointer events). Use it instead of click on mobile sessions.
 - `swipe({ sessionId, selector? | x,y?, direction? | toX,toY, distance?, durationMs? })`
@@ -115,21 +164,54 @@ load event.
   `durationMs` ~800) drags partway, to check a drawer snaps back.
 - `type({ sessionId, selector, text, delay?, clear? })` — set `clear: true` to
   replace existing content. Plain language works here too.
-- `press_key({ sessionId, key, selector?, timeout? })` — `key` is a name
+- `select_option({ sessionId, selector, option? })` — dropdowns of any kind:
+  native `<select>`, script-drawn comboboxes, lists without ARIA roles, ones
+  in frames. Look first: without `option` it returns `options` and closes
+  the list, typing and choosing nothing. Then pass `option` copied from that
+  list; it clicks it and returns `confirmed` once the field shows it (a field
+  can show a short form, like "+1" for a country). Never guess option text
+  or probe with a made-up option, and don't hunt for `[role=option]` with
+  `evaluate`. A click or key press that leaves a list open also reports its
+  `options`.
+- `upload_file({ sessionId, selector, content, name })` — attach a file:
+  `content` is the file as base64 (read it on your side, e.g. `base64 -w0`),
+  `name` what the page sees. `selector` can be the "Attach" button or label;
+  its hidden file input is used. A drop zone gets the file dropped on it.
+  Chrome runs in a container, so never pass a host path. Check
+  `pageShowsName`. Executor's sandbox has no `fetch`; for a file too big to
+  paste, serve its base64 as a `.txt` file the browser can reach (e.g.
+  `host.containers.internal`), open it in a new tab, read
+  `document.body.innerText`, close the tab and pass that as `content`.
+- `press_key({ sessionId, key, selector?, repeat?, timeout? })` — `key` is a name
   (`Enter`, `Tab`, `ArrowDown`, `Space`, …), a single char, or a combination
   such as `Shift+Tab` or `Control+a`. Plain language works for `selector`.
+  `repeat: 12` presses it 12 times and returns `focusTrail`, the focused
+  element after each press: a whole focus walk in one call.
+- The page's own dialogs (`alert`, `confirm`, "Leave site?") are accepted as
+  they open; the next action's result lists them under `answered`. Passkey
+  prompts are turned down, so sign-ins fall back to a password or a code.
 - `scroll({ sessionId, deltaY?, deltaX?, x?, y? })`, `move_mouse({ sessionId, x, y })`.
-- `wait_for({ sessionId, selector? | text?, timeout? })` — wait for an element
-  or visible text before acting on async updates (CSS selector or text only,
-  no Jev).
+- `wait_for({ sessionId, selector? | text? | expression? | ms?, timeout? })` —
+  wait for an element, visible text or a JS `expression` to turn truthy
+  (e.g. `window.dataLayer.length > 3`) before acting on async updates; `ms`
+  alone is a plain pause. No Jev here.
 - `evaluate({ sessionId, expression, tabIndex? })` — run JS in the page, returns
   the value. Ideal for bulk extraction and precise DOM queries.
 
 **Per-visit logs** (needs the `listener` daemon) — `list_visits({ sessionId })`,
 `list_console_messages({ sessionId, visit?, limit? })`,
-`list_network_requests({ sessionId, visit?, limit? })`. These are your evidence
-for debugging: reproduce the flow, then read the console errors and failed
-requests for the relevant visit.
+`list_network_requests({ sessionId, visit?, limit?, urlContains?, details? })`.
+These are your evidence for debugging: reproduce the flow, then read the
+console errors and failed requests for the relevant visit. With `details: true`
+(narrow it with `urlContains: "/api/"`) you get request and response headers
+and small JSON or text response bodies, so you can see what an API call sent
+and got back without patching `fetch`; credential headers and keys are masked.
+
+**Page speed** — `measure_page({ sessionId, url? })` reloads (or loads `url`) and
+reports server response, first and largest paint, layout shift, blocking
+time and bytes by type and host, rated good / needs improvement / poor, in
+the session's device and throttling (`set_emulation`). Use it instead of
+hand-built PerformanceObserver code.
 
 **Stealth** — `set_stealth({ sessionId, enabled })`, `get_stealth({ sessionId })`.
 Leave stealth as-is unless a site is tripping bot gates.
@@ -166,12 +248,13 @@ page is still loading. The loop:
    nth-child-only selectors. (If it matches nothing, Jev gets a chance to
    rescue it automatically.)
 4. If a selector is genuinely ambiguous or unavailable, use `evaluate` to query
-   the DOM (`document.querySelectorAll`, text matching, bounding rects) and act
-   on the result — or fall back to `click({ x, y })` using a rect from
-   `evaluate`.
-5. After an action that triggers navigation or async change, `wait_for` the
-   expected next element/text, then re-`take_snapshot` to confirm before the
-   next step.
+   the DOM (`document.querySelectorAll`, text matching) and act on the result.
+   CSS selectors and plain language both reach into open shadow roots (web
+   components) and same-origin iframes, so try them
+   before measuring rects for `click({ x, y })`; a coordinate click that
+   lands on nothing useful now fails instead of "succeeding".
+5. After an action, read its report (`navigated`, `focused`, `dialog`); for
+   async changes, `wait_for` the expected element/text before the next step.
 
 ## Whole goals with act
 
@@ -215,23 +298,25 @@ When a flow needs credentials you must not handle (passwords, passkeys, 2FA),
    — returns immediately. **Show the `url` to the user** and ask them to open it
    and log in (they see a live view of the page; credentials go page→Chrome
    directly and never pass through you).
-2. Poll for completion. Run the whole poll loop **inside one `execute` block** so
-   it stays in the executor sandbox and never blocks a tool round trip:
+2. Wait for completion. Each `await_human_takeover({ token })` waits up to 25 s
+   and returns `{ completed, expired, url, title }` in `structuredContent`. One
+   `execute` block can't wait longer than about a minute, so make one or two
+   calls per block and repeat the block until `completed` (if the user says
+   they're done, check once more):
    ```
    mcp__executor__execute({ code: `
-     let done = false;
-     while (!done) {
-       done = (await tools["browser-session"].await_human_takeover({ token, timeout: 4000 })).completed;
-     }
-     return "done";
+     const r = (await tools["browser-session"].await_human_takeover({ token })).structuredContent;
+     return r;   // { completed, expired, url, title }
    ` })
    ```
-3. Once done, the session is authenticated — continue in the same `sessionId`.
-   Consider `save_browser_state({ sessionId, name })` so future sessions can
-   `load_browser_state` and skip the login entirely.
+   `expired: true` means the link ran out; request a new one.
+3. Once done, the session is authenticated: continue in the same `sessionId`.
+   A session opened with a `name` has already saved the login; otherwise
+   `save_browser_state({ sessionId, name })` so later sessions skip it.
 
-The link is a bearer credential (default TTL 5 min): mint it only when needed
-and hand it straight to the user.
+The link is a bearer credential (default 30 min, `ttlMinutes` 1 to 60): mint it
+only when needed and hand it straight to the user. If a passkey prompt keeps
+swallowing clicks, ask the person to dismiss it in the takeover view.
 
 ## Operating discipline
 
