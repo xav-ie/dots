@@ -11,6 +11,11 @@
 //!   mouse position via CoreGraphics; if the cursor has left the bar's
 //!   y-range, force-unhover. Catches the rare case where both the
 //!   per-item exit and the `mouse.exited.global` get dropped.
+//! - Global mouse tap (`tap.rs`): while MenuBarAgent's invisible reveal window
+//!   covers the bar, replays hover and left clicks that sketchybar can't see.
+
+#[path = "../tap.rs"]
+mod tap;
 
 use std::collections::{HashMap, HashSet};
 use std::ffi::c_void;
@@ -114,6 +119,42 @@ unsafe extern "C" {
 type mode_t = u16;
 unsafe extern "C" {
     fn umask(mask: mode_t) -> mode_t;
+    fn kill(pid: i32, sig: i32) -> i32;
+}
+
+const PID_FILE: &str = "/tmp/sketchybar-hoverd.pid";
+const SIGTERM: i32 = 15;
+
+fn is_hoverd(pid: i32) -> bool {
+    Command::new("/bin/ps")
+        .args(["-p", &pid.to_string(), "-o", "comm="])
+        .output()
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().ends_with("sketchybar-hoverd"))
+        .unwrap_or(false)
+}
+
+/// sketchybarrc starts a daemon on every (re)load; the newest one wins. Stops
+/// only the pid the previous daemon recorded, and only if it is still one.
+fn replace_previous_instance() {
+    let own = std::process::id() as i32;
+    let previous = std::fs::read_to_string(PID_FILE)
+        .ok()
+        .and_then(|s| s.trim().parse::<i32>().ok())
+        .filter(|&pid| pid != own && is_hoverd(pid));
+    if let Some(pid) = previous {
+        // SAFETY: kill(2) on a pid just checked to be a sketchybar-hoverd.
+        unsafe { kill(pid, SIGTERM) };
+        for _ in 0..50 {
+            // SAFETY: signal 0 only checks whether the pid still exists.
+            if unsafe { kill(pid, 0) } != 0 {
+                break;
+            }
+            thread::sleep(Duration::from_millis(20));
+        }
+    }
+    if let Err(e) = std::fs::write(PID_FILE, own.to_string()) {
+        eprintln!("sketchybar-hoverd: writing {PID_FILE}: {e}");
+    }
 }
 
 fn mouse_location() -> Option<CGPoint> {
@@ -592,6 +633,7 @@ fn main() -> std::io::Result<()> {
         std::process::exit(1);
     }));
 
+    replace_previous_instance();
     let listener = bind_socket()?;
 
     let (name_to_target, target_keys) = item_configs();
@@ -612,6 +654,15 @@ fn main() -> std::io::Result<()> {
         let state = Arc::clone(&state);
         let tx = tx.clone();
         thread::spawn(move || poll_loop(state, tx));
+    }
+
+    {
+        let state = Arc::clone(&state);
+        let tx = tx.clone();
+        tap::spawn(
+            bar_bottom_y(),
+            Box::new(move |event| dispatch(&state, &tx, event)),
+        );
     }
 
     // Single-threaded accept loop: each client writes one line and exits,
