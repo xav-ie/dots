@@ -184,7 +184,7 @@ static void hold_while_open(void) {
   }
   CFNotificationCenterAddObserver(
       CFNotificationCenterGetDistributedCenter(), NULL, on_bar_clicked,
-      CFSTR("com.x.screenshare-ui.bar-clicked"), NULL,
+      CFSTR("bar-panels.bar-clicked"), NULL,
       CFNotificationSuspensionBehaviorDeliverImmediately);
   bool stamped = false;
   long long settle_until = 0;

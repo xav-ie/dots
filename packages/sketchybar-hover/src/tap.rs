@@ -113,9 +113,9 @@ unsafe extern "C" {
 }
 
 /// Announced on every replayed click. The press itself is swallowed, so other
-/// apps' click-outside monitors (screenshare-ui's panels) never see it; they
-/// close on this instead.
-const BAR_CLICKED: &CStr = c"com.x.screenshare-ui.bar-clicked";
+/// apps' click-outside monitors (BarPanels panels, in screenshare-ui and
+/// Virtual Headset) never see it; they close on this instead.
+const BAR_CLICKED: &CStr = c"bar-panels.bar-clicked";
 
 fn announce_click() {
     // SAFETY: the CFString is created from a static C string and released
