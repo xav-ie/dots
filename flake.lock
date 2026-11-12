@@ -152,11 +152,11 @@
     },
     "bar-panels": {
       "locked": {
-        "lastModified": 1794463960,
-        "narHash": "sha256-qbuQwt3X6sHifblUTK4vykkT3UZbZnuLYkJOLjGo1ao=",
+        "lastModified": 1794504865,
+        "narHash": "sha256-3Kt/iVyJFmUIWWbR2gnLtD4z8CUVRL+m0L7HW2qXK4g=",
         "owner": "xav-ie",
         "repo": "bar-panels",
-        "rev": "eb1a90004cabe7d9e4197b80e286bdefe2115085",
+        "rev": "e99534bbe92d823020d1b0c07a0af512cbfb2fe9",
         "type": "github"
       },
       "original": {
@@ -2052,11 +2052,11 @@
     },
     "screenshare-ui": {
       "locked": {
-        "lastModified": 1794502956,
-        "narHash": "sha256-D2lXl5dU+ruL+MlkV38sCV61yGLXn/4yqrlqsCrtio8=",
+        "lastModified": 1794504970,
+        "narHash": "sha256-dML6LOy0wV0gZyEleTbArQDVeR5eP2Kl000uRWabGSM=",
         "ref": "refs/heads/main",
-        "rev": "8cbf8d05a27e3da98d7167297ca5c408e5c05c46",
-        "revCount": 25,
+        "rev": "b04d727c502d9fc9786c5e87ecc81a447e68d938",
+        "revCount": 27,
         "type": "git",
         "url": "ssh://git@github.com/xav-ie/screenshare-ui"
       },
