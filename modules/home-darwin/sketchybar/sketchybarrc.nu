@@ -160,17 +160,17 @@ sketchybar --bar "font_smoothing=on"
 # its own width (it's variable: day/date/12h). The tick is driven by update_freq
 # (the `routine` sender), passed to both sub-items via --*-extra. Highlight is ONE
 # shared label.background over [face + time] (clock -> label_only in
-# sketchybar-hoverd, matching volume/battery). click opens Control Center > Clock.
+# sketchybar-hoverd, matching volume/battery). click toggles Notification Center.
 sb-cluster clock right 24 0 (
   $"sketchybar-hover --plugin ($PLUGIN_DIR)/clock_icon.nu"
 ) [mouse.entered mouse.exited] (
   $"sketchybar-hover --plugin ($PLUGIN_DIR)/clock.nu"
 ) [mouse.entered mouse.exited] --label-extra [
   "update_freq=30"
-  "click_script=$HOME/.config/sketchybar/select_control_center.nu \"Clock\""
+  "click_script=$HOME/.config/sketchybar/toggle_notification_center.js"
 ] --icon-extra [
   "update_freq=30"
-  "click_script=$HOME/.config/sketchybar/select_control_center.nu \"Clock\""
+  "click_script=$HOME/.config/sketchybar/toggle_notification_center.js"
 ]
 
 # control center — single icon (sb-icon-item, icon_only highlight).

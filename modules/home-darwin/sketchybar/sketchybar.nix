@@ -60,6 +60,8 @@
             config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/open_volume_control.scpt";
           "sketchybar/select_control_center.nu".source =
             config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/select_control_center.nu";
+          "sketchybar/toggle_notification_center.js".source =
+            config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/toggle_notification_center.js";
           # Acceptance test for the bar's tiling invariant (no gaps/overlaps
           # between adjacent item footprints). Run:
           #   nu ~/.config/sketchybar/sb-check-tiling.nu
@@ -91,6 +93,28 @@
           "sketchybar/plugins/wifi.nu".source =
             config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/plugins/wifi.nu";
         };
+
+        # Bind "Show Notification Center" (symbolic hotkey 163) to F19, a key no
+        # keyboard here has, for toggle_notification_center.js: pressing the
+        # clock's status item through accessibility closes Notification Center
+        # again at once. Only this one entry is touched, so the rest of the
+        # user's keyboard shortcuts stay as they are.
+        home.activation.notificationCenterHotkey = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          plist="$HOME/Library/Preferences/com.apple.symbolichotkeys.plist"
+          entry=":AppleSymbolicHotKeys:163"
+          run /usr/libexec/PlistBuddy -c "Delete $entry" "$plist" 2>/dev/null || true
+          run /usr/libexec/PlistBuddy \
+            -c "Add $entry dict" \
+            -c "Add $entry:enabled bool true" \
+            -c "Add $entry:value dict" \
+            -c "Add $entry:value:type string standard" \
+            -c "Add $entry:value:parameters array" \
+            -c "Add $entry:value:parameters:0 integer 65535" \
+            -c "Add $entry:value:parameters:1 integer 80" \
+            -c "Add $entry:value:parameters:2 integer 8388608" \
+            "$plist"
+          run /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
+        '';
 
         launchd.agents.sketchybar = {
           enable = true;
