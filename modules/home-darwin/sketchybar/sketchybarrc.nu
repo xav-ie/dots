@@ -13,6 +13,19 @@ let PLUGIN_DIR = "plugins"
 # (exit 1). SKETCHYBAR_HOVER_DEBUG=1 logs every event to the .err file.
 ^/bin/sh -c $"export SKETCHYBAR_BAR_HEIGHT=(get_bar_height) RUST_BACKTRACE=1; /usr/bin/nohup /bin/sh -c 'while :; do sketchybar-hoverd; [ $? = 1 ] || break; sleep 1; done' >/tmp/sketchybar-hover.log 2>/tmp/sketchybar-hover.err &"
 
+# The plugins draw their glyphs (SF Symbols) once into PNGs, cached by size and
+# state but not by macOS, and a macOS update can redraw the symbols themselves
+# (Wi-Fi's arcs got rounded ends). So drop every cached render whenever the
+# build changes; the plugins draw them afresh on their next update.
+let os_build = ^/usr/bin/sw_vers -buildVersion | str trim
+let build_stamp = $"($env.HOME)/.cache/sketchybar/os-build"
+if (try { open --raw $build_stamp | str trim } catch { "" }) != $os_build {
+  let renders = (glob $"($env.HOME)/.cache/sketchybar/**/*.png") ++ (glob $"($env.HOME)/.cache/virtual-headset/bar-*.png")
+  for f in $renders { rm --force $f }
+  mkdir ($build_stamp | path dirname)
+  $os_build | save --force $build_stamp
+}
+
 ##### Bar Appearance #####
 # Configuring the general appearance of the bar.
 # These are only some of the options available. For all options see:
