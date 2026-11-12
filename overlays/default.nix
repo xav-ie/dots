@@ -215,13 +215,14 @@ in
       # `version` has to track the pin, not nixpkgs: versionCheckPhase greps the
       # attr's own version out of `sketchybar --version`, which reports the tag
       # baked into the source.
-      # Its windows are also kept out of screen capture (screen shares,
-      # recordings, screenshots): sharingType only sticks when set by the
-      # process that owns the window, so it's patched into window creation.
+      # Patched with a `capture` item property: `capture=off` keeps that item
+      # out of screen capture (shares, recordings, screenshots) while it still
+      # shows on screen. Only the process that owns a window can set that, so
+      # it has to live in sketchybar itself.
       sketchybar = prev.sketchybar.overrideAttrs {
         version = "2.24.1";
         src = inputs.sketchybar-src;
-        patches = [ ./sketchybar-hide-from-capture.patch ];
+        patches = [ ./sketchybar-capture.patch ];
       };
 
       # Inter with tabular figures (`tnum`) baked in as the default, as a single

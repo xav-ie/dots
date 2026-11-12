@@ -1,0 +1,105 @@
+--- a/src/bar_item.c
++++ b/src/bar_item.c
+@@ -34,6 +34,7 @@
+   bar_item->blur_radius = 0;
+   bar_item->event_port = 0;
+   bar_item->shadow = false;
++  bar_item->capture = true;
+   bar_item->scroll_texts = false;
+   bar_item->mouse_over = false;
+ 
+@@ -556,6 +557,7 @@
+     struct window* window = window_create();
+     window_open(window, (CGRect){{g_nirvana.x, g_nirvana.y}, {1, 1}});
+     if (!bar_item->shadow) window_disable_shadow(window);
++    if (!bar_item->capture) window_set_capture(window, false);
+     window_set_blur_radius(window, bar_item->blur_radius);
+     
+     if (bar_item->parent)
+@@ -889,6 +891,7 @@
+                "\t\t\"associated_space_mask\": %u,\n"
+                "\t\t\"associated_display_mask\": %u,\n"
+                "\t\t\"ignore_association\": \"%s\",\n"
++               "\t\t\"capture\": \"%s\",\n"
+                "\t\t\"y_offset\": %d,\n"
+                "\t\t\"padding_left\": %d,\n"
+                "\t\t\"padding_right\": %d,\n"
+@@ -902,6 +905,7 @@
+                bar_item->associated_space,
+                bar_item->associated_display,
+                format_bool(bar_item->ignore_association),
++               format_bool(bar_item->capture),
+                bar_item->y_offset,
+                bar_item->background.padding_left,
+                bar_item->background.padding_right,
+@@ -1216,6 +1220,13 @@
+       }
+       needs_refresh = true;
+     }
++  } else if (token_equals(property, PROPERTY_CAPTURE)) {
++    bar_item->capture = evaluate_boolean_state(get_token(&message),
++                                               bar_item->capture   );
++    for (int i = 0; i < bar_item->num_windows; i++) {
++      if (bar_item->windows[i])
++        window_set_capture(bar_item->windows[i], bar_item->capture);
++    }
+   } else if (token_equals(property, PROPERTY_IGNORE_ASSOCIATION)) {
+     bar_item->ignore_association = evaluate_boolean_state(get_token(&message),
+                                                           bar_item->ignore_association);
+--- a/src/bar_item.h
++++ b/src/bar_item.h
+@@ -36,6 +36,7 @@
+   // Drawing Modifiers
+   bool drawing;
+   bool shadow;
++  bool capture;
+   bool has_const_width;
+   bool scroll_texts;
+   char align;
+--- a/src/misc/defines.h
++++ b/src/misc/defines.h
+@@ -114,6 +114,7 @@
+ #define PROPERTY_HIDDEN                        "hidden"
+ #define PROPERTY_FONT_SMOOTHING                "font_smoothing"
+ #define PROPERTY_SHADOW                        "shadow"
++#define PROPERTY_CAPTURE                       "capture"
+ #define PROPERTY_ALIGN                         "align"
+ #define PROPERTY_NOTCH_WIDTH                   "notch_width"
+ #define PROPERTY_NOTCH_OFFSET                  "notch_offset"
+--- a/src/window.c
++++ b/src/window.c
+@@ -349,6 +349,12 @@
+   if (window->context) window_clear_background(window);
+ }
+ 
++void window_set_capture(struct window* window, bool capture) {
++  uint64_t tags = kCGSHiddenFromCaptureTagBit;
++  if (capture) SLSClearWindowTags(g_connection, window->id, &tags, 64);
++  else SLSSetWindowTags(g_connection, window->id, &tags, 64);
++}
++
+ void window_disable_shadow(struct window* window) {
+   CFIndex shadow_density = 0;
+   CFNumberRef shadow_density_cf = CFNumberCreate(kCFAllocatorDefault,
+--- a/src/window.h
++++ b/src/window.h
+@@ -3,6 +3,11 @@
+ 
+ #define kCGSExposeFadeTagBit         (1ULL <<  1)
+ #define kCGSPreventsActivationTagBit (1ULL <<  16)
++// Excludes the window from screen capture (shares, recordings, screenshots):
++// what -[NSWindow setSharingType:NSWindowSharingNone] sets on macOS 27, where
++// the window sharing state no longer does it. Found by comparing the tags of
++// a shared and a hidden NSWindow; it's private, so a macOS update can move it.
++#define kCGSHiddenFromCaptureTagBit  (1ULL <<  37)
+ 
+ #define W_ABOVE  1
+ #define W_OUT    0
+@@ -41,6 +46,7 @@
+ 
+ void window_set_blur_radius(struct window* window, uint32_t blur_radius);
+ void window_disable_shadow(struct window* window);
++void window_set_capture(struct window* window, bool capture);
+ void window_set_level(struct window* window, uint32_t level);
+ void window_order(struct window* window, struct window* parent, int mode);
+ void windows_set_order_chain(struct window* root, struct window** windows, int count);
