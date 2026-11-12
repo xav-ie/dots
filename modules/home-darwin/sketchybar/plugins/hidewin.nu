@@ -6,7 +6,8 @@
 # iris/pupil glyph (`record.circle` — a ring + centre dot, no eye outline) via
 # `sketchybar-icons`, white in Normal mode, orange when Screenshare Mode is
 # active (every app hidden from capture, for a meeting), and red when
-# screenshare-ui's leak audit finds a window still capturable. The item itself
+# screenshare-ui's leak audit finds a window still capturable, or when a bar
+# item that should stay out of shares isn't (see UNSHARED_ITEMS). The item itself
 # never shows in a screen share (capture=off in sketchybarrc). Sized to MATCH the
 # neighbouring control_center icon (POINT_SIZE 14 in a MIN_WIDTH canvas, drawn
 # at background.image.scale 0.5), with the same zeroed paddings so it doesn't
@@ -23,6 +24,19 @@ const MODE_FILE = "~/.cache/screenshare-ui/mode" | path expand
 const CACHE = "~/.cache/sketchybar/hidewin" | path expand
 const POINT_SIZE = 14
 const MIN_WIDTH = 26
+# Bar items sketchybarrc sets capture=off on. capture is our sketchybar patch's
+# property, so a sketchybar without it shows these in shares.
+const UNSHARED_ITEMS = [front_app hidewin virtual_headset]
+
+# Whether every UNSHARED_ITEMS item is out of capture.
+def items_unshared [] {
+  $UNSHARED_ITEMS | all {|item|
+    let capture = (try {
+      sketchybar --query $item | from json | get -o geometry.capture
+    } catch { null })
+    $capture == "off"
+  }
+}
 
 def render [mode: string] {
   let color = match $mode {
@@ -61,6 +75,7 @@ def main [] {
           open $MODE_FILE | str trim
         } catch { "off" }
       )
+      let mode = if $mode == "on" and not (items_unshared) { "on-leak" } else { $mode }
       let out = (render $mode)
       sketchybar --set $env.NAME $"icon.background.image=($out)"
     }
