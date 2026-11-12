@@ -3,6 +3,16 @@
 source "~/.config/sketchybar/nix-settings.nu"
 let PLUGIN_DIR = "plugins"
 
+# sketchybar-hoverd owns per-item hover state: items invoke `sketchybar-hover`
+# (the tiny client) on mouse events, and the daemon pushes batched `--set`
+# updates back. Its event tap also replays hover/clicks while MenuBarAgent's
+# reveal window covers the bar, and swallows item presses so they don't reveal
+# the native menu bar; that needs an active tap, i.e. Accessibility trust, which
+# it inherits by being started from here rather than by launchd. Each (re)load's
+# daemon replaces the previous one; the loop restarts it only after a panic
+# (exit 1). SKETCHYBAR_HOVER_DEBUG=1 logs every event to the .err file.
+^/bin/sh -c $"export SKETCHYBAR_BAR_HEIGHT=(get_bar_height) RUST_BACKTRACE=1; /usr/bin/nohup /bin/sh -c 'while :; do sketchybar-hoverd; [ $? = 1 ] || break; sleep 1; done' >/tmp/sketchybar-hover.log 2>/tmp/sketchybar-hover.err &"
+
 ##### Bar Appearance #####
 # Configuring the general appearance of the bar.
 # These are only some of the options available. For all options see:

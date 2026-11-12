@@ -10,7 +10,8 @@
     let
       # Single source of truth for the bar height. Consumed by
       # - `sketchybarrc.nu` via `(get_bar_height)` from nix-settings.nu
-      # - the sketchybar-hover daemon via the SKETCHYBAR_BAR_HEIGHT env var
+      # - the sketchybar-hover daemon via the SKETCHYBAR_BAR_HEIGHT env var,
+      #   which sketchybarrc.nu sets from `(get_bar_height)` when starting it
       barHeight = "32";
 
       # so that I don't have to hard-code $HOME
@@ -159,37 +160,6 @@
             StandardErrorPath = "/tmp/sketchybar-wifi.err";
             # --trigger shells out to `sketchybar` off PATH.
             EnvironmentVariables.PATH = "${lib.makeBinPath [ pkgs.sketchybar ]}:/usr/bin";
-          };
-        };
-
-        # Owns per-item hover state. Items invoke `sketchybar-hover` (the tiny
-        # client) on mouse events; this daemon receives those over a Unix socket
-        # and pushes batched `--set` updates back to sketchybar. Avoids the
-        # per-hover nushell fork-storm and self-heals dropped mouse.exited events.
-        launchd.agents.sketchybar-hover = {
-          inherit (config.launchd.agents.sketchybar) enable;
-          config = {
-            Debug = true;
-            Program = "${pkgs.pkgs-mine.sketchybar-hover}/bin/sketchybar-hoverd";
-            KeepAlive = true;
-            RunAtLoad = true;
-            StandardOutPath = "/tmp/sketchybar-hover.log";
-            StandardErrorPath = "/tmp/sketchybar-hover.err";
-            EnvironmentVariables = {
-              PATH = "${[ pkgs.sketchybar ] |> lib.makeBinPath}:/usr/bin";
-              # Set to "1" to log every event/state/sketchybar invocation to
-              # /tmp/sketchybar-hover.err. Off by default to keep the log file
-              # small in normal use.
-              SKETCHYBAR_HOVER_DEBUG = "0";
-              # Bar height used by the daemon's polling fallback to detect
-              # "cursor left the bar". Sourced from the same `barHeight` used by
-              # nix-settings.nu so all three places (Nix, Nu, Rust) stay in sync.
-              SKETCHYBAR_BAR_HEIGHT = barHeight;
-              # Stack traces in /tmp/sketchybar-hover.err when the daemon's
-              # panic hook fires. No overhead during normal operation since
-              # panics are the abort path.
-              RUST_BACKTRACE = "1";
-            };
           };
         };
 
