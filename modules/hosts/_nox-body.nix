@@ -20,7 +20,6 @@ in
     # Each must ALSO be removed from System Settings → General → Login
     # Items, or the login item wins and the app starts uninjected.
     services.dyldInject.startupApps = [
-      "Claude"
       "Dayflow"
       "FluidVoice"
       "Klack"
