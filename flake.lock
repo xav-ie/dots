@@ -150,6 +150,21 @@
         "type": "github"
       }
     },
+    "bar-panels": {
+      "locked": {
+        "lastModified": 1794463960,
+        "narHash": "sha256-qbuQwt3X6sHifblUTK4vykkT3UZbZnuLYkJOLjGo1ao=",
+        "owner": "xav-ie",
+        "repo": "bar-panels",
+        "rev": "eb1a90004cabe7d9e4197b80e286bdefe2115085",
+        "type": "github"
+      },
+      "original": {
+        "owner": "xav-ie",
+        "repo": "bar-panels",
+        "type": "github"
+      }
+    },
     "bdwgc": {
       "flake": false,
       "locked": {
@@ -1912,6 +1927,7 @@
         "alacritty-theme-themes": "alacritty-theme-themes",
         "astal": "astal",
         "atuin": "atuin",
+        "bar-panels": "bar-panels",
         "beads": "beads",
         "brew-src": "brew-src",
         "browser-session-mcp": "browser-session-mcp",
@@ -2036,11 +2052,11 @@
     },
     "screenshare-ui": {
       "locked": {
-        "lastModified": 1794457799,
-        "narHash": "sha256-+mpqHlUdnMcla0uk1G0d9Rh7tDY4Z2FdhN620V1gun0=",
+        "lastModified": 1794467068,
+        "narHash": "sha256-iZ97jT6yGWHog7EgUW6RLdXRRo1gdt590aYWxV2M3UI=",
         "ref": "refs/heads/main",
-        "rev": "77764b79dbf952e6597a48b7a142f9af3391cbb8",
-        "revCount": 16,
+        "rev": "4a4fc2040c8c60d2f1d4b5aed8092f527b6e2cb0",
+        "revCount": 21,
         "type": "git",
         "url": "ssh://git@github.com/xav-ie/screenshare-ui"
       },
@@ -2321,6 +2337,9 @@
         "ags": [
           "ags"
         ],
+        "bar-panels": [
+          "bar-panels"
+        ],
         "crane": [
           "crane"
         ],
@@ -2329,6 +2348,9 @@
         ],
         "home-manager": [
           "home-manager"
+        ],
+        "nix-darwin": [
+          "nix-darwin"
         ],
         "nixpkgs": [
           "nixpkgs"
@@ -2344,11 +2366,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793193653,
-        "narHash": "sha256-Y7gK3dqGEfc0KkCrA/yoxB+L1TdAQGZgJoVgnW1C/Ss=",
+        "lastModified": 1794466014,
+        "narHash": "sha256-szNO42ofHpZUbLm+7xTt3eD9NeRzvObkhpO0/Z/q4u0=",
         "owner": "xav-ie",
         "repo": "virtual-headset",
-        "rev": "50270528110f2bd962bbb87cedaab3ce5f800300",
+        "rev": "6f5d42f24e0ebb771c51a5fb56215433e0c06379",
         "type": "github"
       },
       "original": {

@@ -46,7 +46,8 @@
   rcsd-src,
   rcsd-web-src,
   # screenshare-ui (its main flake has no packages output; callPackage its
-  # derivations); darwin-only.
+  # derivations) and the BarPanels library its app links; darwin-only.
+  bar-panels-src,
   screenshare-ui-src,
   simulstreaming-src,
   slack-mcp-server-src,
@@ -164,7 +165,9 @@ rec {
   menubar-reveal = pkgs.callPackage ./menubar-reveal { };
   move-pip = pkgs.callPackage ./move-pip { };
   polish-recording = pkgs.callPackage ./polish-recording { };
-  screenshare-ui = pkgs.callPackage "${screenshare-ui-src}/default.nix" { };
+  screenshare-ui = pkgs.callPackage "${screenshare-ui-src}/default.nix" {
+    bar-panels = pkgs.callPackage "${bar-panels-src}/default.nix" { };
+  };
   screenshare-ui-dock-hooks = pkgs.callPackage "${screenshare-ui-src}/dock-hooks.nix" { };
   screenshare-ui-hide-windows = pkgs.callPackage "${screenshare-ui-src}/hide-windows.nix" { };
   sketchybar-battery = pkgs.callPackage ./sketchybar-battery { inherit writeNuApplication; };

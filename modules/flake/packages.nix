@@ -86,6 +86,7 @@
           workspace-mcp-src
           zerobrew-src
           ;
+        bar-panels-src = inputs.bar-panels;
         screenshare-ui-src = inputs.screenshare-ui;
         slack-mcp-server-src = inputs.slack-mcp-server;
       };

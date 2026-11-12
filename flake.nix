@@ -13,6 +13,8 @@
     atuin.inputs.flake-compat.follows = "flake-compat";
     atuin.inputs.flake-parts.follows = "flake-parts";
     atuin.inputs.nixpkgs.follows = "nixpkgs";
+    # BarPanels, the drop-down panel library screenshare-ui and virtual-headset link.
+    bar-panels.url = "github:xav-ie/bar-panels";
     beads.url = "github:steveyegge/beads";
     browser-session-mcp.url = "github:xav-ie/browser-session-mcp";
     browser-session-mcp.inputs.nixpkgs.follows = "nixpkgs";
@@ -235,6 +237,8 @@
     virtual-headset.inputs.systems.follows = "systems";
     virtual-headset.inputs.treefmt-nix.follows = "treefmt-nix";
     virtual-headset.inputs.ags.follows = "ags";
+    virtual-headset.inputs.bar-panels.follows = "bar-panels";
+    virtual-headset.inputs.nix-darwin.follows = "nix-darwin";
     zjstatus.inputs.crane.follows = "crane";
     zjstatus.inputs.flake-utils.follows = "flake-utils";
     zjstatus.inputs.nixpkgs.follows = "nixpkgs";
