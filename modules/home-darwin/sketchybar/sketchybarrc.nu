@@ -154,6 +154,12 @@ sketchybar --bar "font_smoothing=on"
 # volume is registered. More info about the event system can be found here:
 # https://felixkratz.github.io/SketchyBar/config/events
 
+# click_script that opens screenshare-ui's <panel> (sound, wifi, battery) under
+# <item>'s left edge, standing in for Control Center's menus.
+def panel-click [panel: string, item: string] {
+  $"click_script=nu -c 'screenshare-ui ($panel) \(sketchybar --query ($item) | from json | get bounding_rects | values | first | get origin.0\)'"
+}
+
 # clock — icon+label cluster (sb-cluster), identical structure to volume/battery.
 # icon_w=24 == the clock-face zone (the 18px face is centred in it via clock_icon's
 # --min-width, leaving a small gap to the time). label_w=0 → the time string hugs
@@ -180,13 +186,14 @@ sb-icon-item control_center right 26 $"sketchybar-hover --plugin ($PLUGIN_DIR)/c
 
 # battery — icon+label cluster (sb-cluster). icon_w=36 == the rendered battery
 # glyph width, so zone==pull==36 (was 40, the 4px overhang). label_w=0 → the %
-# hugs the text. battery_change is emitted by the sketchybar-battery daemon.
+# hugs the text. battery_change is emitted by the sketchybar-battery daemon. A
+# click opens screenshare-ui's Battery panel under the cluster's left edge.
 (sketchybar --add event battery_change)
 sb-cluster battery right 36 0 (
   $"sketchybar-hover --plugin ($PLUGIN_DIR)/battery_icon.nu"
 ) [battery_change mouse.entered mouse.exited] (
   $"sketchybar-hover --plugin ($PLUGIN_DIR)/battery.nu"
-) [battery_change mouse.entered mouse.exited] --label-extra ["click_script=$HOME/.config/sketchybar/select_control_center.nu \"Battery\""] --icon-extra ["click_script=$HOME/.config/sketchybar/select_control_center.nu \"Battery\""]
+) [battery_change mouse.entered mouse.exited] --label-extra [(panel-click battery battery_icon)] --icon-extra [(panel-click battery battery_icon)]
 
 # wifi — single icon (sb-icon-item). Native icon rendered by `sketchybar-icons`
 # (SF Symbol -> PNG via CoreWLAN signal). `wifi_change` is emitted by the
@@ -199,10 +206,10 @@ sb-cluster battery right 36 0 (
 # re-enables it (the primitive turns background.drawing off by default). NO
 # background.padding — under the tiling primitives every item already abuts, so
 # the old -1px seam-closer now just overlaps its neighbour's highlight.
-# click_script opens Control Center > Wi-Fi.
+# A click opens screenshare-ui's Wi-Fi panel under the item.
 (sketchybar --add event wifi_change)
 sb-icon-item wifi right 26 $"sketchybar-hover --plugin ($PLUGIN_DIR)/wifi.nu" [wifi_change mouse.entered mouse.exited] --extra [
-  "click_script=$HOME/.config/sketchybar/select_control_center.nu \"Wi-Fi\""
+  (panel-click wifi wifi)
   "background.height=24"
   "background.corner_radius=6"
   "background.drawing=on"
@@ -214,16 +221,17 @@ sb-icon-item wifi right 26 $"sketchybar-hover --plugin ($PLUGIN_DIR)/wifi.nu" [w
 # fixes the number box (volume.nu re-sizes it per digit-count via an animated
 # tween). volume_icon does NOT subscribe volume_change — volume.nu owns the icon
 # image and drives it in lockstep with the number tween — but still needs mouse
-# events for the shared hover highlight.
+# events for the shared hover highlight. A click opens screenshare-ui's Sound
+# panel under the cluster's left edge (the icon's x).
 sb-cluster volume right 24 61 (
   $"sketchybar-hover --plugin ($PLUGIN_DIR)/volume_icon.nu"
 ) [mouse.entered mouse.exited] (
   $"sketchybar-hover --plugin ($PLUGIN_DIR)/volume.nu"
 ) [volume_change mouse.entered mouse.exited] --label-extra [
   "label.align=right"
-  "click_script=menubar-reveal $HOME/.config/sketchybar/open_volume_control.scpt"
+  (panel-click sound volume_icon)
 ] --icon-extra [
-  "click_script=menubar-reveal $HOME/.config/sketchybar/open_volume_control.scpt"
+  (panel-click sound volume_icon)
 ]
 
 # hidewin — single icon (sb-icon-item, icon_only). screenshare-ui's Screenshare

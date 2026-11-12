@@ -56,8 +56,6 @@
             '';
           "sketchybar/sketchybarrc".source =
             config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/sketchybarrc.nu";
-          "sketchybar/open_volume_control.scpt".source =
-            config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/open_volume_control.scpt";
           "sketchybar/select_control_center.nu".source =
             config.lib.file.mkOutOfStoreSymlink "${config.dotFilesDir}/modules/home-darwin/sketchybar/select_control_center.nu";
           "sketchybar/toggle_notification_center.js".source =

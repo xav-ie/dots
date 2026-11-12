@@ -2060,11 +2060,11 @@
     },
     "screenshare-ui": {
       "locked": {
-        "lastModified": 1793282809,
-        "narHash": "sha256-p2SI3sDB96piJDCQWQk8vz/uh9VZS6GcWVNtohyCfow=",
+        "lastModified": 1794457799,
+        "narHash": "sha256-+mpqHlUdnMcla0uk1G0d9Rh7tDY4Z2FdhN620V1gun0=",
         "ref": "refs/heads/main",
-        "rev": "808d430081663e07bef3f98ee54cb22cc2154ea0",
-        "revCount": 11,
+        "rev": "77764b79dbf952e6597a48b7a142f9af3391cbb8",
+        "revCount": 16,
         "type": "git",
         "url": "ssh://git@github.com/xav-ie/screenshare-ui"
       },
