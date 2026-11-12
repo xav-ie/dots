@@ -95,10 +95,11 @@ let
     # Dock, Finder and WindowManager start before this agent's setenv
     # lands, so they come up uninjected; all relaunch themselves when killed.
     /usr/bin/killall Dock Finder WindowManager 2>/dev/null || true
-    # So do the agents behind Spotlight's search panel (Siri AI, on macOS 27),
-    # Notification Center and Control Center: uninjected, they showed in
-    # screen shares even in Screenshare Mode. launchd restarts them injected.
-    for label in com.apple.campo com.apple.notificationcenterui.agent com.apple.controlcenter; do
+    # So do the agents behind Hover Text, Spotlight's search panel (Siri AI,
+    # on macOS 27), Notification Center and Control Center: uninjected, they
+    # showed in screen shares even in Screenshare Mode. launchd restarts them
+    # injected.
+    for label in com.apple.accessibility.AXVisualSupportAgent com.apple.campo com.apple.controlcenter com.apple.notificationcenterui.agent; do
       /bin/launchctl kickstart -k "gui/$(/usr/bin/id -u)/$label" 2>/dev/null || true
     done
 
