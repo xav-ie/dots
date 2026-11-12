@@ -1363,15 +1363,15 @@
       "locked": {
         "lastModified": 1794417766,
         "narHash": "sha256-u+B4mhPUnsAJNbKcQ4tq1Tl25jkfNDfY9o2uGaReH3U=",
-        "ref": "refs/heads/main",
+        "owner": "xav-ie",
+        "repo": "nix-darwin-tcc",
         "rev": "9866c673a80ab365f90a0fe9453133db61d3224f",
-        "revCount": 6,
-        "type": "git",
-        "url": "ssh://git@github.com/xav-ie/nix-darwin-tcc"
+        "type": "github"
       },
       "original": {
-        "type": "git",
-        "url": "ssh://git@github.com/xav-ie/nix-darwin-tcc"
+        "owner": "xav-ie",
+        "repo": "nix-darwin-tcc",
+        "type": "github"
       }
     },
     "nix-homebrew": {
@@ -2074,15 +2074,15 @@
       "locked": {
         "lastModified": 1793132195,
         "narHash": "sha256-x2HVtICL7QXU9B1+Jc0m/6ytc6/RaCyyg2jVkGrXbvw=",
-        "ref": "refs/heads/main",
+        "owner": "xav-ie",
+        "repo": "scribe",
         "rev": "7e7944fb2b3694bab98a16482b32698b538ba0b4",
-        "revCount": 165,
-        "type": "git",
-        "url": "ssh://git@github.com/xav-ie/scribe"
+        "type": "github"
       },
       "original": {
-        "type": "git",
-        "url": "ssh://git@github.com/xav-ie/scribe"
+        "owner": "xav-ie",
+        "repo": "scribe",
+        "type": "github"
       }
     },
     "scribe-desktop": {
@@ -2257,15 +2257,15 @@
       "locked": {
         "lastModified": 1791477281,
         "narHash": "sha256-+hLATQm7FBzLYy9//BKTM2gaQCbPY2Hb2m7rrY1rDqE=",
-        "ref": "refs/heads/main",
+        "owner": "xav-ie",
+        "repo": "Tetherbug",
         "rev": "c9ee11751b093e6a21c75be4aac9c86ab4993e5f",
-        "revCount": 1,
-        "type": "git",
-        "url": "ssh://git@github.com/xav-ie/Tetherbug"
+        "type": "github"
       },
       "original": {
-        "type": "git",
-        "url": "ssh://git@github.com/xav-ie/Tetherbug"
+        "owner": "xav-ie",
+        "repo": "Tetherbug",
+        "type": "github"
       }
     },
     "treefmt-nix": {

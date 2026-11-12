@@ -50,7 +50,7 @@
     neverest.inputs.nixpkgs.follows = "nixpkgs";
     nix-auto-follow.url = "github:xav-ie/nix-auto-follow/feat-consolidation";
     nix-darwin.url = "github:LnL7/nix-darwin";
-    nix-darwin-tcc.url = "git+ssh://git@github.com/xav-ie/nix-darwin-tcc";
+    nix-darwin-tcc.url = "github:xav-ie/nix-darwin-tcc";
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
     nix-homebrew.inputs.brew-src.follows = "brew-src";
     # Parallel derivationStrict (DeterminateSystems/nix-src#572): system eval
@@ -71,7 +71,7 @@
     pyproject-build-systems.url = "github:pyproject-nix/build-system-pkgs";
     uv2nix.url = "github:pyproject-nix/uv2nix";
     quadlet-nix.url = "github:SEIAROTg/quadlet-nix";
-    scribe.url = "git+ssh://git@github.com/xav-ie/scribe";
+    scribe.url = "github:xav-ie/scribe";
     scribe.inputs.nixpkgs.follows = "nixpkgs";
     scribe-desktop.url = "git+ssh://git@github.com/xav-ie/scribe-desktop";
     scribe-desktop.inputs.nixpkgs.follows = "nixpkgs";
@@ -85,7 +85,7 @@
     sketchybar-src.url = "github:FelixKratz/SketchyBar/v2.24.1";
     sketchybar-src.flake = false;
     sops-nix.url = "github:Mic92/sops-nix";
-    tetherbug.url = "git+ssh://git@github.com/xav-ie/Tetherbug";
+    tetherbug.url = "github:xav-ie/Tetherbug";
     tetherbug.inputs.nixpkgs.follows = "nixpkgs";
     virtual-headset.url = "github:xav-ie/virtual-headset";
     wyoming-kitten.url = "github:xav-ie/wyoming-kitten";
