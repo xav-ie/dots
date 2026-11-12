@@ -173,15 +173,15 @@ is accepted for you.
   or probe with a made-up option, and don't hunt for `[role=option]` with
   `evaluate`. A click or key press that leaves a list open also reports its
   `options`.
-- `upload_file({ sessionId, selector, content, name })` — attach a file:
-  `content` is the file as base64 (read it on your side, e.g. `base64 -w0`),
-  `name` what the page sees. `selector` can be the "Attach" button or label;
-  its hidden file input is used. A drop zone gets the file dropped on it.
-  Chrome runs in a container, so never pass a host path. Check
-  `pageShowsName`. Executor's sandbox has no `fetch`; for a file too big to
-  paste, serve its base64 as a `.txt` file the browser can reach (e.g.
-  `host.containers.internal`), open it in a new tab, read
-  `document.body.innerText`, close the tab and pass that as `content`.
+- `upload_file({ sessionId, selector, path })` — attach a file: copy it into
+  `/var/lib/browser-session-mcp/uploads/` (shared with the server's
+  container; files older than a day are deleted) and pass that `path`, so its
+  bytes never pass through your context. That folder is on praesidium; from
+  another machine, `scp` the file into it first. `name` overrides the file name the
+  page sees. `selector` can be the "Attach" button or label; its hidden file
+  input is used. A drop zone gets the file dropped on it. Check
+  `pageShowsName`. Only a path inside that folder reaches the server; base64
+  `content` with `name` is the fallback when you can't write there.
 - `press_key({ sessionId, key, selector?, repeat?, timeout? })` — `key` is a name
   (`Enter`, `Tab`, `ArrowDown`, `Space`, …), a single char, or a combination
   such as `Shift+Tab` or `Control+a`. Plain language works for `selector`.
