@@ -1,40 +1,31 @@
 #!/usr/bin/env nu --stdin
 
-# gets all control center item names
-export def get_items [] {
-  let items = (osascript -e 'set text item delimiters to linefeed'
-              -e 'tell application "System Events" to tell process "ControlCenter" to (get description of every menu bar item of menu bar 1) as text'
-              | lines
-              | each {|| $in
-                        | parse -r "^(?<name>[^,]+)"
-                        | first
-                        | get name
-                        | str trim
-                        | str replace -a "‑" "-"
-              })
-  $items
+# macOS 27 hosts the system status items in MenuBarAgent, each wrapped in an
+# AXGroup and identified only by AXIdentifier com.apple.menuextra.<id>.
+const IDS = {
+  "Control Center": "controlcenter"
 }
 
-# gets the index of the control center item with the given name
-export def find_item [item: string] {
-  let items = (get_items)
+const PRESS = '
+on run argv
+  tell application "System Events" to tell process "MenuBarAgent"
+    repeat with g in (every group of menu bar 1)
+      set i to menu bar item 1 of g
+      if value of attribute "AXIdentifier" of i is (item 1 of argv) then
+        perform action "AXPress" of i
+        return
+      end if
+    end repeat
+  end tell
+  error "no menu bar item " & (item 1 of argv)
+end run'
 
-  let result = $items
-  | enumerate
-  | where {|row| $row.item == $item}
-  | first
-  | get index
-
-  $result + 1
-}
-
-# click the item in control center with the given name
+# click the status item with the given name
 export def select_item [item: string] {
-  let index = (find_item $item)
-  menubar-reveal osascript -e $"tell application \"System Events\" to tell process \"Control Center\" to perform action \"AXPress\" of menu bar item ($index) of menu bar 1" | ignore
+  let id = $"com.apple.menuextra.($IDS | get $item)"
+  menubar-reveal osascript -e $PRESS $id | ignore
 }
 
-# select the item in control center with the given name
 def main [item: string] {
   select_item $item
 }
