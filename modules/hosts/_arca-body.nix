@@ -234,6 +234,10 @@ in
             # nginx never spools the body to its own disk.
             client_max_body_size 8g;
             proxy_request_buffering off;
+            # Unbuffered, nginx reads the body only as fast as atticd takes it,
+            # and atticd stalls for over a minute on several large CI pushes at
+            # once. The default 60s then cut those pushes off with a 408.
+            client_body_timeout 600s;
             proxy_read_timeout 3600s;
             proxy_send_timeout 3600s;
           '';
