@@ -150,10 +150,14 @@ sketchybar --bar "font_smoothing=on"
 
 ##### Adding Left Items #####
 # We add some regular items to the left side of the bar, where
-# only the properties deviating from the current defaults need to be set
+# only the properties deviating from the current defaults need to be set.
+# capture=off (our sketchybar patch) keeps the front app out of screen shares
+# and screenshots: it shows on screen, but no one watching sees what you
+# switch to.
 (sketchybar --add item front_app left
   --set front_app $"script=sketchybar-hover --plugin ($PLUGIN_DIR)/front_app.nu"
   $"label.font=(get_app_font)"
+  "capture=off"
   --subscribe front_app front_app_switched mouse.entered mouse.exited mouse.exited.global)
 
 ##### Adding Right Items #####
@@ -247,27 +251,12 @@ sb-cluster volume right 24 61 (
   (panel-click sound volume_icon)
 ]
 
-# hidewin — single icon (sb-icon-item, icon_only). screenshare-ui's Screenshare
-# Mode toggle, placed to the LEFT of the volume icon (right items add
-# right-to-left). Its plugin owns the icon image (white = Normal, orange =
-# Screenshare Mode, red = a window still capturable); `hidewin_mode` is bound to
-# the com.x.screenshare-ui.mode-changed notification. mouse.clicked opens the
-# panel.
-(sketchybar --add event hidewin_mode com.x.screenshare-ui.mode-changed)
-(sb-icon-item
-  hidewin
-  right
-  26
-  $"sketchybar-hover --plugin ($PLUGIN_DIR)/hidewin.nu"
-  [hidewin_mode mouse.entered mouse.exited mouse.clicked]
-)
-
-# virtual_headset — single icon (sb-icon-item, icon_only), LEFT of hidewin.
+# virtual_headset — single icon (sb-icon-item, icon_only), LEFT of the volume icon.
 # virtual-headset's denoising mic agent and call mute in one: the plugin owns the
 # icon (the call's mic while in a call, else a plain mic);
 # `virtual_headset_changed` is bound to the agent's com.github.virtual-headset.changed and
 # front_app_switched catches Zoom desktop meetings. Left click opens the agent's
-# panel, right click toggles mute.
+# panel, right click toggles mute. capture=off: it never shows in a screen share.
 (
   sketchybar --add event virtual_headset_changed com.github.virtual-headset.changed
 )
@@ -277,6 +266,23 @@ sb-cluster volume right 24 61 (
   26
   $"sketchybar-hover --plugin ($PLUGIN_DIR)/virtual_headset.nu"
   [virtual_headset_changed front_app_switched mouse.entered mouse.exited mouse.clicked]
+  --extra ["capture=off"]
+)
+
+# hidewin — single icon (sb-icon-item, icon_only). screenshare-ui's Screenshare
+# Mode toggle, LEFT of virtual_headset (right items add right-to-left). Its
+# plugin owns the icon image (white = Normal, orange = Screenshare Mode, red = a
+# window still capturable); `hidewin_mode` is bound to the
+# com.x.screenshare-ui.mode-changed notification. mouse.clicked opens the panel.
+# capture=off: like front_app, it never shows in a screen share.
+(sketchybar --add event hidewin_mode com.x.screenshare-ui.mode-changed)
+(sb-icon-item
+  hidewin
+  right
+  26
+  $"sketchybar-hover --plugin ($PLUGIN_DIR)/hidewin.nu"
+  [hidewin_mode mouse.entered mouse.exited mouse.clicked]
+  --extra ["capture=off"]
 )
 
 ##### Force all scripts to run the first time (never do this in a script) #####

@@ -6,7 +6,8 @@
 # iris/pupil glyph (`record.circle` — a ring + centre dot, no eye outline) via
 # `sketchybar-icons`, white in Normal mode, orange when Screenshare Mode is
 # active (every app hidden from capture, for a meeting), and red when
-# screenshare-ui's leak audit finds a window still capturable. Sized to MATCH the
+# screenshare-ui's leak audit finds a window still capturable. The item itself
+# never shows in a screen share (capture=off in sketchybarrc). Sized to MATCH the
 # neighbouring control_center icon (POINT_SIZE 14 in a MIN_WIDTH canvas, drawn
 # at background.image.scale 0.5), with the same zeroed paddings so it doesn't
 # overlap the volume icon. Hover highlight is painted by sketchybar-hoverd onto
