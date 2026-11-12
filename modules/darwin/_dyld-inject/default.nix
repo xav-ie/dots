@@ -103,8 +103,13 @@ let
       /bin/launchctl kickstart -k "gui/$(/usr/bin/id -u)/$label" 2>/dev/null || true
     done
 
+    # Hidden (-j) and in the background (-g), so no window opens; an app
+    # already running is left alone, since `open` would send it a reopen,
+    # which most apps answer by showing a window.
     ${lib.concatMapStringsSep "\n" (app: ''
-      /usr/bin/open -g -a ${lib.escapeShellArg app} || echo "dyld-inject: could not open ${app}" >&2
+      if ! /usr/bin/pgrep -qf ${lib.escapeShellArg "/${app}.app/Contents/MacOS/"}; then
+        /usr/bin/open -g -j -a ${lib.escapeShellArg app} || echo "dyld-inject: could not open ${app}" >&2
+      fi
     '') cfg.startupApps}
   '';
 in
@@ -150,8 +155,9 @@ in
         setenv only reaches its own sub-domain; there is no system to
         gui inheritance.
 
-        Each entry is passed to `open -g -a`, so use the name as it
-        appears in /Applications. You MUST also remove the app from
+        Each entry is passed to `open -g -j -a` (hidden, no window), so use
+        the name as it appears in /Applications; one already running is
+        skipped. You MUST also remove the app from
         System Settings to General to Login Items, or it will still race.
       '';
     };
