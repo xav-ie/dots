@@ -280,6 +280,7 @@
                   ''}";
                   on-resume = "${pkgs.writeShellScript "seat-back" ''
                     ${pkgs.coreutils}/bin/rm -f "$XDG_RUNTIME_DIR/seat-away"
+                    ${pkgs.systemd}/bin/systemctl --user start --no-block good-morning.service
                   ''}";
                 }
                 {

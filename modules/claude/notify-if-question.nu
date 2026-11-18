@@ -34,7 +34,9 @@ def main [] {
 
   if ($para | str contains "?") {
     let preview = $para | str substring 0..200
-    ^notify "Claude has a question" $preview
+    let tab = $env.HERDR_TAB_ID? | default ""
+    let tab_flag = if ($tab | is-empty) { [] } else { [--herdr-tab $tab] }
+    ^notify "Claude has a question" $preview --icon claude --expire 1day ...$tab_flag
   }
 
   exit 0

@@ -58,11 +58,21 @@
 let
   optionalAttrs = bool: attrSet: if bool then attrSet else { };
 
+  at-computer = pkgs.callPackage ./at-computer { inherit writeNuApplication; };
   firefox-router = pkgs.callPackage ./firefox-router { };
   is-sshed = pkgs.callPackage ./is-sshed { inherit writeNuApplication; };
+  notifier = pkgs.callPackage ./notifier { };
   notify = pkgs.callPackage ./notify {
-    inherit generate-kaomoji ssh-client-host writeNuApplication;
+    inherit
+      generate-kaomoji
+      notify-icons
+      ssh-client-host
+      writeNuApplication
+      ;
+    at-computer = if isLinux then at-computer else null;
+    notifier = if isDarwin then notifier else null;
   };
+  notify-icons = pkgs.callPackage ./notify-icons { };
   rcsd = pkgs.callPackage ./rcsd { src = rcsd-src; };
   ssh-client-host = pkgs.callPackage ./ssh-client-host { inherit writeNuApplication; };
   uair-toggle-and-notify = pkgs.callPackage ./uair-toggle-and-notify { inherit notify; };
@@ -72,6 +82,7 @@ rec {
     firefox-router
     is-sshed
     notify
+    notify-icons
     rcsd
     ssh-client-host
     uair-toggle-and-notify
@@ -175,10 +186,11 @@ rec {
   sketchybar-icons = sketchybar-icons-pkg;
   zerobrew = pkgs.callPackage ./zerobrew { src = zerobrew-src; };
   virtual-headset = virtual-headset-pkg;
+  inherit notifier;
   yubikey-touch-prompt = pkgs.callPackage ./yubikey-touch-prompt { };
 })
 // (optionalAttrs isLinux rec {
-  at-computer = pkgs.callPackage ./at-computer { inherit writeNuApplication; };
+  inherit at-computer;
   askpass = pkgs.callPackage ./askpass {
     inherit agsPackages at-computer;
     fontName = (import ../modules/_lib/fonts.nix { inherit pkgs; }).fonts.name "sans";

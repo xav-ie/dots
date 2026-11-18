@@ -1,5 +1,13 @@
 #!/usr/bin/env -S nu --stdin
 
+# Claude's notifications: Claude avatar, gone after a day, and a click focuses
+# the herdr tab this session runs in.
+def claude-notify [title: string, body: string] {
+  let tab = $env.HERDR_TAB_ID? | default ""
+  let tab_flag = if ($tab | is-empty) { [] } else { [--herdr-tab $tab] }
+  ^notify $title $body --icon claude --expire 1day ...$tab_flag
+}
+
 def main [] {
   let input = $in | from json
   # The Notification:permission_prompt payload carries no tool data, and the
@@ -13,7 +21,7 @@ def main [] {
   # No recorded tool: fall back to the raw hook message, the same generic ping
   # Claude Code would otherwise show.
   if $pending == null {
-    ^notify "Claude Code" $input.message
+    claude-notify "Claude Code" $input.message
     exit 0
   }
 
@@ -40,50 +48,50 @@ def main [] {
       } else {
         $questions | get question | str join (char nl)
       }
-      ^notify "Claude has a question" $body
+      claude-notify "Claude has a question" $body
     }
     "Edit" => {
       let basepath = $content.input.file_path | path basename
-      ^notify "Claude Code" $"Needs permission to edit ($basepath)"
+      claude-notify "Claude Code" $"Needs permission to edit ($basepath)"
     }
     "EnterPlanMode" => {
-      ^notify "Claude Code" $"Needs permission to enter plan mode"
+      claude-notify "Claude Code" $"Needs permission to enter plan mode"
     }
     "Bash" => {
-      ^notify "Claude Code" $"Bash: ($content.input.description)"
+      claude-notify "Claude Code" $"Bash: ($content.input.description)"
     }
     "Glob" => {
       let basepath = $content.input.path? | default "cwd" | path basename
-      ^notify "Claude Code" $"Needs permission to glob search ($basepath)"
+      claude-notify "Claude Code" $"Needs permission to glob search ($basepath)"
     }
     "Grep" => {
       let basepath = $content.input.path? | default "cwd" | path basename
-      ^notify "Claude Code" $"Needs permission to search ($basepath)"
+      claude-notify "Claude Code" $"Needs permission to search ($basepath)"
     }
     "Read" => {
       let basepath = $content.input.file_path | path basename
-      ^notify "Claude Code" $"Needs permission to read ($basepath)"
+      claude-notify "Claude Code" $"Needs permission to read ($basepath)"
     }
     "SlashCommand" => {
-      ^notify "Claude Code" $"Needs permission to run ($content.input.command)"
+      claude-notify "Claude Code" $"Needs permission to run ($content.input.command)"
     }
     "Task" => {
-      ^notify "Claude Code" $"Subagent ($content.input.subagent_type): ($content.input.description)"
+      claude-notify "Claude Code" $"Subagent ($content.input.subagent_type): ($content.input.description)"
     }
     "WebFetch" => {
-      ^notify "Claude Code" $"Needs permission to fetch ($content.input.url)"
+      claude-notify "Claude Code" $"Needs permission to fetch ($content.input.url)"
     }
     "Write" => {
       let basepath = $content.input.file_path | path basename
-      ^notify "Claude Code" $"Needs permission to create ($basepath)"
+      claude-notify "Claude Code" $"Needs permission to create ($basepath)"
     }
     _ => {
       if ($content.name | str starts-with "mcp__") {
         let mcp = $content.name | parse "mcp__{server}__{tool}" | first
-        ^notify "Claude Code" $"($mcp.server) permission to run ($mcp.tool)"
+        claude-notify "Claude Code" $"($mcp.server) permission to run ($mcp.tool)"
         exit 0
       }
-      ^notify "Unknown tool name" $content.name
+      claude-notify "Unknown tool name" $content.name
       exit 1
     }
   }

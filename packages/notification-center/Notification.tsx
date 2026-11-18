@@ -5,6 +5,7 @@ import Pango from "gi://Pango";
 import AstalNotifd from "gi://AstalNotifd";
 import { createState, onCleanup } from "ags";
 import { focusAdjacent } from "./focusTrap";
+import { runOnClick } from "./notifd";
 
 // Adapted from the official Aylur/ags gtk4 notifications example, shared between
 // the transient popups and the persistent center list.
@@ -176,6 +177,7 @@ export default function Notification({
   // Default action (freedesktop "default", else the first action), fired when a
   // selectable center row is activated with Enter.
   function activate() {
+    if (runOnClick(n)) return;
     const a = n.actions.find((x) => x.id === "default") ?? n.actions[0];
     if (a) n.invoke(a.id);
   }
@@ -188,11 +190,12 @@ export default function Notification({
     (a) => a.id !== "default" && a.label.trim() !== "",
   );
 
-  // A body click invokes the "default" action when the sender provides one
-  // (e.g. Claude Code's "needs your permission" focuses the terminal); invoking
-  // resolves the notification, so no separate dismiss is needed. With no default
-  // action, a body click just dismisses.
+  // A body click runs `notify`'s x-dots-on-click command, else invokes the
+  // "default" action when the sender provides one (e.g. Claude Code's "needs
+  // your permission" focuses the terminal); invoking resolves the notification,
+  // so no separate dismiss is needed. With neither, a body click just dismisses.
   function bodyClick() {
+    if (runOnClick(n)) return;
     const def = n.actions.find((x) => x.id === "default");
     if (def) n.invoke(def.id);
     else n.dismiss();

@@ -1,6 +1,6 @@
 {
   flake.modules.homeManager.linux =
-    { pkgs, ... }:
+    { lib, pkgs, ... }:
     let
       check-systemd-units = pkgs.writeNuApplication {
         name = "check-systemd-units";
@@ -43,7 +43,7 @@
         ];
         text = # nu
           ''
-            notify "Work is done. Time to log off..."
+            notify "Time to log off" "Work is done for today." --icon evening --expire 12hr
             let zoom_window_client = (hyprctl clients -j
                                       | from json
                                       | where {|| $in.title == "Zoom" })
@@ -58,21 +58,49 @@
           '';
       };
 
+      # Claims the work morning on my first return to either machine: hypridle's
+      # seat-back here, Notifier's wake hook on nox (over ssh). Exit 0 means this
+      # caller won the claim and shows Good morning; 1 means already claimed
+      # today, 2 means not a work morning (weekends, before 05:00, after 17:00).
       start-work = pkgs.writeNuApplication {
         name = "start-work";
-        runtimeInputs = with pkgs.pkgs-mine; [
-          notify
-          openrgb-appimage
+        runtimeInputs = with pkgs.pkgs-mine; [ openrgb-appimage ];
+        text = # nu
+          ''
+            def main [] {
+              let now = date now
+              let weekday = $now | format date "%u" | into int
+              let hour = $now | format date "%H" | into int
+              if $weekday > 5 or $hour < 5 or $hour >= 17 { exit 2 }
+              let state = $env.XDG_STATE_HOME? | default ($env.HOME | path join .local/state) | path join start-work
+              let today = $now | format date "%F"
+              if (try { open $state | str trim } catch { "" }) == $today { exit 1 }
+              mkdir ($state | path dirname)
+              $today | save -f $state
+              try { openrgb -p purple | ignore }
+            }
+          '';
+      };
+
+      good-morning = pkgs.writeNuApplication {
+        name = "good-morning";
+        runtimeInputs = [
+          pkgs.pkgs-mine.notify
+          start-work
         ];
         text = # nu
           ''
-            notify "Good morning, time to start work!"
-            openrgb -p purple
+            if (start-work | complete | get exit_code) == 0 {
+              notify "Good morning" "Time to start work!" --icon morning --expire 12hr
+            }
           '';
       };
     in
     {
       config = {
+        # nox's Notifier runs start-work over ssh on wake.
+        home.packages = [ start-work ];
+
         systemd.user = {
           # Nicely reload system units when changing configs
           startServices = "sd-switch";
@@ -89,6 +117,15 @@
             };
             Install = {
               WantedBy = [ "default.target" ];
+            };
+          };
+
+          # Started by hypridle when I return to the seat.
+          services.good-morning = {
+            Unit.Description = "Greet the first return of the work morning";
+            Service = {
+              Type = "oneshot";
+              ExecStart = lib.getExe good-morning;
             };
           };
 
@@ -116,28 +153,6 @@
             };
           };
 
-          services.start-work = {
-            Unit = {
-              Description = "Start work programs";
-            };
-            Service = {
-              Type = "oneshot";
-              ExecStart = "${start-work}/bin/start-work";
-            };
-          };
-          timers.start-work = {
-            Unit = {
-              Description = "Start work programs every weekday at 9am";
-            };
-            Timer = {
-              Unit = "start-work.service";
-              OnCalendar = "Mon..Fri 09:00";
-              Persistent = true;
-            };
-            Install = {
-              WantedBy = [ "timers.target" ];
-            };
-          };
         };
       };
     };
