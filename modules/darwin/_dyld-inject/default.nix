@@ -119,6 +119,7 @@ in
     ./remove-window-rim
     ./pin-iphone-mirroring
     ./hide-windows
+    ./jit-dlopen-fix
   ];
 
   options.services.dyldInject = {
