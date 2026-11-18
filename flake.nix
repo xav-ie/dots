@@ -71,6 +71,10 @@
     pyproject-build-systems.url = "github:pyproject-nix/build-system-pkgs";
     uv2nix.url = "github:pyproject-nix/uv2nix";
     quadlet-nix.url = "github:SEIAROTg/quadlet-nix";
+    # Rex's own flake: the rex CLI, its terminfo entry and ssh guard, and a
+    # home-manager module. Preview channel, matching the Rex.app build.
+    rex.url = "https://pkgs.superlogical.com/rex/nix/preview.tar.gz";
+    rex.inputs.nixpkgs.follows = "nixpkgs";
     scribe.url = "github:xav-ie/scribe";
     scribe.inputs.nixpkgs.follows = "nixpkgs";
     scribe-desktop.url = "git+ssh://git@github.com/xav-ie/scribe-desktop";

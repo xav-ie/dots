@@ -1920,6 +1920,23 @@
         "url": "ssh://git@github.com/xav-ie/rcsd-web.git"
       }
     },
+    "rex": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1794939798,
+        "narHash": "sha256-Tsr0uwzT2RvMj5wamTy20im8Df8YdBY6BWZlTvqaj+c=",
+        "type": "tarball",
+        "url": "https://pkgs.superlogical.com/rex/nix/preview/0.1.0-preview.21.tar.gz"
+      },
+      "original": {
+        "type": "tarball",
+        "url": "https://pkgs.superlogical.com/rex/nix/preview.tar.gz"
+      }
+    },
     "root": {
       "inputs": {
         "ags": "ags",
@@ -1990,6 +2007,7 @@
         "quadlet-nix": "quadlet-nix",
         "rcsd-src": "rcsd-src",
         "rcsd-web-src": "rcsd-web-src",
+        "rex": "rex",
         "rust-analyzer-src": "rust-analyzer-src",
         "rust-overlay": "rust-overlay",
         "screenshare-ui": "screenshare-ui",
