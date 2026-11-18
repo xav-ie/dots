@@ -30,8 +30,50 @@ def on-click [p: record]: nothing -> any {
   ["notify" "focus" $p.origin $p.herdrTab]
 }
 
-# Show the payload on this machine.
+# hyprctl needs the running Hyprland's instance signature, which processes
+# started outside the session (e.g. the herdr server) don't inherit.
+def --env hyprland-env [] {
+  if ($env.HYPRLAND_INSTANCE_SIGNATURE? | is-not-empty) { return }
+  let runtime = $env.XDG_RUNTIME_DIR? | default $"/run/user/(^id -u | str trim)"
+  let sig = try {
+    ls ($runtime | path join hypr) | where type == dir | sort-by modified | last | get name | path basename
+  } catch { null }
+  if $sig != null { $env.HYPRLAND_INSTANCE_SIGNATURE = $sig }
+}
+
+# Is <origin>'s herdr on screen here: is the focused window the Ghostty window
+# Ghostty titles "<origin>: <workspace>"? False when it can't tell.
+def herdr-window-focused [origin: string]: nothing -> bool {
+  let win = try {
+    match (uname | get kernel-name) {
+      "Darwin" => (
+        ^yabai -m query --windows --window
+        | from json
+        | {app: $in.app, title: $in.title}
+      )
+      "Linux" => {
+        hyprland-env
+        ^hyprctl activewindow -j | from json | {app: $in.class, title: $in.title}
+      }
+    }
+  } catch { null }
+  (
+    $win != null
+    and ($win.app | str lowercase | str contains "ghostty")
+    and ($win.title | str starts-with $"($origin): ")
+  )
+}
+
+# Is <tab> the one tab herdr has on screen? Asked on the machine running it.
+def herdr-tab-focused [tab: string]: nothing -> bool {
+  try {
+    ^herdr tab get $tab | from json | get -o result.tab.focused | default false
+  } catch { false }
+}
+
+# Show the payload on this machine, unless I'm already looking at its tab.
 def show [p: record] {
+  if ($p.tabFocused? | default false) and (herdr-window-focused $p.origin) { return }
   let icon = icon-path ($p.icon? | default null) $p.origin
   let click = on-click $p
   match (uname | get kernel-name) {
@@ -85,7 +127,7 @@ def main [
   body?: string
   --icon: string # avatar from notify-icons: claude, morning, evening
   --expire: duration # remove it from the notification list after this long
-  --herdr-tab: string # clicking focuses this herdr tab and its terminal
+  --herdr-tab: string # clicking focuses this herdr tab; skipped while it's on screen
 ] {
   let body = match $body {
     null => (generate-kaomoji -r ".value")
@@ -101,6 +143,7 @@ def main [
     origin: (short-hostname)
     expireAt: $expire_at
     herdrTab: $herdr_tab
+    tabFocused: ($herdr_tab != null and (herdr-tab-focused $herdr_tab))
   }
 }
 
@@ -124,6 +167,7 @@ def "main focus" [origin: string, tab: string] {
       if $win != null { ^yabai -m window --focus $win } else { ^open -a Ghostty }
     }
     "Linux" => {
+      hyprland-env
       let win = (
         ^hyprctl clients -j
         | from json
